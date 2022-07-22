@@ -1,0 +1,13 @@
+Mountain:
+    ShowSnow: true
+    Idle:
+        Position: [ -4.666, 9.715, 1.596 ]
+        Target: [ -2.858, 9.613, 0.746 ]
+    Select:
+        Position: [ -4.666, 9.715, 1.596 ]
+        Target: [ -2.858, 9.613, 0.746 ]
+    Zoom:
+        Position: [ -4.666, 9.715, 1.596 ]
+        Target: [ -2.858, 9.613, 0.746 ]
+    Cursor: [ -1.354, 9.636, 0.150 ]
+    State: 0

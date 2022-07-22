@@ -1,0 +1,13 @@
+HEAD2HEAD_OVERWORLD= Overworld
+
+Head2Head= Head 2 Head
+Head2Head_00_Head2HeadLobby= Head 2 Head Lobby
+
+Head2Head_CategoryName_Clear= Chapter Clear
+Head2Head_CategoryName_HeartCassette= Heart + Cassette
+Head2Head_CategoryName_ARB= All Red Berries
+Head2Head_CategoryName_ARBHeart= All Red Berries + Heart
+Head2Head_CategoryName_CassetteGrab= Cassette Grab
+Head2Head_CategoryName_FullClear= Full Clear
+
+Head2Head_hud_createdby= Created By {0}
