@@ -78,5 +78,9 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public static string TranslatedCategoryName(StandardCategory cat) {
 			return Dialog.Get(string.Format("Head2Head_CategoryName_{0}", cat.ToString()));
 		}
+
+		public static string TranslatedMatchResult(ResultCategory cat) {
+			return Dialog.Get(string.Format("Head2Head_MatchResultCat_{0}", cat.ToString()));
+		}
 	}
 }

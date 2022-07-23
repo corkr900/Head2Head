@@ -2,40 +2,48 @@
 using Celeste.Mod.Head2Head.Shared;
 using Microsoft.Xna.Framework;
 using Monocle;
+using System.Collections.Generic;
 
 namespace Celeste.Mod.Head2Head.UI {
 	public class H2HHudRenderer : HiresRenderer {
 
 		private static Vector2 canvasSize = new Vector2(1920f, 1080f);
-		public static float hudScale = 1f;  // TODO make HUD scale a setting
 		public static float lineOffset = 52f;
-		public static float bannerOpacity_beforematch = 1.0f;
-		public static float bannerOpacity_inmatch = 0.02f;
 
-		private float bannerOpacity {
-			get {
-				if (!ShouldRenderBanner) return 0f;
-				if (PlayerStatus.Current.CurrentMatch?.State == MatchState.InProgress) return bannerOpacity_inmatch;
-				return bannerOpacity_beforematch;
+		private float Opacity(Scene scene, MatchDefinition def) {
+			if (def == null) return 0.0f;
+			if (def.State == MatchState.Completed) return Head2HeadModule.Settings.HudOpacityCompleted;
+			if (def.State == MatchState.InProgress) {
+				if (scene is Overworld) return Head2HeadModule.Settings.HudOpacityInOverworld;
+				else if (def.BeginInstant > System.DateTime.Now) return Head2HeadModule.Settings.HudOpacityBeforeMatch;
+				else return Head2HeadModule.Settings.HudOpacityInMatch;
 			}
+			return Head2HeadModule.Settings.HudOpacityBeforeMatch;
 		}
 
 		public override void Render(Scene scene) {
+			MatchDefinition def = PlayerStatus.Current.CurrentMatch;
 			HiresRenderer.BeginRender();
-			if (ShouldRenderBanner) RenderBanner(scene);
+			if (ShouldRenderBanner(scene, def)) RenderBanner(scene, def);
+			if (ShouldShowPlayerList(scene, def)) RenderPlayerList(scene, def);
 			HiresRenderer.EndRender();
 			base.Render(scene);
 		}
 
-		private bool ShouldRenderBanner { get { return PlayerStatus.Current.CurrentMatch != null && ILSelector.ActiveSelector == null; } }
+		#region Banner
 
-		private void RenderBanner(Scene scene) {
-			MatchDefinition def = PlayerStatus.Current.CurrentMatch;
-			bool showCreator = ShouldShowMatchCreatorOnBanner(def, scene);
-			float _bannerOpacity = bannerOpacity;
+		private bool ShouldRenderBanner(Scene scene, MatchDefinition def) {
+			return def != null && ILSelector.ActiveSelector == null;
+		}
+
+		private void RenderBanner(Scene scene, MatchDefinition def) {
+			// TODO stretch banner width to fit the title
+			bool showCreator = ShouldShowMatchCreatorOnBanner(scene, def);
+			float _bannerOpacity = Opacity(scene, def);
 			Vector2 justify = new Vector2(0.5f, 0f);
+			float hudScale = Head2HeadModule.Settings.HudScale;
 
-			if (_bannerOpacity > 0.0001f) {
+			if (_bannerOpacity > 0.001f) {
 				MTexture bannerBG = GFX.Gui["Head2Head/HUD/banner_bg"];
 				Vector2 bannerPosition = new Vector2(canvasSize.X / 2f, -1f);
 				if (!showCreator) bannerPosition -= Vector2.UnitY * (lineOffset - 16);
@@ -58,8 +66,47 @@ namespace Celeste.Mod.Head2Head.UI {
 			}
 		}
 
-		private bool ShouldShowMatchCreatorOnBanner(MatchDefinition def, Scene scene) {
+		private bool ShouldShowMatchCreatorOnBanner(Scene scene, MatchDefinition def) {
 			return def.State == MatchState.Staged && !(scene is Overworld);
 		}
+
+		#endregion
+
+		#region Player List
+
+		private bool ShouldShowPlayerList(Scene scene, MatchDefinition def) {
+			return def != null && ILSelector.ActiveSelector == null;
+		}
+
+		private void RenderPlayerList(Scene scene, MatchDefinition def) {
+			float opacity = Opacity(scene, def);
+			float hudScale = Head2HeadModule.Settings.HudScale;
+
+			Vector2 listTitleScale = Vector2.One * 0.7f;
+			Vector2 listPlayerScale = Vector2.One * 0.5f;
+			Color listTitleColor = Color.Black;
+			Color listPlayerColor = Color.DarkCyan;
+			const float lineHeight = 24f;
+			Vector2 margin = new Vector2(-8f, 8f);
+
+			if (opacity > 0.001f) {
+
+				// TODO player list background
+
+				ActiveFont.Draw(string.Format(Dialog.Get("Head2Head_hud_playerlist_title"), def.Players.Count),
+					new Vector2(canvasSize.X, 0) + margin, Vector2.UnitX, listTitleScale * hudScale, listTitleColor * opacity);
+
+				float ypos = 42;
+				foreach (PlayerID id in def.Players) {
+					string name = id.Name;
+					string statusstr = Util.TranslatedMatchResult(def.GetPlayerResultCat(id));
+					ActiveFont.Draw(string.Format("{0} | {1}", name, statusstr),
+						new Vector2(canvasSize.X, ypos) + margin, Vector2.UnitX, listPlayerScale * hudScale, listPlayerColor * opacity);
+					ypos += lineHeight;
+				}
+			}
+		}
+
+		#endregion
 	}
 }

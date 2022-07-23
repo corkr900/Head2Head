@@ -91,22 +91,6 @@ namespace Celeste.Mod.Head2Head.Control {
 				default:
 					Engine.Commands.Log(setVarHelpText);
 					return;
-				case "hudscale":
-					if (!isFloat) goto case "help";
-					H2HHudRenderer.hudScale = valFloat;
-					return;
-				case "hudline":
-					if (!isFloat) goto case "help";
-					H2HHudRenderer.lineOffset = valFloat;
-					return;
-				case "opacity1":
-					if (!isFloat) goto case "help";
-					H2HHudRenderer.bannerOpacity_beforematch = valFloat;
-					return;
-				case "opacity2":
-					if (!isFloat) goto case "help";
-					H2HHudRenderer.bannerOpacity_inmatch = valFloat;
-					return;
 			}
 		}
 	}

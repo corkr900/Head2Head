@@ -610,6 +610,24 @@ namespace Celeste.Mod.Head2Head {
 	}
 
 	public class Head2HeadModuleSettings : EverestModuleSettings {
+		// TODO more elegant settings
+		[SettingName("Head2Head_Setting_HudScale_Name")]
+		[SettingSubText("Head2Head_Setting_HudScale_Subtext")]
+		[SettingRange(0, 7)]
+		public int _HudScale { get; set; } = 4;
+		public float HudScale { get { return (new float[] {0.1f, 0.25f, 0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 2.0f})[_HudScale]; } }
+
+		public int _HudOpacityBeforeMatch { get; set; }
+		public float HudOpacityBeforeMatch { get; set; } = 1.0f;
+
+		public int _HudOpacityInMatch { get; set; }
+		public float HudOpacityInMatch { get; set; } = 0.02f;
+
+		public int _HudOpacityInOverworld { get; set; }
+		public float HudOpacityInOverworld { get; set; } = 0.8f;
+
+		public int _HudOpacityCompleted { get; set; }
+		public float HudOpacityCompleted { get; set; } = 1.0f;
 
 	}
 

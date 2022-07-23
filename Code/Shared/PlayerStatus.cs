@@ -304,8 +304,10 @@ namespace Celeste.Mod.Head2Head.Shared {
 						break;
 					}
 				}
-				if (finished)
+				if (finished) {
 					State = PlayerStateCategory.FinishedMatch;
+					CurrentMatch.PlayerFinished(PlayerID.MyIDSafe);
+				}
 			}
 			return anychanges;
 		}

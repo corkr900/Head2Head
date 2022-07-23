@@ -3,6 +3,9 @@ HEAD2HEAD_OVERWORLD= Overworld
 Head2Head= Head 2 Head
 Head2Head_00_Head2HeadLobby= Head 2 Head Lobby
 
+Head2Head_Setting_HudScale_Name= HUD Scale
+Head2Head_Setting_HudScale_Subtext= Controls the size of the Head 2 Head HUD. Default is 4.
+
 Head2Head_CategoryName_Clear= Chapter Clear
 Head2Head_CategoryName_HeartCassette= Heart + Cassette
 Head2Head_CategoryName_ARB= All Red Berries
@@ -10,4 +13,19 @@ Head2Head_CategoryName_ARBHeart= All Red Berries + Heart
 Head2Head_CategoryName_CassetteGrab= Cassette Grab
 Head2Head_CategoryName_FullClear= Full Clear
 
+Head2Head_MatchStatus_None= Unknown
+Head2Head_MatchStatus_Building= Building
+Head2Head_MatchStatus_Staged= Staged
+Head2Head_MatchStatus_InProgress= In Progress
+Head2Head_MatchStatus_Completed= Completed
+
+Head2Head_MatchResultCat_NotJoined= Not Participating
+Head2Head_MatchResultCat_Joined= Ready
+Head2Head_MatchResultCat_InMatch= In Match
+Head2Head_MatchResultCat_Completed= Finished
+Head2Head_MatchResultCat_DNF= DNF
+
+Head2Head_UntitledMatch= Untitled Match
+
 Head2Head_hud_createdby= Created By {0}
+Head2Head_hud_playerlist_title= {0} Players

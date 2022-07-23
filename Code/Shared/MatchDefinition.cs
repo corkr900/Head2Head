@@ -20,6 +20,7 @@ namespace Celeste.Mod.Head2Head.Shared {
         public List<PlayerID> Players = new List<PlayerID>();
         public List<MatchPhase> Phases = new List<MatchPhase>();
 
+        public string DisplayNameOverride = "";
         public bool CanParticipantsStart = true;
         public bool OpenEntry = true;
         public bool RequireNewSaveFile = false;
@@ -47,6 +48,14 @@ namespace Celeste.Mod.Head2Head.Shared {
         public MatchResult Result;
 
 		#endregion
+
+        public string DisplayName {
+			get {
+                if (!string.IsNullOrEmpty(DisplayNameOverride)) return DisplayNameOverride;
+                if (Phases.Count > 0) return Phases[0].Title;
+                return Dialog.Get("Head2Head_UntitledMatch");
+			}
+		}
 
 		private static string GenerateMatchID() {
             return string.Format("p_{0}_c_{1}", PlayerID.MyIDSafe.GetHashCode(), ++localIDCounter);
@@ -86,6 +95,25 @@ namespace Celeste.Mod.Head2Head.Shared {
         public void BroadcastUpdate() {
             CNetComm.Instance.SendMatchUpdate(this);
 		}
+
+        public ResultCategory GetPlayerResultCat(PlayerID id) {
+            if (!Players.Contains(id)) return ResultCategory.NotJoined;
+            if (Result != null  && Result.players.ContainsKey(id)) return Result[id];
+            if (State == MatchState.InProgress) return ResultCategory.InMatch;
+            if (State == MatchState.Completed) return ResultCategory.DNF;
+            return ResultCategory.Joined;
+		}
+
+        public void PlayerFinished(PlayerID id) {
+            // TODO this is extremely likely to cause desync & race condition issues.
+            // Find a better pattern or implement robust state merging.
+            ResultCategory cat = GetPlayerResultCat(id);
+            if (cat == ResultCategory.InMatch) {
+                if (Result == null) Result = new MatchResult();
+                Result[id] = ResultCategory.Completed;
+                if (id.Equals(PlayerID.MyIDSafe)) BroadcastUpdate();
+            }
+        }
     }
 
     public class MatchPhase {
@@ -126,6 +154,7 @@ namespace Celeste.Mod.Head2Head.Shared {
             d.MatchID = reader.ReadString();
             d.Owner = reader.ReadPlayerID();
             d.SetState_NoUpdate((MatchState)Enum.Parse(typeof(MatchState), reader.ReadString()));
+            d.DisplayNameOverride = reader.ReadString();
             d.OpenEntry = reader.ReadBoolean();
             d.RequireNewSaveFile = reader.ReadBoolean();
             d.AllowCheatMode = reader.ReadBoolean();
@@ -142,6 +171,10 @@ namespace Celeste.Mod.Head2Head.Shared {
             for (int i = 0; i < numPhases; i++) {
                 d.Phases.Add(reader.ReadMatchPhase());
             }
+            bool hasResult = reader.ReadBoolean();
+            if (hasResult) {
+                d.Result = reader.ReadMatchResult();
+			}
             return d;
         }
 
@@ -154,6 +187,7 @@ namespace Celeste.Mod.Head2Head.Shared {
             writer.Write(m.MatchID);
             writer.Write(m.Owner);
             writer.Write(m.State.ToString());
+            writer.Write(m.DisplayNameOverride);
             writer.Write(m.OpenEntry);
             writer.Write(m.RequireNewSaveFile);
             writer.Write(m.AllowCheatMode);
@@ -168,6 +202,14 @@ namespace Celeste.Mod.Head2Head.Shared {
             foreach (MatchPhase ph in m.Phases) {
                 writer.Write(ph);
             }
+
+            if (m.Result == null) {
+                writer.Write(false);
+			}
+			else {
+                writer.Write(true);
+                writer.Write(m.Result);
+			}
         }
 
         public static MatchPhase ReadMatchPhase(this CelesteNetBinaryReader reader) {
