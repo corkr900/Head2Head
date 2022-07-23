@@ -32,30 +32,29 @@ namespace Celeste.Mod.Head2Head.UI {
 		private void RenderBanner(Scene scene) {
 			MatchDefinition def = PlayerStatus.Current.CurrentMatch;
 			bool showCreator = ShouldShowMatchCreatorOnBanner(def, scene);
-			float opacity = bannerOpacity;
+			float _bannerOpacity = bannerOpacity;
 			Vector2 justify = new Vector2(0.5f, 0f);
 
-			MTexture bannerBG = GFX.Gui["Head2Head/HUD/banner_bg"];
-			Vector2 bannerPosition = new Vector2(canvasSize.X / 2f, -1f);
-			if (!showCreator) bannerPosition -= Vector2.UnitY * (lineOffset - 16);
-			Color bannerColor = Color.White;
-			bannerColor = bannerColor * opacity;
-			bannerBG.DrawJustified(bannerPosition, justify, bannerColor, hudScale);
+			if (_bannerOpacity > 0.0001f) {
+				MTexture bannerBG = GFX.Gui["Head2Head/HUD/banner_bg"];
+				Vector2 bannerPosition = new Vector2(canvasSize.X / 2f, -1f);
+				if (!showCreator) bannerPosition -= Vector2.UnitY * (lineOffset - 16);
+				Color bannerColor = Color.White;
+				bannerBG.DrawJustified(bannerPosition, justify, bannerColor * _bannerOpacity, hudScale);
 
-			string matchCaption = def.Phases.Count == 0 ? "Unnamed Match" : def.Phases[0].Title;
-			Vector2 captionPos = new Vector2(canvasSize.X / 2, 0f);
-			Vector2 captionScale = Vector2.One * hudScale;
-			Color captionColor = Color.Black;
-			captionColor.A = (byte)(captionColor.A * opacity);
-			ActiveFont.Draw(matchCaption, captionPos, justify, captionScale, captionColor);
+				string matchCaption = def.Phases.Count == 0 ? "Unnamed Match" : def.Phases[0].Title;
+				Vector2 captionPos = new Vector2(canvasSize.X / 2, 0f);
+				Vector2 captionScale = Vector2.One * hudScale;
+				Color captionColor = Color.Black;
+				ActiveFont.Draw(matchCaption, captionPos, justify, captionScale, captionColor * _bannerOpacity);
 
-			if (showCreator) {
-				string matchowner = string.Format(Dialog.Get("Head2Head_hud_createdby"), def.Owner.Name);
-				Vector2 matchPos = new Vector2(canvasSize.X / 2, lineOffset * hudScale);
-				Vector2 matchScale = Vector2.One * hudScale * 0.6f;
-				Color matchColor = Color.DarkCyan;
-				matchColor.A = (byte)(matchColor.A * opacity);
-				ActiveFont.Draw(matchowner, matchPos, justify, matchScale, matchColor);
+				if (showCreator) {
+					string matchowner = string.Format(Dialog.Get("Head2Head_hud_createdby"), def.Owner.Name);
+					Vector2 matchPos = new Vector2(canvasSize.X / 2, lineOffset * hudScale);
+					Vector2 matchScale = Vector2.One * hudScale * 0.6f;
+					Color matchColor = Color.DarkCyan;
+					ActiveFont.Draw(matchowner, matchPos, justify, matchScale, matchColor * _bannerOpacity);
+				}
 			}
 		}
 
