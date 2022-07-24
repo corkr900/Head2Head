@@ -329,15 +329,18 @@ namespace Celeste.Mod.Head2Head {
 						def.PlayerFinished(data.playerID, data.Status);
 					}
 					bool playersFinished = true;
-					foreach (PlayerStatus p in knownPlayers.Values) {
+					foreach (PlayerID id in def.Players) {
+						PlayerStatus p = GetPlayerStatus(id);
+						if (p == null) {
+							Engine.Commands.Log("Could not get player status for " + id.Name);
+							continue;
+						}
 						if (p.CurrentMatch == null) continue;
 						if (p.CurrentMatch.MatchID != PlayerStatus.Current.CurrentMatch.MatchID) continue;
 						if (p.State == PlayerStateCategory.InMatch) playersFinished = false;
 					}
 					if (playersFinished) {
-						Engine.Commands.Log("Match Completed!!!!!");
 						PlayerStatus.Current.CurrentMatch.State = MatchState.Completed;
-						// TODO handle match completion
 					}
 				}
 			}
@@ -617,6 +620,11 @@ namespace Celeste.Mod.Head2Head {
 			});
 		}
 
+		public static PlayerStatus GetPlayerStatus(PlayerID id) {
+			if (id.Equals(PlayerID.MyID)) return PlayerStatus.Current;
+			if (knownPlayers.ContainsKey(id)) return knownPlayers[id];
+			return null;
+		}
 	}
 
 	public class Head2HeadModuleSettings : EverestModuleSettings {
