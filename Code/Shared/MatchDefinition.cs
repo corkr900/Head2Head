@@ -98,19 +98,30 @@ namespace Celeste.Mod.Head2Head.Shared {
 
         public ResultCategory GetPlayerResultCat(PlayerID id) {
             if (!Players.Contains(id)) return ResultCategory.NotJoined;
-            if (Result != null  && Result.players.ContainsKey(id)) return Result[id];
+            if (Result != null  && Result.players.ContainsKey(id)) return Result[id].Result;
             if (State == MatchState.InProgress) return ResultCategory.InMatch;
             if (State == MatchState.Completed) return ResultCategory.DNF;
             return ResultCategory.Joined;
 		}
 
-        public void PlayerFinished(PlayerID id) {
+        public void PlayerFinished(PlayerID id, PlayerStatus stat) {
             // TODO this is extremely likely to cause desync & race condition issues.
             // Find a better pattern or implement robust state merging.
             ResultCategory cat = GetPlayerResultCat(id);
             if (cat == ResultCategory.InMatch) {
                 if (Result == null) Result = new MatchResult();
-                Result[id] = ResultCategory.Completed;
+                if (Result.players.ContainsKey(id)) {
+                    Result[id].Result = ResultCategory.Completed;
+                    Result[id].FileTimeEnd = stat.FileTimerAtLastObjectiveComplete;
+				}
+				else {
+                    Result[id] = new MatchResultPlayer() {
+                        ID = id,
+                        Result = ResultCategory.Completed,
+                        FileTimeStart = stat.FileTimerAtMatchBegin,
+                        FileTimeEnd = stat.FileTimerAtLastObjectiveComplete,
+                    };
+				}
                 if (id.Equals(PlayerID.MyIDSafe)) BroadcastUpdate();
             }
         }

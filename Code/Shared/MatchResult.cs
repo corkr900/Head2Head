@@ -8,26 +8,28 @@ using System.Threading.Tasks;
 namespace Celeste.Mod.Head2Head.Shared {
     public class MatchResult {
         public Dictionary<PlayerID, MatchResultPlayer> players = new Dictionary<PlayerID, MatchResultPlayer>();
-        public ResultCategory this[PlayerID key] {
+        public MatchResultPlayer this[PlayerID key] {
             get {
-                if (!players.ContainsKey(key)) return ResultCategory.NotJoined;
-                return players[key].Result;
+                if (!players.ContainsKey(key)) return null;
+                return players[key];
             }
             set {
                 if (players.ContainsKey(key)) {
-                    players[key].Result = value;
+                    players[key] = value;
                 }
                 else {
-                    players.Add(key, new MatchResultPlayer() {
-                        Result = value,
-                    });
+                    players.Add(key, value);
                 }
             }
         }
     }
 
     public class MatchResultPlayer {
+        public PlayerID ID;
         public ResultCategory Result = ResultCategory.NotJoined;
+        public long FileTimeStart;
+        public long FileTimeEnd;
+        public long FileTimeTotal { get { return FileTimeEnd - FileTimeStart; } }
     }
 
     public enum ResultCategory {
@@ -60,12 +62,18 @@ namespace Celeste.Mod.Head2Head.Shared {
 
         public static MatchResultPlayer ReadMatchResultPlayer(this CelesteNetBinaryReader r) {
             MatchResultPlayer res = new MatchResultPlayer();
+            res.ID = r.ReadPlayerID();
             res.Result = (ResultCategory)Enum.Parse(typeof(ResultCategory), r.ReadString());
+            res.FileTimeStart = r.ReadInt64();
+            res.FileTimeEnd = r.ReadInt64();
             return res;
         }
 
         public static void Write(this CelesteNetBinaryWriter w, MatchResultPlayer m) {
+            w.Write(m.ID);
             w.Write(m.Result.ToString());
+            w.Write(m.FileTimeStart);
+            w.Write(m.FileTimeEnd);
         }
     }
 }

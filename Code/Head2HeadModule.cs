@@ -24,11 +24,9 @@ using Mono.Cecil.Cil;
 using Celeste.Mod.UI;
 using Celeste.Mod.Head2Head.UI;
 
-// TODO maintain repository of matches in the lobby/channel
 // TODO match selection from repository (future update maybe)
 // TODO Auto-launch into next map in multi-phase matches (setting based?)
 // TODO Prevent starting at checkpoints not already reached during the match
-// TODO Freeze the chapter timer while in the lobby
 
 // timer conversion to readable string: speedrunTimerFileString = Dialog.FileTime(SaveData.Instance.Time);
 
@@ -87,7 +85,6 @@ namespace Celeste.Mod.Head2Head {
 
 		public override void Load() {
 			// Annoying manual/IL hooks
-			//On.Celeste.Strawberry.OnCollect += OnStrawberryCollect;
 			hook_Strawberry_orig_OnCollect = new Hook(
 				typeof(Strawberry).GetMethod("orig_OnCollect", BindingFlags.Public | BindingFlags.Instance),
 				typeof(Head2HeadModule).GetMethod("OnStrawberryCollect"));
@@ -101,6 +98,7 @@ namespace Celeste.Mod.Head2Head {
 
 			On.Celeste.Level.Render += OnLevelRender;
 			On.Celeste.Level.Pause += OnGamePause;
+			On.Celeste.Level.UpdateTime += OnLevelUpdateTime;
 			On.Celeste.Postcard.DisplayRoutine += OnPostcardDisplayRoutine;
 			On.Celeste.SaveData.RegisterCassette += OnCassetteCollected;
 			On.Celeste.SaveData.RegisterHeartGem += OnHeartCollected;
@@ -141,7 +139,9 @@ namespace Celeste.Mod.Head2Head {
 			On.Monocle.Scene.Begin -= OnSceneBegin;
 			On.Monocle.Scene.End -= OnSceneEnd;
 
+			On.Celeste.Level.Render -= OnLevelRender;
 			On.Celeste.Level.Pause -= OnGamePause;
+			On.Celeste.Level.UpdateTime -= OnLevelUpdateTime;
 			On.Celeste.Postcard.DisplayRoutine -= OnPostcardDisplayRoutine;
 			On.Celeste.SaveData.RegisterCassette -= OnCassetteCollected;
 			On.Celeste.SaveData.RegisterHeartGem -= OnHeartCollected;
@@ -307,6 +307,12 @@ namespace Celeste.Mod.Head2Head {
 			dd.Set("H2HHudRenderer", ren);
 		}
 
+		public static void OnLevelUpdateTime(On.Celeste.Level.orig_UpdateTime orig, Level self) {
+			// Freeze the timer in the lobby
+			if (self.Session.Area.SID == GlobalAreaKey.Head2HeadLobby.SID) return;
+			orig(self);
+		}
+
 		// ########################################
 
 		private void OnPlayerStatusUpdate(DataH2HPlayerStatus data) {
@@ -316,21 +322,26 @@ namespace Celeste.Mod.Head2Head {
 				}
 				else knownPlayers.Add(data.playerID, data.Status);
 			}
-			if (data.Status.State == PlayerStateCategory.FinishedMatch
-				&& PlayerStatus.Current.MatchState == MatchState.InProgress
-				&& data.Status.CurrentMatch.MatchID == PlayerStatus.Current.CurrentMatch.MatchID) {
-				bool playersFinished = true;
-				foreach (PlayerStatus p in knownPlayers.Values) {
-					if (p.CurrentMatch == null) continue;
-					if (p.CurrentMatch.MatchID != PlayerStatus.Current.CurrentMatch.MatchID) continue;
-					if (p.State == PlayerStateCategory.InMatch) playersFinished = false;
-				}
-				if (playersFinished) {
-					Engine.Commands.Log("Match Completed!!!!!");
-					PlayerStatus.Current.CurrentMatch.State = MatchState.Completed;
-					// TODO handle match completion
+			if (data.Status.State == PlayerStateCategory.FinishedMatch && knownMatches.ContainsKey(data.Status.CurrentMatchID)) {
+				MatchDefinition def = knownMatches[data.Status.CurrentMatchID];
+				if (def.State == MatchState.InProgress) {
+					if (def.GetPlayerResultCat(data.playerID) == ResultCategory.InMatch) {
+						def.PlayerFinished(data.playerID, data.Status);
+					}
+					bool playersFinished = true;
+					foreach (PlayerStatus p in knownPlayers.Values) {
+						if (p.CurrentMatch == null) continue;
+						if (p.CurrentMatch.MatchID != PlayerStatus.Current.CurrentMatch.MatchID) continue;
+						if (p.State == PlayerStateCategory.InMatch) playersFinished = false;
+					}
+					if (playersFinished) {
+						Engine.Commands.Log("Match Completed!!!!!");
+						PlayerStatus.Current.CurrentMatch.State = MatchState.Completed;
+						// TODO handle match completion
+					}
 				}
 			}
+			
 		}
 
 		private void OnMatchJoinReceived(DataH2HMatchJoin data) {
@@ -362,7 +373,23 @@ namespace Celeste.Mod.Head2Head {
 		}
 
 		private void OnMatchUpdate(DataH2HMatchUpdate data) {
-			OnMatchUpdated(data.NewDef);
+			MatchDefinition def = data.NewDef;
+			bool isNew = !knownMatches.ContainsKey(def.MatchID);
+			MatchDefinition old = isNew ? null : knownMatches[def.MatchID];
+			if (isNew) {
+				if (def.State == MatchState.Completed) return;
+				knownMatches.Add(def.MatchID, def);
+			}
+			else {
+				knownMatches[def.MatchID] = def;
+			}
+			if (def.State == MatchState.Staged && (isNew || old.State != MatchState.Staged)) {
+				MatchStaged(def);
+			}
+			else if (def.State == MatchState.InProgress
+				&& (isNew || old.State != MatchState.InProgress)) {
+				MatchStarted(def);
+			}
 		}
 
 		private void OnChannelMove(DataChannelMove data) {
@@ -520,23 +547,6 @@ namespace Celeste.Mod.Head2Head {
 		}
 
 		// #######################################################
-
-		public void OnMatchUpdated(MatchDefinition def) {
-			bool isNew = !knownMatches.ContainsKey(def.MatchID);
-			if (isNew) {
-				if (def.State == MatchState.Completed) return;
-				knownMatches.Add(def.MatchID, def);
-			}
-			MatchDefinition old = isNew ? null : knownMatches[def.MatchID];
-			knownMatches[def.MatchID] = def;
-			if (def.State == MatchState.Staged && (isNew || old.State != MatchState.Staged)) {
-				MatchStaged(def);
-			}
-			else if (def.State == MatchState.InProgress
-				&& (isNew || old.State != MatchState.InProgress)) {
-				MatchStarted(def);
-			}
-		}
 
 		private static void MatchStaged(MatchDefinition def) {
 			MatchDefinition current = PlayerStatus.Current.CurrentMatch;

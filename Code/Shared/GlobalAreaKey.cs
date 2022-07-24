@@ -48,8 +48,13 @@ namespace Celeste.Mod.Head2Head.Shared {
                 return new GlobalAreaKey(AreaData.Get(0).ToKey());
             }
         }
+        public static GlobalAreaKey Head2HeadLobby {
+            get {
+                return new GlobalAreaKey("Head2Head/00_Head2HeadLobby");
+            }
+        }
 
-		public bool IsVanilla { get { return ExistsLocal && Local?.LevelSet == "Celeste"; } }
+        public bool IsVanilla { get { return ExistsLocal && Local?.LevelSet == "Celeste"; } }
 
 		private static string GetTranslatedSide(AreaMode? mode) {
 			switch (mode) {

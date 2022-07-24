@@ -213,21 +213,19 @@ namespace Celeste.Mod.Head2Head.UI {
 			height = GetModeHeight();
 			modes.Clear();
 			// TODO AltSideHelper support
-			bool hasBSide = !Data.Interlude_Safe && Data.HasMode(AreaMode.BSide);
-			bool hasCSide = !Data.Interlude_Safe && Data.HasMode(AreaMode.CSide);
 			modes.Add(new Option {
-				Label = Dialog.Clean(Data.Interlude_Safe ? "FILE_BEGIN" : "overworld_normal").ToUpper(),
+				Label = Dialog.Clean(Data.Interlude ? "FILE_BEGIN" : "overworld_normal").ToUpper(),
 				Icon = GFX.Gui["menu/play"],
 				ID = "A"
 			});
-			if (hasBSide) {
+			if (Data.HasMode(AreaMode.BSide)) {
 				modes.Add(new Option {
 					Label = Dialog.Clean("overworld_remix"),
 					Icon = GFX.Gui["menu/remix"],
 					ID = "B"
 				});
 			}
-			if (hasCSide) {
+			if (Data.HasMode(AreaMode.CSide)) {
 				modes.Add(new Option {
 					Label = Dialog.Clean("overworld_remix2"),
 					Icon = GFX.Gui["menu/rmx2"],

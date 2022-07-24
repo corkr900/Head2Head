@@ -99,7 +99,9 @@ namespace Celeste.Mod.Head2Head.UI {
 				float ypos = 42;
 				foreach (PlayerID id in def.Players) {
 					string name = id.Name;
-					string statusstr = Util.TranslatedMatchResult(def.GetPlayerResultCat(id));
+					ResultCategory cat = def.GetPlayerResultCat(id);
+					long timer = def.Result == null ? 0 : def.Result[id].FileTimeTotal;
+					string statusstr = cat == ResultCategory.Completed ? Dialog.FileTime(timer) : Util.TranslatedMatchResult(cat);
 					ActiveFont.Draw(string.Format("{0} | {1}", name, statusstr),
 						new Vector2(canvasSize.X, ypos) + margin, Vector2.UnitX, listPlayerScale * hudScale, listPlayerColor * opacity);
 					ypos += lineHeight;

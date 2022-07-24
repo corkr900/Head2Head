@@ -306,7 +306,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 				}
 				if (finished) {
 					State = PlayerStateCategory.FinishedMatch;
-					CurrentMatch.PlayerFinished(PlayerID.MyIDSafe);
+					CurrentMatch.PlayerFinished(PlayerID.MyIDSafe, this);
 				}
 			}
 			return anychanges;
