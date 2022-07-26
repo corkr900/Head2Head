@@ -12,15 +12,26 @@ namespace Celeste.Mod.Head2Head.Shared {
         private readonly string _sid;
         private readonly AreaKey? _localKey;
         private readonly AreaData _areaData;
-        private string _modVersion; // TODO - enforce version match
+        private string _modVersion;
+        private ModContent _modContent;
 
-		public AreaKey? Local { get { return _localKey; } }
+        public AreaKey? Local { get { return _localKey; } }
         public AreaKey Local_Safe { get { return _localKey ?? VanillaPrologue.Local.Value; } }
         public AreaData Data { get { return _areaData; } }
         public string SID { get { return _sid; } }
+        public string VersionString { get { return _modVersion; } }
+        public Version Version { get { return new Version(_modVersion); } }
         public AreaMode Mode { get { return ExistsLocal ? Local.Value.Mode : AreaMode.Normal; } }
         public MapMeta ModeMeta { get { return !ExistsLocal ? null : _areaData.GetModeMeta(Mode); } }
         public MapMetaModeProperties ModeMetaProperties { get { return !ExistsLocal ? null : _areaData.GetModeMeta(Mode)?.Modes[(int)Mode]; } }
+        public ModContent ModContent { 
+            get {
+                if (_localKey == null) return null;
+                if (_modContent == null) _modContent = Util.GetModContent(Local_Safe);
+                return _modContent;
+			}
+        }
+        public bool VersionMatchesLocal { get { return Version == ModContent.Mod.Version; } }  // TODO enforce same version to join a match
 
         public bool ExistsLocal { get { return _localKey != null; } }
         public bool IsOverworld { get { return _localKey == null && _sid == "Overworld"; } }
@@ -42,7 +53,6 @@ namespace Celeste.Mod.Head2Head.Shared {
                 return new GlobalAreaKey("Overworld");
             }
         }
-
         public static GlobalAreaKey VanillaPrologue {
             get {
                 return new GlobalAreaKey(AreaData.Get(0).ToKey());
@@ -70,11 +80,12 @@ namespace Celeste.Mod.Head2Head.Shared {
             }
 		}
 
-        public GlobalAreaKey(string SID, AreaMode mode = AreaMode.Normal) {
+        public GlobalAreaKey(string SID, AreaMode mode = AreaMode.Normal, string version = null) {
             _sid = SID;
             _localKey = null;
-            _areaData = null;
-            _modVersion = "";
+			_areaData = null;
+            _modContent = null;
+            _modVersion = version;
             if (SID != "Overworld") {
                 foreach (AreaData d in AreaData.Areas) {
                     if (d.GetSID() == SID) {
@@ -83,30 +94,34 @@ namespace Celeste.Mod.Head2Head.Shared {
                     }
                 }
             }
+            if (_modVersion == null) _modVersion = ModContent?.Mod.VersionString ?? "";
         }
         public GlobalAreaKey(AreaKey localKey) {
             _localKey = localKey;
             _sid = localKey.SID;
             _areaData = AreaData.Areas[localKey.ID];
+            _modContent = null;
             _modVersion = "";
+            _modVersion = ModContent?.Mod.VersionString ?? "";
         }
-
 		public GlobalAreaKey(int localID, AreaMode mode = AreaMode.Normal) : this() {
             _areaData = AreaData.Areas[localID];
             _localKey = _areaData.ToKey(mode);
             _sid = _areaData.SID;
+            _modContent = null;
             _modVersion = "";
+            _modVersion = ModContent?.Mod.VersionString ?? "";
         }
 
 		public override bool Equals(object obj) {
             if (obj is GlobalAreaKey k) {
-                return k.SID == SID && k.Mode == Mode;
+                return k.SID == SID && k.Mode == Mode && k.VersionString == VersionString;
             }
             return false;
         }
 
         public override int GetHashCode() {
-            return (SID + Mode.ToString()).GetHashCode();
+            return (SID + Mode.ToString() + VersionString).GetHashCode();
         }
 	}
 
@@ -115,12 +130,14 @@ namespace Celeste.Mod.Head2Head.Shared {
         public static GlobalAreaKey ReadAreaKey(this CelesteNetBinaryReader reader) {
             string sid = reader.ReadString();
             AreaMode mode = (AreaMode)Enum.Parse(typeof(AreaMode), reader.ReadString());
-            return new GlobalAreaKey(sid, mode);
+            string version = reader.ReadString();
+            return new GlobalAreaKey(sid, mode, version);
         }
 
         public static void Write(this CelesteNetBinaryWriter writer, GlobalAreaKey area) {
             writer.Write(area.SID);
             writer.Write(area.Mode.ToString());
+            writer.Write(area.VersionString);
         }
     }
 

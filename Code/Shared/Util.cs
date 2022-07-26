@@ -33,18 +33,6 @@ namespace Celeste.Mod.Head2Head.Shared {
 	public static class Util {
 
 		/// <summary>
-		/// Populates a global area key from an SID. Returns true if the SID was successfully localized, otherwise false.
-		/// </summary>
-		/// <param name="SID"></param>
-		/// <param name="mode"></param>
-		/// <param name="gak"></param>
-		/// <returns>Returns true if the SID was successfully localized, otherwise false.</returns>
-		public static bool TryGetAreaKey(string SID, AreaMode mode, out GlobalAreaKey gak) {
-			gak = new GlobalAreaKey(SID, mode);
-			return gak.Local != null;
-		}
-
-		/// <summary>
 		/// Counts the number of berries in a chapter. Returns -1 if the area could not be localized or data could not be found.
 		/// </summary>
 		/// <param name="area"></param>
@@ -87,6 +75,13 @@ namespace Celeste.Mod.Head2Head.Shared {
 		internal static LevelSetStats GetSetStats(string levelSet) {
 			if (string.IsNullOrEmpty(levelSet)) return null;
 			return SaveData.Instance.GetLevelSetStatsFor(levelSet);
+		}
+
+		internal static ModContent GetModContent(AreaKey area) {
+			foreach (ModContent content in Everest.Content.Mods) {
+				if (content.Map.ContainsKey(area.SID)) return content;
+			}
+			return null;
 		}
 
 		public static string TranslatedCategoryName(StandardCategory cat) {
