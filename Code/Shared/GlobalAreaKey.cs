@@ -20,7 +20,7 @@ namespace Celeste.Mod.Head2Head.Shared {
         public string SID { get { return _sid; } }
         public AreaMode Mode { get { return ExistsLocal ? Local.Value.Mode : AreaMode.Normal; } }
         public MapMeta ModeMeta { get { return !ExistsLocal ? null : _areaData.GetModeMeta(Mode); } }
-        public MapMetaModeProperties ModeMetaProperties { get { return !ExistsLocal ? null : _areaData.GetModeMeta(Mode).Modes[(int)Mode]; } }
+        public MapMetaModeProperties ModeMetaProperties { get { return !ExistsLocal ? null : _areaData.GetModeMeta(Mode)?.Modes[(int)Mode]; } }
 
         public bool ExistsLocal { get { return _localKey != null; } }
         public bool IsOverworld { get { return _localKey == null && _sid == "Overworld"; } }

@@ -12,13 +12,12 @@ namespace Celeste.Mod.Head2Head.UI {
 
 		private float Opacity(Scene scene, MatchDefinition def) {
 			if (def == null) return 0.0f;
-			if (def.State == MatchState.Completed) return Head2HeadModule.Settings.HudOpacityCompleted;
-			if (def.State == MatchState.InProgress) {
-				if (scene is Overworld) return Head2HeadModule.Settings.HudOpacityInOverworld;
-				else if (def.BeginInstant > System.DateTime.Now) return Head2HeadModule.Settings.HudOpacityBeforeMatch;
-				else return Head2HeadModule.Settings.HudOpacityInMatch;
+			if (scene is Overworld) return Head2HeadModule.Settings.HudOpacityInOverworld;
+			if (def.State == MatchState.Completed) return Head2HeadModule.Settings.HudOpacityNotInMatch;
+			if (def.State == MatchState.InProgress && def.BeginInstant <= System.DateTime.Now) {
+				return Head2HeadModule.Settings.HudOpacityInMatch;
 			}
-			return Head2HeadModule.Settings.HudOpacityBeforeMatch;
+			return Head2HeadModule.Settings.HudOpacityNotInMatch;
 		}
 
 		public override void Render(Scene scene) {

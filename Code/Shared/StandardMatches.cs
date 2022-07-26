@@ -121,20 +121,35 @@ namespace Celeste.Mod.Head2Head.Shared {
 				Area = area,
 				Objectives = new List<MatchObjective>() {
 					new MatchObjective() {
-						ObjectiveType = MatchObjectiveType.HeartCollect,
-					},
-					new MatchObjective() {
-						ObjectiveType = MatchObjectiveType.CassetteCollect,
-					},
-					new MatchObjective() {
 						ObjectiveType = MatchObjectiveType.ChapterComplete,
 					},
 				}
 			};
-			mp.Objectives.Add(new MatchObjective() {
-				ObjectiveType = MatchObjectiveType.Strawberries,
-				BerryGoal = Util.CountBerries(area)
-			}); ;
+			if (Util.HasOptionalRealHeart(area)) {
+				mp.Objectives.Add(new MatchObjective() {
+					ObjectiveType = MatchObjectiveType.HeartCollect,
+				});
+			}
+			if (Util.HasCassette(area)) {
+				mp.Objectives.Add(new MatchObjective() {
+					ObjectiveType = MatchObjectiveType.CassetteCollect,
+				});
+			}
+			if (Util.HasTrackedBerries(area)) {
+				mp.Objectives.Add(new MatchObjective() {
+					ObjectiveType = MatchObjectiveType.Strawberries,
+					BerryGoal = Util.CountBerries(area)
+				});
+			}
+			int moonberries = Util.CountMoonBerries(area);
+			if (moonberries > 0 && area.Local.Value.ID == 10) {
+				// TODO separate FC from FC+moonberry as separate categories
+				// so we can have moon berry categories without special handling for farewell
+				mp.Objectives.Add(new MatchObjective() {
+					ObjectiveType = MatchObjectiveType.MoonBerry,
+					BerryGoal = moonberries,
+				});
+			}
 			return mp;
 		}
 
@@ -170,13 +185,13 @@ namespace Celeste.Mod.Head2Head.Shared {
 							|| cat == StandardCategory.CassetteGrab;
 					case 10:  // Farewell
 						return cat == StandardCategory.Clear
-							|| cat == StandardCategory.FullClear;  // TODO make sure moon berry is handled
+							|| cat == StandardCategory.FullClear;
 				}
 			}
 			else {
 				bool berries = Util.HasTrackedBerries(area);
 				bool hasCassette = Util.HasCassette(area);
-				bool hasOptionalHeart = Util.HasOptionalHeart(area);
+				bool hasOptionalHeart = Util.HasOptionalRealHeart(area);
 				bool canFC = area.Data?.CanFullClear ?? false;
 				switch (cat) {
 					case StandardCategory.Clear:

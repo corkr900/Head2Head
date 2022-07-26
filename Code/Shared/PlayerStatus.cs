@@ -135,10 +135,10 @@ namespace Celeste.Mod.Head2Head.Shared {
 			Updated();
 		}
 		public void MatchReset() {
-			// TODO do something with match resets
 			phases.Clear();
 			objectives.Clear();
-			State = PlayerStateCategory.Joined;
+			State = PlayerStateCategory.Idle;
+			CurrentMatch = null;
 			Updated();
 		}
 
@@ -158,7 +158,8 @@ namespace Celeste.Mod.Head2Head.Shared {
 		}
 		public void StrawberryCollected(GlobalAreaKey area, Strawberry strawb) {
 			bool updated = false;
-			MatchObjective ob = FindObjective(MatchObjectiveType.Strawberries, area, false);
+			MatchObjectiveType objtype = strawb.Moon ? MatchObjectiveType.MoonBerry : MatchObjectiveType.Strawberries;
+			MatchObjective ob = FindObjective(objtype, area, false);
 			if (ob == null) return;
 			int stateIndex = objectives.FindIndex((H2HMatchObjectiveState s) => s.ObjectiveID == ob.ID);
 			if (stateIndex < 0) {

@@ -1,4 +1,5 @@
 ﻿using Celeste.Mod.Meta;
+using MonoMod.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -58,11 +59,24 @@ namespace Celeste.Mod.Head2Head.Shared {
 			return area.Data.Mode[(int)area.Mode].MapData.DetectedCassette;
 		}
 
-		internal static bool HasOptionalHeart(GlobalAreaKey area) {
+		internal static int CountMoonBerries(GlobalAreaKey area) {
+			if (!area.ExistsLocal) return -1;
+			var strawbs = area.Data.Mode[(int)area.Mode].MapData.Strawberries;
+			int count = 0;
+			foreach(var strawb in strawbs) {
+				if (strawb.Values == null || !strawb.Values.ContainsKey("moon")) continue;
+				object val = strawb.Values["moon"];
+				if (val is bool && (bool)val) count += 1;
+			}
+			return count;
+		}
+
+		internal static bool HasOptionalRealHeart(GlobalAreaKey area) {
 			if (!area.ExistsLocal) return false;
 			MapMetaModeProperties props = area.ModeMetaProperties;
-			if (props.HeartIsEnd == true) return false;
-			return area.Data.Mode[(int)area.Mode].MapData.DetectedHeartGem;
+			if (props?.HeartIsEnd == true) return false;
+			DynamicData dd = new DynamicData(area.Data.Mode[(int)area.Mode].MapData);
+			return dd.Get<bool>("DetectedRealHeartGem");
 		}
 
 		internal static bool HasTrackedBerries(GlobalAreaKey area) {
@@ -81,6 +95,23 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 		public static string TranslatedMatchResult(ResultCategory cat) {
 			return Dialog.Get(string.Format("Head2Head_MatchResultCat_{0}", cat.ToString()));
+		}
+
+		internal static bool ContainsRealHeartGem(BinaryPacker.Element data) {
+			foreach (BinaryPacker.Element child in data.Children) {
+				if (child.Name == "entities" && child.Children != null) {
+					foreach (BinaryPacker.Element child2 in child.Children) {
+						if (child2.Name == "blackGem") {
+							bool isFake = child2.AttrBool("fake", false);
+							if (!isFake) return true;
+						}
+						if (child2.Name == "birdForsakenCityGem") return true;
+						if (child2.Name == "reflectionHeartStatue") return true;
+						// TODO Custom heart code entities are not handled yet
+					}
+				}
+			}
+			return false;
 		}
 	}
 }

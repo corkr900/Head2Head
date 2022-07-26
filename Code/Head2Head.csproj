@@ -85,6 +85,7 @@
     <Compile Include="Data\DataH2HMatchReset.cs" />
     <Compile Include="Data\DataH2HPlayerStatus.cs" />
     <Compile Include="Data\DataH2HTest.cs" />
+    <Compile Include="Head2HeadModuleSettings.cs" />
     <Compile Include="IO\ActionLogger.cs" />
     <Compile Include="IO\CNetComm.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -113,6 +114,11 @@
     <None Include="..\everest.yaml">
       <Link>everest.yaml</Link>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\Dialog\English.txt">
+      <Link>English.txt</Link>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

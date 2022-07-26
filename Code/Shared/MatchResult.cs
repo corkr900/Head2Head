@@ -32,12 +32,16 @@ namespace Celeste.Mod.Head2Head.Shared {
         public long FileTimeTotal { get { return FileTimeEnd - FileTimeStart; } }
     }
 
+    /// <summary>
+    /// Discrete match outcomes (or states prior to end of match).
+    /// Underlying value defines priority when merging (high value = higher priority)
+    /// </summary>
     public enum ResultCategory {
-        NotJoined,
-        Joined,
-        InMatch,
-        Completed,
-        DNF,
+        NotJoined = 0,
+        Joined = 10,
+        InMatch = 20,
+        Completed = 30,
+        DNF = 999,
     }
 
     public static class MatchResultExtensions {

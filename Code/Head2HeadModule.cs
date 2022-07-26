@@ -23,6 +23,7 @@ using MonoMod.Cil;
 using Mono.Cecil.Cil;
 using Celeste.Mod.UI;
 using Celeste.Mod.Head2Head.UI;
+using FMOD.Studio;
 
 // TODO match selection from repository (future update maybe)
 // TODO Auto-launch into next map in multi-phase matches (setting based?)
@@ -49,6 +50,7 @@ namespace Celeste.Mod.Head2Head {
 
 		private static IDetour hook_Strawberry_orig_OnCollect;
 		private static IDetour hook_OuiChapterSelectIcon_Get_IdlePosition;
+		private static IDetour hook_LevelData_orig_ctor;
 
 		// #######################################################
 
@@ -91,6 +93,9 @@ namespace Celeste.Mod.Head2Head {
 			hook_OuiChapterSelectIcon_Get_IdlePosition = new Hook(
 				typeof(OuiChapterSelectIcon).GetProperty("IdlePosition").GetAccessors()[0],
 				typeof(Head2HeadModule).GetMethod("OnOuiChapterSelectIconGetIdlePosition"));
+			hook_LevelData_orig_ctor = new Hook(
+				typeof(LevelData).GetMethod("orig_ctor", BindingFlags.Public | BindingFlags.Instance),
+				typeof(Head2HeadModule).GetMethod("OnLevelDataCtor"));
 			IL.Celeste.LevelLoader.LoadingThread += Level_LoadingThread;
 			// Monocle + Celeste Hooks
 			On.Monocle.Scene.Begin += OnSceneBegin;
@@ -99,6 +104,7 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.Level.Render += OnLevelRender;
 			On.Celeste.Level.Pause += OnGamePause;
 			On.Celeste.Level.UpdateTime += OnLevelUpdateTime;
+			On.Celeste.MapData.ctor += OnMapDataCtor;
 			On.Celeste.Postcard.DisplayRoutine += OnPostcardDisplayRoutine;
 			On.Celeste.SaveData.RegisterCassette += OnCassetteCollected;
 			On.Celeste.SaveData.RegisterHeartGem += OnHeartCollected;
@@ -134,6 +140,8 @@ namespace Celeste.Mod.Head2Head {
 			hook_Strawberry_orig_OnCollect = null;
 			hook_OuiChapterSelectIcon_Get_IdlePosition?.Dispose();
 			hook_OuiChapterSelectIcon_Get_IdlePosition = null;
+			hook_LevelData_orig_ctor?.Dispose();
+			hook_LevelData_orig_ctor = null;
 			IL.Celeste.LevelLoader.LoadingThread -= Level_LoadingThread;
 			// Monocle + Celeste Hooks
 			On.Monocle.Scene.Begin -= OnSceneBegin;
@@ -142,6 +150,7 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.Level.Render -= OnLevelRender;
 			On.Celeste.Level.Pause -= OnGamePause;
 			On.Celeste.Level.UpdateTime -= OnLevelUpdateTime;
+			On.Celeste.MapData.ctor -= OnMapDataCtor;
 			On.Celeste.Postcard.DisplayRoutine -= OnPostcardDisplayRoutine;
 			On.Celeste.SaveData.RegisterCassette -= OnCassetteCollected;
 			On.Celeste.SaveData.RegisterHeartGem -= OnHeartCollected;
@@ -169,6 +178,11 @@ namespace Celeste.Mod.Head2Head {
 			// Misc other cleanup
 			if (Celeste.Instance.Components.Contains(Comm))
 				Celeste.Instance.Components.Remove(Comm);
+		}
+
+		public override void CreateModMenuSection(TextMenu menu, bool inGame, EventInstance snapshot) {
+			base.CreateModMenuSection(menu, inGame, snapshot);
+			Settings.CreateOptions(menu, inGame, snapshot);
 		}
 
 		// ###############################################
@@ -226,7 +240,6 @@ namespace Celeste.Mod.Head2Head {
 		}
 
 		private IEnumerator OnPostcardDisplayRoutine(On.Celeste.Postcard.orig_DisplayRoutine orig, Postcard self) {
-			// TODO be smarter about not preventing error messages from Everest
 			if (PlayerStatus.Current.CurrentMatch?.State == MatchState.InProgress) yield break;
 			else yield return new SwapImmediately(orig(self));
 		}
@@ -239,7 +252,7 @@ namespace Celeste.Mod.Head2Head {
 				// TODO handle golden strawberries
 			}
 			else {
-				// TODO special handling for moon berries
+				// Moon berries work this way too
 				PlayerStatus.Current.StrawberryCollected(gak, self);
 			}
 		}
@@ -313,6 +326,30 @@ namespace Celeste.Mod.Head2Head {
 			orig(self);
 		}
 
+		public static void OnLevelDataCtor(Action<LevelData, BinaryPacker.Element> orig, LevelData self, BinaryPacker.Element data) {
+			orig(self, data);
+			DynamicData dd = new DynamicData(self);
+			dd.Set("HasRealHeartGem", Shared.Util.ContainsRealHeartGem(data));
+		}
+
+		public static void OnMapDataCtor(On.Celeste.MapData.orig_ctor orig, MapData self, AreaKey area) {
+			orig(self, area);
+			DynamicData ddself = new DynamicData(self);
+			bool found = false;
+			foreach (LevelData lev in self.Levels) {
+				DynamicData ddlev = new DynamicData(lev);
+				if (ddlev.Get<bool>("HasRealHeartGem")) {
+					found = true;
+					break;
+				}
+			}
+			ddself.Set("DetectedRealHeartGem", found);
+			//if (!found) {
+			//	System.Diagnostics.Debug.WriteLine(new GlobalAreaKey(self.Area).DisplayName);
+			//	System.Diagnostics.Debug.WriteLine(" - " + self.DetectedHeartGem);
+			//}
+		}
+
 		// ########################################
 
 		private void OnPlayerStatusUpdate(DataH2HPlayerStatus data) {
@@ -349,48 +386,40 @@ namespace Celeste.Mod.Head2Head {
 
 		private void OnMatchJoinReceived(DataH2HMatchJoin data) {
 			if (PlayerStatus.Current.CurrentMatch.MatchID != data.MatchID) {
-				Engine.Commands.Log(data.playerID.Name + " cannot join the current match: match ID doesn't match");
 				return;
 			}
 			if (PlayerStatus.Current.MatchState != MatchState.Staged) {
-				Engine.Commands.Log(data.playerID.Name + " cannot join a match: match is't staged");
 				return;
 			}
 			if (PlayerStatus.Current.CurrentMatch.Players.Contains(data.playerID)) {
-				Engine.Commands.Log("Player already joined: " + data.playerID.Name);
 				return;
 			}
 			PlayerStatus.Current.CurrentMatch.Players.Add(data.playerID);
-			Engine.Commands.Log(data.player.FullName + " joined the match!");
 			OnPlayerJoinedMatch?.Invoke(data.playerID, data.MatchID);
 		}
 
 		private void OnMatchReset(DataH2HMatchReset data) {
 			if (PlayerStatus.Current.CurrentMatch?.MatchID == data.MatchID) {
-				PlayerStatus.Current.State = PlayerStateCategory.Idle;
-				if (PlayerStatus.Current.CurrentMatch != null) {
-					CNetComm.Instance.SendMatchReset(PlayerStatus.Current.CurrentMatch.MatchID);
-					PlayerStatus.Current.CurrentMatch = null;
-				}
+				PlayerStatus.Current.MatchReset();
 			}
 		}
 
 		private void OnMatchUpdate(DataH2HMatchUpdate data) {
 			MatchDefinition def = data.NewDef;
 			bool isNew = !knownMatches.ContainsKey(def.MatchID);
-			MatchDefinition old = isNew ? null : knownMatches[def.MatchID];
+			MatchState oldState = isNew ? MatchState.None : knownMatches[def.MatchID].State;
 			if (isNew) {
 				if (def.State == MatchState.Completed) return;
 				knownMatches.Add(def.MatchID, def);
 			}
 			else {
-				knownMatches[def.MatchID] = def;
+				knownMatches[def.MatchID].MergeDynamic(def);
 			}
-			if (def.State == MatchState.Staged && (isNew || old.State != MatchState.Staged)) {
+			if (def.State == MatchState.Staged && (isNew || oldState != MatchState.Staged)) {
 				MatchStaged(def);
 			}
 			else if (def.State == MatchState.InProgress
-				&& (isNew || old.State != MatchState.InProgress)) {
+				&& (isNew || oldState != MatchState.InProgress)) {
 				MatchStarted(def);
 			}
 		}
@@ -543,9 +572,13 @@ namespace Celeste.Mod.Head2Head {
 
 		public void ResetCurrentMatch() {
 			buildingMatch = null;
-			PlayerStatus.Current.State = CNetComm.Instance.IsConnected ? PlayerStateCategory.Idle : PlayerStateCategory.None;
 			if (PlayerStatus.Current.CurrentMatch != null) {
-				CNetComm.Instance.SendMatchReset(PlayerStatus.Current.CurrentMatch.MatchID);
+				if (CNetComm.Instance.IsConnected) {
+					CNetComm.Instance.SendMatchReset(PlayerStatus.Current.CurrentMatch.MatchID);
+				}
+				else {
+					PlayerStatus.Current.MatchReset();
+				}
 			}
 		}
 
@@ -616,7 +649,6 @@ namespace Celeste.Mod.Head2Head {
 			new FadeWipe(currentScenes.Last(), false, () => {
 				LevelEnter.Go(new Session(gak.Local.Value), false);
 				// TODO send a confirmation message on load-in?
-				// TODO set the beginning file timer
 			});
 		}
 
@@ -625,28 +657,6 @@ namespace Celeste.Mod.Head2Head {
 			if (knownPlayers.ContainsKey(id)) return knownPlayers[id];
 			return null;
 		}
-	}
-
-	public class Head2HeadModuleSettings : EverestModuleSettings {
-		// TODO more elegant settings
-		[SettingName("Head2Head_Setting_HudScale_Name")]
-		[SettingSubText("Head2Head_Setting_HudScale_Subtext")]
-		[SettingRange(0, 7)]
-		public int _HudScale { get; set; } = 4;
-		public float HudScale { get { return (new float[] {0.1f, 0.25f, 0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 2.0f})[_HudScale]; } }
-
-		public int _HudOpacityBeforeMatch { get; set; }
-		public float HudOpacityBeforeMatch { get; set; } = 1.0f;
-
-		public int _HudOpacityInMatch { get; set; }
-		public float HudOpacityInMatch { get; set; } = 0.02f;
-
-		public int _HudOpacityInOverworld { get; set; }
-		public float HudOpacityInOverworld { get; set; } = 0.8f;
-
-		public int _HudOpacityCompleted { get; set; }
-		public float HudOpacityCompleted { get; set; } = 1.0f;
-
 	}
 
 	public class Head2HeadModuleSaveData : EverestModuleSaveData {
