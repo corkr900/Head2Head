@@ -327,6 +327,7 @@ namespace Celeste.Mod.Head2Head {
 		}
 
 		public static void OnLevelDataCtor(Action<LevelData, BinaryPacker.Element> orig, LevelData self, BinaryPacker.Element data) {
+			// TODO hook CreateEntityData instead
 			orig(self, data);
 			DynamicData dd = new DynamicData(self);
 			dd.Set("HasRealHeartGem", Shared.Util.ContainsRealHeartGem(data));
