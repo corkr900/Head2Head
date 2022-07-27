@@ -25,7 +25,13 @@ using Celeste.Mod.UI;
 using Celeste.Mod.Head2Head.UI;
 using FMOD.Studio;
 
-// TODO match selection from repository (future update maybe)
+// TODO Helpdesk entity for lobby (+ pause menu option to get to it):
+// - Choose a different match to stage
+// - fix/reset weird states
+// - maybe jump back into a running match?
+// - drop out of current match
+// - end match early (if player DC'd without dropping, for example)
+
 // TODO Auto-launch into next map in multi-phase matches (setting based?)
 // TODO Prevent starting at checkpoints not already reached during the match
 
@@ -50,7 +56,6 @@ namespace Celeste.Mod.Head2Head {
 
 		private static IDetour hook_Strawberry_orig_OnCollect;
 		private static IDetour hook_OuiChapterSelectIcon_Get_IdlePosition;
-		private static IDetour hook_LevelData_orig_ctor;
 
 		// #######################################################
 
@@ -93,9 +98,6 @@ namespace Celeste.Mod.Head2Head {
 			hook_OuiChapterSelectIcon_Get_IdlePosition = new Hook(
 				typeof(OuiChapterSelectIcon).GetProperty("IdlePosition").GetAccessors()[0],
 				typeof(Head2HeadModule).GetMethod("OnOuiChapterSelectIconGetIdlePosition"));
-			hook_LevelData_orig_ctor = new Hook(
-				typeof(LevelData).GetMethod("orig_ctor", BindingFlags.Public | BindingFlags.Instance),
-				typeof(Head2HeadModule).GetMethod("OnLevelDataCtor"));
 			IL.Celeste.LevelLoader.LoadingThread += Level_LoadingThread;
 			// Monocle + Celeste Hooks
 			On.Monocle.Scene.Begin += OnSceneBegin;
@@ -108,6 +110,7 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.Postcard.DisplayRoutine += OnPostcardDisplayRoutine;
 			On.Celeste.SaveData.RegisterCassette += OnCassetteCollected;
 			On.Celeste.SaveData.RegisterHeartGem += OnHeartCollected;
+			On.Celeste.LevelData.CreateEntityData += OnLevelDataCreateEntityData;
 			On.Celeste.Editor.MapEditor.ctor += onDebugScreenOpened;
 			On.Celeste.LevelLoader.StartLevel += OnLevelLoaderStart;
 			On.Celeste.Editor.MapEditor.LoadLevel += onDebugTeleport;
@@ -140,8 +143,6 @@ namespace Celeste.Mod.Head2Head {
 			hook_Strawberry_orig_OnCollect = null;
 			hook_OuiChapterSelectIcon_Get_IdlePosition?.Dispose();
 			hook_OuiChapterSelectIcon_Get_IdlePosition = null;
-			hook_LevelData_orig_ctor?.Dispose();
-			hook_LevelData_orig_ctor = null;
 			IL.Celeste.LevelLoader.LoadingThread -= Level_LoadingThread;
 			// Monocle + Celeste Hooks
 			On.Monocle.Scene.Begin -= OnSceneBegin;
@@ -154,6 +155,7 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.Postcard.DisplayRoutine -= OnPostcardDisplayRoutine;
 			On.Celeste.SaveData.RegisterCassette -= OnCassetteCollected;
 			On.Celeste.SaveData.RegisterHeartGem -= OnHeartCollected;
+			On.Celeste.LevelData.CreateEntityData -= OnLevelDataCreateEntityData;
 			On.Celeste.Editor.MapEditor.ctor -= onDebugScreenOpened;
 			On.Celeste.Editor.MapEditor.LoadLevel -= onDebugTeleport;
 			On.Celeste.OuiChapterSelectIcon.Show -= OnOuiChapterSelectIconShow;
@@ -326,11 +328,13 @@ namespace Celeste.Mod.Head2Head {
 			orig(self);
 		}
 
-		public static void OnLevelDataCtor(Action<LevelData, BinaryPacker.Element> orig, LevelData self, BinaryPacker.Element data) {
-			// TODO hook CreateEntityData instead
-			orig(self, data);
+		private EntityData OnLevelDataCreateEntityData(On.Celeste.LevelData.orig_CreateEntityData orig, LevelData self, BinaryPacker.Element entity) {
+			EntityData data = orig(self, entity);
 			DynamicData dd = new DynamicData(self);
-			dd.Set("HasRealHeartGem", Shared.Util.ContainsRealHeartGem(data));
+			if (!dd.Data.ContainsKey("HasRealHeartGem") || !dd.Get<bool>("HasRealHeartGem")) {
+				dd.Set("HasRealHeartGem", Shared.Util.EntityIsRealHeartGem(entity));
+			}
+			return data;
 		}
 
 		public static void OnMapDataCtor(On.Celeste.MapData.orig_ctor orig, MapData self, AreaKey area) {
@@ -339,16 +343,13 @@ namespace Celeste.Mod.Head2Head {
 			bool found = false;
 			foreach (LevelData lev in self.Levels) {
 				DynamicData ddlev = new DynamicData(lev);
+				if (!ddlev.Data.ContainsKey("HasRealHeartGem")) ddlev.Set("HasRealHeartGem", false);
 				if (ddlev.Get<bool>("HasRealHeartGem")) {
 					found = true;
 					break;
 				}
 			}
 			ddself.Set("DetectedRealHeartGem", found);
-			//if (!found) {
-			//	System.Diagnostics.Debug.WriteLine(new GlobalAreaKey(self.Area).DisplayName);
-			//	System.Diagnostics.Debug.WriteLine(" - " + self.DetectedHeartGem);
-			//}
 		}
 
 		// ########################################
@@ -539,13 +540,26 @@ namespace Celeste.Mod.Head2Head {
 		}
 
 		public void JoinStagedMatch() {
-			if (PlayerStatus.Current.CurrentMatch == null) {
+			MatchDefinition def = PlayerStatus.Current.CurrentMatch;
+			if (def == null) {
 				Engine.Commands.Log("There is no staged match!");
 				return;
 			}
 			if (PlayerStatus.Current.MatchState != MatchState.Staged) {
 				Engine.Commands.Log("Current match is not staged!");
 				return;
+			}
+			foreach (MatchPhase ph in def.Phases) {
+				if (!ph.Area.ExistsLocal) {
+					Engine.Commands.Log(string.Format("Could not join match - map not installed: {0}", ph.Area.SID));
+					return;
+				}
+				if (!ph.Area.VersionMatchesLocal) {
+					Engine.Commands.Log(string.Format(
+						"Could not join match - map version mismatch: {0} (match initator has {1}, but {2} is installed)",
+						ph.Area.DisplayName, ph.Area.Version, ph.Area.LocalVersion));
+					return;
+				}
 			}
 			CNetComm.Instance.SendMatchJoin(PlayerStatus.Current.CurrentMatch.MatchID);
 			PlayerStatus.Current.MatchJoined();
@@ -598,7 +612,7 @@ namespace Celeste.Mod.Head2Head {
 
 		private bool MatchStarted(MatchDefinition def) {
 			foreach (MatchPhase ph in def.Phases) {
-				if (!ph.Area.ExistsLocal) {
+				if (!ph.Area.ExistsLocal || !ph.Area.VersionMatchesLocal) {
 					return false;
 				}
 			}

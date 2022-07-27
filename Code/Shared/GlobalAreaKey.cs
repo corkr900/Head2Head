@@ -12,15 +12,21 @@ namespace Celeste.Mod.Head2Head.Shared {
         private readonly string _sid;
         private readonly AreaKey? _localKey;
         private readonly AreaData _areaData;
-        private string _modVersion;
-        private ModContent _modContent;
+        private string _versionString;  // lazily populated
+        private ModContent _modContent;  // lazily populated
 
         public AreaKey? Local { get { return _localKey; } }
         public AreaKey Local_Safe { get { return _localKey ?? VanillaPrologue.Local.Value; } }
         public AreaData Data { get { return _areaData; } }
         public string SID { get { return _sid; } }
-        public string VersionString { get { return _modVersion; } }
-        public Version Version { get { return new Version(_modVersion); } }
+        public string VersionString { 
+            get {
+                if (_versionString == null) _versionString = ModContent.Mod.VersionString;
+                return _versionString;
+            }
+        }
+        public Version Version { get { return new Version(VersionString); } }
+        public Version LocalVersion { get { return ModContent.Mod.Version; } }
         public AreaMode Mode { get { return ExistsLocal ? Local.Value.Mode : AreaMode.Normal; } }
         public MapMeta ModeMeta { get { return !ExistsLocal ? null : _areaData.GetModeMeta(Mode); } }
         public MapMetaModeProperties ModeMetaProperties { get { return !ExistsLocal ? null : _areaData.GetModeMeta(Mode)?.Modes[(int)Mode]; } }
@@ -31,11 +37,10 @@ namespace Celeste.Mod.Head2Head.Shared {
                 return _modContent;
 			}
         }
-        public bool VersionMatchesLocal { get { return Version == ModContent.Mod.Version; } }  // TODO enforce same version to join a match
-
+        public bool VersionMatchesLocal { get { return Version == LocalVersion; } }
         public bool ExistsLocal { get { return _localKey != null; } }
         public bool IsOverworld { get { return _localKey == null && _sid == "Overworld"; } }
-
+        public bool IsVanilla { get { return ExistsLocal && Local?.LevelSet == "Celeste"; } }
         public string DisplayName {
             get {
                 if (IsOverworld) {
@@ -64,7 +69,6 @@ namespace Celeste.Mod.Head2Head.Shared {
             }
         }
 
-        public bool IsVanilla { get { return ExistsLocal && Local?.LevelSet == "Celeste"; } }
 
 		private static string GetTranslatedSide(AreaMode? mode) {
 			switch (mode) {
@@ -85,7 +89,7 @@ namespace Celeste.Mod.Head2Head.Shared {
             _localKey = null;
 			_areaData = null;
             _modContent = null;
-            _modVersion = version;
+            _versionString = version;
             if (SID != "Overworld") {
                 foreach (AreaData d in AreaData.Areas) {
                     if (d.GetSID() == SID) {
@@ -94,23 +98,20 @@ namespace Celeste.Mod.Head2Head.Shared {
                     }
                 }
             }
-            if (_modVersion == null) _modVersion = ModContent?.Mod.VersionString ?? "";
         }
         public GlobalAreaKey(AreaKey localKey) {
             _localKey = localKey;
             _sid = localKey.SID;
             _areaData = AreaData.Areas[localKey.ID];
             _modContent = null;
-            _modVersion = "";
-            _modVersion = ModContent?.Mod.VersionString ?? "";
+            _versionString = null;
         }
 		public GlobalAreaKey(int localID, AreaMode mode = AreaMode.Normal) : this() {
             _areaData = AreaData.Areas[localID];
             _localKey = _areaData.ToKey(mode);
             _sid = _areaData.SID;
             _modContent = null;
-            _modVersion = "";
-            _modVersion = ModContent?.Mod.VersionString ?? "";
+            _versionString = null;
         }
 
 		public override bool Equals(object obj) {

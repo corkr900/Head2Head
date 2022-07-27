@@ -92,20 +92,14 @@ namespace Celeste.Mod.Head2Head.Shared {
 			return Dialog.Get(string.Format("Head2Head_MatchResultCat_{0}", cat.ToString()));
 		}
 
-		internal static bool ContainsRealHeartGem(BinaryPacker.Element data) {
-			foreach (BinaryPacker.Element child in data.Children) {
-				if (child.Name == "entities" && child.Children != null) {
-					foreach (BinaryPacker.Element child2 in child.Children) {
-						if (child2.Name == "blackGem") {
-							bool isFake = child2.AttrBool("fake", false);
-							if (!isFake) return true;
-						}
-						if (child2.Name == "birdForsakenCityGem") return true;
-						if (child2.Name == "reflectionHeartStatue") return true;
-						// TODO Custom heart code entities are not handled yet
-					}
-				}
+		internal static bool EntityIsRealHeartGem(BinaryPacker.Element entity) {
+			if (entity.Name == "blackGem") {
+				bool isFake = entity.AttrBool("fake", false);
+				if (!isFake) return true;
 			}
+			if (entity.Name == "birdForsakenCityGem") return true;
+			if (entity.Name == "reflectionHeartStatue") return true;
+			// TODO Custom heart code entities are not handled yet
 			return false;
 		}
 	}
