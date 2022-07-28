@@ -12,6 +12,8 @@ namespace Celeste.Mod.Head2Head.Shared {
 		ARBHeart,
 		CassetteGrab,
 		FullClear,
+		MoonBerry,
+		FullClearMoonBerry,
 	}
 
 	public static class StandardMatches {
