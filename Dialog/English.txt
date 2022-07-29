@@ -19,6 +19,8 @@ Head2Head_CategoryName_ARB= All Red Berries
 Head2Head_CategoryName_ARBHeart= All Red Berries + Heart
 Head2Head_CategoryName_CassetteGrab= Cassette Grab
 Head2Head_CategoryName_FullClear= Full Clear
+Head2Head_CategoryName_MoonBerry= Moon Berry
+Head2Head_CategoryName_FullClearMoonBerry= Full Clear with Moon Berry
 
 Head2Head_MatchStatus_None= Unknown
 Head2Head_MatchStatus_Building= Building

@@ -19,21 +19,26 @@ namespace Celeste.Mod.Head2Head.Shared {
         public AreaKey Local_Safe { get { return _localKey ?? VanillaPrologue.Local.Value; } }
         public AreaData Data { get { return _areaData; } }
         public string SID { get { return _sid; } }
+        public Version LocalVersion {
+			get {
+                if (IsOverworld || !ExistsLocal || IsVanilla) return Everest.Version;
+                else return ModContent.Mod.Version;
+            }
+		}
         public string VersionString { 
             get {
-                if (_versionString == null) _versionString = ModContent.Mod.VersionString;
+                if (string.IsNullOrEmpty(_versionString)) _versionString = LocalVersion.ToString();
                 return _versionString;
             }
         }
         public Version Version { get { return new Version(VersionString); } }
-        public Version LocalVersion { get { return ModContent.Mod.Version; } }
         public AreaMode Mode { get { return ExistsLocal ? Local.Value.Mode : AreaMode.Normal; } }
         public MapMeta ModeMeta { get { return !ExistsLocal ? null : _areaData.GetModeMeta(Mode); } }
         public MapMetaModeProperties ModeMetaProperties { get { return !ExistsLocal ? null : _areaData.GetModeMeta(Mode)?.Modes[(int)Mode]; } }
         public ModContent ModContent { 
             get {
                 if (_localKey == null) return null;
-                if (_modContent == null) _modContent = Util.GetModContent(Local_Safe);
+                if (_modContent == null) _modContent = Util.GetModContent(this);
                 return _modContent;
 			}
         }

@@ -143,10 +143,60 @@ namespace Celeste.Mod.Head2Head.Shared {
 					BerryGoal = Util.CountBerries(area)
 				});
 			}
+			return mp;
+		}
+
+		public static MatchPhase ILMoonBerry(GlobalAreaKey area) {
+			if (string.IsNullOrEmpty(area.Local?.SID)) return null;
+			if (!IsCategoryValid(StandardCategory.FullClear, area)) return null;
+
+			MatchPhase mp = new MatchPhase() {
+				category = StandardCategory.FullClear,
+				Area = area,
+				Objectives = new List<MatchObjective>() {
+					new MatchObjective() {
+						ObjectiveType = MatchObjectiveType.ChapterComplete,
+					},
+					new MatchObjective() {
+						ObjectiveType = MatchObjectiveType.MoonBerry,
+						BerryGoal = Util.CountMoonBerries(area),
+					},
+				}
+			};
+			return mp;
+		}
+
+		public static MatchPhase ILFCMoonBerry(GlobalAreaKey area) {
+			if (string.IsNullOrEmpty(area.Local?.SID)) return null;
+			if (!IsCategoryValid(StandardCategory.FullClear, area)) return null;
+
+			MatchPhase mp = new MatchPhase() {
+				category = StandardCategory.FullClear,
+				Area = area,
+				Objectives = new List<MatchObjective>() {
+					new MatchObjective() {
+						ObjectiveType = MatchObjectiveType.ChapterComplete,
+					},
+				}
+			};
+			if (Util.HasOptionalRealHeart(area)) {
+				mp.Objectives.Add(new MatchObjective() {
+					ObjectiveType = MatchObjectiveType.HeartCollect,
+				});
+			}
+			if (Util.HasCassette(area)) {
+				mp.Objectives.Add(new MatchObjective() {
+					ObjectiveType = MatchObjectiveType.CassetteCollect,
+				});
+			}
+			if (Util.HasTrackedBerries(area)) {
+				mp.Objectives.Add(new MatchObjective() {
+					ObjectiveType = MatchObjectiveType.Strawberries,
+					BerryGoal = Util.CountBerries(area)
+				});
+			}
 			int moonberries = Util.CountMoonBerries(area);
-			if (moonberries > 0 && area.Local.Value.ID == 10) {
-				// TODO separate FC from FC+moonberry as separate categories
-				// so we can have moon berry categories without special handling for farewell
+			if (moonberries > 0) {
 				mp.Objectives.Add(new MatchObjective() {
 					ObjectiveType = MatchObjectiveType.MoonBerry,
 					BerryGoal = moonberries,
@@ -187,7 +237,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 							|| cat == StandardCategory.CassetteGrab;
 					case 10:  // Farewell
 						return cat == StandardCategory.Clear
-							|| cat == StandardCategory.FullClear;
+							|| cat == StandardCategory.MoonBerry;
 				}
 			}
 			else {
@@ -195,6 +245,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 				bool hasCassette = Util.HasCassette(area);
 				bool hasOptionalHeart = Util.HasOptionalRealHeart(area);
 				bool canFC = area.Data?.CanFullClear ?? false;
+				bool hasMoonBerry = Util.CountMoonBerries(area) > 0;
 				switch (cat) {
 					case StandardCategory.Clear:
 					default:
@@ -208,6 +259,10 @@ namespace Celeste.Mod.Head2Head.Shared {
 						return hasCassette;
 					case StandardCategory.FullClear:
 						return canFC && (berries || hasCassette || hasOptionalHeart);
+					case StandardCategory.MoonBerry:
+						return hasMoonBerry;
+					case StandardCategory.FullClearMoonBerry:
+						return hasMoonBerry && (berries || hasCassette || hasOptionalHeart);
 				}
 			}
 		}

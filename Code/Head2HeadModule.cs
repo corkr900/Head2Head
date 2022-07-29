@@ -264,6 +264,7 @@ namespace Celeste.Mod.Head2Head {
 		}
 
 		private void OnHeartCollected(On.Celeste.SaveData.orig_RegisterHeartGem orig, SaveData self, AreaKey area) {
+			// TODO find a different hook for hearts; This one fires after tapping past the poem, not when the IL timer stops
 			orig(self, area);
 			PlayerStatus.Current.HeartCollected(new GlobalAreaKey(area));
 		}
@@ -496,6 +497,12 @@ namespace Celeste.Mod.Head2Head {
 					break;
 				case StandardCategory.CassetteGrab:
 					mp = StandardMatches.ILCassetteGrab(area);
+					break;
+				case StandardCategory.MoonBerry:
+					mp = StandardMatches.ILMoonBerry(area);
+					break;
+				case StandardCategory.FullClearMoonBerry:
+					mp = StandardMatches.ILFCMoonBerry(area);
 					break;
 			}
 			if (mp == null) {
