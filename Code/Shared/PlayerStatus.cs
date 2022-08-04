@@ -28,6 +28,24 @@ namespace Celeste.Mod.Head2Head.Shared {
 		}
 		private static PlayerStatus _current;
 
+		public delegate void OnMatchPhaseCompletedHandler(OnMatchPhaseCompletedArgs args);
+		public static event OnMatchPhaseCompletedHandler OnMatchPhaseCompleted;
+		public class OnMatchPhaseCompletedArgs
+		{
+			public OnMatchPhaseCompletedArgs(MatchDefinition def, MatchObjective lastOb, MatchPhase lastPh, MatchPhase nextPh, bool matchComp)
+			{
+				MatchDef = def;
+				CompletedObjective = lastOb;
+				CompletedPhase = lastPh;
+				MatchCompleted = matchComp;
+			}
+			public readonly MatchDefinition MatchDef;
+			public readonly MatchObjective CompletedObjective;
+			public readonly MatchPhase CompletedPhase;
+			public readonly MatchPhase NextPhase;
+			public readonly bool MatchCompleted;
+		}
+
 		public PlayerStateCategory State {
 			get { return _state; }
 			set {
@@ -257,12 +275,14 @@ namespace Celeste.Mod.Head2Head.Shared {
 				});
 				FileTimerAtLastObjectiveComplete = SaveData.Instance.Time;
 			}
-			TryMarkPhaseComplete();
+			TryMarkPhaseComplete(ob);
 			return true;
 		}
 
-		private bool TryMarkPhaseComplete() {
+		private bool TryMarkPhaseComplete(MatchObjective lastOB) {
+			// TODO enforce phase order
 			bool anychanges = false;
+			MatchPhase lastPhase = null;
 			foreach (MatchPhase ph in CurrentMatch.Phases) {
 				if (IsPhaseComplete(ph.ID)) continue;
 				bool complete = true;
@@ -274,6 +294,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 				}
 				if (complete) {
 					anychanges = true;
+					lastPhase = ph;
 					bool found = false;
 					for (int i = 0; i < phases.Count; i++) {
 						H2HMatchPhaseState st = phases[i];
@@ -298,17 +319,26 @@ namespace Celeste.Mod.Head2Head.Shared {
 				}
 			}
 			if (anychanges) {
-				bool finished = true;
+				bool matchFinished = true;
+				MatchPhase nextPhase = null;
 				foreach (MatchPhase ph in CurrentMatch.Phases) {
 					if (!IsPhaseComplete(ph.ID)) {
-						finished = false;
+						matchFinished = false;
+						nextPhase = ph;
 						break;
 					}
 				}
-				if (finished) {
+				if (matchFinished) {  // All phases are complete
 					State = PlayerStateCategory.FinishedMatch;
 					CurrentMatch.PlayerFinished(PlayerID.MyIDSafe, this);
 				}
+				OnMatchPhaseCompleted?.Invoke(new OnMatchPhaseCompletedArgs(
+					CurrentMatch,
+					lastOB,
+					lastPhase,
+					nextPhase,
+					matchFinished
+				));
 			}
 			return anychanges;
 		}

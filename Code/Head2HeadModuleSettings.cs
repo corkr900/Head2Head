@@ -12,6 +12,14 @@ namespace Celeste.Mod.Head2Head {
 
 		#region Settings
 
+		[SettingName("Head2Head_Setting_ReturnToLobby")]
+		[SettingSubText("Head2Head_Setting_ReturnToLobby_Subtext")]
+		public bool ReturnToLobby { get; set; } = true;
+		[SettingName("Head2Head_Setting_AutoLaunchPhase")]
+		[SettingSubText("Head2Head_Setting_AutoLaunchPhase_Subtext")]
+		public bool AutoLaunchNextPhase { get; set; } = true;
+
+		// Settings with manual handling
 		public float HudScale { get; set; } = 1.0f;
 		public float HudOpacityNotInMatch { get; set; } = 1.0f;
 		public float HudOpacityInMatch { get; set; } = 0.25f;

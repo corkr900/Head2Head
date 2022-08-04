@@ -32,7 +32,6 @@ using FMOD.Studio;
 // - drop out of current match
 // - end match early (if player DC'd without dropping, for example)
 
-// TODO Auto-launch into next map in multi-phase matches (setting based?)
 // TODO Prevent starting at checkpoints not already reached during the match
 
 // timer conversion to readable string: speedrunTimerFileString = Dialog.FileTime(SaveData.Instance.Time);
@@ -74,6 +73,10 @@ namespace Celeste.Mod.Head2Head {
 		public Session currentSession = null;
 		public List<Scene> currentScenes = new List<Scene>();
 		public MatchDefinition buildingMatch = null;
+
+		private GlobalAreaKey autoLaunchArea;
+		private MatchObjectiveType lastObjectiveType;
+		private bool doAutoLaunch;
 
 		// TODO discard stale data so it doesn't just grow indefinitely
 		public static Dictionary<string, MatchDefinition> knownMatches = new Dictionary<string, MatchDefinition>();
@@ -133,6 +136,7 @@ namespace Celeste.Mod.Head2Head {
 			CNetComm.OnReceiveMatchUpdate += OnMatchUpdate;
 			CNetComm.OnReceivePlayerStatus += OnPlayerStatusUpdate;
 			CNetComm.OnReceiveMatchReset += OnMatchReset;
+			PlayerStatus.OnMatchPhaseCompleted += OnCompletedMatchPhase;
 			// Misc other setup
 			Celeste.Instance.Components.Add(Comm = new CNetComm(Celeste.Instance));
 		}
@@ -177,6 +181,7 @@ namespace Celeste.Mod.Head2Head {
 			CNetComm.OnReceiveMatchUpdate -= OnMatchUpdate;
 			CNetComm.OnReceivePlayerStatus -= OnPlayerStatusUpdate;
 			CNetComm.OnReceiveMatchReset -= OnMatchReset;
+			PlayerStatus.OnMatchPhaseCompleted -= OnCompletedMatchPhase;
 			// Misc other cleanup
 			if (Celeste.Instance.Components.Contains(Comm))
 				Celeste.Instance.Components.Remove(Comm);
@@ -678,6 +683,45 @@ namespace Celeste.Mod.Head2Head {
 			if (id.Equals(PlayerID.MyID)) return PlayerStatus.Current;
 			if (knownPlayers.ContainsKey(id)) return knownPlayers[id];
 			return null;
+		}
+
+		private void OnCompletedMatchPhase(PlayerStatus.OnMatchPhaseCompletedArgs args)
+		{
+			if (args.MatchCompleted)
+			{
+				if (!Settings.ReturnToLobby) return;
+				autoLaunchArea = GlobalAreaKey.Head2HeadLobby;
+			}
+			else
+			{
+				if (!Settings.AutoLaunchNextPhase) return;
+				if (args.NextPhase == null) return;
+				if (!args.NextPhase.Area.ExistsLocal) return;
+				if (!args.NextPhase.Area.VersionMatchesLocal) return;
+				if (args.NextPhase.Area.Equals(GlobalAreaKey.Overworld)) return;
+				autoLaunchArea = args.NextPhase.Area;
+			}
+			lastObjectiveType = args.CompletedObjective.ObjectiveType;
+			doAutoLaunch = true;
+			// TODO Find good hooks to check whether to do an autolaunch and call DoPostPhaseAutoLaunch
+			// Cassette: after being bubbled back to start of room after collecting tape
+			// chapter completion: end of chapter complete screen (example of this already in The Inward Climb)
+			// heart collect: UI finishes disappearing
+			// berry + moon berry: immediate i guess? maybe a small delay?
+		}
+
+		private void DoPostPhaseAutoLaunch(bool doFadeWipe)
+		{
+			GlobalAreaKey area = autoLaunchArea;
+			doAutoLaunch = false;
+			autoLaunchArea = GlobalAreaKey.Overworld;
+			if (doFadeWipe)
+			{
+				new FadeWipe(currentScenes.Last(), false, () => {
+					LevelEnter.Go(new Session(area.Local.Value), false);
+				});
+			}
+			else LevelEnter.Go(new Session(area.Local.Value), false);
 		}
 	}
 

@@ -103,7 +103,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			if (entity.Name == "birdForsakenCityGem") return true;
 			if (entity.Name == "reflectionHeartStatue") return true;
 			// TODO Custom heart code entities are not handled yet; some way to do it generically?
-			// collabutils2 mini hearts NOT included because they always end the chapter
+			// collabutils2 mini hearts NOT included because they always end the chapter regardless of map metadata
 
 			// should flag these entities...
 			//		If it's possible to check whether the associated type extends HeartGem that should handle most of these...

@@ -4,6 +4,10 @@ Head2Head= Head 2 Head
 Head2Head_00_Head2HeadLobby= Head 2 Head Lobby
 
 Head2Head_Setting= Head 2 Head Settings
+Head2Head_Setting_ReturnToLobby= Return to Lobby
+Head2Head_Setting_ReturnToLobby_Subtext= If turned on, you will automatically return to the Head2Head lobby after completing a match. Default: On
+Head2Head_Setting_AutoLaunchPhase= Auto-Launch Next Phase
+Head2Head_Setting_AutoLaunchPhase= (CURRENTLY UNUSED - multi-phase matches cannot be created... yet) If turned on, you will automatically be launched into the next phase of a match after completing the previous phase. Default: On
 Head2Head_Setting_HudScale= HUD Scale
 Head2Head_Setting_HudScale_Description= Controls the size of the Head 2 Head HUD. Default is 4.
 Head2Head_Setting_HudOpacityBeforeMatch= HUD Opacity (Before/After Match)
