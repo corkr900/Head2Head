@@ -78,7 +78,6 @@ namespace Celeste.Mod.Head2Head {
 		private MatchObjectiveType lastObjectiveType;
 		private bool doAutoLaunch;
 
-		// TODO discard stale data so it doesn't just grow indefinitely
 		public static Dictionary<string, MatchDefinition> knownMatches = new Dictionary<string, MatchDefinition>();
 		public static Dictionary<PlayerID, PlayerStatus> knownPlayers = new Dictionary<PlayerID, PlayerStatus>();
 
@@ -264,6 +263,7 @@ namespace Celeste.Mod.Head2Head {
 			else {
 				// Moon berries work this way too
 				PlayerStatus.Current.StrawberryCollected(gak, self);
+				Instance.DoPostPhaseAutoLaunch(true, self.Moon ? MatchObjectiveType.MoonBerry : MatchObjectiveType.Strawberries);
 			}
 		}
 
@@ -272,14 +272,15 @@ namespace Celeste.Mod.Head2Head {
 		}
 
 		private void OnHeartCollected(On.Celeste.SaveData.orig_RegisterHeartGem orig, SaveData self, AreaKey area) {
-			// TODO find a different hook for hearts; This one fires after tapping past the poem, not when the IL timer stops
 			orig(self, area);
-			PlayerStatus.Current.HeartCollected(new GlobalAreaKey(area));
+			PlayerStatus.Current.HeartCollected(new GlobalAreaKey(area));  // TODO find a different hook for hearts; This one fires after tapping past the poem, not when the IL timer stops
+			DoPostPhaseAutoLaunch(true, MatchObjectiveType.HeartCollect);  // TODO find a better hook for returning to lobby after heart collection
 		}
 
 		private void OnCassetteCollected(On.Celeste.SaveData.orig_RegisterCassette orig, SaveData self, AreaKey area) {
 			orig(self, area);
 			PlayerStatus.Current.CassetteCollected(new GlobalAreaKey(area));
+			DoPostPhaseAutoLaunch(true, MatchObjectiveType.CassetteCollect);  // TODO find a better hook for returning to lobby after cassette collection
 		}
 
 		private void OnMapSearchCleanExit(On.Celeste.Mod.UI.OuiMapSearch.orig_cleanExit orig, OuiMapSearch self) {
@@ -364,10 +365,13 @@ namespace Celeste.Mod.Head2Head {
 		private void OnAreaCompleteUpdate(On.Celeste.AreaComplete.orig_Update orig, AreaComplete self)
 		{
 			DynamicData dd = new DynamicData(self);
-			if (Input.MenuConfirm.Pressed && dd.Get<bool>("finishedSlide") && dd.Get<bool>("canConfirm"))
+			if (doAutoLaunch && Input.MenuConfirm.Pressed && dd.Get<bool>("finishedSlide") && dd.Get<bool>("canConfirm"))
 			{
-				dd.Set("canConfirm", false);
-				DoPostPhaseAutoLaunch(true);
+				// TODO this won't get hit for interlude chapters...
+				if (DoPostPhaseAutoLaunch(true, MatchObjectiveType.ChapterComplete))
+				{
+					dd.Set("canConfirm", false);
+				}
 			}
 			orig(self);
 		}
@@ -424,6 +428,7 @@ namespace Celeste.Mod.Head2Head {
 			if (PlayerStatus.Current.CurrentMatch?.MatchID == data.MatchID) {
 				PlayerStatus.Current.MatchReset();
 			}
+			ClearAutoLaunchInfo();
 		}
 
 		private void OnMatchUpdate(DataH2HMatchUpdate data) {
@@ -439,16 +444,20 @@ namespace Celeste.Mod.Head2Head {
 			}
 			if (def.State == MatchState.Staged && (isNew || oldState != MatchState.Staged)) {
 				MatchStaged(def);
+				ClearAutoLaunchInfo();
 			}
 			else if (def.State == MatchState.InProgress
 				&& (isNew || oldState != MatchState.InProgress)) {
 				MatchStarted(def);
+				ClearAutoLaunchInfo();
 			}
+			PurgeStaleData();
 		}
 
 		private void OnChannelMove(DataChannelMove data) {
 			// TODO handle channel moves
 			Engine.Commands.Log("Channel Move Received for " + data.Player?.FullName);
+			PurgeStaleData();
 		}
 
 		private void OnConnected(CelesteNetClientContext cxt) {
@@ -563,6 +572,7 @@ namespace Celeste.Mod.Head2Head {
 			buildingMatch.AssignIDs();
 			buildingMatch.State = MatchState.Staged;  // Sends update
 			buildingMatch = null;
+			ClearAutoLaunchInfo();
 		}
 
 		public void JoinStagedMatch() {
@@ -621,6 +631,41 @@ namespace Celeste.Mod.Head2Head {
 					PlayerStatus.Current.MatchReset();
 				}
 			}
+		}
+
+		public void PurgeStaleData()
+		{
+			List<MatchDefinition> defsToRemove = new List<MatchDefinition>();
+			foreach (MatchDefinition def in knownMatches.Values)
+			{
+				if (MatchIsStale(def))
+				{
+					defsToRemove.Add(def);
+				}
+			}
+			foreach (MatchDefinition def in defsToRemove) knownMatches.Remove(def.MatchID);
+
+			List<PlayerID> playersToRemove = new List<PlayerID>();
+			foreach (KeyValuePair<PlayerID, PlayerStatus> kvp in knownPlayers)
+			{
+				if (kvp.Key.Equals(PlayerID.MyIDSafe)) continue;
+				if (knownMatches.Any((def) => def.Value?.Players?.Contains(kvp.Key) ?? false))
+				{
+					playersToRemove.Add(kvp.Key);
+				}
+			}
+			foreach (PlayerID id in playersToRemove) knownPlayers.Remove(id);
+		}
+
+		private bool MatchIsStale(MatchDefinition def)
+		{
+			if (def == null) return false;
+			if (!knownMatches.ContainsKey(def.MatchID)) return false;
+			if (def.MatchID == PlayerStatus.Current.CurrentMatchID) return false;
+			if (def.State == MatchState.None) return true;
+			if (def.State == MatchState.Completed) return true;
+			if (def.State == MatchState.Building && buildingMatch.MatchID != def.MatchID) return true;
+			return false;
 		}
 
 		// #######################################################
@@ -717,19 +762,14 @@ namespace Celeste.Mod.Head2Head {
 			}
 			lastObjectiveType = args.CompletedObjective.ObjectiveType;
 			doAutoLaunch = true;
-			// TODO Find good hooks to check whether to do an autolaunch and call DoPostPhaseAutoLaunch
-			// Cassette: after being bubbled back to start of room after collecting tape
-			// chapter completion: end of chapter complete screen (example of this already in The Inward Climb) (done, untested)
-			// heart collect: UI finishes disappearing
-			// berry + moon berry: immediate i guess? maybe a small delay?
 		}
 
-		private void DoPostPhaseAutoLaunch(bool doFadeWipe)
+		private bool DoPostPhaseAutoLaunch(bool doFadeWipe, MatchObjectiveType ifType)
 		{
-			if (!doAutoLaunch) return;
+			if (!doAutoLaunch) return false;
+			if (lastObjectiveType != ifType) return false;
 			GlobalAreaKey area = autoLaunchArea;
-			doAutoLaunch = false;
-			autoLaunchArea = GlobalAreaKey.Overworld;
+			ClearAutoLaunchInfo();
 			if (doFadeWipe)
 			{
 				new FadeWipe(currentScenes.Last(), false, () => {
@@ -737,6 +777,15 @@ namespace Celeste.Mod.Head2Head {
 				});
 			}
 			else LevelEnter.Go(new Session(area.Local.Value), false);
+			ClearAutoLaunchInfo();
+			return true;
+		}
+
+		public void ClearAutoLaunchInfo()
+		{
+			lastObjectiveType = MatchObjectiveType.ChapterComplete;
+			doAutoLaunch = false;
+			autoLaunchArea = GlobalAreaKey.Overworld;
 		}
 	}
 
