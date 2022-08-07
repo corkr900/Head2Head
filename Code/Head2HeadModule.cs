@@ -114,6 +114,7 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.SaveData.RegisterCassette += OnCassetteCollected;
 			On.Celeste.SaveData.RegisterHeartGem += OnHeartCollected;
 			On.Celeste.LevelData.CreateEntityData += OnLevelDataCreateEntityData;
+			On.Celeste.AreaComplete.Update += OnAreaCompleteUpdate;
 			On.Celeste.Editor.MapEditor.ctor += onDebugScreenOpened;
 			On.Celeste.LevelLoader.StartLevel += OnLevelLoaderStart;
 			On.Celeste.Editor.MapEditor.LoadLevel += onDebugTeleport;
@@ -160,6 +161,7 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.SaveData.RegisterCassette -= OnCassetteCollected;
 			On.Celeste.SaveData.RegisterHeartGem -= OnHeartCollected;
 			On.Celeste.LevelData.CreateEntityData -= OnLevelDataCreateEntityData;
+			On.Celeste.AreaComplete.Update -= OnAreaCompleteUpdate;
 			On.Celeste.Editor.MapEditor.ctor -= onDebugScreenOpened;
 			On.Celeste.Editor.MapEditor.LoadLevel -= onDebugTeleport;
 			On.Celeste.OuiChapterSelectIcon.Show -= OnOuiChapterSelectIconShow;
@@ -187,7 +189,8 @@ namespace Celeste.Mod.Head2Head {
 				Celeste.Instance.Components.Remove(Comm);
 		}
 
-		public override void CreateModMenuSection(TextMenu menu, bool inGame, EventInstance snapshot) {
+		public override void CreateModMenuSection(TextMenu menu, bool inGame, EventInstance snapshot)
+		{
 			base.CreateModMenuSection(menu, inGame, snapshot);
 			Settings.CreateOptions(menu, inGame, snapshot);
 		}
@@ -356,6 +359,17 @@ namespace Celeste.Mod.Head2Head {
 				}
 			}
 			ddself.Set("DetectedRealHeartGem", found);
+		}
+
+		private void OnAreaCompleteUpdate(On.Celeste.AreaComplete.orig_Update orig, AreaComplete self)
+		{
+			DynamicData dd = new DynamicData(self);
+			if (Input.MenuConfirm.Pressed && dd.Get<bool>("finishedSlide") && dd.Get<bool>("canConfirm"))
+			{
+				dd.Set("canConfirm", false);
+				DoPostPhaseAutoLaunch(true);
+			}
+			orig(self);
 		}
 
 		// ########################################
@@ -705,13 +719,14 @@ namespace Celeste.Mod.Head2Head {
 			doAutoLaunch = true;
 			// TODO Find good hooks to check whether to do an autolaunch and call DoPostPhaseAutoLaunch
 			// Cassette: after being bubbled back to start of room after collecting tape
-			// chapter completion: end of chapter complete screen (example of this already in The Inward Climb)
+			// chapter completion: end of chapter complete screen (example of this already in The Inward Climb) (done, untested)
 			// heart collect: UI finishes disappearing
 			// berry + moon berry: immediate i guess? maybe a small delay?
 		}
 
 		private void DoPostPhaseAutoLaunch(bool doFadeWipe)
 		{
+			if (!doAutoLaunch) return;
 			GlobalAreaKey area = autoLaunchArea;
 			doAutoLaunch = false;
 			autoLaunchArea = GlobalAreaKey.Overworld;

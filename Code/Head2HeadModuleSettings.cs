@@ -20,16 +20,21 @@ namespace Celeste.Mod.Head2Head {
 		public bool AutoLaunchNextPhase { get; set; } = true;
 
 		// Settings with manual handling
+		[SettingIgnore]
 		public float HudScale { get; set; } = 1.0f;
+		[SettingIgnore]
 		public float HudOpacityNotInMatch { get; set; } = 1.0f;
+		[SettingIgnore]
 		public float HudOpacityInMatch { get; set; } = 0.25f;
+		[SettingIgnore]
 		public float HudOpacityInOverworld { get; set; } = 0.5f;
 
 		#endregion
 
 		#region Menu Building
 
-		internal void CreateOptions(TextMenu menu, bool inGame, EventInstance snapshot) {
+		internal void CreateOptions(TextMenu menu, bool inGame, EventInstance snapshot)
+		{
 			AddSlider(menu, "Head2Head_Setting_HudScale", HudScale,
 				new float[] { 0.1f, 0.25f, 0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 2.0f },
 				(float val) => HudScale = val);
@@ -48,12 +53,13 @@ namespace Celeste.Mod.Head2Head {
 
 		#region Helpers
 
-		private void AddSlider<T>(TextMenu menu, string labelkey, T setting, IEnumerable<T> vals, Action<T> changed) {
+		private void AddSlider<T>(TextMenu menu, string labelkey, T setting, IEnumerable<T> vals, Action<T> changed)
+		{
 			TextMenuExt.EnumerableSlider<T> slider = new TextMenuExt.EnumerableSlider<T>(
 				Dialog.Get(labelkey), vals, setting);
 			slider.Change(changed);
 			menu.Add(slider);
-			slider.AddDescription(menu, Dialog.Get(labelkey + "_Description"));
+			slider.AddDescription(menu, Dialog.Clean(labelkey + "_Description"));
 		}
 
 		#endregion
