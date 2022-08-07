@@ -78,8 +78,6 @@ namespace Celeste.Mod.Head2Head.Shared {
 		}
 
 		internal static ModContent GetModContent(GlobalAreaKey area) {
-			// TODO I need to change how this works
-			// https://discord.com/channels/403698615446536203/908809001834274887/1002302965043953834
 			string path = string.Format("Maps/{0}", area.Data.Mode[(int)area.Mode].Path);
 			foreach (ModContent content in Everest.Content.Mods) {
 				if (content.Map.ContainsKey(path)) return content;

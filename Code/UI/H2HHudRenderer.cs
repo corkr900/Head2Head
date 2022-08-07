@@ -36,7 +36,7 @@ namespace Celeste.Mod.Head2Head.UI {
 		}
 
 		private void RenderBanner(Scene scene, MatchDefinition def) {
-			// TODO stretch banner width to fit the title
+			// TODO (!!!) stretch banner width to fit the title
 			bool showCreator = ShouldShowMatchCreatorOnBanner(scene, def);
 			float _bannerOpacity = Opacity(scene, def);
 			Vector2 justify = new Vector2(0.5f, 0f);
@@ -90,7 +90,7 @@ namespace Celeste.Mod.Head2Head.UI {
 
 			if (opacity > 0.001f) {
 
-				// TODO player list background
+				// TODO (!!!) player list background
 
 				ActiveFont.Draw(string.Format(Dialog.Get("Head2Head_hud_playerlist_title"), def.Players.Count),
 					new Vector2(canvasSize.X, 0) + margin, Vector2.UnitX, listTitleScale * hudScale, listTitleColor * opacity);

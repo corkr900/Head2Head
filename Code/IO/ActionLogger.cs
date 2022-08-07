@@ -34,7 +34,7 @@ namespace Celeste.Mod.Head2Head.IO {
 			foreach (LoggableAction la in Instance.log) {
 				sb.AppendLine(la.ToString());
 			}
-			// TODO better action logging
+			// TODO (!!!) better action logging
 			//File.WriteAllText(GetLogPath(), sb.ToString());
 		}
 

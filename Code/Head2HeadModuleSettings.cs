@@ -59,7 +59,7 @@ namespace Celeste.Mod.Head2Head {
 				Dialog.Get(labelkey), vals, setting);
 			slider.Change(changed);
 			menu.Add(slider);
-			slider.AddDescription(menu, Dialog.Clean(labelkey + "_Description"));
+			slider.AddDescription(menu, Dialog.Clean(labelkey + "_subtext"));
 		}
 
 		#endregion

@@ -25,14 +25,16 @@ using Celeste.Mod.UI;
 using Celeste.Mod.Head2Head.UI;
 using FMOD.Studio;
 
-// TODO Helpdesk entity for lobby (+ pause menu option to get to it):
+// TODO (!!!) Helpdesk entity for lobby (+ pause menu option to get to it):
 // - Choose a different match to stage
 // - fix/reset weird states
-// - maybe jump back into a running match?
+// - jump back into a running match
 // - drop out of current match
 // - end match early (if player DC'd without dropping, for example)
 
-// TODO Prevent starting at checkpoints not already reached during the match
+// TODO (!!!) Prevent starting at checkpoints not already reached during the match
+// TODO (!!!) Force DNF status if a player uses debug teleport or loads into a different savefile than the one they started the match in
+// TODO Force DNF if a player intentionally closes the game
 
 // timer conversion to readable string: speedrunTimerFileString = Dialog.FileTime(SaveData.Instance.Time);
 
@@ -126,6 +128,7 @@ namespace Celeste.Mod.Head2Head {
 			Everest.Events.Level.OnEnter += onLevelEnter;
 			Everest.Events.Level.OnExit += onLevelExit;
 			Everest.Events.Level.OnTransitionTo += onRoomTransition;
+			Everest.Events.Level.OnCreatePauseMenuButtons += OnCreatePauseMenuButtons;
 			Everest.Events.Celeste.OnExiting += OnExiting;
 			// CelesteNet events
 			CNetComm.OnConnected += OnConnected;
@@ -172,6 +175,7 @@ namespace Celeste.Mod.Head2Head {
 			Everest.Events.Level.OnEnter -= onLevelEnter;
 			Everest.Events.Level.OnExit -= onLevelExit;
 			Everest.Events.Level.OnTransitionTo -= onRoomTransition;
+			Everest.Events.Level.OnCreatePauseMenuButtons -= OnCreatePauseMenuButtons;
 			Everest.Events.Celeste.OnExiting -= OnExiting;
 			// CelesteNet events
 			CNetComm.OnConnected -= OnConnected;
@@ -374,6 +378,30 @@ namespace Celeste.Mod.Head2Head {
 				}
 			}
 			orig(self);
+		}
+
+		private void OnCreatePauseMenuButtons(Level level, TextMenu menu, bool minimal)
+		{
+			if (!CNetComm.Instance.IsConnected) return;
+			// find the position just under "Mod Options"
+			int returnToMapIndex = menu.GetItems().FindIndex(item =>
+				item.GetType() == typeof(TextMenu.Button) && ((TextMenu.Button)item).Label == Dialog.Clean("MENU_MODOPTIONS"));
+
+			if (returnToMapIndex == -1)
+			{
+				// fall back to just after "Resume"
+				returnToMapIndex = 1;
+			}
+
+			// add the "Head 2 Head Helpdesk" button
+			TextMenu.Button returnToLobbyButton = new TextMenu.Button(Dialog.Clean("Head2Head_menu_helpdesk"));
+			returnToLobbyButton.Pressed(() => {
+				level.PauseMainMenuOpen = false;
+				menu.RemoveSelf();
+				Menus.Helpdesk(level, menu.Selection, true);
+			});
+			returnToLobbyButton.ConfirmSfx = "event:/ui/main/message_confirm";
+			menu.Insert(returnToMapIndex + 1, returnToLobbyButton);
 		}
 
 		// ########################################
@@ -705,7 +733,7 @@ namespace Celeste.Mod.Head2Head {
 				return true;
 			}
 			// Begin!
-			// TODO prevent this from getting broken by stuff like closing the OUI
+			// TODO (!!!) prevent this from getting broken by stuff like closing the OUI
 			Entity wrapper = new Entity();
 			currentScenes.Last().Add(wrapper);
 			wrapper.Add(new Coroutine(StartMatchCoroutine(def.Phases[0].Area)));
@@ -724,7 +752,7 @@ namespace Celeste.Mod.Head2Head {
 				Engine.Commands.Log("Match begins in the past...");
 			}
 			else {
-				// TODO countdown animation
+				// TODO (!!!) countdown animation
 				yield return (float)((startInstant - now).TotalSeconds);
 			}
 

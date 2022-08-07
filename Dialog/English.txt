@@ -13,16 +13,16 @@ If turned on, you will automatically be launched into the next phase of a match
 after completing the previous phase.
 Default: On
 Head2Head_Setting_HudScale= HUD Scale
-Head2Head_Setting_HudScale_Description= Controls the size of the Head 2 Head HUD.
+Head2Head_Setting_HudScale_subtext= Controls the size of the Head 2 Head HUD.
 Default: 4
 Head2Head_Setting_HudOpacityBeforeMatch= HUD Opacity (Before/After Match)
-Head2Head_Setting_HudOpacityBeforeMatch_Description= Changes the opacity of the Head 2 Head HUD before & after the match.
+Head2Head_Setting_HudOpacityBeforeMatch_subtext= Changes the opacity of the Head 2 Head HUD before & after the match.
 Default: 1
 Head2Head_Setting_HudOpacityInMatch= HUD Opacity (During Match)
-Head2Head_Setting_HudOpacityInMatch_Description= Changes the opacity of the Head 2 Head HUD during the match.
+Head2Head_Setting_HudOpacityInMatch_subtext= Changes the opacity of the Head 2 Head HUD during the match.
 Default: 0.25
 Head2Head_Setting_HudOpacityInOverworld= HUD Opacity (In Overworld)
-Head2Head_Setting_HudOpacityInOverworld_Description= Changes the opacity of the Head 2 Head HUD in the overworld.
+Head2Head_Setting_HudOpacityInOverworld_subtext= Changes the opacity of the Head 2 Head HUD in the overworld.
 Default: 0.5
 
 Head2Head_CategoryName_Clear= Chapter Clear
@@ -50,3 +50,18 @@ Head2Head_UntitledMatch= Untitled Match
 
 Head2Head_hud_createdby= Created By {0}
 Head2Head_hud_playerlist_title= {0} Players
+
+Head2Head_menu_helpdesk= Head 2 Head Helpdesk
+Head2Head_menu_helpdesk_browse= Browse Joinable Matches
+Head2Head_menu_helpdesk_rejoin= Rejoin an Ongong Match
+Head2Head_menu_helpdesk_rejoin_subtext= If you lost connection or your game crashed mid-match,
+use this to safely rejoin the match and resync with the other players
+Head2Head_menu_helpdesk_dropout= Drop Out of Current Match
+Head2Head_menu_helpdesk_dropout_subtext= Abandon the current match.
+This cannot be undone.
+Head2Head_menu_helpdesk_forceend= End Current Match
+Head2Head_menu_helpdesk_forceend_subtext= Force the current match to end and mark all unfinished players as DNF.
+This cannot be undone.
+Head2Head_menu_helpdesk_clean= Clean Up Data
+Head2Head_menu_helpdesk_clean_subtext= Remove all Head 2 Head data and ask everyone else for up-to-date matches & statuses.
+This cannot be undone.

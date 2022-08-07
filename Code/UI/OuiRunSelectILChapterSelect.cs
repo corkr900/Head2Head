@@ -78,7 +78,7 @@ namespace Celeste.Mod.Head2Head.UI {
 			LevelSetStats stats = null;
 			foreach (OuiChapterSelectIcon current in icons) {
 				AreaData areaData = AreaData.Get(current.Area);
-				if (areaData != null && areaData.GetLevelSet() == currentLevelSet) {  // TODO show ALL chapters, regardless of unlocked
+				if (areaData != null && areaData.GetLevelSet() == currentLevelSet) {
 					stats = stats ?? Util.GetSetStats(areaData.LevelSet);
 					int iD = areaData.ToKey().ID;
 					if ((string.IsNullOrEmpty(currentLevelSet) || iD <= Math.Max(1, stats.AreaOffset + stats.MaxArea)) && current != unselected) {
@@ -283,7 +283,7 @@ namespace Celeste.Mod.Head2Head.UI {
 							Audio.Play("event:/ui/world_map/icon/assist_skip");
 							Focused = false;
 							base.Overworld.ShowInputUI = false;
-							icons[area].AssistModeUnlock(delegate  // TODO remove all references to assist mode
+							icons[area].AssistModeUnlock(delegate  // TODO (!!!) remove all references to assist mode
 							{
 								Focused = true;
 								base.Overworld.ShowInputUI = true;
