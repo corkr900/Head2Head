@@ -11,13 +11,61 @@ namespace Celeste.Mod.Head2Head.Shared
 {
 	public static class Menus
 	{
-		public static void Helpdesk(Level level, int returnIndex, bool fromPauseMenu)
+		public class HelpdeskMenuContext
 		{
-			level.Paused = true;
+			public HelpdeskMenuContext(Level level, int returnIndex, bool fromPause)
+			{
+				this.level = level;
+				this.returnToIndex.Push(returnIndex);
+				this.fromPauseMenu = fromPause;
+			}
+
+			public Level level;
+			public bool fromPauseMenu;
+			public Stack<int> returnToIndex = new Stack<int>();
+			public Stack<Action<HelpdeskMenuContext>> menus = new Stack<Action<HelpdeskMenuContext>>();
+			public MatchDefinition match;
+			public PlayerID player;
+
+			public void GoTo(Action<HelpdeskMenuContext> target, TextMenu current)
+			{
+				Audio.Play("event:/ui/main/button_confirm");  // TODO make sure this is correct
+				returnToIndex.Push(current == null ? 0 : current.IndexOf(current.Current));
+				menus.Push(target);
+				current?.RemoveSelf();
+				target.Invoke(this);
+			}
+
+			public void Back(TextMenu current)
+			{
+				Audio.Play("event:/ui/main/button_back");
+				current.RemoveSelf();
+				menus.Pop();
+				int index = returnToIndex.Pop();
+				if (menus.Count != 0)
+				{
+					menus.Peek().Invoke(this);
+				}
+				else if (fromPauseMenu)
+				{
+					level.Pause(index, minimal: false);
+				}
+				else
+				{
+					DynamicData dd = new DynamicData(level);
+					dd.Set("unpauseTimer", 0.15f);
+					level.Paused = false;
+					Audio.Play("event:/ui/game/unpause");
+				}
+			}
+		}
+
+		public static void Helpdesk(HelpdeskMenuContext cxt)
+		{
+			cxt.level.Paused = true;
 			TextMenu menu = new TextMenu();
 			menu.AutoScroll = false;
 			menu.Position = new Vector2((float)Engine.Width / 2f, (float)Engine.Height / 2f - 100f);
-
 			TextMenu.Item item;
 
 			// Head 2 Head Helpdesk
@@ -25,14 +73,14 @@ namespace Celeste.Mod.Head2Head.Shared
 
 			// Browse
 			item = new TextMenu.Button(Dialog.Clean("Head2Head_menu_helpdesk_browse")).Pressed(() => {
-				// TODO (!!!)
+				cxt.GoTo(BrowseMatches, menu);
 			});
 			menu.Add(item);
 			//item.AddDescription(menu, Dialog.Clean("Head2Head_menu_helpdesk_browse_subtext"));
 
 			// Rejoin
 			item = new TextMenu.Button(Dialog.Clean("Head2Head_menu_helpdesk_rejoin")).Pressed(() => {
-				// TODO (!!!)
+				// TODO (!!!) This might not have to be separate from browse known matches...
 			});
 			menu.Add(item);
 			item.AddDescription(menu, Dialog.Clean("Head2Head_menu_helpdesk_rejoin_subtext"));
@@ -46,7 +94,10 @@ namespace Celeste.Mod.Head2Head.Shared
 
 			// Force End
 			item = new TextMenu.Button(Dialog.Clean("Head2Head_menu_helpdesk_forceend")).Pressed(() => {
-				// TODO (!!!)
+				MatchDefinition def = PlayerStatus.Current.CurrentMatch;
+				if (def == null) return;
+				if (def.State != MatchState.InProgress) return;
+				def.State = MatchState.Completed;  // Broadcasts update
 			});
 			menu.Add(item);
 			item.AddDescription(menu, Dialog.Clean("Head2Head_menu_helpdesk_forceend_subtext"));
@@ -66,22 +117,49 @@ namespace Celeste.Mod.Head2Head.Shared
 
 			// handle Cancel button
 			menu.OnCancel = () => {
-				Audio.Play("event:/ui/main/button_back");
-				menu.RemoveSelf();
-				if (fromPauseMenu)
-				{
-					level.Pause(returnIndex, minimal: false);
-				}
-				else
-				{
-					DynamicData dd = new DynamicData(level);
-					dd.Set("unpauseTimer", 0.15f);
-					level.Paused = false;
-					Audio.Play("event:/ui/game/unpause");
-				}
+				cxt.Back(menu);
 			};
 			menu.Selection = menu.FirstPossibleSelection;
-			level.Add(menu);
+			cxt.level.Add(menu);
+		}
+
+		public static void BrowseMatches(HelpdeskMenuContext cxt)
+		{
+			cxt.level.Paused = true;
+			TextMenu menu = new TextMenu();
+			menu.AutoScroll = false;
+			menu.Position = new Vector2((float)Engine.Width / 2f, (float)Engine.Height / 2f - 100f);
+			TextMenu.Item item;
+
+			// Head 2 Head Helpdesk
+			menu.Add(new TextMenu.Header(Dialog.Clean("Head2Head_menu_helpdesk_browse")));
+
+			// Cancel
+			item = new TextMenu.Button(Dialog.Clean("Head2Head_menu_helpdesk_back")).Pressed(() => {
+				menu.OnCancel();
+			});
+			menu.Add(item);
+
+			// Loop over known matches
+			Head2HeadModule.Instance.PurgeStaleData();
+			foreach (MatchDefinition def in Head2HeadModule.knownMatches.Values)
+			{
+				item = new TextMenu.Button(def.DisplayName).Pressed(() => {
+					// TODO (!!!)
+				});
+				menu.Add(item);
+				string desc = string.Format(Dialog.Get("Head2Head_menu_browsematchdescription"),
+					def.Owner.Name, def.Players.Count, Util.TranslatedMatchState(def.State));
+				item.AddDescription(menu, desc);
+			}
+
+
+			// handle Cancel button
+			menu.OnCancel = () => {
+				cxt.Back(menu);
+			};
+			menu.Selection = menu.FirstPossibleSelection;
+			cxt.level.Add(menu);
 		}
 	}
 }

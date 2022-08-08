@@ -46,13 +46,20 @@ Head2Head_MatchResultCat_InMatch= In Match
 Head2Head_MatchResultCat_Completed= Finished
 Head2Head_MatchResultCat_DNF= DNF
 
+Head2Head_MatchState_None= Unknown
+Head2Head_MatchState_Building= Under Construction
+Head2Head_MatchState_Staged= Staged
+Head2Head_MatchState_InProgress= In Progress
+Head2Head_MatchState_Completed= Completed
+
 Head2Head_UntitledMatch= Untitled Match
 
 Head2Head_hud_createdby= Created By {0}
 Head2Head_hud_playerlist_title= {0} Players
 
 Head2Head_menu_helpdesk= Head 2 Head Helpdesk
-Head2Head_menu_helpdesk_browse= Browse Joinable Matches
+Head2Head_menu_helpdesk_back= Back to Head 2 Head Helpdesk
+Head2Head_menu_helpdesk_browse= Browse Known Matches
 Head2Head_menu_helpdesk_rejoin= Rejoin an Ongong Match
 Head2Head_menu_helpdesk_rejoin_subtext= If you lost connection or your game crashed mid-match,
 use this to safely rejoin the match and resync with the other players
@@ -65,3 +72,5 @@ This cannot be undone.
 Head2Head_menu_helpdesk_clean= Clean Up Data
 Head2Head_menu_helpdesk_clean_subtext= Remove all Head 2 Head data and ask everyone else for up-to-date matches & statuses.
 This cannot be undone.
+
+Head2Head_menu_browsematchdescription= Created by {0}, {1} players joined. Current status: {2}

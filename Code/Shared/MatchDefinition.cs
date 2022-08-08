@@ -130,8 +130,18 @@ namespace Celeste.Mod.Head2Head.Shared {
         }
 
         public void MergeDynamic(MatchDefinition newer) {
+            if (newer == null) return;
+            // merge overall state
             _state = (MatchState)Math.Max((int)_state, (int)newer._state);
             BeginInstant = newer.BeginInstant > BeginInstant ? newer.BeginInstant : BeginInstant;
+
+            // merge player list
+            foreach (PlayerID id in newer.Players)
+			{
+                if (!Players.Contains(id)) Players.Add(id);
+			}
+
+            // merge result object
             if (Result == null) Result = newer.Result;
 			else {
                 foreach (KeyValuePair<PlayerID, MatchResultPlayer> res in newer.Result.players) {

@@ -25,13 +25,6 @@ using Celeste.Mod.UI;
 using Celeste.Mod.Head2Head.UI;
 using FMOD.Studio;
 
-// TODO (!!!) Helpdesk entity for lobby (+ pause menu option to get to it):
-// - Choose a different match to stage
-// - fix/reset weird states
-// - jump back into a running match
-// - drop out of current match
-// - end match early (if player DC'd without dropping, for example)
-
 // TODO (!!!) Prevent starting at checkpoints not already reached during the match
 // TODO (!!!) Force DNF status if a player uses debug teleport or loads into a different savefile than the one they started the match in
 // TODO Force DNF if a player intentionally closes the game
@@ -397,8 +390,7 @@ namespace Celeste.Mod.Head2Head {
 			TextMenu.Button returnToLobbyButton = new TextMenu.Button(Dialog.Clean("Head2Head_menu_helpdesk"));
 			returnToLobbyButton.Pressed(() => {
 				level.PauseMainMenuOpen = false;
-				menu.RemoveSelf();
-				Menus.Helpdesk(level, menu.Selection, true);
+				new Menus.HelpdeskMenuContext(level, menu.Selection, true).GoTo(Menus.Helpdesk, menu);
 			});
 			returnToLobbyButton.ConfirmSfx = "event:/ui/main/message_confirm";
 			menu.Insert(returnToMapIndex + 1, returnToLobbyButton);

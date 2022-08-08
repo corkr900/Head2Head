@@ -26,7 +26,7 @@ namespace Celeste.Mod.Head2Head.Entities
 				new Rectangle(-16, -16, 32, 32),
 				new Vector2(0, -16),
 				(Player player) => {
-					Menus.Helpdesk(player.SceneAs<Level>(), 0, false);
+					new Menus.HelpdeskMenuContext(player.SceneAs<Level>(), 0, false).GoTo(Menus.Helpdesk, null);
 				}
 			)
 			{ PlayerMustBeFacing = false });
