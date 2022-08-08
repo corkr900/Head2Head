@@ -76,6 +76,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Data\DataH2HMatchUpdate.cs" />
+    <Compile Include="Entities\Helpdesk.cs" />
     <Compile Include="Entities\ILSelector.cs" />
     <Compile Include="Entities\MatchButton.cs" />
     <Compile Include="Head2HeadModule.cs" />
@@ -106,6 +107,9 @@
     <Compile Include="UI\OuiRunSelectILLevelSet.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\Ahorn\entities\Helpdesk.jl">
+      <Link>Entities\Helpdesk.jl</Link>
+    </None>
     <None Include="..\Ahorn\entities\ILSelector.jl">
       <Link>Entities\ILSelector.jl</Link>
     </None>
@@ -119,6 +123,9 @@
   <ItemGroup>
     <Content Include="..\Dialog\English.txt">
       <Link>English.txt</Link>
+    </Content>
+    <Content Include="..\Graphics\Sprites.xml">
+      <Link>Sprites.xml</Link>
     </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

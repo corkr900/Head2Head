@@ -151,7 +151,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			if (!IsCategoryValid(StandardCategory.FullClear, area)) return null;
 
 			MatchPhase mp = new MatchPhase() {
-				category = StandardCategory.FullClear,
+				category = StandardCategory.MoonBerry,
 				Area = area,
 				Objectives = new List<MatchObjective>() {
 					new MatchObjective() {
@@ -171,7 +171,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			if (!IsCategoryValid(StandardCategory.FullClear, area)) return null;
 
 			MatchPhase mp = new MatchPhase() {
-				category = StandardCategory.FullClear,
+				category = StandardCategory.FullClearMoonBerry,
 				Area = area,
 				Objectives = new List<MatchObjective>() {
 					new MatchObjective() {
@@ -224,7 +224,12 @@ namespace Celeste.Mod.Head2Head.Shared {
 					case 4:
 					case 5:
 					case 7:
-						return true;
+						return cat == StandardCategory.Clear
+							|| cat == StandardCategory.ARB
+							|| cat == StandardCategory.ARBHeart
+							|| cat == StandardCategory.HeartCassette
+							|| cat == StandardCategory.FullClear
+							|| cat == StandardCategory.CassetteGrab;
 					case 0:  // Prologue
 						return cat == StandardCategory.Clear;
 					case 6:  // Reflection

@@ -32,7 +32,7 @@ namespace Celeste.Mod.Head2Head.Entities {
 
 		public ILSelector(EntityData data, Vector2 offset) {
 			//map = data.Attr("map");
-			Position = data.Position;
+			Position = data.Position + offset;
 			Add(sprite = GFX.SpriteBank.Create("Head2Head_ILSelector"));
 			sprite.Play("idle");
 			sprite.Position = new Vector2(-8, -16);

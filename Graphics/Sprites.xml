@@ -4,6 +4,10 @@
 		<Loop id="idle" path="Idle" delay=".1" frames="0" />
 	</Head2Head_ILSelector>
 
+  <Head2Head_Helpdesk path="Head2Head/Helpdesk/" start="idle">
+    <Loop id="idle" path="Idle" delay=".1" frames="0" />
+  </Head2Head_Helpdesk>
+
 	<Head2Head_MatchSwitch_Stage path="Head2Head/MatchSwitch/Stage" start="idle">
 		<Justify x="0.5" y="0.5"/>
 		<Loop id="idle" path="" delay="0.08" frames="0-20"/>
@@ -24,5 +28,6 @@
 		<Loop id="pushed" path="" delay="0.08" frames="27"/>
 		<Anim id="push" path="" delay="0.07" frames="21-27" goto="pushed"/>
 	</Head2Head_MatchSwitch_Start>
+
 
 </Sprites>
