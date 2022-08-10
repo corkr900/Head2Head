@@ -452,14 +452,11 @@ namespace Celeste.Mod.Head2Head {
 					}
 					bool playersFinished = true;
 					foreach (PlayerID id in def.Players) {
-						PlayerStatus p = GetPlayerStatus(id);
-						if (p == null) {
-							Engine.Commands.Log("Could not get player status for " + id.Name);
-							continue;
+						ResultCategory cat = def.GetPlayerResultCat(id);
+						if (cat <= ResultCategory.InMatch) {
+							playersFinished = false;
+							break;
 						}
-						if (p.CurrentMatch == null) continue;
-						if (p.CurrentMatch.MatchID != PlayerStatus.Current.CurrentMatch.MatchID) continue;
-						if (p.State == PlayerStateCategory.InMatch) playersFinished = false;
 					}
 					if (playersFinished) {
 						PlayerStatus.Current.CurrentMatch.State = MatchState.Completed;
