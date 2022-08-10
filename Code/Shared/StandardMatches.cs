@@ -237,7 +237,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 							|| cat == StandardCategory.FullClear
 							|| cat == StandardCategory.CassetteGrab;
 					case 8:  // epilogue
-						return false;
+						return cat == StandardCategory.Clear;
 					case 9:  // Core
 						return cat == StandardCategory.Clear
 							|| cat == StandardCategory.FullClear

@@ -161,7 +161,19 @@ namespace Celeste.Mod.Head2Head.Shared
 
 			// Clean
 			btn = menu.AddButton("Head2Head_menu_helpdesk_clean", () => {
-				// TODO (!!!)
+				MatchDefinition curdef = PlayerStatus.Current.CurrentMatch;
+				Head2HeadModule.knownMatches.Clear();
+				Head2HeadModule.knownPlayers.Clear();
+				Head2HeadModule.Instance.ClearAutoLaunchInfo();
+				Head2HeadModule.Instance.buildingMatch = null;
+				if (curdef != null && !curdef.PlayerCanLeaveFreely(PlayerID.MyIDSafe)) {
+					Head2HeadModule.knownMatches.Add(curdef.MatchID, curdef);
+				}
+				else {
+					PlayerStatus.Current.Cleanup();
+				}
+				// TODO (!!!) Send a message asking for known information
+				cxt.Close(menu);
 			});
 			if (true)
 				btn.SoftDisable(menu, "Head2Head_menu_helpdesk_clean_notimplemented");

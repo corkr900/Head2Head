@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 
 namespace Celeste.Mod.Head2Head.UI {
 	public class OuiRunSelectILChapterPanel : Oui {
-
+		// TODO prevent crash if there are no valid categories
 		private class Option {
 			public string Label;
 

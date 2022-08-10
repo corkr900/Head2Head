@@ -65,7 +65,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 		public MatchDefinition CurrentMatch {
 			get {
-				return CurrentMatchID == null ? null
+				return string.IsNullOrEmpty(CurrentMatchID) ? null
 					: !Head2HeadModule.knownMatches.ContainsKey(CurrentMatchID) ? null
 					: Head2HeadModule.knownMatches[CurrentMatchID];
 			}
@@ -121,7 +121,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			IsInDebug = false;
 			Updated();
 		}
-		public void ChapterExited(Level level, LevelExit exit, LevelExit.Mode mode, Session session, HiresSnow snow) {
+		public void ChapterExited(LevelExit.Mode mode, Session session) {
 			CurrentArea = GlobalAreaKey.Overworld;
 			CurrentRoom = "";
 			if (mode == LevelExit.Mode.Completed || mode == LevelExit.Mode.CompletedInterlude) {
@@ -160,6 +160,14 @@ namespace Celeste.Mod.Head2Head.Shared {
 			Updated();
 		}
 
+		public void Cleanup() {
+			phases.Clear();
+			objectives.Clear();
+			State = PlayerStateCategory.Idle;
+			CurrentMatch = null;
+			Updated();
+		}
+
 		// CHECKING OFF OBJECTIVES/PHASES
 
 		private void ChapterCompleted(GlobalAreaKey area) {
@@ -174,6 +182,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			MatchObjective ob = FindObjective(MatchObjectiveType.CassetteCollect, area, false);
 			if (ob != null && MarkObjectiveComplete(ob)) Updated();
 		}
+
 		public void StrawberryCollected(GlobalAreaKey area, Strawberry strawb) {
 			bool updated = false;
 			MatchObjectiveType objtype = strawb.Moon ? MatchObjectiveType.MoonBerry : MatchObjectiveType.Strawberries;

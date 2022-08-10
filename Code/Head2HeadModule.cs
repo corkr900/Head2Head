@@ -96,6 +96,7 @@ namespace Celeste.Mod.Head2Head {
 				typeof(OuiChapterSelectIcon).GetProperty("IdlePosition").GetAccessors()[0],
 				typeof(Head2HeadModule).GetMethod("OnOuiChapterSelectIconGetIdlePosition"));
 			IL.Celeste.LevelLoader.LoadingThread += Level_LoadingThread;
+			IL.Celeste.Level.CompleteArea_bool_bool_bool += Level_CompleteArea;
 			// Monocle + Celeste Hooks
 			On.Monocle.Scene.Begin += OnSceneBegin;
 			On.Monocle.Scene.End += OnSceneEnd;
@@ -103,6 +104,7 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.Level.Render += OnLevelRender;
 			On.Celeste.Level.Pause += OnGamePause;
 			On.Celeste.Level.UpdateTime += OnLevelUpdateTime;
+			On.Celeste.Level.CompleteArea_bool_bool_bool += OnLevelAreaComplete;
 			On.Celeste.MapData.ctor += OnMapDataCtor;
 			On.Celeste.Postcard.DisplayRoutine += OnPostcardDisplayRoutine;
 			On.Celeste.SaveData.RegisterCassette += OnCassetteCollected;
@@ -144,6 +146,7 @@ namespace Celeste.Mod.Head2Head {
 			hook_OuiChapterSelectIcon_Get_IdlePosition?.Dispose();
 			hook_OuiChapterSelectIcon_Get_IdlePosition = null;
 			IL.Celeste.LevelLoader.LoadingThread -= Level_LoadingThread;
+			IL.Celeste.Level.CompleteArea_bool_bool_bool -= Level_CompleteArea;
 			// Monocle + Celeste Hooks
 			On.Monocle.Scene.Begin -= OnSceneBegin;
 			On.Monocle.Scene.End -= OnSceneEnd;
@@ -151,6 +154,7 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.Level.Render -= OnLevelRender;
 			On.Celeste.Level.Pause -= OnGamePause;
 			On.Celeste.Level.UpdateTime -= OnLevelUpdateTime;
+			On.Celeste.Level.CompleteArea_bool_bool_bool -= OnLevelAreaComplete;
 			On.Celeste.MapData.ctor -= OnMapDataCtor;
 			On.Celeste.Postcard.DisplayRoutine -= OnPostcardDisplayRoutine;
 			On.Celeste.SaveData.RegisterCassette -= OnCassetteCollected;
@@ -202,6 +206,36 @@ namespace Celeste.Mod.Head2Head {
 			}
 		}
 
+		private ScreenWipe OnLevelAreaComplete(On.Celeste.Level.orig_CompleteArea_bool_bool_bool orig, Level self, bool spotlightWipe, bool skipScreenWipe, bool skipCompleteScreen) {
+			ScreenWipe sw = orig(self, spotlightWipe, skipScreenWipe, skipCompleteScreen);
+			if (sw != null) {
+				sw.OnComplete = BeforeLevelCompleteAreaActionExecuted(sw.OnComplete, self);
+			}
+			return sw;
+		}
+
+		private static void Level_CompleteArea(ILContext il) {
+			// This IL hook covers the code path that OnLevelAreaComplete can't handle
+			ILCursor cursor = new ILCursor(il);
+			if (cursor.TryGotoNext(instr => instr.MatchCallvirt(typeof(System.Action), "Invoke"))) {
+				// "orig" parameter already loaded
+				cursor.Emit(OpCodes.Ldarg_0);  // load "self" parameter
+				cursor.Emit(OpCodes.Call, typeof(Head2HeadModule).GetMethod("BeforeLevelCompleteAreaActionExecuted"));
+			}
+		}
+
+		public static Action BeforeLevelCompleteAreaActionExecuted(Action orig, Level level) {
+			if (AreaData.Get(level.Session).Interlude_Safe) {
+				return () => {
+					PlayerStatus.Current.ChapterExited(LevelExit.Mode.CompletedInterlude, level.Session);
+					if (!Instance.DoPostPhaseAutoLaunch(false, MatchObjectiveType.ChapterComplete)) {
+						orig();
+					}
+				};
+			}
+			return orig;
+		}
+
 		private void onLevelEnter(Session session, bool fromSaveData) {
 			ActionLogger.StartingChapter(session.Area.SID + " (" + session.LevelData.Name + ")");
 			currentSession = session;
@@ -211,7 +245,7 @@ namespace Celeste.Mod.Head2Head {
 		private void onLevelExit(Level level, LevelExit exit, LevelExit.Mode mode, Session session, HiresSnow snow) {
 			ActionLogger.EndingChapter(session.Area.SID);
 			currentSession = null;
-			PlayerStatus.Current.ChapterExited(level, exit, mode, session, snow);
+			PlayerStatus.Current.ChapterExited(mode, session);
 		}
 
 		private void OnLevelLoaderStart(On.Celeste.LevelLoader.orig_StartLevel orig, LevelLoader self) {
@@ -395,6 +429,11 @@ namespace Celeste.Mod.Head2Head {
 			returnToLobbyButton.ConfirmSfx = "event:/ui/main/message_confirm";
 			menu.Insert(returnToMapIndex + 1, returnToLobbyButton);
 		}
+
+		//private void OnLevelComplete() {
+		//	GlobalAreaKey gak = new GlobalAreaKey(self.Session.Area);
+		//	if (self.)
+		//}
 
 		// ########################################
 
@@ -607,12 +646,12 @@ namespace Celeste.Mod.Head2Head {
 				Engine.Commands.Log("You need to add a phase first...");
 				return;
 			}
-			if (PlayerStatus.Current.MatchState == MatchState.InProgress)
+			if (!PlayerStatus.Current.CanStageMatch())
 			{
-				Engine.Commands.Log("You're already in a match...");
+				Engine.Commands.Log("Player status prevents staging a match (are you already in one?)");
 				return;
 			}
-			PlayerStatus.Current.CurrentMatch = def;
+			PlayerStatus.Current.MatchStaged(def);
 			OnMatchStaged?.Invoke();
 			ClearAutoLaunchInfo();
 		}
