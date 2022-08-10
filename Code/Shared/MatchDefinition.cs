@@ -173,15 +173,17 @@ namespace Celeste.Mod.Head2Head.Shared {
             // merge result object
             if (Result == null) Result = newer.Result;
 			else {
-                foreach (KeyValuePair<PlayerID, MatchResultPlayer> res in newer.Result.players) {
-                    if (!Result.players.ContainsKey(res.Key)) {
-                        Result.players.Add(res.Key, res.Value);
-                        continue;
-					}
-                    if (res.Value.Result > Result[res.Key].Result) {
-                        Result[res.Key] = res.Value;
-					}
-				}
+                if (newer.Result != null) {
+                    foreach (KeyValuePair<PlayerID, MatchResultPlayer> res in newer.Result.players) {
+                        if (!Result.players.ContainsKey(res.Key)) {
+                            Result.players.Add(res.Key, res.Value);
+                            continue;
+                        }
+                        if (res.Value.Result > Result[res.Key].Result) {
+                            Result[res.Key] = res.Value;
+                        }
+                    }
+                }
                 // Sanity check - clean up illogical results
                 List<PlayerID> playersToRemove = new List<PlayerID>();
                 foreach (KeyValuePair<PlayerID, MatchResultPlayer> res in Result.players) {
