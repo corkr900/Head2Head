@@ -72,6 +72,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			internal set {
 				if (value == null) {
 					CurrentMatchID = null;
+					State = PlayerStateCategory.Idle;
 					return;
 				}
 				if (!Head2HeadModule.knownMatches.ContainsKey(value.MatchID)) Head2HeadModule.knownMatches.Add(value.MatchID, value);
@@ -368,6 +369,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			switch (cat) {
 				case PlayerStateCategory.FinishedMatch:
 				case PlayerStateCategory.Idle:
+				case PlayerStateCategory.None:
 					return true;
 				default:
 					return false;

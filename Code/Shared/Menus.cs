@@ -132,6 +132,8 @@ namespace Celeste.Mod.Head2Head.Shared
 					|| cat == ResultCategory.Completed
 					|| cat == ResultCategory.DNF) return;
 				def.PlayerDNF();
+				//PlayerStatus.Current.CurrentMatch = null;
+				PlayerStatus.Current.State = PlayerStateCategory.Idle;
 				cxt.Refresh(menu);
 			});
 			MatchDefinition defdrop = PlayerStatus.Current.CurrentMatch;

@@ -502,7 +502,7 @@ namespace Celeste.Mod.Head2Head {
 				knownMatches[def.MatchID].MergeDynamic(def);
 			}
 			if (def.State == MatchState.Staged && (isNew || oldState != MatchState.Staged)) {
-				MatchStaged(def);
+				MatchStaged(def, data.playerID.Equals(PlayerID.MyIDSafe));
 				ClearAutoLaunchInfo();
 			}
 			else if (def.State == MatchState.InProgress
@@ -624,8 +624,9 @@ namespace Celeste.Mod.Head2Head {
 				Engine.Commands.Log("You need to add a phase first...");
 				return;
 			}
-			if (PlayerStatus.Current.MatchState == MatchState.InProgress) {
-				Engine.Commands.Log("You're already in a match...");
+			MatchDefinition def = PlayerStatus.Current.CurrentMatch;
+			if (def != null && !def.PlayerCanLeaveFreely(PlayerID.MyIDSafe)) {
+				Engine.Commands.Log("Drop out of your current match before creating a new one");
 				return;
 			}
 			buildingMatch.AssignIDs();
@@ -651,9 +652,19 @@ namespace Celeste.Mod.Head2Head {
 				Engine.Commands.Log("Player status prevents staging a match (are you already in one?)");
 				return;
 			}
-			PlayerStatus.Current.MatchStaged(def);
-			OnMatchStaged?.Invoke();
+			MatchStaged(def, true);
 			ClearAutoLaunchInfo();
+		}
+
+		private static void MatchStaged(MatchDefinition def, bool overrideStaged = true) {
+			MatchDefinition current = PlayerStatus.Current.CurrentMatch;
+			if (current != null) {
+				if (!current.PlayerCanLeaveFreely(PlayerID.MyIDSafe)) return;
+				if (!overrideStaged && current.GetPlayerResultCat(PlayerID.MyIDSafe) == ResultCategory.NotJoined) return;
+			}
+			PlayerStatus.Current.CurrentMatch = def;
+			PlayerStatus.Current.MatchStaged(PlayerStatus.Current.CurrentMatch);
+			OnMatchStaged?.Invoke();
 		}
 
 		public void JoinStagedMatch() {
@@ -750,17 +761,6 @@ namespace Celeste.Mod.Head2Head {
 		}
 
 		// #######################################################
-
-		private static void MatchStaged(MatchDefinition def) {
-			MatchDefinition current = PlayerStatus.Current.CurrentMatch;
-			if (current != null) {
-				if (current.State == MatchState.InProgress) return;  // In a match...
-				if (current.State == MatchState.Staged && current.Players.Contains(PlayerID.MyIDSafe)) return;  // Joined a match...
-			}
-			PlayerStatus.Current.CurrentMatch = def;
-			PlayerStatus.Current.MatchStaged(PlayerStatus.Current.CurrentMatch);
-			OnMatchStaged?.Invoke();
-		}
 
 		private bool MatchStarted(MatchDefinition def) {
 			foreach (MatchPhase ph in def.Phases) {
