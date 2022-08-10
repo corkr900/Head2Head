@@ -52,11 +52,17 @@ namespace Celeste.Mod.Head2Head.Shared
 				}
 				else
 				{
-					DynamicData dd = new DynamicData(level);
-					dd.Set("unpauseTimer", 0.15f);
-					level.Paused = false;
-					Audio.Play("event:/ui/game/unpause");
+					Close(null);
 				}
+			}
+
+			public void Close(TextMenu curr)
+			{
+				if (curr != null) curr.RemoveSelf();
+				DynamicData dd = new DynamicData(level);
+				dd.Set("unpauseTimer", 0.15f);
+				level.Paused = false;
+				Audio.Play("event:/ui/game/unpause");
 			}
 		}
 
@@ -78,13 +84,6 @@ namespace Celeste.Mod.Head2Head.Shared
 			menu.Add(item);
 			//item.AddDescription(menu, Dialog.Clean("Head2Head_menu_helpdesk_browse_subtext"));
 
-			// Rejoin
-			item = new TextMenu.Button(Dialog.Clean("Head2Head_menu_helpdesk_rejoin")).Pressed(() => {
-				// TODO (!!!) This might not have to be separate from browse known matches...
-			});
-			menu.Add(item);
-			item.AddDescription(menu, Dialog.Clean("Head2Head_menu_helpdesk_rejoin_subtext"));
-
 			// Drop Out
 			item = new TextMenu.Button(Dialog.Clean("Head2Head_menu_helpdesk_dropout")).Pressed(() => {
 				// TODO (!!!)
@@ -98,6 +97,7 @@ namespace Celeste.Mod.Head2Head.Shared
 				if (def == null) return;
 				if (def.State != MatchState.InProgress) return;
 				def.State = MatchState.Completed;  // Broadcasts update
+				cxt.Close(menu);
 			});
 			menu.Add(item);
 			item.AddDescription(menu, Dialog.Clean("Head2Head_menu_helpdesk_forceend_subtext"));
@@ -134,8 +134,8 @@ namespace Celeste.Mod.Head2Head.Shared
 			// Head 2 Head Helpdesk
 			menu.Add(new TextMenu.Header(Dialog.Clean("Head2Head_menu_helpdesk_browse")));
 
-			// Cancel
-			item = new TextMenu.Button(Dialog.Clean("Head2Head_menu_helpdesk_back")).Pressed(() => {
+			// Back
+			item = new TextMenu.Button(Dialog.Clean("Head2Head_menu_back")).Pressed(() => {
 				menu.OnCancel();
 			});
 			menu.Add(item);
@@ -145,12 +145,87 @@ namespace Celeste.Mod.Head2Head.Shared
 			foreach (MatchDefinition def in Head2HeadModule.knownMatches.Values)
 			{
 				item = new TextMenu.Button(def.DisplayName).Pressed(() => {
-					// TODO (!!!)
+					cxt.match = def;
+					cxt.GoTo(KnownMatchMenu, menu);
 				});
 				menu.Add(item);
 				string desc = string.Format(Dialog.Get("Head2Head_menu_browsematchdescription"),
 					def.Owner.Name, def.Players.Count, Util.TranslatedMatchState(def.State));
 				item.AddDescription(menu, desc);
+			}
+
+			// handle Cancel button
+			menu.OnCancel = () => {
+				cxt.Back(menu);
+			};
+			menu.Selection = menu.FirstPossibleSelection;
+			cxt.level.Add(menu);
+		}
+
+		public static void KnownMatchMenu(HelpdeskMenuContext cxt)
+		{
+			cxt.level.Paused = true;
+			TextMenu menu = new TextMenu();
+			menu.AutoScroll = false;
+			menu.Position = new Vector2((float)Engine.Width / 2f, (float)Engine.Height / 2f - 100f);
+			TextMenu.Item item;
+
+			if (cxt.match == null)
+			{
+				// Header
+				menu.Add(new TextMenu.Header(Dialog.Clean("Head2Head_menu_match_invalidmatch")));
+
+				// Back
+				item = new TextMenu.Button(Dialog.Clean("Head2Head_menu_back")).Pressed(() => {
+					menu.OnCancel();
+				});
+				menu.Add(item);
+			}
+			else
+			{
+				// Header
+				menu.Add(new TextMenu.Header(cxt.match.DisplayName));
+
+				// Stage
+				if (cxt.match.State == MatchState.Staged && cxt.match.MatchID != PlayerStatus.Current.CurrentMatch?.MatchID)
+				{
+					item = new TextMenu.Button(Dialog.Clean("Head2Head_menu_match_stage")).Pressed(() => {
+						// TODO (!!!) un-join the current match if it's staged and I've already joined (or just prevent doing this if joined)
+						Head2HeadModule.Instance.StageMatch(cxt.match);
+						cxt.Close(menu);
+						// TODO (!!!) this should cause the join / start buttons to update somewhere downstream
+					});
+					menu.Add(item);
+					item.AddDescription(menu, Dialog.Clean("Head2Head_menu_match_stage_subtext"));
+				}
+
+				// Join
+				if (cxt.match.State == MatchState.Staged && cxt.match.GetPlayerResultCat(PlayerID.MyIDSafe) == ResultCategory.NotJoined)
+				{
+					item = new TextMenu.Button(Dialog.Clean("Head2Head_menu_match_join")).Pressed(() => {
+						if (cxt.match.MatchID != PlayerStatus.Current.CurrentMatch?.MatchID)
+						{
+							Head2HeadModule.Instance.StageMatch(cxt.match);
+						}
+						Head2HeadModule.Instance.JoinStagedMatch();
+						cxt.Close(menu);
+						// TODO (!!!) this should cause the join / start buttons to update somewhere downstream
+					});
+					menu.Add(item);
+					item.AddDescription(menu, Dialog.Clean("Head2Head_menu_match_join_subtext"));
+				}
+
+				// Rejoin
+				// TODO (!!!)
+
+				// Forget
+				// TODO (!!!)
+
+				// Back
+				item = new TextMenu.Button(Dialog.Clean("Head2Head_menu_back")).Pressed(() => {
+					menu.OnCancel();
+				});
+				menu.Add(item);
 			}
 
 

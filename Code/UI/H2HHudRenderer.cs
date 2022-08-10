@@ -2,15 +2,16 @@
 using Celeste.Mod.Head2Head.Shared;
 using Microsoft.Xna.Framework;
 using Monocle;
+using System;
 using System.Collections.Generic;
 
 namespace Celeste.Mod.Head2Head.UI {
 	public class H2HHudRenderer : HiresRenderer {
 
-		private static Vector2 canvasSize = new Vector2(1920f, 1080f);
+		public static Vector2 CanvasSize = new Vector2(1920f, 1080f);
 		public static float lineOffset = 52f;
 
-		private float Opacity(Scene scene, MatchDefinition def) {
+		public static float Opacity(Scene scene, MatchDefinition def) {
 			if (def == null) return 0.0f;
 			if (scene is Overworld) return Head2HeadModule.Settings.HudOpacityInOverworld;
 			if (def.State == MatchState.Completed) return Head2HeadModule.Settings.HudOpacityNotInMatch;
@@ -25,6 +26,7 @@ namespace Celeste.Mod.Head2Head.UI {
 			HiresRenderer.BeginRender();
 			if (ShouldRenderBanner(scene, def)) RenderBanner(scene, def);
 			if (ShouldShowPlayerList(scene, def)) RenderPlayerList(scene, def);
+			if (ShouldShowCountdown(scene, def)) RenderCountdown(scene, def);
 			HiresRenderer.EndRender();
 			base.Render(scene);
 		}
@@ -44,20 +46,20 @@ namespace Celeste.Mod.Head2Head.UI {
 
 			if (_bannerOpacity > 0.001f) {
 				MTexture bannerBG = GFX.Gui["Head2Head/HUD/banner_bg"];
-				Vector2 bannerPosition = new Vector2(canvasSize.X / 2f, -1f);
+				Vector2 bannerPosition = new Vector2(CanvasSize.X / 2f, -1f);
 				if (!showCreator) bannerPosition -= Vector2.UnitY * (lineOffset - 16);
 				Color bannerColor = Color.White;
 				bannerBG.DrawJustified(bannerPosition, justify, bannerColor * _bannerOpacity, hudScale);
 
 				string matchCaption = def.Phases.Count == 0 ? "Unnamed Match" : def.Phases[0].Title;
-				Vector2 captionPos = new Vector2(canvasSize.X / 2, 0f);
+				Vector2 captionPos = new Vector2(CanvasSize.X / 2, 0f);
 				Vector2 captionScale = Vector2.One * hudScale;
 				Color captionColor = Color.Black;
 				ActiveFont.Draw(matchCaption, captionPos, justify, captionScale, captionColor * _bannerOpacity);
 
 				if (showCreator) {
 					string matchowner = string.Format(Dialog.Get("Head2Head_hud_createdby"), def.Owner.Name);
-					Vector2 matchPos = new Vector2(canvasSize.X / 2, lineOffset * hudScale);
+					Vector2 matchPos = new Vector2(CanvasSize.X / 2, lineOffset * hudScale);
 					Vector2 matchScale = Vector2.One * hudScale * 0.6f;
 					Color matchColor = Color.DarkCyan;
 					ActiveFont.Draw(matchowner, matchPos, justify, matchScale, matchColor * _bannerOpacity);
@@ -93,7 +95,7 @@ namespace Celeste.Mod.Head2Head.UI {
 				// TODO (!!!) player list background
 
 				ActiveFont.Draw(string.Format(Dialog.Get("Head2Head_hud_playerlist_title"), def.Players.Count),
-					new Vector2(canvasSize.X, 0) + margin, Vector2.UnitX, listTitleScale * hudScale, listTitleColor * opacity);
+					new Vector2(CanvasSize.X, 0) + margin, Vector2.UnitX, listTitleScale * hudScale, listTitleColor * opacity);
 
 				float ypos = 42;
 				foreach (PlayerID id in def.Players) {
@@ -102,10 +104,45 @@ namespace Celeste.Mod.Head2Head.UI {
 					long timer = def.Result == null || cat != ResultCategory.Completed ? 0 : def.Result[id]?.FileTimeTotal ?? 0;
 					string statusstr = cat == ResultCategory.Completed ? Dialog.FileTime(timer) : Util.TranslatedMatchResult(cat);
 					ActiveFont.Draw(string.Format("{0} | {1}", name, statusstr),
-						new Vector2(canvasSize.X, ypos) + margin, Vector2.UnitX, listPlayerScale * hudScale, listPlayerColor * opacity);
+						new Vector2(CanvasSize.X, ypos) + margin, Vector2.UnitX, listPlayerScale * hudScale, listPlayerColor * opacity);
 					ypos += lineHeight;
 				}
 			}
+		}
+
+		#endregion
+
+		#region Countdown
+
+		private bool ShouldShowCountdown(Scene scene, MatchDefinition def)
+		{
+			if (def == null) return false;
+			if (def.State != MatchState.InProgress) return false;
+			DateTime now = DateTime.Now;
+			if (def.BeginInstant < now) return false;
+			TimeSpan remain = def.BeginInstant - now;
+			int cdIdx = (int)Math.Ceiling(remain.TotalSeconds);
+			if (cdIdx <= 0 || cdIdx > 5) return false;
+
+			return true;
+		}
+
+		public void RenderCountdown(Scene scene, MatchDefinition def)
+		{
+			if (def == null) return;
+			float _bannerOpacity = Opacity(scene, PlayerStatus.Current.CurrentMatch);
+			Vector2 justify = new Vector2(0.5f, 0.5f);
+			float hudScale = Head2HeadModule.Settings.HudScale;
+			DateTime now = DateTime.Now;
+			if (def.BeginInstant < now) return;
+			TimeSpan remain = def.BeginInstant - now;
+			int cdIdx = (int)Math.Ceiling(remain.TotalSeconds);
+			if (cdIdx <= 0 || cdIdx > 5) return;
+
+			MTexture cdBG = GFX.Gui["Head2Head/Countdown/" + cdIdx.ToString()];
+			Vector2 cdPos = CanvasSize / 2f;
+			Color cdColor = Color.White;
+			cdBG.DrawJustified(cdPos, justify, cdColor * _bannerOpacity, hudScale);
 		}
 
 		#endregion

@@ -270,7 +270,7 @@ namespace Celeste.Mod.Head2Head {
 
 		private void OnHeartCollected(On.Celeste.SaveData.orig_RegisterHeartGem orig, SaveData self, AreaKey area) {
 			orig(self, area);
-			PlayerStatus.Current.HeartCollected(new GlobalAreaKey(area));  // TODO find a different hook for hearts; This one fires after tapping past the poem, not when the IL timer stops
+			PlayerStatus.Current.HeartCollected(new GlobalAreaKey(area));  // TODO find a different hook for hearts; This one fires after tapping past the poem, not when the IL timer stops (BUT this *is* consistent with file timer based full runs...)
 			DoPostPhaseAutoLaunch(true, MatchObjectiveType.HeartCollect);  // TODO find a better hook for returning to lobby after heart collection
 		}
 
@@ -595,6 +595,27 @@ namespace Celeste.Mod.Head2Head {
 			ClearAutoLaunchInfo();
 		}
 
+		public void StageMatch(MatchDefinition def)
+		{
+			if (def == null)
+			{
+				Engine.Commands.Log("You need to build a match first...");
+				return;
+			}
+			if (def.Phases.Count == 0)
+			{
+				Engine.Commands.Log("You need to add a phase first...");
+				return;
+			}
+			if (PlayerStatus.Current.MatchState == MatchState.InProgress)
+			{
+				Engine.Commands.Log("You're already in a match...");
+				return;
+			}
+			PlayerStatus.Current.CurrentMatch = def;
+			ClearAutoLaunchInfo();
+		}
+
 		public void JoinStagedMatch() {
 			MatchDefinition def = PlayerStatus.Current.CurrentMatch;
 			if (def == null) {
@@ -725,7 +746,9 @@ namespace Celeste.Mod.Head2Head {
 				return true;
 			}
 			// Begin!
-			// TODO (!!!) prevent this from getting broken by stuff like closing the OUI
+			// TODO (!!!) prevent this from getting broken by stuff like screen transitions or closing the OUI
+			// If the coroutine can be made persistent across rooms, that + disabling pause during
+			// countdown should cover all the cases we really care about since pause is the only way to exit the lobby
 			Entity wrapper = new Entity();
 			currentScenes.Last().Add(wrapper);
 			wrapper.Add(new Coroutine(StartMatchCoroutine(def.Phases[0].Area)));
@@ -744,7 +767,6 @@ namespace Celeste.Mod.Head2Head {
 				Engine.Commands.Log("Match begins in the past...");
 			}
 			else {
-				// TODO (!!!) countdown animation
 				yield return (float)((startInstant - now).TotalSeconds);
 			}
 
