@@ -78,8 +78,6 @@ namespace Celeste.Mod.Head2Head {
 
 		public delegate void OnMatchStagedHandler();
 		public static event OnMatchStagedHandler OnMatchStaged;
-		public delegate void OnPlayerJoinedMatchHandler(PlayerID player, string matchID);
-		public static event OnPlayerJoinedMatchHandler OnPlayerJoinedMatch;
 
 		// #######################################################
 
@@ -130,7 +128,6 @@ namespace Celeste.Mod.Head2Head {
 			CNetComm.OnDisconnected += OnDisconnected;
 			CNetComm.OnReceiveChannelMove += OnChannelMove;
 			// Head2Head events
-			CNetComm.OnReceiveMatchJoin += OnMatchJoinReceived;
 			CNetComm.OnReceiveMatchUpdate += OnMatchUpdate;
 			CNetComm.OnReceivePlayerStatus += OnPlayerStatusUpdate;
 			CNetComm.OnReceiveMatchReset += OnMatchReset;
@@ -179,7 +176,6 @@ namespace Celeste.Mod.Head2Head {
 			CNetComm.OnDisconnected -= OnDisconnected;
 			CNetComm.OnReceiveChannelMove -= OnChannelMove;
 			// Head2Head events
-			CNetComm.OnReceiveMatchJoin -= OnMatchJoinReceived;
 			CNetComm.OnReceiveMatchUpdate -= OnMatchUpdate;
 			CNetComm.OnReceivePlayerStatus -= OnPlayerStatusUpdate;
 			CNetComm.OnReceiveMatchReset -= OnMatchReset;
@@ -466,20 +462,6 @@ namespace Celeste.Mod.Head2Head {
 			
 		}
 
-		private void OnMatchJoinReceived(DataH2HMatchJoin data) {
-			if (PlayerStatus.Current.CurrentMatch.MatchID != data.MatchID) {
-				return;
-			}
-			if (PlayerStatus.Current.MatchState != MatchState.Staged) {
-				return;
-			}
-			if (PlayerStatus.Current.CurrentMatch.Players.Contains(data.playerID)) {
-				return;
-			}
-			PlayerStatus.Current.CurrentMatch.Players.Add(data.playerID);
-			OnPlayerJoinedMatch?.Invoke(data.playerID, data.MatchID);
-		}
-
 		private void OnMatchReset(DataH2HMatchReset data) {
 			if (PlayerStatus.Current.CurrentMatch?.MatchID == data.MatchID) {
 				PlayerStatus.Current.MatchReset();
@@ -686,8 +668,11 @@ namespace Celeste.Mod.Head2Head {
 					return;
 				}
 			}
-			CNetComm.Instance.SendMatchJoin(PlayerStatus.Current.CurrentMatch.MatchID);
-			PlayerStatus.Current.MatchJoined();
+			if (!def.Players.Contains(PlayerID.MyIDSafe)) {
+				def.Players.Add(PlayerID.MyIDSafe);
+				PlayerStatus.Current.MatchJoined();
+				def.BroadcastUpdate();
+			}
 		}
 
 		public void BeginStagedMatch() {

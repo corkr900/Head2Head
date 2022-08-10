@@ -38,9 +38,6 @@ namespace Celeste.Mod.Head2Head.IO {
 		public delegate void OnReceivePlayerStatusHandler(DataH2HPlayerStatus data);
 		public static event OnReceivePlayerStatusHandler OnReceivePlayerStatus;
 
-		public delegate void OnReceiveMatchJoinHandler(DataH2HMatchJoin data);
-		public static event OnReceiveMatchJoinHandler OnReceiveMatchJoin;
-
 		public delegate void OnReceiveMatchResetHandler(DataH2HMatchReset data);
 		public static event OnReceiveMatchResetHandler OnReceiveMatchReset;  // TODO bake match resets into a better system
 
@@ -112,16 +109,6 @@ namespace Celeste.Mod.Head2Head.IO {
 			});
 		}
 
-		internal void SendMatchJoin(string matchID) {
-			if (!IsConnected) {
-				Engine.Commands.Log("Cannot send match join message: not connected to CelesteNet.");
-				return;
-			}
-			CnetClient.SendAndHandle(new DataH2HMatchJoin() {
-				MatchID = matchID,
-			});
-		}
-
 		internal void SendMatchReset(string matchID) {
 			if (!IsConnected) {
 				Engine.Commands.Log("Cannot send match reset message: not connected to CelesteNet.");
@@ -155,10 +142,6 @@ namespace Celeste.Mod.Head2Head.IO {
 		public void Handle(CelesteNetConnection con, DataH2HPlayerStatus data) {
 			if (data.player == null) data.player = CnetClient.PlayerInfo;  // It's null when handling our own messages
 			updateQueue.Enqueue(() => OnReceivePlayerStatus?.Invoke(data));
-		}
-		public void Handle(CelesteNetConnection con, DataH2HMatchJoin data) {
-			if (data.player == null) data.player = CnetClient.PlayerInfo;  // It's null when handling our own messages
-			updateQueue.Enqueue(() => OnReceiveMatchJoin?.Invoke(data));
 		}
 		public void Handle(CelesteNetConnection con, DataH2HMatchReset data) {
 			if (data.player == null) data.player = CnetClient.PlayerInfo;  // It's null when handling our own messages

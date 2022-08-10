@@ -12,9 +12,12 @@ namespace Celeste.Mod.Head2Head.Shared {
     public class MatchDefinition {
         private static uint localIDCounter = 1;
 
-		#region Invariable Members / Properties
+        public delegate void OnPlayerJoinedMatchHandler(PlayerID player, string matchID);
+        public static event OnPlayerJoinedMatchHandler OnPlayerJoinedMatch;
 
-		public string MatchID = GenerateMatchID();
+        #region Invariable Members / Properties
+
+        public string MatchID = GenerateMatchID();
         public PlayerID Owner = PlayerID.MyIDSafe;
 
         public List<PlayerID> Players = new List<PlayerID>();
@@ -167,7 +170,10 @@ namespace Celeste.Mod.Head2Head.Shared {
             // merge player list
             foreach (PlayerID id in newer.Players)
 			{
-                if (!Players.Contains(id)) Players.Add(id);
+                if (!Players.Contains(id)) {
+                    Players.Add(id);
+                    OnPlayerJoinedMatch?.Invoke(id, MatchID);
+                }
 			}
 
             // merge result object

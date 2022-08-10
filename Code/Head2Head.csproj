@@ -82,7 +82,6 @@
     <Compile Include="Head2HeadModule.cs" />
     <Compile Include="Control\Head2HeadCommands.cs" />
     <Compile Include="Data\DataH2HBase.cs" />
-    <Compile Include="Data\DataH2HMatchJoin.cs" />
     <Compile Include="Data\DataH2HMatchReset.cs" />
     <Compile Include="Data\DataH2HPlayerStatus.cs" />
     <Compile Include="Data\DataH2HTest.cs" />

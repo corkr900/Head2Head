@@ -130,14 +130,14 @@ namespace Celeste.Mod.Head2Head.Entities {
 			UpdateSwitchState();
 			PlayerStatus.OnPlayerStateCategoryChanged += OnPlayerStateChanged;
 			Head2HeadModule.OnMatchStaged += UpdateSwitchState;
-			Head2HeadModule.OnPlayerJoinedMatch += OnPlayerJoinedMatch;
+			MatchDefinition.OnPlayerJoinedMatch += OnPlayerJoinedMatch;
 		}
 
 		public override void Removed(Scene scene) {
 			base.Removed(scene);
 			PlayerStatus.OnPlayerStateCategoryChanged -= OnPlayerStateChanged;
 			Head2HeadModule.OnMatchStaged -= UpdateSwitchState;
-			Head2HeadModule.OnPlayerJoinedMatch -= OnPlayerJoinedMatch;
+			MatchDefinition.OnPlayerJoinedMatch -= OnPlayerJoinedMatch;
 		}
 
 		private void OnPlayerStateChanged(PlayerStatus source, PlayerStateCategory oldstate, PlayerStateCategory newstate) {
