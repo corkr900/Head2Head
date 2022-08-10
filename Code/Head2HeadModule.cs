@@ -613,6 +613,7 @@ namespace Celeste.Mod.Head2Head {
 				return;
 			}
 			PlayerStatus.Current.CurrentMatch = def;
+			OnMatchStaged?.Invoke();
 			ClearAutoLaunchInfo();
 		}
 
@@ -772,7 +773,7 @@ namespace Celeste.Mod.Head2Head {
 
 			if (PlayerStatus.Current.CurrentMatch == null) yield break;
 			if (PlayerStatus.Current.CurrentMatchID != idCheck) yield break;
-			PlayerStatus.Current.CurrentMatch.SetState_NoUpdate(MatchState.InProgress);  // Probably duplicative but just to be safe
+			if (PlayerStatus.Current.CurrentMatch.State != MatchState.InProgress) yield break;
 			PlayerStatus.Current.MatchStarted();
 			new FadeWipe(currentScenes.Last(), false, () => {
 				LevelEnter.Go(new Session(gak.Local.Value), false);

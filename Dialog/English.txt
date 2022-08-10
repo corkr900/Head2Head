@@ -57,24 +57,55 @@ Head2Head_UntitledMatch= Untitled Match
 Head2Head_hud_createdby= Created By {0}
 Head2Head_hud_playerlist_title= {0} Players
 
+
+
+####################
+#     HELPDESK     #
+####################
+
 Head2Head_menu_back= Back
 Head2Head_menu_helpdesk= Head 2 Head Helpdesk
+
 Head2Head_menu_helpdesk_browse= Browse Known Matches
+
 Head2Head_menu_helpdesk_dropout= Drop Out of Current Match
 Head2Head_menu_helpdesk_dropout_subtext= Abandon the current match.
 You cannot rejoin after dropping out.
+Head2Head_menu_helpdesk_dropout_notjoined= You have not joined the current match.
+Head2Head_menu_helpdesk_dropout_completed= You have already completed the current match.
+
 Head2Head_menu_helpdesk_forceend= End Current Match
 Head2Head_menu_helpdesk_forceend_subtext= Force the current match to end and mark all unfinished players as DNF.
 This cannot be undone.
+Head2Head_menu_helpdesk_forceend_nocurrent= There is no current match.
+Head2Head_menu_helpdesk_forceend_notinprogress= The current match is not in progress.
+
 Head2Head_menu_helpdesk_clean= Clean Up Data
 Head2Head_menu_helpdesk_clean_subtext= Remove all Head 2 Head data and ask everyone else for up-to-date matches & statuses.
 This cannot be undone.
+Head2Head_menu_helpdesk_clean_notimplemented= This has not been implemented yet.
+
+#     MATCH MENU     #
 
 Head2Head_menu_match_invalidmatch= (Invalid Match)
-Head2Head_menu_match_stage= Stage This Match
+
+Head2Head_menu_match_stage= Stage
 Head2Head_menu_match_stage_subtext= Set this match as your "current" match.
 This will show information about it on the overlay and allow you to join it with the dash button.
-Head2Head_menu_match_join= Join This Match
+Head2Head_menu_match_stage_wrongstatus= This match is not in a stagable status.
+Head2Head_menu_match_stage_alreadycurrent= This match is already your current match.
+Head2Head_menu_match_stage_dropfirst= You must finish or drop out of your current match before staging another.
+
+Head2Head_menu_match_join= Join
 Head2Head_menu_match_join_subtext= Set this match as your "current" match and join it.
+Head2Head_menu_match_join_alreadyjoined= You have already joined this match
+
+Head2Head_menu_match_rejoin= Rejoin
+Head2Head_menu_match_rejoin_subtext= Rejoin this match after a game crash or disconnect.
+Head2Head_menu_match_rejoin_notimplemented= This has not been implemented yet.
+
+Head2Head_menu_match_forget= Forget
+Head2Head_menu_match_forget_subtext= Delete local information about this match. This may not be permanent if another player sends an update to the match.
+Head2Head_menu_match_forget_notimplemented= This has not been implemented yet.
 
 Head2Head_menu_browsematchdescription= Created by {0}, {1} players joined. Current status: {2}

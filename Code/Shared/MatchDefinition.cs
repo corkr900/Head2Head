@@ -109,6 +109,35 @@ namespace Celeste.Mod.Head2Head.Shared {
             return ResultCategory.Joined;
 		}
 
+        public bool PlayerCanLeaveFreely(PlayerID id) {
+            ResultCategory cat = GetPlayerResultCat(id);
+            return cat == ResultCategory.NotJoined
+                || cat == ResultCategory.Completed
+                || cat == ResultCategory.DNF;
+		}
+
+        public void PlayerDNF() {
+            PlayerID id = PlayerID.MyIDSafe;
+            PlayerStatus stat = PlayerStatus.Current;
+            ResultCategory cat = GetPlayerResultCat(id);
+            if (cat == ResultCategory.Joined || cat == ResultCategory.InMatch) {
+                if (Result == null) Result = new MatchResult();
+                if (Result.players.ContainsKey(id)) {
+                    Result[id].Result = ResultCategory.DNF;
+                    Result[id].FileTimeEnd = stat.FileTimerAtLastObjectiveComplete;
+                }
+                else {
+                    Result[id] = new MatchResultPlayer() {
+                        ID = id,
+                        Result = ResultCategory.DNF,
+                        FileTimeStart = stat.FileTimerAtMatchBegin,
+                        FileTimeEnd = stat.FileTimerAtLastObjectiveComplete,
+                    };
+                }
+                BroadcastUpdate();
+            }
+        }
+
         public void PlayerFinished(PlayerID id, PlayerStatus stat) {
             ResultCategory cat = GetPlayerResultCat(id);
             if (cat == ResultCategory.InMatch) {
@@ -156,15 +185,7 @@ namespace Celeste.Mod.Head2Head.Shared {
                 // Sanity check - clean up illogical results
                 List<PlayerID> playersToRemove = new List<PlayerID>();
                 foreach (KeyValuePair<PlayerID, MatchResultPlayer> res in Result.players) {
-                    if (_state <= MatchState.Staged) {
-                        if (res.Value.Result == ResultCategory.DNF) {
-                            playersToRemove.Add(res.Key);
-                        }
-                        else if (res.Value.Result >= ResultCategory.InMatch) {
-                            Result.players[res.Key].Result = ResultCategory.Joined;
-                        }
-                    }
-                    else if (res.Value.Result == ResultCategory.NotJoined) {
+                    if (_state >= MatchState.InProgress && res.Value.Result == ResultCategory.NotJoined) {
                         playersToRemove.Add(res.Key);
 					}
 					else if (_state == MatchState.Completed && res.Value.Result < ResultCategory.Completed) {
