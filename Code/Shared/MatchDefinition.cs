@@ -205,6 +205,10 @@ namespace Celeste.Mod.Head2Head.Shared {
 				}
             }
         }
+
+        public void InvokePlayerJoin() {
+            OnPlayerJoinedMatch?.Invoke(PlayerID.MyIDSafe, MatchID);
+		}
     }
 
     public class MatchPhase {

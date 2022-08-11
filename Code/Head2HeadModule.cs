@@ -476,6 +476,7 @@ namespace Celeste.Mod.Head2Head {
 			if (isNew) {
 				if (def.State == MatchState.Completed) return;
 				knownMatches.Add(def.MatchID, def);
+				def.InvokePlayerJoin();
 			}
 			else {
 				knownMatches[def.MatchID].MergeDynamic(def);
