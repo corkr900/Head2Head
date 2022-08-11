@@ -394,7 +394,6 @@ namespace Celeste.Mod.Head2Head {
 			DynamicData dd = new DynamicData(self);
 			if (doAutoLaunch && Input.MenuConfirm.Pressed && dd.Get<bool>("finishedSlide") && dd.Get<bool>("canConfirm"))
 			{
-				// TODO this won't get hit for interlude chapters...
 				if (DoPostPhaseAutoLaunch(true, MatchObjectiveType.ChapterComplete))
 				{
 					dd.Set("canConfirm", false);

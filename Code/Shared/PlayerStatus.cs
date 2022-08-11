@@ -37,6 +37,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 				MatchDef = def;
 				CompletedObjective = lastOb;
 				CompletedPhase = lastPh;
+				NextPhase = nextPh;
 				MatchCompleted = matchComp;
 			}
 			public readonly MatchDefinition MatchDef;
