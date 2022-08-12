@@ -47,23 +47,6 @@ namespace Celeste.Mod.Head2Head.Shared {
 			public readonly bool MatchCompleted;
 		}
 
-		public PlayerStateCategory State {
-			get { return _state; }
-			set {
-				PlayerStateCategory tmp = State;
-				if (tmp != value) {
-					_state = value;
-					OnPlayerStateCategoryChanged?.Invoke(this, tmp, value);
-				}
-			}
-		}
-		private PlayerStateCategory _state = PlayerStateCategory.None;
-		internal void SetPlayerState_NoEvent(PlayerStateCategory cat) => _state = cat;
-		public bool IsInDebug { get; internal set; }
-
-		public delegate void PlayerStateCategoryChangedHandler(PlayerStatus source, PlayerStateCategory oldstate, PlayerStateCategory newstate);
-		public static event PlayerStateCategoryChangedHandler OnPlayerStateCategoryChanged;
-
 		public MatchDefinition CurrentMatch {
 			get {
 				return string.IsNullOrEmpty(CurrentMatchID) ? null
@@ -73,19 +56,35 @@ namespace Celeste.Mod.Head2Head.Shared {
 			internal set {
 				if (value == null) {
 					CurrentMatchID = null;
-					State = PlayerStateCategory.Idle;
 					return;
 				}
 				if (!Head2HeadModule.knownMatches.ContainsKey(value.MatchID)) Head2HeadModule.knownMatches.Add(value.MatchID, value);
 				CurrentMatchID = value.MatchID;
 			}
 		}
+		public bool IsInMatch(bool includeJoined, PlayerID? id = null) {
+			if (string.IsNullOrEmpty(CurrentMatchID)) return false;
+			MatchDefinition def = CurrentMatch;
+			if (def == null) return true;  // Remote player but we have forgotten their match. This is not likely to ever get hit
+			ResultCategory cat = def.GetPlayerResultCat(id ?? PlayerID.MyIDSafe);
+			return cat == ResultCategory.InMatch || (includeJoined && cat == ResultCategory.Joined);
+		}
+		public bool HasCompletedMatch(PlayerID? id = null) {
+			if (string.IsNullOrEmpty(CurrentMatchID)) return false;
+			MatchDefinition def = CurrentMatch;
+			if (def == null) return true;  // Remote player but we have forgotten their match. This is not likely to ever get hit
+			ResultCategory cat = def.GetPlayerResultCat(id ?? PlayerID.MyIDSafe);
+			return cat == ResultCategory.Completed || cat == ResultCategory.DNF;
+		}
+
 		public string CurrentMatchID { get; private set; }
 		public GlobalAreaKey CurrentArea { get; internal set; }
 		public string CurrentRoom { get; internal set; }
+		public bool IsInDebug { get; internal set; }
 		public long CurrentFileTimer { get; internal set; }
 		public long FileTimerAtMatchBegin { get; internal set; }
 		public long FileTimerAtLastObjectiveComplete { get; internal set; }
+		public int SaveFileAtMatchStart { get; internal set; }
 		public List<H2HMatchPhaseState> phases { get; internal set; } = new List<H2HMatchPhaseState>();
 		public List<H2HMatchObjectiveState> objectives { get; internal set; } = new List<H2HMatchObjectiveState>();
 
@@ -137,27 +136,24 @@ namespace Celeste.Mod.Head2Head.Shared {
 				CurrentMatch = def;
 				phases.Clear();
 				objectives.Clear();
-				State = PlayerStateCategory.Idle;
 				Updated();
 			}
 		}
 		public void MatchJoined() {
 			phases.Clear();
 			objectives.Clear();
-			State = PlayerStateCategory.Joined;
 			Updated();
 		}
 		public void MatchStarted() {
 			phases.Clear();
 			objectives.Clear();
-			State = PlayerStateCategory.InMatch;
 			FileTimerAtMatchBegin = SaveData.Instance.Time;
+			SaveFileAtMatchStart = SaveData.Instance.FileSlot;
 			Updated();
 		}
 		public void MatchReset() {
 			phases.Clear();
 			objectives.Clear();
-			State = PlayerStateCategory.Idle;
 			CurrentMatch = null;
 			Updated();
 		}
@@ -165,7 +161,6 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public void Cleanup() {
 			phases.Clear();
 			objectives.Clear();
-			State = PlayerStateCategory.Idle;
 			CurrentMatch = null;
 			Updated();
 		}
@@ -220,7 +215,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 		private int CurrentPhase() {
 			if (CurrentMatch == null) return -1;
-			if (State != PlayerStateCategory.InMatch) return -1;
+			if (!IsInMatch(false)) return -1;
 			int max = 0;
 			foreach (H2HMatchPhaseState s in phases) {
 				int order = CurrentMatch.GetPhase(s.PhaseID)?.Order ?? -1;
@@ -262,7 +257,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		}
 
 		private bool MarkObjectiveComplete(MatchObjective ob) {
-			if (State != PlayerStateCategory.InMatch) return false;
+			if (!IsInMatch(false)) return false;
 			bool found = false;
 			for (int i = 0; i < objectives.Count; i++) {
 				H2HMatchObjectiveState st = objectives[i];
@@ -340,7 +335,6 @@ namespace Celeste.Mod.Head2Head.Shared {
 					}
 				}
 				if (matchFinished) {  // All phases are complete
-					State = PlayerStateCategory.FinishedMatch;
 					CurrentMatch.PlayerFinished(PlayerID.MyIDSafe, this);
 				}
 				OnMatchPhaseCompleted?.Invoke(new OnMatchPhaseCompletedArgs(
@@ -354,7 +348,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			return anychanges;
 		}
 
-		private void Updated() {
+		internal void Updated() {
 			CurrentFileTimer = SaveData.Instance?.Time ?? 0;
 			if (this == Current && CNetComm.Instance.IsConnected) {
 				CNetComm.Instance.SendPlayerStatus(this);
@@ -362,19 +356,11 @@ namespace Celeste.Mod.Head2Head.Shared {
 		}
 
 		public bool CanStageMatch() {
-			return (CanStageWithStatus(State))
-				&& (CurrentMatch?.State ?? MatchState.InProgress) != MatchState.InProgress;
-		}
-
-		private static bool CanStageWithStatus(PlayerStateCategory cat) {
-			switch (cat) {
-				case PlayerStateCategory.FinishedMatch:
-				case PlayerStateCategory.Idle:
-				case PlayerStateCategory.None:
-					return true;
-				default:
-					return false;
-			}
+			if (Current != this) return false;
+			if (string.IsNullOrEmpty(CurrentMatchID)) return true;
+			MatchDefinition def = CurrentMatch;
+			ResultCategory cat = def.GetPlayerResultCat(PlayerID.MyIDSafe);
+			return cat != ResultCategory.Joined && cat != ResultCategory.InMatch;
 		}
 	}
 
@@ -400,7 +386,6 @@ namespace Celeste.Mod.Head2Head.Shared {
 	public static class PlayerStateExt {
 		public static PlayerStatus ReadPlayerState(this CelesteNetBinaryReader r) {
 			PlayerStatus pms = new PlayerStatus();
-			pms.State = (PlayerStateCategory)Enum.Parse(typeof(PlayerStateCategory), r.ReadString());
 			pms.IsInDebug = r.ReadBoolean();
 			pms.CurrentMatch = r.ReadMatch();
 			pms.CurrentArea = r.ReadAreaKey();
@@ -408,6 +393,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			pms.CurrentFileTimer = r.ReadInt64();
 			pms.FileTimerAtMatchBegin = r.ReadInt64();
 			pms.FileTimerAtLastObjectiveComplete = r.ReadInt64();
+			pms.SaveFileAtMatchStart = r.ReadInt32();
 			int numPhases = r.ReadInt32();
 			for (int i = 0; i < numPhases; i++) {
 				pms.phases.Add(r.ReadMatchPhaseState());
@@ -420,7 +406,6 @@ namespace Celeste.Mod.Head2Head.Shared {
 		}
 
 		public static void Write(this CelesteNetBinaryWriter w, PlayerStatus s) {
-			w.Write(s.State.ToString());
 			w.Write(s.IsInDebug);
 			w.Write(s.CurrentMatch);
 			w.Write(s.CurrentArea);
@@ -428,6 +413,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			w.Write(s.CurrentFileTimer);
 			w.Write(s.FileTimerAtMatchBegin);
 			w.Write(s.FileTimerAtLastObjectiveComplete);
+			w.Write(s.SaveFileAtMatchStart);
 			w.Write(s.phases.Count);
 			foreach (H2HMatchPhaseState st in s.phases) {
 				w.Write(st);

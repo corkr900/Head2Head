@@ -26,7 +26,6 @@ using Celeste.Mod.Head2Head.UI;
 using FMOD.Studio;
 
 // TODO (!!!) Prevent starting at checkpoints not already reached during the match
-// TODO (!!!) Force DNF status if a player uses debug teleport or loads into a different savefile than the one they started the match in
 // TODO Force DNF if a player intentionally closes the game
 
 // timer conversion to readable string: speedrunTimerFileString = Dialog.FileTime(SaveData.Instance.Time);
@@ -76,8 +75,8 @@ namespace Celeste.Mod.Head2Head {
 		public static Dictionary<string, MatchDefinition> knownMatches = new Dictionary<string, MatchDefinition>();
 		public static Dictionary<PlayerID, PlayerStatus> knownPlayers = new Dictionary<PlayerID, PlayerStatus>();
 
-		public delegate void OnMatchStagedHandler();
-		public static event OnMatchStagedHandler OnMatchStaged;
+		public delegate void OnMatchCurrentMatchUpdatedHandler();
+		public static event OnMatchCurrentMatchUpdatedHandler OnMatchCurrentMatchUpdated;
 
 		// #######################################################
 
@@ -107,6 +106,8 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.Postcard.DisplayRoutine += OnPostcardDisplayRoutine;
 			On.Celeste.SaveData.RegisterCassette += OnCassetteCollected;
 			On.Celeste.SaveData.RegisterHeartGem += OnHeartCollected;
+			On.Celeste.SaveData.Start += OnSaveDataStart;
+			On.Celeste.SaveData.TryDelete += OnSaveDataTryDelete;
 			On.Celeste.LevelData.CreateEntityData += OnLevelDataCreateEntityData;
 			On.Celeste.AreaComplete.Update += OnAreaCompleteUpdate;
 			On.Celeste.Editor.MapEditor.ctor += onDebugScreenOpened;
@@ -156,6 +157,8 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.Postcard.DisplayRoutine -= OnPostcardDisplayRoutine;
 			On.Celeste.SaveData.RegisterCassette -= OnCassetteCollected;
 			On.Celeste.SaveData.RegisterHeartGem -= OnHeartCollected;
+			On.Celeste.SaveData.Start += OnSaveDataStart;
+			On.Celeste.SaveData.TryDelete -= OnSaveDataTryDelete;
 			On.Celeste.LevelData.CreateEntityData -= OnLevelDataCreateEntityData;
 			On.Celeste.AreaComplete.Update -= OnAreaCompleteUpdate;
 			On.Celeste.Editor.MapEditor.ctor -= onDebugScreenOpened;
@@ -264,6 +267,13 @@ namespace Celeste.Mod.Head2Head {
 			ActionLogger.DebugEnter(level.Name);
 			orig(self, level, at);
 			PlayerStatus.Current.DebugTeleport(self, level, at);
+			MatchDefinition def = PlayerStatus.Current.CurrentMatch;
+			if (def != null) {
+				ResultCategory cat = def.GetPlayerResultCat(PlayerID.MyIDSafe);
+				if (cat == ResultCategory.InMatch) {
+					def.PlayerDNF();
+				}
+			}
 		}
 
 		private void OnExiting() {
@@ -425,10 +435,19 @@ namespace Celeste.Mod.Head2Head {
 			menu.Insert(returnToMapIndex + 1, returnToLobbyButton);
 		}
 
-		//private void OnLevelComplete() {
-		//	GlobalAreaKey gak = new GlobalAreaKey(self.Session.Area);
-		//	if (self.)
-		//}
+		private void OnSaveDataStart(On.Celeste.SaveData.orig_Start orig, SaveData data, int slot) {
+			if (PlayerStatus.Current.IsInMatch(false) && PlayerStatus.Current.SaveFileAtMatchStart != slot) {
+				PlayerStatus.Current.CurrentMatch?.PlayerDNF();
+			}
+			orig(data, slot);
+		}
+
+		private bool OnSaveDataTryDelete(On.Celeste.SaveData.orig_TryDelete orig, int slot) {
+			if (PlayerStatus.Current.IsInMatch(false)) {
+				PlayerStatus.Current.CurrentMatch?.PlayerDNF();
+			}
+			return orig(slot);
+		}
 
 		// ########################################
 
@@ -439,7 +458,7 @@ namespace Celeste.Mod.Head2Head {
 				}
 				else knownPlayers.Add(data.playerID, data.Status);
 			}
-			if (data.Status.State == PlayerStateCategory.FinishedMatch && knownMatches.ContainsKey(data.Status.CurrentMatchID)) {
+			if (data.Status.HasCompletedMatch() && knownMatches.ContainsKey(data.Status.CurrentMatchID)) {
 				MatchDefinition def = knownMatches[data.Status.CurrentMatchID];
 				if (def.State == MatchState.InProgress) {
 					if (def.GetPlayerResultCat(data.playerID) == ResultCategory.InMatch) {
@@ -458,13 +477,14 @@ namespace Celeste.Mod.Head2Head {
 					}
 				}
 			}
-			
+			OnMatchCurrentMatchUpdated?.Invoke();
 		}
 
 		private void OnMatchReset(DataH2HMatchReset data) {
 			if (PlayerStatus.Current.CurrentMatch?.MatchID == data.MatchID) {
 				PlayerStatus.Current.MatchReset();
 			}
+			OnMatchCurrentMatchUpdated?.Invoke();
 			ClearAutoLaunchInfo();
 		}
 
@@ -475,7 +495,6 @@ namespace Celeste.Mod.Head2Head {
 			if (isNew) {
 				if (def.State == MatchState.Completed) return;
 				knownMatches.Add(def.MatchID, def);
-				def.InvokePlayerJoin();
 			}
 			else {
 				knownMatches[def.MatchID].MergeDynamic(def);
@@ -489,20 +508,28 @@ namespace Celeste.Mod.Head2Head {
 				MatchStarted(def);
 				ClearAutoLaunchInfo();
 			}
+			else if (def.State == MatchState.InProgress && oldState == MatchState.InProgress) {
+				// Everyone dropped out
+				def.CompleteIfNoRunners(false);
+			}
+			OnMatchCurrentMatchUpdated?.Invoke();
 			PurgeStaleData();
 		}
 
 		private void OnChannelMove(DataChannelMove data) {
 			// TODO handle channel moves
 			Engine.Commands.Log("Channel Move Received for " + data.Player?.FullName);
+			OnMatchCurrentMatchUpdated?.Invoke();
 			PurgeStaleData();
 		}
 
 		private void OnConnected(CelesteNetClientContext cxt) {
+			OnMatchCurrentMatchUpdated?.Invoke();
 			//PlayerStatus.Current.CNetConnected();
 		}
 
 		private void OnDisconnected(CelesteNetConnection con) {
+			OnMatchCurrentMatchUpdated?.Invoke();
 			//PlayerStatus.Current.CNetDisconnected();
 		}
 
@@ -643,7 +670,7 @@ namespace Celeste.Mod.Head2Head {
 			}
 			PlayerStatus.Current.CurrentMatch = def;
 			PlayerStatus.Current.MatchStaged(PlayerStatus.Current.CurrentMatch);
-			OnMatchStaged?.Invoke();
+			OnMatchCurrentMatchUpdated?.Invoke();
 		}
 
 		public void JoinStagedMatch() {
@@ -764,7 +791,7 @@ namespace Celeste.Mod.Head2Head {
 			}
 			else if (!def.Players.Contains(PlayerID.MyIDSafe)) {  // Player did not join the match
 				PlayerStatus.Current.CurrentMatch = null;
-				PlayerStatus.Current.State = PlayerStateCategory.Idle;
+				PlayerStatus.Current.Updated();
 				return true;
 			}
 			// Begin!
@@ -772,6 +799,7 @@ namespace Celeste.Mod.Head2Head {
 			// If the coroutine can be made persistent across rooms, that + disabling pause during
 			// countdown should cover all the cases we really care about since pause is the only way to exit the lobby
 			Entity wrapper = new Entity();
+			wrapper.AddTag(Tags.Persistent);
 			currentScenes.Last().Add(wrapper);
 			wrapper.Add(new Coroutine(StartMatchCoroutine(def.Phases[0].Area)));
 			return true;

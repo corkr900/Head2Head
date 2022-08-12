@@ -90,7 +90,7 @@
     <Compile Include="IO\CNetComm.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Shared\MatchResult.cs" />
-    <Compile Include="Shared\Menus.cs" />
+    <Compile Include="UI\Menus.cs" />
     <Compile Include="Shared\PlayerStatus.cs" />
     <Compile Include="Shared\GlobalAreaKey.cs" />
     <Compile Include="Shared\MatchDefinition.cs" />

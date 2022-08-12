@@ -12,9 +12,6 @@ namespace Celeste.Mod.Head2Head.Shared {
     public class MatchDefinition {
         private static uint localIDCounter = 1;
 
-        public delegate void OnPlayerJoinedMatchHandler(PlayerID player, string matchID);
-        public static event OnPlayerJoinedMatchHandler OnPlayerJoinedMatch;
-
         #region Invariable Members / Properties
 
         public string MatchID = GenerateMatchID();
@@ -65,7 +62,17 @@ namespace Celeste.Mod.Head2Head.Shared {
 			}
 		}
 
-		private static string GenerateMatchID() {
+        public GlobalAreaKey? VersionCheck() {
+            foreach(MatchPhase ph in Phases) {
+                if (!ph.Area.VersionMatchesLocal) {
+                    return ph.Area;
+                }
+			}
+            return null;
+		}
+
+
+        private static string GenerateMatchID() {
             return string.Format("p_{0}_c_{1}", PlayerID.MyIDSafe.GetHashCode(), ++localIDCounter);
 		}
 
@@ -137,6 +144,7 @@ namespace Celeste.Mod.Head2Head.Shared {
                         FileTimeEnd = stat.FileTimerAtLastObjectiveComplete,
                     };
                 }
+                CompleteIfNoRunners(false);
                 BroadcastUpdate();
             }
         }
@@ -157,9 +165,18 @@ namespace Celeste.Mod.Head2Head.Shared {
                         FileTimeEnd = stat.FileTimerAtLastObjectiveComplete,
                     };
 				}
-                if (id.Equals(PlayerID.MyIDSafe)) BroadcastUpdate();
+                CompleteIfNoRunners(id.Equals(PlayerID.MyIDSafe));
             }
         }
+
+        public void CompleteIfNoRunners(bool broadcastUpdate) {
+            if (State != MatchState.InProgress) return;
+            foreach (PlayerID player in Players) {
+                if (GetPlayerResultCat(player) <= ResultCategory.InMatch) return;
+			}
+            if (broadcastUpdate) State = MatchState.Completed;  // Broadcasts update
+            else SetState_NoUpdate(MatchState.Completed);
+		}
 
         public void MergeDynamic(MatchDefinition newer) {
             if (newer == null) return;
@@ -172,7 +189,6 @@ namespace Celeste.Mod.Head2Head.Shared {
 			{
                 if (!Players.Contains(id)) {
                     Players.Add(id);
-                    OnPlayerJoinedMatch?.Invoke(id, MatchID);
                 }
 			}
 
@@ -205,10 +221,6 @@ namespace Celeste.Mod.Head2Head.Shared {
 				}
             }
         }
-
-        public void InvokePlayerJoin() {
-            OnPlayerJoinedMatch?.Invoke(PlayerID.MyIDSafe, MatchID);
-		}
     }
 
     public class MatchPhase {

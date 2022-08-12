@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using Celeste.Mod.Head2Head.Shared;
+using Microsoft.Xna.Framework;
 using Monocle;
 using MonoMod.Utils;
 using System;
@@ -8,7 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using static Celeste.TextMenuExt;
 
-namespace Celeste.Mod.Head2Head.Shared
+namespace Celeste.Mod.Head2Head.UI
 {
 	public static class Menus
 	{
@@ -25,7 +26,14 @@ namespace Celeste.Mod.Head2Head.Shared
 			public bool fromPauseMenu;
 			public Stack<int> returnToIndex = new Stack<int>();
 			public Stack<Action<HelpdeskMenuContext>> menus = new Stack<Action<HelpdeskMenuContext>>();
-			public MatchDefinition match;
+			public string matchID;
+			public MatchDefinition match {
+				get {
+					if (string.IsNullOrEmpty(matchID)) return null;
+					if (!Head2HeadModule.knownMatches.ContainsKey(matchID)) return null;
+					return Head2HeadModule.knownMatches[matchID];
+				}
+			}
 			public PlayerID player;
 
 			public void GoTo(Action<HelpdeskMenuContext> target, TextMenu current)
@@ -87,11 +95,15 @@ namespace Celeste.Mod.Head2Head.Shared
 			return btn;
 		}
 
-		private static void SoftDisable(this ButtonExt btn, TextMenu menu, string newSubtext) {
+		private static void SoftDisable(this ButtonExt btn, TextMenu menu, string newSubtext, params string[] fmtArgs) {
 			btn.TextColor = btn.TextColorDisabled;
-			btn.AddDescription(menu, Dialog.Clean(newSubtext));
+			btn.AddDescription(menu, string.Format(GetDialogWithLineBreaks(newSubtext), fmtArgs));
 			DynamicData dd = new DynamicData(btn);
 			dd.Set("H2H_SoftDisable", true);
+		}
+
+		private static string GetDialogWithLineBreaks(string key) {
+			return Dialog.Get(key).Replace("{n}", "\n").Replace("{break}", "\n");
 		}
 
 		#endregion
@@ -106,6 +118,7 @@ namespace Celeste.Mod.Head2Head.Shared
 			menu.Position = new Vector2((float)Engine.Width / 2f, (float)Engine.Height / 2f - 100f);
 			TextMenu.Item item;
 			ButtonExt btn;
+			MatchDefinition def_menu = PlayerStatus.Current.CurrentMatch;
 
 			// Head 2 Head Helpdesk
 			menu.Add(new TextMenu.Header(Dialog.Clean("Head2Head_menu_helpdesk")));
@@ -132,13 +145,10 @@ namespace Celeste.Mod.Head2Head.Shared
 					|| cat == ResultCategory.Completed
 					|| cat == ResultCategory.DNF) return;
 				def.PlayerDNF();
-				//PlayerStatus.Current.CurrentMatch = null;
-				PlayerStatus.Current.State = PlayerStateCategory.Idle;
 				cxt.Refresh(menu);
 			});
-			MatchDefinition defdrop = PlayerStatus.Current.CurrentMatch;
-			ResultCategory? rescatdrop = defdrop?.GetPlayerResultCat(PlayerID.MyIDSafe);
-			if (defdrop == null)
+			ResultCategory? rescatdrop = def_menu?.GetPlayerResultCat(PlayerID.MyIDSafe);
+			if (def_menu == null)
 				btn.SoftDisable(menu, "Head2Head_menu_helpdesk_forceend_nocurrent");
 			else if (rescatdrop.Value == ResultCategory.NotJoined)
 				btn.SoftDisable(menu, "Head2Head_menu_helpdesk_dropout_notjoined");
@@ -150,14 +160,14 @@ namespace Celeste.Mod.Head2Head.Shared
 			// Force End
 			btn = menu.AddButton("Head2Head_menu_helpdesk_forceend", () => {
 				MatchDefinition def = PlayerStatus.Current.CurrentMatch;
-				if (def == null) return;
-				if (def.State != MatchState.InProgress) return;
-				def.State = MatchState.Completed;  // Broadcasts update
+				if (def != null && def.State == MatchState.InProgress) {
+					def.State = MatchState.Completed;  // Broadcasts update
+				}
 				cxt.Refresh(menu);
 			});
-			if (PlayerStatus.Current.CurrentMatch == null)
+			if (def_menu == null)
 				btn.SoftDisable(menu, "Head2Head_menu_helpdesk_forceend_nocurrent");
-			else if (PlayerStatus.Current.CurrentMatch.State != MatchState.InProgress)
+			else if (def_menu.State != MatchState.InProgress)
 				btn.SoftDisable(menu, "Head2Head_menu_helpdesk_forceend_notinprogress");
 			else btn.AddDescription(menu, Dialog.Clean("Head2Head_menu_helpdesk_forceend_subtext"));
 
@@ -177,10 +187,20 @@ namespace Celeste.Mod.Head2Head.Shared
 				// TODO (!!!) Send a message asking for known information
 				cxt.Close(menu);
 			});
-			if (true)
-				btn.SoftDisable(menu, "Head2Head_menu_helpdesk_clean_notimplemented");
-			else
+			//if (true)
+			//	btn.SoftDisable(menu, "Head2Head_menu_helpdesk_clean_notimplemented");
+			//else
 				item.AddDescription(menu, Dialog.Clean("Head2Head_menu_helpdesk_clean_subtext"));
+
+			// Return to Lobby
+			if (!PlayerStatus.Current.CurrentArea.Equals(GlobalAreaKey.Head2HeadLobby)) {
+				btn = menu.AddButton("Head2Head_menu_helpdesk_returntolobby", () => {
+					cxt.Close(menu);
+					new FadeWipe(menu.Scene, false, () => {
+						LevelEnter.Go(new Session(GlobalAreaKey.Head2HeadLobby.Local.Value), false);
+					});
+				});
+			}
 
 			// handle Cancel button
 			menu.OnCancel = () => {
@@ -212,7 +232,7 @@ namespace Celeste.Mod.Head2Head.Shared
 			foreach (MatchDefinition def in Head2HeadModule.knownMatches.Values)
 			{
 				item = new TextMenu.Button(def.DisplayName).Pressed(() => {
-					cxt.match = def;
+					cxt.matchID = def.MatchID;
 					cxt.GoTo(KnownMatchMenu, menu);
 				});
 				menu.Add(item);
@@ -236,8 +256,9 @@ namespace Celeste.Mod.Head2Head.Shared
 			menu.AutoScroll = false;
 			menu.Position = new Vector2((float)Engine.Width / 2f, (float)Engine.Height / 2f - 100f);
 			TextMenu.Item item;
+			MatchDefinition cxtMatch = cxt.match;
 
-			if (cxt.match == null)
+			if (cxtMatch == null)
 			{
 				// Header
 				menu.Add(new TextMenu.Header(Dialog.Clean("Head2Head_menu_match_invalidmatch")));
@@ -252,7 +273,7 @@ namespace Celeste.Mod.Head2Head.Shared
 				MatchDefinition curmatch = PlayerStatus.Current.CurrentMatch;
 
 				// Header
-				menu.Add(new TextMenu.SubHeader(cxt.match.DisplayName));
+				menu.Add(new TextMenu.SubHeader(cxtMatch.DisplayName));
 
 				// Back
 				item = new TextMenu.Button(Dialog.Clean("Head2Head_menu_back")).Pressed(() => {
@@ -262,13 +283,16 @@ namespace Celeste.Mod.Head2Head.Shared
 
 				// Stage
 				ButtonExt btn = menu.AddButton("Head2Head_menu_match_stage", () => {
-					Head2HeadModule.Instance.StageMatch(cxt.match);
+					Head2HeadModule.Instance.StageMatch(cxtMatch);
 					cxt.Close(menu);
 				});
-				if (cxt.match.State != MatchState.Staged)
+				GlobalAreaKey? vchk = cxtMatch.VersionCheck();
+				if (cxtMatch.State != MatchState.Staged)
 					btn.SoftDisable(menu, "Head2Head_menu_match_stage_wrongstatus");
-				else if (cxt.match.MatchID == curmatch?.MatchID)
+				else if (cxtMatch.MatchID == curmatch?.MatchID)
 					btn.SoftDisable(menu, "Head2Head_menu_match_stage_alreadycurrent");
+				else if (vchk != null)
+					btn.SoftDisable(menu, "Head2Head_menu_match_join_versionmismatch", vchk?.LocalVersion.ToString(), vchk?.Version.ToString());
 				else if (curmatch?.PlayerCanLeaveFreely(PlayerID.MyIDSafe) == false)
 					btn.SoftDisable(menu, "Head2Head_menu_match_stage_dropfirst");
 				else
@@ -276,19 +300,16 @@ namespace Celeste.Mod.Head2Head.Shared
 
 				// Join
 				btn = menu.AddButton("Head2Head_menu_match_join", () => {
-					if (cxt.match.MatchID != PlayerStatus.Current.CurrentMatch?.MatchID)
+					if (cxtMatch.MatchID != curmatch?.MatchID)
 					{
-						Head2HeadModule.Instance.StageMatch(cxt.match);
+						Head2HeadModule.Instance.StageMatch(cxtMatch);
 					}
 					Head2HeadModule.Instance.JoinStagedMatch();
 					cxt.Close(menu);
 				});
-				if (cxt.match.State != MatchState.Staged)
+				if (cxtMatch.State != MatchState.Staged)
 					btn.SoftDisable(menu, "Head2Head_menu_match_stage_wrongstatus");
-				else if (cxt.match.MatchID == curmatch?.MatchID
-					  && !cxt.match.Players.Contains(PlayerID.MyIDSafe))
-					btn.SoftDisable(menu, "Head2Head_menu_match_stage_alreadycurrent");
-				else if (cxt.match.GetPlayerResultCat(PlayerID.MyIDSafe) >= ResultCategory.Joined)
+				else if (cxtMatch.GetPlayerResultCat(PlayerID.MyIDSafe) >= ResultCategory.Joined)
 					btn.SoftDisable(menu, "Head2Head_menu_match_join_alreadyjoined");
 				else if (curmatch?.PlayerCanLeaveFreely(PlayerID.MyIDSafe) == false)
 					btn.SoftDisable(menu, "Head2Head_menu_match_stage_dropfirst");
@@ -306,10 +327,19 @@ namespace Celeste.Mod.Head2Head.Shared
 
 				// Forget
 				btn = menu.AddButton("Head2Head_menu_match_forget", () => {
-					// TODO (!!!)
+					if (cxtMatch.MatchID == PlayerStatus.Current.CurrentMatchID) {
+						ResultCategory cat2 = cxtMatch.GetPlayerResultCat(PlayerID.MyIDSafe);
+						if (cat2 == ResultCategory.Joined || cat2 == ResultCategory.InMatch) return;
+						PlayerStatus.Current.CurrentMatch = null;
+						PlayerStatus.Current.Updated();
+					}
+					Head2HeadModule.knownMatches.Remove(cxt.matchID);
+					cxt.Back(menu);
 				});
-				if (true)
-					btn.SoftDisable(menu, "Head2Head_menu_match_forget_notimplemented");
+				ResultCategory cat = cxtMatch.GetPlayerResultCat(PlayerID.MyIDSafe);
+				if (cxtMatch.MatchID == PlayerStatus.Current.CurrentMatchID
+					&& (cat == ResultCategory.Joined || cat == ResultCategory.InMatch))
+					btn.SoftDisable(menu, "Head2Head_menu_match_forget_current");
 				else
 					btn.AddDescription(menu, Dialog.Clean("Head2Head_menu_match_forget_subtext"));
 			}

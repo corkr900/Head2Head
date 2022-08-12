@@ -1,5 +1,6 @@
 ﻿using Celeste.Mod.Entities;
 using Celeste.Mod.Head2Head.Shared;
+using Celeste.Mod.Head2Head.UI;
 using Microsoft.Xna.Framework;
 using Monocle;
 using System;
