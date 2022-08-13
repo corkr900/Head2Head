@@ -540,6 +540,7 @@ namespace Celeste.Mod.Head2Head {
 			}
 
 			MatchDefinition curdef = PlayerStatus.Current.CurrentMatch;
+			if (curdef == null) return;
 			bool tryJoin = data.RequestorStatus != null && curdef.PlayerCanLeaveFreely(PlayerID.MyIDSafe);
 			if (!tryJoin) return;
 
