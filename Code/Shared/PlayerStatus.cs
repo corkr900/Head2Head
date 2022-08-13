@@ -85,6 +85,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public long FileTimerAtLastObjectiveComplete { get; internal set; }
 		public List<H2HMatchPhaseState> phases { get; internal set; } = new List<H2HMatchPhaseState>();
 		public List<H2HMatchObjectiveState> objectives { get; internal set; } = new List<H2HMatchObjectiveState>();
+		public List<Tuple<GlobalAreaKey, string>> reachedCheckpoints = new List<Tuple<GlobalAreaKey, string>>();
 
 		/// <summary>
 		/// This is not sent over the network. It is to be set on receipt of an update.
@@ -107,6 +108,13 @@ namespace Celeste.Mod.Head2Head.Shared {
 			CurrentRoom = level.Session.Level;
 			if (next.HasCheckpoint) {
 				LastCheckpoint = next.Name;
+				GlobalAreaKey area = new GlobalAreaKey(level.Session.Area);
+				int index = reachedCheckpoints.FindIndex((Tuple<GlobalAreaKey, string> tpred) => {
+					return tpred.Item1.Equals(area) && tpred.Item2 == LastCheckpoint;
+				});
+				if (index < 0 || index >= reachedCheckpoints.Count) {
+					reachedCheckpoints.Add(new Tuple<GlobalAreaKey, string>(area, LastCheckpoint));
+				}
 			}
 			Updated();
 		}
@@ -149,6 +157,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public void MatchStarted() {
 			phases.Clear();
 			objectives.Clear();
+			reachedCheckpoints.Clear();
 			FileTimerAtMatchBegin = SaveData.Instance.Time;
 			Updated();
 		}

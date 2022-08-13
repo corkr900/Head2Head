@@ -86,6 +86,7 @@ This cannot be undone.
 
 Head2Head_menu_helpdesk_rejoin= Scan for Rejoinable Match
 Head2Head_menu_helpdesk_rejoin_subtext= If you previously crashed out of the game during a match, use this to rejoin it.
+This feature may only be used immediately after re-entering the same savefile and reconnecting to the network.
 
 Head2Head_menu_helpdesk_returntolobby= Return to Head 2 Head Lobby
 

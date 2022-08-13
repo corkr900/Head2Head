@@ -181,11 +181,13 @@ namespace Celeste.Mod.Head2Head.UI
 			item.AddDescription(menu, Dialog.Clean("Head2Head_menu_helpdesk_clean_subtext"));
 
 			// Scan & Rejoin
-			btn = menu.AddButton("Head2Head_menu_helpdesk_rejoin", () => {
-				CNetComm.Instance.SendScanRequest(true);
-				cxt.Close(menu);
-			});
-			item.AddDescription(menu, Dialog.Clean("Head2Head_menu_helpdesk_rejoin_subtext"));
+			if (!Head2HeadModule.Instance.PlayerCompletedARoom && def_menu == null) {
+				btn = menu.AddButton("Head2Head_menu_helpdesk_rejoin", () => {
+					CNetComm.Instance.SendScanRequest(true);
+					cxt.Close(menu);
+				});
+				item.AddDescription(menu, Dialog.Clean("Head2Head_menu_helpdesk_rejoin_subtext"));
+			}
 
 			// Return to Lobby
 			if (!PlayerStatus.Current.CurrentArea.Equals(GlobalAreaKey.Head2HeadLobby)) {

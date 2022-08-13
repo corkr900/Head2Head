@@ -71,6 +71,8 @@ namespace Celeste.Mod.Head2Head {
 		private GlobalAreaKey autoLaunchArea;
 		private MatchObjectiveType lastObjectiveType;
 		private bool doAutoLaunch;
+		public bool PlayerEnteredAMap { get; private set; } = false;
+		public bool PlayerCompletedARoom { get; private set; } = false;
 
 		public static Dictionary<string, MatchDefinition> knownMatches = new Dictionary<string, MatchDefinition>();
 		public static Dictionary<PlayerID, PlayerStatus> knownPlayers = new Dictionary<PlayerID, PlayerStatus>();
@@ -108,11 +110,13 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.SaveData.RegisterHeartGem += OnHeartCollected;
 			On.Celeste.SaveData.Start += OnSaveDataStart;
 			On.Celeste.SaveData.TryDelete += OnSaveDataTryDelete;
+			On.Celeste.SaveData.FoundAnyCheckpoints += OnSaveDataFoundAnyCheckpoints;
 			On.Celeste.LevelData.CreateEntityData += OnLevelDataCreateEntityData;
 			On.Celeste.AreaComplete.Update += OnAreaCompleteUpdate;
 			On.Celeste.Editor.MapEditor.ctor += onDebugScreenOpened;
 			On.Celeste.LevelLoader.StartLevel += OnLevelLoaderStart;
 			On.Celeste.Editor.MapEditor.LoadLevel += onDebugTeleport;
+			On.Celeste.OuiChapterPanel._GetCheckpoints += OnOUIChapterPanel_GetCheckpoints;
 			On.Celeste.OuiChapterSelectIcon.Show += OnOuiChapterSelectIconShow;
 			On.Celeste.Mod.UI.OuiMapSearch.cleanExit += OnMapSearchCleanExit;
 			On.Celeste.Mod.UI.OuiMapSearch.Inspect += OnMapSearchInspect;
@@ -159,12 +163,14 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.Postcard.DisplayRoutine -= OnPostcardDisplayRoutine;
 			On.Celeste.SaveData.RegisterCassette -= OnCassetteCollected;
 			On.Celeste.SaveData.RegisterHeartGem -= OnHeartCollected;
-			On.Celeste.SaveData.Start += OnSaveDataStart;
+			On.Celeste.SaveData.Start -= OnSaveDataStart;
+			On.Celeste.SaveData.FoundAnyCheckpoints -= OnSaveDataFoundAnyCheckpoints;
 			On.Celeste.SaveData.TryDelete -= OnSaveDataTryDelete;
 			On.Celeste.LevelData.CreateEntityData -= OnLevelDataCreateEntityData;
 			On.Celeste.AreaComplete.Update -= OnAreaCompleteUpdate;
 			On.Celeste.Editor.MapEditor.ctor -= onDebugScreenOpened;
 			On.Celeste.Editor.MapEditor.LoadLevel -= onDebugTeleport;
+			On.Celeste.OuiChapterPanel._GetCheckpoints -= OnOUIChapterPanel_GetCheckpoints;
 			On.Celeste.OuiChapterSelectIcon.Show -= OnOuiChapterSelectIconShow;
 			On.Celeste.Mod.UI.OuiMapSearch.cleanExit -= OnMapSearchCleanExit;
 			On.Celeste.Mod.UI.OuiMapSearch.Inspect -= OnMapSearchInspect;
@@ -240,9 +246,13 @@ namespace Celeste.Mod.Head2Head {
 		}
 
 		private void onLevelEnter(Session session, bool fromSaveData) {
-			ActionLogger.StartingChapter(session.Area.SID + " (" + session.LevelData.Name + ")");
 			currentSession = session;
-			PlayerStatus.Current.ChapterEntered(new GlobalAreaKey(session.Area), session);
+			GlobalAreaKey area = new GlobalAreaKey(session.Area);
+			ActionLogger.StartingChapter(area.SID + " (" + session.LevelData.Name + ")");
+			PlayerStatus.Current.ChapterEntered(area, session);
+			if (!area.Equals(GlobalAreaKey.Head2HeadLobby) && !area.Equals(GlobalAreaKey.Overworld)) {
+				PlayerEnteredAMap = true;
+			}
 		}
 
 		private void onLevelExit(Level level, LevelExit exit, LevelExit.Mode mode, Session session, HiresSnow snow) {
@@ -259,6 +269,9 @@ namespace Celeste.Mod.Head2Head {
 		private void onRoomTransition(Level level, LevelData next, Vector2 direction) {
 			ActionLogger.EnteringRoom(next.Name);
 			PlayerStatus.Current.RoomEntered(level, next, direction);
+			if (PlayerEnteredAMap && !(new GlobalAreaKey(level.Session.Area).Equals(GlobalAreaKey.Head2HeadLobby))) {
+				PlayerCompletedARoom = true;
+			}
 		}
 
 		private void onDebugScreenOpened(On.Celeste.Editor.MapEditor.orig_ctor orig, MapEditor self, AreaKey area, bool reloadMapData) {
@@ -454,6 +467,29 @@ namespace Celeste.Mod.Head2Head {
 				PlayerStatus.Current.CurrentMatch?.PlayerDNF();
 			}
 			return orig(slot);
+		}
+
+		private bool OnSaveDataFoundAnyCheckpoints(On.Celeste.SaveData.orig_FoundAnyCheckpoints orig, SaveData self, AreaKey area) {
+			// This might interact weirdly with CollabUtils. Shouldn't be an issue though because you won't use a lobby in a match.
+			MatchDefinition def = PlayerStatus.Current.CurrentMatch;
+			if (def != null && def.GetPlayerResultCat(PlayerID.MyIDSafe) == ResultCategory.InMatch) {
+				return PlayerStatus.Current.reachedCheckpoints.Any((Tuple<GlobalAreaKey, string> t) => t.Item1.Equals(new GlobalAreaKey(area)));
+			}
+			else return orig(self, area);
+		}
+
+		private HashSet<string> OnOUIChapterPanel_GetCheckpoints(On.Celeste.OuiChapterPanel.orig__GetCheckpoints orig, SaveData save, AreaKey area) {
+			// This might interact weirdly with CollabUtils. Shouldn't be an issue though because you won't use a lobby in a match.
+			MatchDefinition def = PlayerStatus.Current.CurrentMatch;
+			if (def != null && def.GetPlayerResultCat(PlayerID.MyIDSafe) == ResultCategory.InMatch) {
+				HashSet<string> set = new HashSet<string>();
+				GlobalAreaKey gak = new GlobalAreaKey(area);
+				foreach (Tuple<GlobalAreaKey, string> t in PlayerStatus.Current.reachedCheckpoints) {
+					if (t.Item1.Equals(gak)) set.Add(t.Item2);
+				}
+				return set;
+			}
+			else return orig(save, area);
 		}
 
 		// ########################################
@@ -901,7 +937,6 @@ namespace Celeste.Mod.Head2Head {
 
 		private IEnumerator StartMatchCoroutine(GlobalAreaKey gak, string startRoom = null) {
 			if (PlayerStatus.Current.CurrentMatch == null) yield break;
-			if (gak.IsOverworld) yield break;
 			string idCheck = PlayerStatus.Current.CurrentMatchID;
 			DateTime startInstant = PlayerStatus.Current.CurrentMatch.BeginInstant;
 			DateTime now = DateTime.Now;
@@ -921,6 +956,7 @@ namespace Celeste.Mod.Head2Head {
 			if (def.State != MatchState.InProgress) yield break;
 			PlayerStatus.Current.MatchStarted();
 			def.RegisterSaveFile();
+			if (gak.IsOverworld) yield break;
 			new FadeWipe(currentScenes.Last(), false, () => {
 				LevelEnter.Go(new Session(gak.Local.Value, startRoom), false);
 				// TODO send a confirmation message on load-in?
