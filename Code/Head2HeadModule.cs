@@ -525,7 +525,7 @@ namespace Celeste.Mod.Head2Head {
 
 		private void OnScanRequest(DataH2HScanRequest data) {
 			if (data.playerID.Equals(PlayerID.MyIDSafe)) return;
-			CNetComm.Instance.SendScanResponse(data.playerID, knownPlayers[data.playerID]);
+			CNetComm.Instance.SendScanResponse(data.playerID, knownPlayers.ContainsKey(data.playerID) ? knownPlayers[data.playerID] : null);
 		}
 
 		private void OnScanResponse(DataH2HScanResponse data) {
