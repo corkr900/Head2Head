@@ -100,7 +100,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public void ChapterEntered(GlobalAreaKey area, Session session) {
 			CurrentArea = area;
 			CurrentRoom = session.Level;
-			LastCheckpoint = null;
+			LastCheckpoint = session.LevelData.HasCheckpoint ? session.LevelData.Name : null;
 			Updated();
 		}
 		public void RoomEntered(Level level, LevelData next, Vector2 direction) {
@@ -127,7 +127,6 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public void ChapterExited(LevelExit.Mode mode, Session session) {
 			CurrentArea = GlobalAreaKey.Overworld;
 			CurrentRoom = "";
-			LastCheckpoint = null;
 			if (mode == LevelExit.Mode.Completed || mode == LevelExit.Mode.CompletedInterlude) {
 				ChapterCompleted(new GlobalAreaKey(session.Area));
 			}
