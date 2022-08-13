@@ -525,7 +525,9 @@ namespace Celeste.Mod.Head2Head {
 
 		private void OnScanRequest(DataH2HScanRequest data) {
 			if (data.playerID.Equals(PlayerID.MyIDSafe)) return;
-			CNetComm.Instance.SendScanResponse(data.playerID, knownPlayers.ContainsKey(data.playerID) ? knownPlayers[data.playerID] : null);
+			CNetComm.Instance.SendScanResponse(data.playerID,
+				!data.AutoRejoin ? null
+				: knownPlayers.ContainsKey(data.playerID) ? knownPlayers[data.playerID] : null);
 		}
 
 		private void OnScanResponse(DataH2HScanResponse data) {
@@ -540,8 +542,7 @@ namespace Celeste.Mod.Head2Head {
 			}
 
 			MatchDefinition curdef = PlayerStatus.Current.CurrentMatch;
-			if (curdef == null) return;
-			bool tryJoin = data.RequestorStatus != null && curdef.PlayerCanLeaveFreely(PlayerID.MyIDSafe);
+			bool tryJoin = data.RequestorStatus != null && (curdef == null || curdef.PlayerCanLeaveFreely(PlayerID.MyIDSafe));
 			if (!tryJoin) return;
 
 			// try join (in progress takes priority)
@@ -562,7 +563,10 @@ namespace Celeste.Mod.Head2Head {
 					Entity wrapper = new Entity();
 					wrapper.AddTag(Tags.Persistent);
 					currentScenes.Last().Add(wrapper);
-					wrapper.Add(new Coroutine(StartMatchCoroutine(def.Phases[0].Area, data.RequestorStatus.CurrentRoom)));
+					GlobalAreaKey key;
+					string cp;
+					GetLastAreaCP(data.RequestorStatus, out key, out cp);
+					wrapper.Add(new Coroutine(StartMatchCoroutine(key, cp)));
 					return;
 				}
 			}
@@ -574,6 +578,12 @@ namespace Celeste.Mod.Head2Head {
 					PlayerStatus.Current.Updated();
 				}
 			}
+		}
+
+		private void GetLastAreaCP(PlayerStatus stat, out GlobalAreaKey key, out string cp) {
+			key = GlobalAreaKey.Overworld;
+			cp = null;
+			if (stat.CurrentArea.IsOverworld) return;
 		}
 
 		private void OnChannelMove(DataChannelMove data) {
@@ -881,6 +891,7 @@ namespace Celeste.Mod.Head2Head {
 
 		private IEnumerator StartMatchCoroutine(GlobalAreaKey gak, string startRoom = null) {
 			if (PlayerStatus.Current.CurrentMatch == null) yield break;
+			if (gak.IsOverworld) yield break;
 			string idCheck = PlayerStatus.Current.CurrentMatchID;
 			DateTime startInstant = PlayerStatus.Current.CurrentMatch.BeginInstant;
 			DateTime now = DateTime.Now;

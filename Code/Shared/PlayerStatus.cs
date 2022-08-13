@@ -78,6 +78,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public string CurrentMatchID { get; private set; }
 		public GlobalAreaKey CurrentArea { get; internal set; }
 		public string CurrentRoom { get; internal set; }
+		public string LastCheckpoint { get; internal set; } = null;  // TODO (!!!) send over network
 		public bool IsInDebug { get; internal set; }
 		public long CurrentFileTimer { get; internal set; }
 		public long FileTimerAtMatchBegin { get; internal set; }
@@ -99,10 +100,14 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public void ChapterEntered(GlobalAreaKey area, Session session) {
 			CurrentArea = area;
 			CurrentRoom = session.Level;
+			LastCheckpoint = null;
 			Updated();
 		}
 		public void RoomEntered(Level level, LevelData next, Vector2 direction) {
 			CurrentRoom = level.Session.Level;
+			if (next.HasCheckpoint) {
+				LastCheckpoint = next.Name;
+			}
 			Updated();
 		}
 		internal void DebugOpened(MapEditor screen, GlobalAreaKey globalAreaKey, bool reloadMapData) {
@@ -122,6 +127,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public void ChapterExited(LevelExit.Mode mode, Session session) {
 			CurrentArea = GlobalAreaKey.Overworld;
 			CurrentRoom = "";
+			LastCheckpoint = null;
 			if (mode == LevelExit.Mode.Completed || mode == LevelExit.Mode.CompletedInterlude) {
 				ChapterCompleted(new GlobalAreaKey(session.Area));
 			}
@@ -404,6 +410,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			pms.CurrentMatch = r.ReadMatch();
 			pms.CurrentArea = r.ReadAreaKey();
 			pms.CurrentRoom = r.ReadString();
+			pms.LastCheckpoint = r.ReadString();
 			pms.CurrentFileTimer = r.ReadInt64();
 			pms.FileTimerAtMatchBegin = r.ReadInt64();
 			pms.FileTimerAtLastObjectiveComplete = r.ReadInt64();
@@ -428,6 +435,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			w.Write(s.CurrentMatch);
 			w.Write(s.CurrentArea);
 			w.Write(s.CurrentRoom);
+			w.Write(s.LastCheckpoint);
 			w.Write(s.CurrentFileTimer);
 			w.Write(s.FileTimerAtMatchBegin);
 			w.Write(s.FileTimerAtLastObjectiveComplete);
