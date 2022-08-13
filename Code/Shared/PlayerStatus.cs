@@ -30,10 +30,8 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 		public delegate void OnMatchPhaseCompletedHandler(OnMatchPhaseCompletedArgs args);
 		public static event OnMatchPhaseCompletedHandler OnMatchPhaseCompleted;
-		public class OnMatchPhaseCompletedArgs
-		{
-			public OnMatchPhaseCompletedArgs(MatchDefinition def, MatchObjective lastOb, MatchPhase lastPh, MatchPhase nextPh, bool matchComp)
-			{
+		public class OnMatchPhaseCompletedArgs {
+			public OnMatchPhaseCompletedArgs(MatchDefinition def, MatchObjective lastOb, MatchPhase lastPh, MatchPhase nextPh, bool matchComp) {
 				MatchDef = def;
 				CompletedObjective = lastOb;
 				CompletedPhase = lastPh;
@@ -84,7 +82,6 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public long CurrentFileTimer { get; internal set; }
 		public long FileTimerAtMatchBegin { get; internal set; }
 		public long FileTimerAtLastObjectiveComplete { get; internal set; }
-		public int SaveFileAtMatchStart { get; internal set; }
 		public List<H2HMatchPhaseState> phases { get; internal set; } = new List<H2HMatchPhaseState>();
 		public List<H2HMatchObjectiveState> objectives { get; internal set; } = new List<H2HMatchObjectiveState>();
 
@@ -92,8 +89,8 @@ namespace Celeste.Mod.Head2Head.Shared {
 		/// This is not sent over the network. It is to be set on receipt of an update.
 		/// </summary>
 		public DateTime ReceivedAt = DateTime.Now;
-		public MatchState MatchState { 
-			get { 
+		public MatchState MatchState {
+			get {
 				return CurrentMatch?.State ?? MatchState.None;
 			}
 		}
@@ -148,7 +145,6 @@ namespace Celeste.Mod.Head2Head.Shared {
 			phases.Clear();
 			objectives.Clear();
 			FileTimerAtMatchBegin = SaveData.Instance.Time;
-			SaveFileAtMatchStart = SaveData.Instance.FileSlot;
 			Updated();
 		}
 		public void MatchReset() {
@@ -362,6 +358,23 @@ namespace Celeste.Mod.Head2Head.Shared {
 			ResultCategory cat = def.GetPlayerResultCat(PlayerID.MyIDSafe);
 			return cat != ResultCategory.Joined && cat != ResultCategory.InMatch;
 		}
+
+		public int GetMatchSaveFile() {
+			MatchDefinition def = CurrentMatch;
+			if (def == null) return int.MinValue;
+			MatchResultPlayer res = def.Result?[PlayerID.MyIDSafe];
+			if (res == null) return int.MinValue;
+			return res.SaveFile;
+		}
+
+		public void Merge(PlayerStatus other) {
+			CurrentMatchID = other.CurrentMatchID;
+			phases = other.phases;
+			objectives = other.objectives;
+			CurrentFileTimer = other.CurrentFileTimer;
+			FileTimerAtMatchBegin = other.FileTimerAtMatchBegin;
+			FileTimerAtLastObjectiveComplete = other.FileTimerAtLastObjectiveComplete;
+		}
 	}
 
 	public struct H2HMatchPhaseState {
@@ -385,6 +398,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 	public static class PlayerStateExt {
 		public static PlayerStatus ReadPlayerState(this CelesteNetBinaryReader r) {
+			if (!r.ReadBoolean()) return null;
 			PlayerStatus pms = new PlayerStatus();
 			pms.IsInDebug = r.ReadBoolean();
 			pms.CurrentMatch = r.ReadMatch();
@@ -393,7 +407,6 @@ namespace Celeste.Mod.Head2Head.Shared {
 			pms.CurrentFileTimer = r.ReadInt64();
 			pms.FileTimerAtMatchBegin = r.ReadInt64();
 			pms.FileTimerAtLastObjectiveComplete = r.ReadInt64();
-			pms.SaveFileAtMatchStart = r.ReadInt32();
 			int numPhases = r.ReadInt32();
 			for (int i = 0; i < numPhases; i++) {
 				pms.phases.Add(r.ReadMatchPhaseState());
@@ -406,6 +419,11 @@ namespace Celeste.Mod.Head2Head.Shared {
 		}
 
 		public static void Write(this CelesteNetBinaryWriter w, PlayerStatus s) {
+			if (s == null) {
+				w.Write(false);
+				return;
+			}
+			w.Write(true);
 			w.Write(s.IsInDebug);
 			w.Write(s.CurrentMatch);
 			w.Write(s.CurrentArea);
@@ -413,7 +431,6 @@ namespace Celeste.Mod.Head2Head.Shared {
 			w.Write(s.CurrentFileTimer);
 			w.Write(s.FileTimerAtMatchBegin);
 			w.Write(s.FileTimerAtLastObjectiveComplete);
-			w.Write(s.SaveFileAtMatchStart);
 			w.Write(s.phases.Count);
 			foreach (H2HMatchPhaseState st in s.phases) {
 				w.Write(st);

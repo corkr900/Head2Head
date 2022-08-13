@@ -1,4 +1,5 @@
-﻿using Celeste.Mod.Head2Head.Shared;
+﻿using Celeste.Mod.Head2Head.IO;
+using Celeste.Mod.Head2Head.Shared;
 using Microsoft.Xna.Framework;
 using Monocle;
 using MonoMod.Utils;
@@ -173,24 +174,18 @@ namespace Celeste.Mod.Head2Head.UI
 
 			// Clean
 			btn = menu.AddButton("Head2Head_menu_helpdesk_clean", () => {
-				MatchDefinition curdef = PlayerStatus.Current.CurrentMatch;
-				Head2HeadModule.knownMatches.Clear();
-				Head2HeadModule.knownPlayers.Clear();
-				Head2HeadModule.Instance.ClearAutoLaunchInfo();
-				Head2HeadModule.Instance.buildingMatch = null;
-				if (curdef != null && !curdef.PlayerCanLeaveFreely(PlayerID.MyIDSafe)) {
-					Head2HeadModule.knownMatches.Add(curdef.MatchID, curdef);
-				}
-				else {
-					PlayerStatus.Current.Cleanup();
-				}
-				// TODO (!!!) Send a message asking for known information
+				Head2HeadModule.Instance.PurgeAllData();
+				CNetComm.Instance.SendScanRequest(false);
 				cxt.Close(menu);
 			});
-			//if (true)
-			//	btn.SoftDisable(menu, "Head2Head_menu_helpdesk_clean_notimplemented");
-			//else
-				item.AddDescription(menu, Dialog.Clean("Head2Head_menu_helpdesk_clean_subtext"));
+			item.AddDescription(menu, Dialog.Clean("Head2Head_menu_helpdesk_clean_subtext"));
+
+			// Scan & Rejoin
+			btn = menu.AddButton("Head2Head_menu_helpdesk_rejoin", () => {
+				CNetComm.Instance.SendScanRequest(true);
+				cxt.Close(menu);
+			});
+			item.AddDescription(menu, Dialog.Clean("Head2Head_menu_helpdesk_rejoin_subtext"));
 
 			// Return to Lobby
 			if (!PlayerStatus.Current.CurrentArea.Equals(GlobalAreaKey.Head2HeadLobby)) {
@@ -228,7 +223,7 @@ namespace Celeste.Mod.Head2Head.UI
 			menu.Add(item);
 
 			// Loop over known matches
-			Head2HeadModule.Instance.PurgeStaleData();
+			Head2HeadModule.Instance.DiscardStaleData();
 			foreach (MatchDefinition def in Head2HeadModule.knownMatches.Values)
 			{
 				item = new TextMenu.Button(def.DisplayName).Pressed(() => {
@@ -315,15 +310,6 @@ namespace Celeste.Mod.Head2Head.UI
 					btn.SoftDisable(menu, "Head2Head_menu_match_stage_dropfirst");
 				else
 					btn.AddDescription(menu, Dialog.Clean("Head2Head_menu_match_join_subtext"));
-
-				// Rejoin
-				btn = menu.AddButton("Head2Head_menu_match_rejoin", () => {
-					// TODO (!!!)
-				});
-				if (true)
-					btn.SoftDisable(menu, "Head2Head_menu_match_rejoin_notimplemented");
-				else
-					btn.AddDescription(menu, Dialog.Clean("Head2Head_menu_match_rejoin_subtext"));
 
 				// Forget
 				btn = menu.AddButton("Head2Head_menu_match_forget", () => {

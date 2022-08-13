@@ -132,6 +132,8 @@ namespace Celeste.Mod.Head2Head {
 			CNetComm.OnReceiveMatchUpdate += OnMatchUpdate;
 			CNetComm.OnReceivePlayerStatus += OnPlayerStatusUpdate;
 			CNetComm.OnReceiveMatchReset += OnMatchReset;
+			CNetComm.OnReceiveScanRequest += OnScanRequest;
+			CNetComm.OnReceiveScanResponse += OnScanResponse;
 			PlayerStatus.OnMatchPhaseCompleted += OnCompletedMatchPhase;
 			// Misc other setup
 			Celeste.Instance.Components.Add(Comm = new CNetComm(Celeste.Instance));
@@ -182,6 +184,8 @@ namespace Celeste.Mod.Head2Head {
 			CNetComm.OnReceiveMatchUpdate -= OnMatchUpdate;
 			CNetComm.OnReceivePlayerStatus -= OnPlayerStatusUpdate;
 			CNetComm.OnReceiveMatchReset -= OnMatchReset;
+			CNetComm.OnReceiveScanRequest -= OnScanRequest;
+			CNetComm.OnReceiveScanResponse -= OnScanResponse;
 			PlayerStatus.OnMatchPhaseCompleted -= OnCompletedMatchPhase;
 			// Misc other cleanup
 			if (Celeste.Instance.Components.Contains(Comm))
@@ -436,8 +440,11 @@ namespace Celeste.Mod.Head2Head {
 		}
 
 		private void OnSaveDataStart(On.Celeste.SaveData.orig_Start orig, SaveData data, int slot) {
-			if (PlayerStatus.Current.IsInMatch(false) && PlayerStatus.Current.SaveFileAtMatchStart != slot) {
-				PlayerStatus.Current.CurrentMatch?.PlayerDNF();
+			if (PlayerStatus.Current.IsInMatch(false)) {
+				int matchslot = PlayerStatus.Current.GetMatchSaveFile();
+				if (matchslot != int.MinValue && matchslot != slot) {
+					PlayerStatus.Current.CurrentMatch?.PlayerDNF();
+				}
 			}
 			orig(data, slot);
 		}
@@ -459,6 +466,7 @@ namespace Celeste.Mod.Head2Head {
 				else knownPlayers.Add(data.playerID, data.Status);
 			}
 			if (data.Status.HasCompletedMatch() && knownMatches.ContainsKey(data.Status.CurrentMatchID)) {
+				// TODO (!!!) Is this really necessary???
 				MatchDefinition def = knownMatches[data.Status.CurrentMatchID];
 				if (def.State == MatchState.InProgress) {
 					if (def.GetPlayerResultCat(data.playerID) == ResultCategory.InMatch) {
@@ -501,26 +509,77 @@ namespace Celeste.Mod.Head2Head {
 			}
 			if (def.State == MatchState.Staged && (isNew || oldState != MatchState.Staged)) {
 				MatchStaged(def, data.playerID.Equals(PlayerID.MyIDSafe));
-				ClearAutoLaunchInfo();
 			}
-			else if (def.State == MatchState.InProgress
-				&& (isNew || oldState != MatchState.InProgress)) {
-				MatchStarted(def);
-				ClearAutoLaunchInfo();
+			else if (def.State == MatchState.InProgress && (isNew || oldState != MatchState.InProgress)) {
+				if (MatchStarted(def)) {
+					ClearAutoLaunchInfo();
+				}
 			}
 			else if (def.State == MatchState.InProgress && oldState == MatchState.InProgress) {
 				// Everyone dropped out
 				def.CompleteIfNoRunners(false);
 			}
 			OnMatchCurrentMatchUpdated?.Invoke();
-			PurgeStaleData();
+			DiscardStaleData();
+		}
+
+		private void OnScanRequest(DataH2HScanRequest data) {
+			if (data.playerID.Equals(PlayerID.MyIDSafe)) return;
+			CNetComm.Instance.SendScanResponse(data.playerID, knownPlayers[data.playerID]);
+		}
+
+		private void OnScanResponse(DataH2HScanResponse data) {
+			if (!data.Requestor.Equals(PlayerID.MyID)) return;
+
+			// sync data
+			if (knownPlayers.ContainsKey(data.playerID)) knownPlayers[data.playerID] = data.SenderStatus;
+			else knownPlayers.Add(data.playerID, data.SenderStatus);
+			foreach (MatchDefinition def in data.Matches) {
+				if (knownMatches.ContainsKey(def.MatchID)) knownMatches[def.MatchID].MergeDynamic(def);
+				else knownMatches.Add(def.MatchID, def);
+			}
+
+			MatchDefinition curdef = PlayerStatus.Current.CurrentMatch;
+			bool tryJoin = data.RequestorStatus != null && curdef.PlayerCanLeaveFreely(PlayerID.MyIDSafe);
+			if (!tryJoin) return;
+
+			// try join (in progress takes priority)
+			foreach (MatchDefinition def in knownMatches.Values) {
+				ResultCategory cat = def.GetPlayerResultCat(PlayerID.MyIDSafe);
+				if (cat == ResultCategory.InMatch
+					&& def.Result[PlayerID.MyIDSafe]?.SaveFile == global::Celeste.SaveData.Instance.FileSlot)
+				{
+					PlayerStatus.Current.CurrentMatch = def;
+					PlayerStatus.Current.Merge(data.RequestorStatus);
+					if (global::Celeste.SaveData.Instance != null) {
+						global::Celeste.SaveData.Instance.Time = Math.Max(
+							global::Celeste.SaveData.Instance.Time,
+							data.RequestorStatus.CurrentFileTimer);
+					}
+					PlayerStatus.Current.Updated();
+
+					Entity wrapper = new Entity();
+					wrapper.AddTag(Tags.Persistent);
+					currentScenes.Last().Add(wrapper);
+					wrapper.Add(new Coroutine(StartMatchCoroutine(def.Phases[0].Area, data.RequestorStatus.CurrentRoom)));
+					return;
+				}
+			}
+			// try join (joined, not started)
+			foreach (MatchDefinition def in knownMatches.Values) {
+				ResultCategory cat = def.GetPlayerResultCat(PlayerID.MyIDSafe);
+				if (cat == ResultCategory.Joined) {
+					PlayerStatus.Current.CurrentMatch = def;
+					PlayerStatus.Current.Updated();
+				}
+			}
 		}
 
 		private void OnChannelMove(DataChannelMove data) {
 			// TODO handle channel moves
 			Engine.Commands.Log("Channel Move Received for " + data.Player?.FullName);
 			OnMatchCurrentMatchUpdated?.Invoke();
-			PurgeStaleData();
+			DiscardStaleData();
 		}
 
 		private void OnConnected(CelesteNetClientContext cxt) {
@@ -671,6 +730,7 @@ namespace Celeste.Mod.Head2Head {
 			PlayerStatus.Current.CurrentMatch = def;
 			PlayerStatus.Current.MatchStaged(PlayerStatus.Current.CurrentMatch);
 			OnMatchCurrentMatchUpdated?.Invoke();
+			Instance.ClearAutoLaunchInfo();
 		}
 
 		public void JoinStagedMatch() {
@@ -734,7 +794,7 @@ namespace Celeste.Mod.Head2Head {
 			}
 		}
 
-		public void PurgeStaleData()
+		public void DiscardStaleData()
 		{
 			List<MatchDefinition> defsToRemove = new List<MatchDefinition>();
 			foreach (MatchDefinition def in knownMatches.Values)
@@ -756,6 +816,20 @@ namespace Celeste.Mod.Head2Head {
 				}
 			}
 			foreach (PlayerID id in playersToRemove) knownPlayers.Remove(id);
+		}
+
+		public void PurgeAllData() {
+			MatchDefinition curdef = PlayerStatus.Current.CurrentMatch;
+			knownMatches.Clear();
+			knownPlayers.Clear();
+			Instance.ClearAutoLaunchInfo();
+			Instance.buildingMatch = null;
+			if (curdef != null && !curdef.PlayerCanLeaveFreely(PlayerID.MyIDSafe)) {
+				knownMatches.Add(curdef.MatchID, curdef);
+			}
+			else {
+				PlayerStatus.Current.Cleanup();
+			}
 		}
 
 		private bool MatchIsStale(MatchDefinition def)
@@ -781,10 +855,12 @@ namespace Celeste.Mod.Head2Head {
 				Engine.Commands.Log("Cannot start match: there is no scene");
 				return false;
 			}
-			if (PlayerStatus.Current.CurrentMatch == null) {  // Out of sync (maybe a disconnect / reconnect?)
-				if (!def.Players.Contains(PlayerID.MyIDSafe)) return false;
+			if (PlayerStatus.Current.CurrentMatch == null) { 
+				// Out of sync (data purge, crash/reload, channel switching)
+				ResultCategory cat = def.GetPlayerResultCat(PlayerID.MyIDSafe);
+				if (cat != ResultCategory.InMatch) return false;
+				if (def.Result[PlayerID.MyIDSafe]?.SaveFile != global::Celeste.SaveData.Instance.FileSlot) return false;
 				PlayerStatus.Current.CurrentMatch = def;
-				// TODO if the player has not entered a savefile and reconnects and hits this, it could load you into the level without a savefile
 			}
 			else if (PlayerStatus.Current.CurrentMatch.MatchID != def.MatchID) {  // Not a match we care about
 				return false;
@@ -795,9 +871,6 @@ namespace Celeste.Mod.Head2Head {
 				return true;
 			}
 			// Begin!
-			// TODO (!!!) prevent this from getting broken by stuff like screen transitions or closing the OUI
-			// If the coroutine can be made persistent across rooms, that + disabling pause during
-			// countdown should cover all the cases we really care about since pause is the only way to exit the lobby
 			Entity wrapper = new Entity();
 			wrapper.AddTag(Tags.Persistent);
 			currentScenes.Last().Add(wrapper);
@@ -805,7 +878,7 @@ namespace Celeste.Mod.Head2Head {
 			return true;
 		}
 
-		private IEnumerator StartMatchCoroutine(GlobalAreaKey gak) {
+		private IEnumerator StartMatchCoroutine(GlobalAreaKey gak, string startRoom = null) {
 			if (PlayerStatus.Current.CurrentMatch == null) yield break;
 			string idCheck = PlayerStatus.Current.CurrentMatchID;
 			DateTime startInstant = PlayerStatus.Current.CurrentMatch.BeginInstant;
@@ -820,13 +893,16 @@ namespace Celeste.Mod.Head2Head {
 				yield return (float)((startInstant - now).TotalSeconds);
 			}
 
-			if (PlayerStatus.Current.CurrentMatch == null) yield break;
 			if (PlayerStatus.Current.CurrentMatchID != idCheck) yield break;
-			if (PlayerStatus.Current.CurrentMatch.State != MatchState.InProgress) yield break;
+			MatchDefinition def = PlayerStatus.Current.CurrentMatch;
+			if (def == null) yield break;
+			if (def.State != MatchState.InProgress) yield break;
 			PlayerStatus.Current.MatchStarted();
+			def.RegisterSaveFile();
 			new FadeWipe(currentScenes.Last(), false, () => {
-				LevelEnter.Go(new Session(gak.Local.Value), false);
+				LevelEnter.Go(new Session(gak.Local.Value, startRoom), false);
 				// TODO send a confirmation message on load-in?
+
 			});
 		}
 

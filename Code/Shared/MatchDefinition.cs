@@ -91,6 +91,24 @@ namespace Celeste.Mod.Head2Head.Shared {
 			}
 		}
 
+        public void RegisterSaveFile() {
+            if (Result == null) Result = new MatchResult();
+            MatchResultPlayer res = Result[PlayerID.MyIDSafe];
+            if (res == null) {
+                PlayerID? id = PlayerID.MyID;
+                if (id == null) return;
+                Result.players.Add(id.Value, new MatchResultPlayer() {
+                    ID = id.Value,
+                    Result = GetPlayerResultCat(id.Value),
+                    SaveFile = SaveData.Instance.FileSlot,
+                    FileTimeStart = PlayerStatus.Current.FileTimerAtMatchBegin,
+                });
+			}
+			else {
+                res.SaveFile = SaveData.Instance.FileSlot;
+			}
+		}
+
         public MatchPhase GetPhase(uint id) {
             foreach(MatchPhase phase in Phases) {
                 if (phase.ID == id) return phase;
@@ -113,11 +131,21 @@ namespace Celeste.Mod.Head2Head.Shared {
 
         public ResultCategory GetPlayerResultCat(PlayerID id) {
             if (!Players.Contains(id)) return ResultCategory.NotJoined;
-            if (Result != null  && Result.players.ContainsKey(id)) return Result[id].Result;
+            if (Result != null && Result.players.ContainsKey(id)) {
+                ResultCategory res = Result[id].Result;
+                ResultCategory min = MinimumPlayerResult();
+                return min > res ? min : res;
+            }
             if (State == MatchState.InProgress) return ResultCategory.InMatch;
             if (State == MatchState.Completed) return ResultCategory.DNF;
             return ResultCategory.Joined;
 		}
+
+        private ResultCategory MinimumPlayerResult() {
+            if (State == MatchState.InProgress) return ResultCategory.InMatch;
+            if (State == MatchState.Completed) return ResultCategory.Completed;
+            return ResultCategory.NotJoined;
+        }
 
         public bool PlayerCanLeaveFreely(PlayerID id) {
             ResultCategory cat = GetPlayerResultCat(id);

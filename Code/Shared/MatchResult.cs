@@ -29,7 +29,9 @@ namespace Celeste.Mod.Head2Head.Shared {
         public ResultCategory Result = ResultCategory.NotJoined;
         public long FileTimeStart;
         public long FileTimeEnd;
-        public long FileTimeTotal { get { return FileTimeEnd - FileTimeStart; } }
+		public int SaveFile;
+
+		public long FileTimeTotal { get { return FileTimeEnd - FileTimeStart; } }
     }
 
     /// <summary>
@@ -70,6 +72,7 @@ namespace Celeste.Mod.Head2Head.Shared {
             res.Result = (ResultCategory)Enum.Parse(typeof(ResultCategory), r.ReadString());
             res.FileTimeStart = r.ReadInt64();
             res.FileTimeEnd = r.ReadInt64();
+            res.SaveFile = r.ReadInt32();
             return res;
         }
 
@@ -78,6 +81,7 @@ namespace Celeste.Mod.Head2Head.Shared {
             w.Write(m.Result.ToString());
             w.Write(m.FileTimeStart);
             w.Write(m.FileTimeEnd);
+            w.Write(m.SaveFile);
         }
     }
 }
