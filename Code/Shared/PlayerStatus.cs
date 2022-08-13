@@ -411,6 +411,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			pms.CurrentArea = r.ReadAreaKey();
 			pms.CurrentRoom = r.ReadString();
 			pms.LastCheckpoint = r.ReadString();
+			if (string.IsNullOrEmpty(pms.LastCheckpoint)) pms.LastCheckpoint = null;
 			pms.CurrentFileTimer = r.ReadInt64();
 			pms.FileTimerAtMatchBegin = r.ReadInt64();
 			pms.FileTimerAtLastObjectiveComplete = r.ReadInt64();
@@ -435,7 +436,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			w.Write(s.CurrentMatch);
 			w.Write(s.CurrentArea);
 			w.Write(s.CurrentRoom);
-			w.Write(s.LastCheckpoint);
+			w.Write(s.LastCheckpoint ?? "");
 			w.Write(s.CurrentFileTimer);
 			w.Write(s.FileTimerAtMatchBegin);
 			w.Write(s.FileTimerAtLastObjectiveComplete);
