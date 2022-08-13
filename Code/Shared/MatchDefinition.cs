@@ -107,6 +107,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			else {
                 res.SaveFile = SaveData.Instance.FileSlot;
 			}
+            BroadcastUpdate();
 		}
 
         public MatchPhase GetPhase(uint id) {
