@@ -8,7 +8,7 @@ using System.Collections.Generic;
 namespace Celeste.Mod.Head2Head.UI {
 	public class H2HHudRenderer : HiresRenderer {
 
-		public static Vector2 CanvasSize = new Vector2(1920f, 1080f);
+		public static Vector2 CanvasSize { get { return new Vector2(1920f, 1080f); } }
 		public static float lineOffset = 52f;
 
 		public static float Opacity(Scene scene, MatchDefinition def) {
@@ -21,14 +21,20 @@ namespace Celeste.Mod.Head2Head.UI {
 			return Head2HeadModule.Settings.HudOpacityNotInMatch;
 		}
 
-		public override void Render(Scene scene) {
+		public override void BeforeRender(Scene scene) {
+			if (DrawToBuffer) {
+				Engine.Graphics.GraphicsDevice.SetRenderTarget(Buffer);
+				RenderContent(scene);
+			}
+		}
+
+		public override void RenderContent(Scene scene) {
 			MatchDefinition def = PlayerStatus.Current.CurrentMatch;
 			HiresRenderer.BeginRender();
 			if (ShouldRenderBanner(scene, def)) RenderBanner(scene, def);
 			if (ShouldShowPlayerList(scene, def)) RenderPlayerList(scene, def);
 			if (ShouldShowCountdown(scene, def)) RenderCountdown(scene, def);
 			HiresRenderer.EndRender();
-			base.Render(scene);
 		}
 
 		#region Banner
@@ -114,8 +120,7 @@ namespace Celeste.Mod.Head2Head.UI {
 
 		#region Countdown
 
-		private bool ShouldShowCountdown(Scene scene, MatchDefinition def)
-		{
+		private bool ShouldShowCountdown(Scene scene, MatchDefinition def) {
 			if (def == null) return false;
 			if (def.State != MatchState.InProgress) return false;
 			DateTime now = DateTime.Now;
@@ -127,8 +132,7 @@ namespace Celeste.Mod.Head2Head.UI {
 			return true;
 		}
 
-		public void RenderCountdown(Scene scene, MatchDefinition def)
-		{
+		public void RenderCountdown(Scene scene, MatchDefinition def) {
 			if (def == null) return;
 			float _bannerOpacity = Opacity(scene, PlayerStatus.Current.CurrentMatch);
 			Vector2 justify = new Vector2(0.5f, 0.5f);
