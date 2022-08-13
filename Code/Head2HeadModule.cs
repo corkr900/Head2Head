@@ -565,7 +565,7 @@ namespace Celeste.Mod.Head2Head {
 					currentScenes.Last().Add(wrapper);
 					GlobalAreaKey key;
 					string cp;
-					GetLastAreaCP(data.RequestorStatus, out key, out cp);
+					GetLastAreaCP(data.RequestorStatus, def, out key, out cp);
 					wrapper.Add(new Coroutine(StartMatchCoroutine(key, cp)));
 					return;
 				}
@@ -580,10 +580,16 @@ namespace Celeste.Mod.Head2Head {
 			}
 		}
 
-		private void GetLastAreaCP(PlayerStatus stat, out GlobalAreaKey key, out string cp) {
+		private void GetLastAreaCP(PlayerStatus stat, MatchDefinition def, out GlobalAreaKey key, out string cp) {
 			key = GlobalAreaKey.Overworld;
 			cp = null;
 			if (stat.CurrentArea.IsOverworld) return;
+			stat.CurrentMatch = def;
+			int phase = stat.CurrentPhase();
+			phase = Math.Min(phase, def.Phases.Count - 1);
+			if (phase < 0) return;
+			key = def.Phases[phase].Area;
+			cp = string.IsNullOrEmpty(stat.LastCheckpoint) ? null : stat.LastCheckpoint;
 		}
 
 		private void OnChannelMove(DataChannelMove data) {

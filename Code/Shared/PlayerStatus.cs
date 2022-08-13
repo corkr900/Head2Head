@@ -78,7 +78,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public string CurrentMatchID { get; private set; }
 		public GlobalAreaKey CurrentArea { get; internal set; }
 		public string CurrentRoom { get; internal set; }
-		public string LastCheckpoint { get; internal set; } = null;  // TODO (!!!) send over network
+		public string LastCheckpoint { get; internal set; } = null;
 		public bool IsInDebug { get; internal set; }
 		public long CurrentFileTimer { get; internal set; }
 		public long FileTimerAtMatchBegin { get; internal set; }
@@ -215,7 +215,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 		// objective help
 
-		private int CurrentPhase() {
+		internal int CurrentPhase() {
 			if (CurrentMatch == null) return -1;
 			if (!IsInMatch(false)) return -1;
 			int max = 0;
@@ -374,7 +374,6 @@ namespace Celeste.Mod.Head2Head.Shared {
 		}
 
 		public void Merge(PlayerStatus other) {
-			CurrentMatchID = other.CurrentMatchID;
 			phases = other.phases;
 			objectives = other.objectives;
 			CurrentFileTimer = other.CurrentFileTimer;
