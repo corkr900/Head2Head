@@ -11,7 +11,7 @@ namespace Celeste.Mod.Head2Head.Data {
             DataID = "DataH2HScanRequest_" + Head2HeadModule.ProtocolVersion;
         }
 
-        protected override bool UseBoundRef { get { return true; } }
+        protected override bool UseBoundRef { get { return false; } }
 
         public bool AutoRejoin;
 
