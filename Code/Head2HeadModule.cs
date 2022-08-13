@@ -461,6 +461,10 @@ namespace Celeste.Mod.Head2Head {
 		private void OnPlayerStatusUpdate(DataH2HPlayerStatus data) {
 			if (!data.playerID.Equals(PlayerID.MyID)) {
 				if (knownPlayers.ContainsKey(data.playerID)) {
+					// don't overwrite the cp so it can be used in a rejoin
+					if (string.IsNullOrEmpty(data.Status.LastCheckpoint)) {
+						data.Status.LastCheckpoint = knownPlayers[data.playerID].LastCheckpoint;
+					}
 					knownPlayers[data.playerID] = data.Status;
 				}
 				else knownPlayers.Add(data.playerID, data.Status);
