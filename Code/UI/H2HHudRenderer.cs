@@ -9,7 +9,21 @@ namespace Celeste.Mod.Head2Head.UI {
 	public class H2HHudRenderer : HiresRenderer {
 
 		public static Vector2 CanvasSize { get { return new Vector2(1920f, 1080f); } }
-		public static float lineOffset = 52f;
+		public static readonly int lineOffset = 52;
+		public static readonly int titleMarginX = 80;
+
+		MTexture Banner;
+		MTexture BannerLeft;
+		MTexture BannerMid;
+		MTexture BannerRight;
+
+		public H2HHudRenderer() : base() {
+			Banner = GFX.Gui["Head2Head/HUD/banner_bg"];
+			int w = Banner.Width / 3;
+			BannerLeft = new MTexture(Banner, 0, 0, w, Banner.Height);
+			BannerMid = new MTexture(Banner, w, 0, w, Banner.Height);
+			BannerRight = new MTexture(Banner, Banner.Width - w, 0, w, Banner.Height);
+		}
 
 		public static float Opacity(Scene scene, MatchDefinition def) {
 			if (def == null) return 0.0f;
@@ -51,16 +65,22 @@ namespace Celeste.Mod.Head2Head.UI {
 			float hudScale = Head2HeadModule.Settings.HudScale;
 
 			if (_bannerOpacity > 0.001f) {
-				MTexture bannerBG = GFX.Gui["Head2Head/HUD/banner_bg"];
-				Vector2 bannerPosition = new Vector2(CanvasSize.X / 2f, -1f);
-				if (!showCreator) bannerPosition -= Vector2.UnitY * (lineOffset - 16);
-				Color bannerColor = Color.White;
-				bannerBG.DrawJustified(bannerPosition, justify, bannerColor * _bannerOpacity, hudScale);
-
 				string matchCaption = def.Phases.Count == 0 ? "Unnamed Match" : def.Phases[0].Title;
 				Vector2 captionPos = new Vector2(CanvasSize.X / 2, 0f);
 				Vector2 captionScale = Vector2.One * hudScale;
 				Color captionColor = Color.Black;
+
+				float midWidth = Math.Max(ActiveFont.Measure(matchCaption).X - (BannerLeft.Width * 2) + titleMarginX * 2, 0);
+				Vector2 bannerPositionL = new Vector2((CanvasSize.X - midWidth) / 2f, -1f);
+				Vector2 bannerPositionR = new Vector2((CanvasSize.X + midWidth) / 2f, -1f);
+				if (!showCreator) {
+					bannerPositionL -= Vector2.UnitY * (lineOffset - 16);
+					bannerPositionR -= Vector2.UnitY * (lineOffset - 16);
+				}
+				BannerLeft.DrawJustified(bannerPositionL, new Vector2(1, 0));
+				BannerMid.DrawJustified(bannerPositionL, new Vector2(0, 0), Color.White, new Vector2(midWidth / BannerMid.Width, 1));
+				BannerRight.DrawJustified(bannerPositionR, new Vector2(0, 0));
+
 				ActiveFont.Draw(matchCaption, captionPos, justify, captionScale, captionColor * _bannerOpacity);
 
 				if (showCreator) {

@@ -25,10 +25,7 @@ using Celeste.Mod.UI;
 using Celeste.Mod.Head2Head.UI;
 using FMOD.Studio;
 
-// TODO (!!!) Prevent starting at checkpoints not already reached during the match
 // TODO Force DNF if a player intentionally closes the game
-
-// timer conversion to readable string: speedrunTimerFileString = Dialog.FileTime(SaveData.Instance.Time);
 
 namespace Celeste.Mod.Head2Head {
 	public class Head2HeadModule : EverestModule {

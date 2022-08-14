@@ -86,6 +86,10 @@ namespace Celeste.Mod.Head2Head.Control {
 			bool isFloat = float.TryParse(val, out valFloat);
 
 			switch (id) {
+				//case "margin":
+				//	if (!isFloat) return;
+				//	H2HHudRenderer.titleMarginX = (int)valFloat;
+				//	return;
 				case "help":
 				case "-h":
 				default:
