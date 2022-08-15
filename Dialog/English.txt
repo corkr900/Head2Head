@@ -14,7 +14,7 @@ after completing the previous phase.
 Default: On
 Head2Head_Setting_HudScale= HUD Scale
 Head2Head_Setting_HudScale_subtext= Controls the size of the Head 2 Head HUD.
-Default: 4
+Default: 1
 Head2Head_Setting_HudOpacityBeforeMatch= HUD Opacity (Before/After Match)
 Head2Head_Setting_HudOpacityBeforeMatch_subtext= Changes the opacity of the Head 2 Head HUD before & after the match.
 Default: 1
