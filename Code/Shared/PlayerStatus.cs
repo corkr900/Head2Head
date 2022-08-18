@@ -67,13 +67,6 @@ namespace Celeste.Mod.Head2Head.Shared {
 			ResultCategory cat = def.GetPlayerResultCat(id ?? PlayerID.MyIDSafe);
 			return cat == ResultCategory.InMatch || (includeJoined && cat == ResultCategory.Joined);
 		}
-		public bool HasCompletedMatch(PlayerID? id = null) {
-			if (string.IsNullOrEmpty(CurrentMatchID)) return false;
-			MatchDefinition def = CurrentMatch;
-			if (def == null) return true;  // Remote player but we have forgotten their match. This is not likely to ever get hit
-			ResultCategory cat = def.GetPlayerResultCat(id ?? PlayerID.MyIDSafe);
-			return cat == ResultCategory.Completed || cat == ResultCategory.DNF;
-		}
 
 		public string CurrentMatchID { get; private set; }
 		public GlobalAreaKey CurrentArea { get; internal set; }
@@ -354,6 +347,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 					nextPhase,
 					matchFinished
 				));
+				Updated();
 			}
 			return anychanges;
 		}

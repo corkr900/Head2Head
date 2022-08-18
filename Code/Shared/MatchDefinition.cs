@@ -172,7 +172,7 @@ namespace Celeste.Mod.Head2Head.Shared {
                         FileTimeEnd = stat.FileTimerAtLastObjectiveComplete,
                     };
                 }
-                CompleteIfNoRunners(false);
+                CompleteIfNoRunners();
                 BroadcastUpdate();
             }
         }
@@ -193,17 +193,17 @@ namespace Celeste.Mod.Head2Head.Shared {
                         FileTimeEnd = stat.FileTimerAtLastObjectiveComplete,
                     };
 				}
-                CompleteIfNoRunners(id.Equals(PlayerID.MyIDSafe));
+                CompleteIfNoRunners();
             }
         }
 
-        public void CompleteIfNoRunners(bool broadcastUpdate) {
+        public void CompleteIfNoRunners() {
             if (State != MatchState.InProgress) return;
             foreach (PlayerID player in Players) {
                 if (GetPlayerResultCat(player) <= ResultCategory.InMatch) return;
-			}
-            if (broadcastUpdate) State = MatchState.Completed;  // Broadcasts update
-            else SetState_NoUpdate(MatchState.Completed);
+            }
+            SetState_NoUpdate(MatchState.Completed);
+            BroadcastUpdate();
 		}
 
         public void MergeDynamic(MatchDefinition newer) {

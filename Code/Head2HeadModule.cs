@@ -502,26 +502,6 @@ namespace Celeste.Mod.Head2Head {
 				}
 				else knownPlayers.Add(data.playerID, data.Status);
 			}
-			if (data.Status.HasCompletedMatch() && knownMatches.ContainsKey(data.Status.CurrentMatchID)) {
-				// TODO (!!!) Is this really necessary???
-				MatchDefinition def = knownMatches[data.Status.CurrentMatchID];
-				if (def.State == MatchState.InProgress) {
-					if (def.GetPlayerResultCat(data.playerID) == ResultCategory.InMatch) {
-						def.PlayerFinished(data.playerID, data.Status);
-					}
-					bool playersFinished = true;
-					foreach (PlayerID id in def.Players) {
-						ResultCategory cat = def.GetPlayerResultCat(id);
-						if (cat <= ResultCategory.InMatch) {
-							playersFinished = false;
-							break;
-						}
-					}
-					if (playersFinished) {
-						PlayerStatus.Current.CurrentMatch.State = MatchState.Completed;
-					}
-				}
-			}
 			OnMatchCurrentMatchUpdated?.Invoke();
 		}
 
@@ -552,9 +532,9 @@ namespace Celeste.Mod.Head2Head {
 					ClearAutoLaunchInfo();
 				}
 			}
-			else if (def.State == MatchState.InProgress && oldState == MatchState.InProgress) {
+			if (def.State == MatchState.InProgress) {
 				// Everyone dropped out
-				def.CompleteIfNoRunners(false);
+				def.CompleteIfNoRunners();
 			}
 			OnMatchCurrentMatchUpdated?.Invoke();
 			DiscardStaleData();

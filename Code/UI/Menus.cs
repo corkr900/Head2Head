@@ -178,7 +178,7 @@ namespace Celeste.Mod.Head2Head.UI
 				CNetComm.Instance.SendScanRequest(false);
 				cxt.Close(menu);
 			});
-			item.AddDescription(menu, Dialog.Clean("Head2Head_menu_helpdesk_clean_subtext"));
+			btn.AddDescription(menu, Dialog.Clean("Head2Head_menu_helpdesk_clean_subtext"));
 
 			// Scan & Rejoin
 			if (!Head2HeadModule.Instance.PlayerCompletedARoom && def_menu == null) {
@@ -186,7 +186,7 @@ namespace Celeste.Mod.Head2Head.UI
 					CNetComm.Instance.SendScanRequest(true);
 					cxt.Close(menu);
 				});
-				item.AddDescription(menu, Dialog.Clean("Head2Head_menu_helpdesk_rejoin_subtext"));
+				btn.AddDescription(menu, Dialog.Clean("Head2Head_menu_helpdesk_rejoin_subtext"));
 			}
 
 			// Return to Lobby
