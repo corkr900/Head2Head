@@ -112,6 +112,7 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.LevelData.CreateEntityData += OnLevelDataCreateEntityData;
 			On.Celeste.LevelLoader.StartLevel += OnLevelLoaderStart;
 			On.Celeste.AreaComplete.Update += OnAreaCompleteUpdate;
+			On.Celeste.OverworldLoader.Begin += OnOverworldLoaderBegin;
 			On.Celeste.OuiChapterPanel._GetCheckpoints += OnOUIChapterPanel_GetCheckpoints;
 			On.Celeste.OuiChapterSelectIcon.Show += OnOuiChapterSelectIconShow;
 			On.Celeste.Editor.MapEditor.ctor += onDebugScreenOpened;
@@ -168,6 +169,7 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.LevelData.CreateEntityData -= OnLevelDataCreateEntityData;
 			On.Celeste.LevelLoader.StartLevel -= OnLevelLoaderStart;
 			On.Celeste.AreaComplete.Update -= OnAreaCompleteUpdate;
+			On.Celeste.OverworldLoader.Begin -= OnOverworldLoaderBegin;
 			On.Celeste.OuiChapterPanel._GetCheckpoints -= OnOUIChapterPanel_GetCheckpoints;
 			On.Celeste.OuiChapterSelectIcon.Show -= OnOuiChapterSelectIconShow;
 			On.Celeste.Editor.MapEditor.ctor -= onDebugScreenOpened;
@@ -205,11 +207,6 @@ namespace Celeste.Mod.Head2Head {
 		}
 
 		// ###############################################
-
-		private void OnLevelRegisterAreaComplete(On.Celeste.Level.orig_RegisterAreaComplete orig, Level self) {
-			PlayerStatus.Current.ChapterCompleted(new GlobalAreaKey(self.Session.Area));
-			orig(self);
-		}
 
 		private static void Level_LoadingThread(ILContext il) {
 			ILCursor cursor = new ILCursor(il);
@@ -495,6 +492,17 @@ namespace Celeste.Mod.Head2Head {
 				return set;
 			}
 			else return orig(save, area);
+		}
+
+		private void OnLevelRegisterAreaComplete(On.Celeste.Level.orig_RegisterAreaComplete orig, Level self) {
+			PlayerStatus.Current.ChapterCompleted(new GlobalAreaKey(self.Session.Area));
+			orig(self);
+		}
+
+		private void OnOverworldLoaderBegin(On.Celeste.OverworldLoader.orig_Begin orig, OverworldLoader self) {
+			if (!DoPostPhaseAutoLaunch(false)) {
+				orig(self);
+			}
 		}
 
 		// ########################################
@@ -975,10 +983,10 @@ namespace Celeste.Mod.Head2Head {
 			doAutoLaunch = true;
 		}
 
-		private bool DoPostPhaseAutoLaunch(bool doFadeWipe, MatchObjectiveType ifType)
+		private bool DoPostPhaseAutoLaunch(bool doFadeWipe, MatchObjectiveType? ifType = null)
 		{
 			if (!doAutoLaunch) return false;
-			if (lastObjectiveType != ifType) return false;
+			if (ifType != null && lastObjectiveType != ifType.Value) return false;
 			GlobalAreaKey area = autoLaunchArea;
 			ClearAutoLaunchInfo();
 			if (doFadeWipe)

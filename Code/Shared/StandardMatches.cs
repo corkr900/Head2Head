@@ -148,7 +148,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 		public static MatchPhase ILMoonBerry(GlobalAreaKey area) {
 			if (string.IsNullOrEmpty(area.Local?.SID)) return null;
-			if (!IsCategoryValid(StandardCategory.FullClear, area)) return null;
+			if (!IsCategoryValid(StandardCategory.MoonBerry, area)) return null;
 
 			MatchPhase mp = new MatchPhase() {
 				category = StandardCategory.MoonBerry,
@@ -168,7 +168,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 		public static MatchPhase ILFCMoonBerry(GlobalAreaKey area) {
 			if (string.IsNullOrEmpty(area.Local?.SID)) return null;
-			if (!IsCategoryValid(StandardCategory.FullClear, area)) return null;
+			if (!IsCategoryValid(StandardCategory.FullClearMoonBerry, area)) return null;
 
 			MatchPhase mp = new MatchPhase() {
 				category = StandardCategory.FullClearMoonBerry,
