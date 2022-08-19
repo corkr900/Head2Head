@@ -514,16 +514,16 @@ namespace Celeste.Mod.Head2Head {
 		}
 
 		private void OnMatchUpdate(DataH2HMatchUpdate data) {
-			MatchDefinition def = data.NewDef;
-			bool isNew = !knownMatches.ContainsKey(def.MatchID);
-			MatchState oldState = isNew ? MatchState.None : knownMatches[def.MatchID].State;
+			bool isNew = !knownMatches.ContainsKey(data.NewDef.MatchID);
+			MatchState oldState = isNew ? MatchState.None : knownMatches[data.NewDef.MatchID].State;
 			if (isNew) {
-				if (def.State == MatchState.Completed) return;
-				knownMatches.Add(def.MatchID, def);
+				if (data.NewDef.State == MatchState.Completed) return;
+				knownMatches.Add(data.NewDef.MatchID, data.NewDef);
 			}
 			else {
-				knownMatches[def.MatchID].MergeDynamic(def);
+				knownMatches[data.NewDef.MatchID].MergeDynamic(data.NewDef);
 			}
+			MatchDefinition def = knownMatches[data.NewDef.MatchID];
 			if (def.State == MatchState.Staged && (isNew || oldState != MatchState.Staged)) {
 				MatchStaged(def, data.playerID.Equals(PlayerID.MyIDSafe));
 			}
