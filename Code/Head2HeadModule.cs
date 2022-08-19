@@ -100,6 +100,7 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.Level.Render += OnLevelRender;
 			On.Celeste.Level.Pause += OnGamePause;
 			On.Celeste.Level.UpdateTime += OnLevelUpdateTime;
+			On.Celeste.Level.RegisterAreaComplete += OnLevelRegisterAreaComplete;
 			On.Celeste.Level.CompleteArea_bool_bool_bool += OnLevelAreaComplete;
 			On.Celeste.MapData.ctor += OnMapDataCtor;
 			On.Celeste.Postcard.DisplayRoutine += OnPostcardDisplayRoutine;
@@ -109,16 +110,16 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.SaveData.TryDelete += OnSaveDataTryDelete;
 			On.Celeste.SaveData.FoundAnyCheckpoints += OnSaveDataFoundAnyCheckpoints;
 			On.Celeste.LevelData.CreateEntityData += OnLevelDataCreateEntityData;
-			On.Celeste.AreaComplete.Update += OnAreaCompleteUpdate;
-			On.Celeste.Editor.MapEditor.ctor += onDebugScreenOpened;
 			On.Celeste.LevelLoader.StartLevel += OnLevelLoaderStart;
-			On.Celeste.Editor.MapEditor.LoadLevel += onDebugTeleport;
+			On.Celeste.AreaComplete.Update += OnAreaCompleteUpdate;
 			On.Celeste.OuiChapterPanel._GetCheckpoints += OnOUIChapterPanel_GetCheckpoints;
 			On.Celeste.OuiChapterSelectIcon.Show += OnOuiChapterSelectIconShow;
-			On.Celeste.Mod.UI.OuiMapSearch.cleanExit += OnMapSearchCleanExit;
-			On.Celeste.Mod.UI.OuiMapSearch.Inspect += OnMapSearchInspect;
+			On.Celeste.Editor.MapEditor.ctor += onDebugScreenOpened;
+			On.Celeste.Editor.MapEditor.LoadLevel += onDebugTeleport;
 			On.Celeste.Mod.UI.OuiMapList.Update += OnMapListUpdate;
 			On.Celeste.Mod.UI.OuiMapList.Inspect += OnMapListInspect;
+			On.Celeste.Mod.UI.OuiMapSearch.Inspect += OnMapSearchInspect;
+			On.Celeste.Mod.UI.OuiMapSearch.cleanExit += OnMapSearchCleanExit;
 			// Everest Events
 			Everest.Events.Level.OnEnter += onLevelEnter;
 			Everest.Events.Level.OnExit += onLevelExit;
@@ -155,6 +156,7 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.Level.Render -= OnLevelRender;
 			On.Celeste.Level.Pause -= OnGamePause;
 			On.Celeste.Level.UpdateTime -= OnLevelUpdateTime;
+			On.Celeste.Level.RegisterAreaComplete -= OnLevelRegisterAreaComplete;
 			On.Celeste.Level.CompleteArea_bool_bool_bool -= OnLevelAreaComplete;
 			On.Celeste.MapData.ctor -= OnMapDataCtor;
 			On.Celeste.Postcard.DisplayRoutine -= OnPostcardDisplayRoutine;
@@ -164,15 +166,16 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.SaveData.FoundAnyCheckpoints -= OnSaveDataFoundAnyCheckpoints;
 			On.Celeste.SaveData.TryDelete -= OnSaveDataTryDelete;
 			On.Celeste.LevelData.CreateEntityData -= OnLevelDataCreateEntityData;
+			On.Celeste.LevelLoader.StartLevel -= OnLevelLoaderStart;
 			On.Celeste.AreaComplete.Update -= OnAreaCompleteUpdate;
-			On.Celeste.Editor.MapEditor.ctor -= onDebugScreenOpened;
-			On.Celeste.Editor.MapEditor.LoadLevel -= onDebugTeleport;
 			On.Celeste.OuiChapterPanel._GetCheckpoints -= OnOUIChapterPanel_GetCheckpoints;
 			On.Celeste.OuiChapterSelectIcon.Show -= OnOuiChapterSelectIconShow;
-			On.Celeste.Mod.UI.OuiMapSearch.cleanExit -= OnMapSearchCleanExit;
-			On.Celeste.Mod.UI.OuiMapSearch.Inspect -= OnMapSearchInspect;
+			On.Celeste.Editor.MapEditor.ctor -= onDebugScreenOpened;
+			On.Celeste.Editor.MapEditor.LoadLevel -= onDebugTeleport;
 			On.Celeste.Mod.UI.OuiMapList.Update -= OnMapListUpdate;
 			On.Celeste.Mod.UI.OuiMapList.Inspect -= OnMapListInspect;
+			On.Celeste.Mod.UI.OuiMapSearch.cleanExit -= OnMapSearchCleanExit;
+			On.Celeste.Mod.UI.OuiMapSearch.Inspect -= OnMapSearchInspect;
 			// Everest Events
 			Everest.Events.Level.OnEnter -= onLevelEnter;
 			Everest.Events.Level.OnExit -= onLevelExit;
@@ -202,6 +205,11 @@ namespace Celeste.Mod.Head2Head {
 		}
 
 		// ###############################################
+
+		private void OnLevelRegisterAreaComplete(On.Celeste.Level.orig_RegisterAreaComplete orig, Level self) {
+			PlayerStatus.Current.ChapterCompleted(new GlobalAreaKey(self.Session.Area));
+			orig(self);
+		}
 
 		private static void Level_LoadingThread(ILContext il) {
 			ILCursor cursor = new ILCursor(il);

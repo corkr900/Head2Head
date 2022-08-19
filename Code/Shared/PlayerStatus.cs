@@ -128,9 +128,6 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public void ChapterExited(LevelExit.Mode mode, Session session) {
 			CurrentArea = GlobalAreaKey.Overworld;
 			CurrentRoom = "";
-			if (mode == LevelExit.Mode.Completed || mode == LevelExit.Mode.CompletedInterlude) {
-				ChapterCompleted(new GlobalAreaKey(session.Area));
-			}
 			Updated();
 		}
 
@@ -170,7 +167,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 		// CHECKING OFF OBJECTIVES/PHASES
 
-		private void ChapterCompleted(GlobalAreaKey area) {
+		public void ChapterCompleted(GlobalAreaKey area) {
 			MatchObjective ob = FindObjective(MatchObjectiveType.ChapterComplete, area, false);
 			if (ob != null && MarkObjectiveComplete(ob)) Updated();
 		}
