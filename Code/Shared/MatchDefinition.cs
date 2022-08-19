@@ -194,6 +194,7 @@ namespace Celeste.Mod.Head2Head.Shared {
                     };
 				}
                 CompleteIfNoRunners();
+                PlayerStatus.Current.Updated();
             }
         }
 
