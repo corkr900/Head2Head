@@ -194,6 +194,7 @@ namespace Celeste.Mod.Head2Head.Shared {
                     };
 				}
                 CompleteIfNoRunners();
+                BroadcastUpdate();
                 PlayerStatus.Current.Updated();
             }
         }
@@ -204,7 +205,6 @@ namespace Celeste.Mod.Head2Head.Shared {
                 if (GetPlayerResultCat(player) <= ResultCategory.InMatch) return;
             }
             SetState_NoUpdate(MatchState.Completed);
-            BroadcastUpdate();
 		}
 
         public void MergeDynamic(MatchDefinition newer) {
