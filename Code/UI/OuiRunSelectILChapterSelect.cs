@@ -221,24 +221,8 @@ namespace Celeste.Mod.Head2Head.UI {
 
 		private void GetMinMaxArea(out int areaOffs, out int areaMax) {
 			LevelSetStats stats = Util.GetSetStats(ILSelector.LastArea.Local_Safe.LevelSet);
-			int areaOffsRaw = stats.AreaOffset;
-			int areaMaxRaw = areaOffsRaw + stats.MaxArea;
-			//do {
-			//	areaOffs = icons.FindIndex((OuiChapterSelectIcon i) => i != null && i.Area == areaOffsRaw);
-			//}
-			//while (areaOffs == -1 && ++areaOffsRaw < areaMaxRaw);
-			//if (areaOffs == -1) {
-			//	areaOffs = areaOffsRaw;
-			//}
-			//do {
-			//	areaMax = icons.FindLastIndex((OuiChapterSelectIcon i) => (i != null && i.Area == areaMaxRaw) || i.AssistModeUnlockable);
-			//}
-			//while (areaMax == -1 && --areaMaxRaw < areaOffsRaw);
-			//if (areaMax == -1) {
-			//	areaMax = areaMaxRaw;
-			//}
-			areaOffs = areaOffsRaw;
-			areaMax = areaMaxRaw;
+			areaOffs = stats.AreaOffset;
+			areaMax = areaOffs + stats.MaxArea;
 		}
 
 		public void orig_Update() {
@@ -279,31 +263,9 @@ namespace Celeste.Mod.Head2Head.UI {
 						}
 					}
 					else if (Input.MenuConfirm.Pressed) {
-						if (icons[area].AssistModeUnlockable) {
-							Audio.Play("event:/ui/world_map/icon/assist_skip");
-							Focused = false;
-							base.Overworld.ShowInputUI = false;
-							icons[area].AssistModeUnlock(delegate  // TODO (!!!) remove all references to assist mode
-							{
-								Focused = true;
-								base.Overworld.ShowInputUI = true;
-								EaseCamera();
-								if (area == 10) {
-									SaveData.Instance.RevealedChapter9 = true;
-								}
-								if (area < stats.AreaOffset + stats.MaxArea) {
-									OuiChapterSelectIcon ouiChapterSelectIcon = icons[area + 1];
-									ouiChapterSelectIcon.AssistModeUnlockable = true;
-									ouiChapterSelectIcon.Position = ouiChapterSelectIcon.HiddenPosition;
-									ouiChapterSelectIcon.Show();
-								}
-							});
-						}
-						else {
-							Audio.Play("event:/ui/world_map/icon/select");
-							ILSelector.LastArea = new GlobalAreaKey(ILSelector.LastArea.SID, AreaMode.Normal);
-							Overworld.Goto<OuiRunSelectILChapterPanel>();
-						}
+						Audio.Play("event:/ui/world_map/icon/select");
+						ILSelector.LastArea = new GlobalAreaKey(ILSelector.LastArea.SID, AreaMode.Normal);
+						Overworld.Goto<OuiRunSelectILChapterPanel>();
 					}
 				}
 			}
