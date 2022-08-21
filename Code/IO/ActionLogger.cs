@@ -1,148 +1,206 @@
 ﻿using Celeste.Mod.Head2Head.Control;
+using Celeste.Mod.Head2Head.Shared;
+using Monocle;
+using MonoMod.Utils;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Serialization;
 
 namespace Celeste.Mod.Head2Head.IO {
 
-	[Serializable]
+	// TODO (!!!) put action logging behind a setting
+	// TODO (!!!) system to export a match log
 	public class ActionLogger {
+		private static MatchLog Current;
 
-		[NonSerialized]
-		private static ActionLogger _instance;
-		private static ActionLogger Instance {
-			get {
-				if (_instance == null) {
-					_instance = new ActionLogger();
+		private static bool TrackActions(bool skipCurrentCheck = false) {
+			return (skipCurrentCheck || Current != null) && Head2HeadModule.Settings.UseActionLog;
+		}
+
+		public static void WriteLog() {
+			if (Current == null) return;
+			try {
+				using (FileStream fs = new FileStream(GetLogPath(), FileMode.Create)) {
+					XmlSerializer ser = new XmlSerializer(typeof(MatchLog));
+					ser.Serialize(fs, Current);
 				}
-				return _instance;
+			}
+			catch (Exception e) {
+				Engine.Commands.Log("Failed to write action log: " + e.Message);
 			}
 		}
 
-		private List<LoggableAction> log = new List<LoggableAction>();
-
-		public static void Log(LoggableAction action) {
-			Instance.log.Add(action);
-			WriteLog();
-		}
-
-		private static void WriteLog() {
-			StringBuilder sb = new StringBuilder();
-			foreach (LoggableAction la in Instance.log) {
-				sb.AppendLine(la.ToString());
+		public static MatchLog LoadLog(string matchID) {
+			string path = GetLogFileName(matchID);
+			if (string.IsNullOrEmpty(path) || !File.Exists(path)) return null;
+			try {
+				using (FileStream fs = new FileStream(path, FileMode.Open)) {
+					XmlSerializer ser = new XmlSerializer(typeof(MatchLog));
+					object ob = ser.Deserialize(fs);
+					if (ob is MatchLog log) {
+						return log;
+					}
+					else return null;
+				}
 			}
-			// TODO (!!!) better action logging
-			//File.WriteAllText(GetLogPath(), sb.ToString());
+			catch (Exception e) {
+				Engine.Commands.Log("Failed to write action log: " + e.Message);
+			}
+			return null;
 		}
 
+		/// <summary>
+		/// Searches for an existing log with the given ID
+		/// </summary>
+		/// <param name="matchID"></param>
+		/// <returns>Returns "" if there is no matching file</returns>
+		private static string GetLogFileName(string matchID) {
+			DynamicData dd = new DynamicData(typeof(UserIO));
+			string dirpath = dd.Get<string>("SavePath");
+			foreach (string file in Directory.GetFiles(dirpath, "Head2Head*")) {
+				if (string.IsNullOrEmpty(file)) continue;
+				string filename = Path.GetFileName(file);
+				string[] parts = filename.Split(' ');
+				if (parts.Length < 3) continue;
+				if (parts[2] == matchID) return file;
+			}
+			return "";
+		}
+
+		/// <summary>
+		/// Gets the path to write the current log to
+		/// </summary>
+		/// <returns>Returns "" if there is no appropriate path</returns>
 		private static string GetLogPath() {
-			string appdata = Environment.GetEnvironmentVariable("APPDATA");
-			if (string.IsNullOrEmpty(appdata)) throw new IOException("Could not determine path to write action log");
-			string directory = Path.Combine(appdata, "Head2Head");
-			if (!Directory.Exists(directory)) {
-				Directory.CreateDirectory(directory);
-			}
-			return Path.Combine(directory, "ActionLog.txt");
+			if (Current == null) return "";
+			DynamicData dd = new DynamicData(typeof(UserIO));
+			string handle = dd.Invoke("GetHandle", string.Format("Head2Head {0} {1}", Current.matchBeginDate, Current.matchID)) as string;
+			return handle ?? "";
+		}
+
+		public static void PurgeOldLogs() {
+			// TODO (!!!) Delete logs older than today or yesterday
 		}
 
 		// ######################################
 
-		public static void StartingChapter(string desc) {
+		public static void StartingMatch(MatchDefinition def) {
+			WriteLog();
+			if (!TrackActions(true)) return;
+			Current = new MatchLog() {
+				matchBeginDate = def.BeginInstant.ToShortDateString().Replace('/', '-'),
+				matchID = def.MatchID,
+				matchDispName = def.DisplayName,
+				matchCreator = def.Owner.Name,
+				dirty = false,
+			};
+			Current.log.Add(new LoggableAction(LoggableAction.ActionType.MatchStart));
+			WriteLog();
 		}
 
-		public static void EndingChapter(string desc) {
+		public static void EnteringArea() {
+			if (!TrackActions()) return;
+			Current.log.Add(new LoggableAction(LoggableAction.ActionType.AreaEnter));
 		}
 
-		public static void EnteringRoom(string desc) {
+		public static void ExitingArea(LevelExit.Mode _mode) {
+			if (!TrackActions()) return;
+			Current.log.Add(new LoggableAction(LoggableAction.ActionType.AreaExit) {
+				levelExitMode = _mode.ToString(),
+			});
 		}
 
-		public static void DebugView(string desc) {
+		public static void AreaCompleted() {
+			if (!TrackActions()) return;
+			Current.log.Add(new LoggableAction(LoggableAction.ActionType.AreaComplete));
 		}
 
-		public static void DebugEnter(string desc) {
+		public static void EnteringRoom() {
+			if (!TrackActions()) return;
+			Current.log.Add(new LoggableAction(LoggableAction.ActionType.EnterRoom));
 		}
 
-		public static void ClosingApplication(string desc) {
+		public static void DebugView() {
+			if (!TrackActions()) return;
+			Current.log.Add(new LoggableAction(LoggableAction.ActionType.DebugView));
 		}
+
+		public static void DebugTeleport() {
+			if (!TrackActions()) return;
+			Current.log.Add(new LoggableAction(LoggableAction.ActionType.DebugTeleport));
+		}
+
+		public static void ClosingApplication() {
+			if (!TrackActions()) return;
+			Current.log.Add(new LoggableAction(LoggableAction.ActionType.IntentionalCloseApplication));
+			WriteLog();
+		}
+
+		// TODO (!!!) event for completed match
+
+		// TODO (!!!) event for opening savefile
+
+		// TODO (!!!) event for rejoining match
 	}
 
 	[Serializable]
-	public struct LoggableAction {
+	public class MatchLog {
+		public string matchBeginDate;
+		public string matchID;
+		public string matchDispName;
+		public string matchCreator;
+		public List<LoggableAction> log = new List<LoggableAction>();
+
+		public bool dirty;
+	}
+
+	[Serializable]
+	public class LoggableAction {
 		public enum ActionType : int {
-			ChapterStart = 1,
-			ChapterComplete = 2,
-			EnterRoom = 3,
-			DebugView = 4,
-			DebugEnter = 5,
-			ErrorLogged = 6,
-			IntentionalCloseApplication = 7,
+			MatchStart = 1,
+			MatchComplete = 2,
+			AreaEnter = 3,
+			AreaComplete = 4,
+			AreaExit = 5,
+			EnterRoom = 6,
+			DebugView = 7,
+			DebugTeleport = 8,
 
-			ParseError = 999,
+			IntentionalCloseApplication = 99,
+
+			ErrorType = 999,
 		}
 
-		public DateTime instant { get; set; }
-		public long? H2HTimer { get; set; }
-		public ActionType type { get; set; }
-		public long FileTimer { get; set; }
-		public string description { get; set; }
+		public LoggableAction()
+			: this(ActionType.ErrorType)
+		{
 
-		private static readonly char delim = '|';
-
-		public override string ToString() {
-			StringBuilder sb = new StringBuilder();
-			sb.Append(instant);
-			sb.Append(delim);
-			sb.Append(type);
-			sb.Append(delim);
-			sb.Append(FileTimer);
-			sb.Append(delim);
-			if (H2HTimer != null) sb.Append(H2HTimer);
-			sb.Append(delim);
-			sb.Append(description.Replace("|","/"));
-			return sb.ToString();
 		}
 
-		public static LoggableAction Parse(string actionString) {
-			string[] split = actionString.Split(delim);
-
-			ActionType type;
-			DateTime instant;
-			long fileTimer;
-			long? h2hTimer;
-			long _h2hTimer;
-
-			if (split.Length < 5) {
-				return GetParseError("String did not have enough pieces");
-			}
-			if (!DateTime.TryParse(split[0], out instant))
-				return GetParseError(string.Format("parsed instant is not valid: {0}", split[0]));
-			if (!Enum.TryParse(split[1], out type))
-				return GetParseError(string.Format("parsed action is not valid: {0}", split[1]));
-			if (!long.TryParse(split[2], out fileTimer))
-				return GetParseError(string.Format("parsed file timer is not valid: {0}", split[2]));
-			if (long.TryParse(split[3], out _h2hTimer)) h2hTimer = _h2hTimer;
-			else h2hTimer = null;
-
-			return new LoggableAction {
-				type = type,
-				instant = instant,
-				FileTimer = fileTimer,
-				H2HTimer = h2hTimer,
-				description = split[4],
-			};
+		public LoggableAction(ActionType _type) {
+			type = _type;
+			instant = DateTime.Now.ToString();
+			fileTimer = SaveData.Instance.Time;
+			areaSID = PlayerStatus.Current.CurrentArea.SID;
+			room = PlayerStatus.Current.CurrentRoom;
+			matchID = PlayerStatus.Current.CurrentMatchID;
+			saveDataIndex = SaveData.Instance?.FileSlot ?? -99;
+			levelExitMode = "";
 		}
 
-		private static LoggableAction GetParseError(string description) {
-			return new LoggableAction {
-				type = ActionType.ParseError,
-				instant = DateTime.Now,
-				FileTimer = 0,
-				H2HTimer = null,
-				description = string.Format("This action was generated by the logger by a failed attempt to parse a string: {0}.", description),
-			};
-		}
+		public ActionType type;
+		public string instant;
+		public long fileTimer;
+		public string areaSID;
+		public string room;
+		public string matchID;
+		public int saveDataIndex;
+
+		public string levelExitMode;
 	}
 }

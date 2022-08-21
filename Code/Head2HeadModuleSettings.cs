@@ -18,6 +18,9 @@ namespace Celeste.Mod.Head2Head {
 		[SettingName("Head2Head_Setting_AutoLaunchPhase")]
 		[SettingSubText("Head2Head_Setting_AutoLaunchPhase_Subtext")]
 		public bool AutoLaunchNextPhase { get; set; } = true;
+		[SettingName("Head2Head_Setting_UseActionLog")]
+		[SettingSubText("Head2Head_Setting_UseActionLog_Subtext")]
+		public bool UseActionLog { get; set; } = false;
 
 		// Settings with manual handling
 		[SettingIgnore]

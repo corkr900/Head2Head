@@ -108,6 +108,7 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.SaveData.RegisterHeartGem += OnHeartCollected;
 			On.Celeste.SaveData.Start += OnSaveDataStart;
 			On.Celeste.SaveData.TryDelete += OnSaveDataTryDelete;
+			On.Celeste.SaveData.BeforeSave += OnSaveDataBeforeSave;
 			On.Celeste.SaveData.FoundAnyCheckpoints += OnSaveDataFoundAnyCheckpoints;
 			On.Celeste.LevelData.CreateEntityData += OnLevelDataCreateEntityData;
 			On.Celeste.LevelLoader.StartLevel += OnLevelLoaderStart;
@@ -166,6 +167,7 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.SaveData.Start -= OnSaveDataStart;
 			On.Celeste.SaveData.FoundAnyCheckpoints -= OnSaveDataFoundAnyCheckpoints;
 			On.Celeste.SaveData.TryDelete -= OnSaveDataTryDelete;
+			On.Celeste.SaveData.BeforeSave -= OnSaveDataBeforeSave;
 			On.Celeste.LevelData.CreateEntityData -= OnLevelDataCreateEntityData;
 			On.Celeste.LevelLoader.StartLevel -= OnLevelLoaderStart;
 			On.Celeste.AreaComplete.Update -= OnAreaCompleteUpdate;
@@ -250,16 +252,16 @@ namespace Celeste.Mod.Head2Head {
 		private void onLevelEnter(Session session, bool fromSaveData) {
 			currentSession = session;
 			GlobalAreaKey area = new GlobalAreaKey(session.Area);
-			ActionLogger.StartingChapter(area.SID + " (" + session.LevelData.Name + ")");
 			PlayerStatus.Current.ChapterEntered(area, session);
 			if (!area.Equals(GlobalAreaKey.Head2HeadLobby) && !area.Equals(GlobalAreaKey.Overworld)) {
 				PlayerEnteredAMap = true;
 			}
+			ActionLogger.EnteringArea();
 		}
 
 		private void onLevelExit(Level level, LevelExit exit, LevelExit.Mode mode, Session session, HiresSnow snow) {
-			ActionLogger.EndingChapter(session.Area.SID);
 			currentSession = null;
+			ActionLogger.ExitingArea(mode);
 			PlayerStatus.Current.ChapterExited(mode, session);
 		}
 
@@ -269,21 +271,20 @@ namespace Celeste.Mod.Head2Head {
 		}
 
 		private void onRoomTransition(Level level, LevelData next, Vector2 direction) {
-			ActionLogger.EnteringRoom(next.Name);
 			PlayerStatus.Current.RoomEntered(level, next, direction);
 			if (PlayerEnteredAMap && !(new GlobalAreaKey(level.Session.Area).Equals(GlobalAreaKey.Head2HeadLobby))) {
 				PlayerCompletedARoom = true;
 			}
+			ActionLogger.EnteringRoom();
 		}
 
 		private void onDebugScreenOpened(On.Celeste.Editor.MapEditor.orig_ctor orig, MapEditor self, AreaKey area, bool reloadMapData) {
-			ActionLogger.DebugView(area.SID);
 			orig(self, area, reloadMapData);
 			PlayerStatus.Current.DebugOpened(self, new GlobalAreaKey(area), reloadMapData);
+			ActionLogger.DebugView();
 		}
 		
 		private void onDebugTeleport(On.Celeste.Editor.MapEditor.orig_LoadLevel orig, MapEditor self, LevelTemplate level, Vector2 at) {
-			ActionLogger.DebugEnter(level.Name);
 			orig(self, level, at);
 			PlayerStatus.Current.DebugTeleport(self, level, at);
 			MatchDefinition def = PlayerStatus.Current.CurrentMatch;
@@ -293,10 +294,12 @@ namespace Celeste.Mod.Head2Head {
 					def.PlayerDNF();
 				}
 			}
+			ActionLogger.DebugTeleport();
 		}
 
 		private void OnExiting() {
-			ActionLogger.ClosingApplication("Exiting application normally");
+			ActionLogger.ClosingApplication();
+			ActionLogger.PurgeOldLogs();
 		}
 
 		private void OnGamePause(On.Celeste.Level.orig_Pause orig, Level self, int startIndex, bool minimal, bool quickReset) {
@@ -495,6 +498,7 @@ namespace Celeste.Mod.Head2Head {
 		}
 
 		private void OnLevelRegisterAreaComplete(On.Celeste.Level.orig_RegisterAreaComplete orig, Level self) {
+			ActionLogger.AreaCompleted();
 			PlayerStatus.Current.ChapterCompleted(new GlobalAreaKey(self.Session.Area));
 			orig(self);
 		}
@@ -503,6 +507,11 @@ namespace Celeste.Mod.Head2Head {
 			if (!DoPostPhaseAutoLaunch(false)) {
 				orig(self);
 			}
+		}
+
+		private void OnSaveDataBeforeSave(On.Celeste.SaveData.orig_BeforeSave orig, SaveData self) {
+			orig(self);
+			ActionLogger.WriteLog();
 		}
 
 		// ########################################
@@ -949,6 +958,7 @@ namespace Celeste.Mod.Head2Head {
 			if (def.State != MatchState.InProgress) yield break;
 			PlayerStatus.Current.MatchStarted();
 			def.RegisterSaveFile();
+			ActionLogger.StartingMatch(def);
 			if (gak.IsOverworld) yield break;
 			new FadeWipe(currentScenes.Last(), false, () => {
 				LevelEnter.Go(new Session(gak.Local.Value, startRoom), false);

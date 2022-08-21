@@ -12,6 +12,11 @@ Head2Head_Setting_AutoLaunchPhase_Subtext= (CURRENTLY UNUSED - multi-phase match
 If turned on, you will automatically be launched into the next phase of a match
 after completing the previous phase.
 Default: On
+Head2Head_Setting_UseActionLog= Use Action Logging
+Head2Head_Setting_UseActionLog_Subtext= If enabled, the system will keep track of key actions taken during a match.
+The log can be exported from the Head 2 Head Helpdesk
+to be sent to an event organizer for additional run verification.
+Default: Off
 Head2Head_Setting_HudScale= HUD Scale
 Head2Head_Setting_HudScale_subtext= Controls the size of the Head 2 Head HUD.
 Default: 1
