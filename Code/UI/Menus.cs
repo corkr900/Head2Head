@@ -313,6 +313,15 @@ namespace Celeste.Mod.Head2Head.UI
 				else
 					btn.AddDescription(menu, Dialog.Clean("Head2Head_menu_match_join_subtext"));
 
+				// Export Log
+				if (ActionLogger.LogFileExists(cxtMatch.MatchID)) {
+					btn = menu.AddButton("Head2Head_menu_match_export", () => {
+						ActionLogger.Export(cxtMatch.MatchID);
+						cxt.Close(menu);
+					});
+					btn.AddDescription(menu, Dialog.Clean("Head2Head_menu_match_export_subtext"));
+				}
+
 				// Forget
 				btn = menu.AddButton("Head2Head_menu_match_forget", () => {
 					if (cxtMatch.MatchID == PlayerStatus.Current.CurrentMatchID) {

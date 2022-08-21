@@ -17,6 +17,9 @@ Head2Head_Setting_UseActionLog_Subtext= If enabled, the system will keep track o
 The log can be exported from the Head 2 Head Helpdesk
 to be sent to an event organizer for additional run verification.
 Default: Off
+Head2Head_Setting_LogExportDirectory= Action Log Export Location
+Head2Head_Setting_LogExportDirectory_Subtext= This is the directory action logs will be written to if you export them.
+Default: My Documents
 Head2Head_Setting_HudScale= HUD Scale
 Head2Head_Setting_HudScale_subtext= Controls the size of the Head 2 Head HUD.
 Default: 1
@@ -114,5 +117,8 @@ Head2Head_menu_match_join_versionmismatch= The installed version of the map (or 
 Head2Head_menu_match_forget= Forget
 Head2Head_menu_match_forget_subtext= Delete local information about this match. This may not be permanent if another player sends an update to the match.
 Head2Head_menu_match_forget_current= You may not forget your current match.
+
+Head2Head_menu_match_export= Export Log File
+Head2Head_menu_match_export_subtext= Export the action log for this match to your Documents folder.
 
 Head2Head_menu_browsematchdescription= Created by {0}, {1} players joined. Current status: {2}

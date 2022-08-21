@@ -275,7 +275,7 @@ namespace Celeste.Mod.Head2Head {
 			if (PlayerEnteredAMap && !(new GlobalAreaKey(level.Session.Area).Equals(GlobalAreaKey.Head2HeadLobby))) {
 				PlayerCompletedARoom = true;
 			}
-			ActionLogger.EnteringRoom();
+			//ActionLogger.EnteringRoom();
 		}
 
 		private void onDebugScreenOpened(On.Celeste.Editor.MapEditor.orig_ctor orig, MapEditor self, AreaKey area, bool reloadMapData) {
@@ -465,13 +465,18 @@ namespace Celeste.Mod.Head2Head {
 				}
 			}
 			orig(data, slot);
+			ActionLogger.EnteredSavefile();
 		}
 
 		private bool OnSaveDataTryDelete(On.Celeste.SaveData.orig_TryDelete orig, int slot) {
 			if (PlayerStatus.Current.IsInMatch(false)) {
 				PlayerStatus.Current.CurrentMatch?.PlayerDNF();
 			}
-			return orig(slot);
+			if (orig(slot)) {
+				ActionLogger.DeletedSavefile();
+				return true;
+			}
+			return false;
 		}
 
 		private bool OnSaveDataFoundAnyCheckpoints(On.Celeste.SaveData.orig_FoundAnyCheckpoints orig, SaveData self, AreaKey area) {
@@ -608,6 +613,7 @@ namespace Celeste.Mod.Head2Head {
 					GlobalAreaKey key;
 					string cp;
 					GetLastAreaCP(data.RequestorStatus, def, out key, out cp);
+					ActionLogger.RejoinMatch(def.MatchID);
 					wrapper.Add(new Coroutine(StartMatchCoroutine(key, cp)));
 					return;
 				}
@@ -977,6 +983,7 @@ namespace Celeste.Mod.Head2Head {
 		{
 			if (args.MatchCompleted)
 			{
+				ActionLogger.CompletedMatch();
 				if (!Settings.ReturnToLobby) return;
 				autoLaunchArea = GlobalAreaKey.Head2HeadLobby;
 			}

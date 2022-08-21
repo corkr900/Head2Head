@@ -72,7 +72,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		}
 
         private static string GenerateMatchID() {
-            return string.Format("p_{0}_c_{1}", PlayerID.MyIDSafe.GetHashCode(), ++localIDCounter);
+            return string.Format("h2hmid_{0}_{1}_{2}", PlayerID.MyIDSafe.GetHashCode(), ++localIDCounter, DateTime.Now.GetHashCode());
 		}
 
         public void SetState_NoUpdate(MatchState newState) {

@@ -11,28 +11,18 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 
-namespace Celeste.Mod.Head2Head.IO {
 
-	// TODO (!!!) put action logging behind a setting
-	// TODO (!!!) system to export a match log
+namespace Celeste.Mod.Head2Head.IO {
 	public class ActionLogger {
 		private static MatchLog Current;
 
 		private static bool TrackActions(bool skipCurrentCheck = false) {
-			return (skipCurrentCheck || Current != null) && Head2HeadModule.Settings.UseActionLog;
+			return (skipCurrentCheck || (Current != null && !Current.completedMatchWritten)) && Head2HeadModule.Settings.UseActionLog;
 		}
 
-		public static void WriteLog() {
-			if (Current == null) return;
-			try {
-				using (FileStream fs = new FileStream(GetLogPath(), FileMode.Create)) {
-					XmlSerializer ser = new XmlSerializer(typeof(MatchLog));
-					ser.Serialize(fs, Current);
-				}
-			}
-			catch (Exception e) {
-				Engine.Commands.Log("Failed to write action log: " + e.Message);
-			}
+		public static bool WriteLog() {
+			if (Current == null) return false;
+			return Current.Write();
 		}
 
 		public static MatchLog LoadLog(string matchID) {
@@ -64,7 +54,7 @@ namespace Celeste.Mod.Head2Head.IO {
 			string dirpath = dd.Get<string>("SavePath");
 			foreach (string file in Directory.GetFiles(dirpath, "Head2Head*")) {
 				if (string.IsNullOrEmpty(file)) continue;
-				string filename = Path.GetFileName(file);
+				string filename = Path.GetFileNameWithoutExtension(file);
 				string[] parts = filename.Split(' ');
 				if (parts.Length < 3) continue;
 				if (parts[2] == matchID) return file;
@@ -72,80 +62,159 @@ namespace Celeste.Mod.Head2Head.IO {
 			return "";
 		}
 
-		/// <summary>
-		/// Gets the path to write the current log to
-		/// </summary>
-		/// <returns>Returns "" if there is no appropriate path</returns>
-		private static string GetLogPath() {
-			if (Current == null) return "";
-			DynamicData dd = new DynamicData(typeof(UserIO));
-			string handle = dd.Invoke("GetHandle", string.Format("Head2Head {0} {1}", Current.matchBeginDate, Current.matchID)) as string;
-			return handle ?? "";
+		public static bool LogFileExists(string matchID) {
+			return File.Exists(GetLogFileName(matchID));
 		}
 
 		public static void PurgeOldLogs() {
-			// TODO (!!!) Delete logs older than today or yesterday
+			// Delete logs older than today or yesterday
+			DynamicData dd = new DynamicData(typeof(UserIO));
+			string dirpath = dd.Get<string>("SavePath");
+			DateTime basedate = DateTime.Today;
+			foreach (string file in Directory.GetFiles(dirpath, "Head2Head*")) {
+				if (string.IsNullOrEmpty(file)) continue;
+				string filename = Path.GetFileName(file);
+				string[] parts = filename.Split(' ');
+				if (parts.Length < 2) continue;
+				DateTime date;
+				if (DateTime.TryParse(parts[1], out date)){
+					TimeSpan span = basedate - date;
+					if (span.TotalHours > 40) {
+						try {
+							File.Delete(file);
+						}
+						catch(Exception e) {
+							Engine.Commands.Log("Failed to delete old log: " + e.Message);
+						}
+					}
+				}
+			}
+		}
+
+		public static void Export(string matchID) {
+			try {
+				string source = GetLogFileName(matchID);
+				if (string.IsNullOrEmpty(source)) {
+					Engine.Commands.Log("Export failed: could not get source file path for match ID " + matchID);
+					return;
+				}
+				if (!File.Exists(source)) {
+					Engine.Commands.Log("Export failed: source does not exist: " + source);
+					return;
+				}
+				string dir = Head2HeadModule.Settings.RealExportLocation;
+				if (!Directory.Exists(dir)) {
+					Engine.Commands.Log("Export failed: target directory does not exist: " + dir);
+					return;
+				}
+				string target = Path.Combine(dir, Path.GetFileName(source));
+				File.Copy(source, target, true);
+			}
+			catch(Exception e) {
+				Engine.Commands.Log("Export failed: " + e.Message);
+			}
 		}
 
 		// ######################################
 
 		public static void StartingMatch(MatchDefinition def) {
-			WriteLog();
 			if (!TrackActions(true)) return;
-			Current = new MatchLog() {
-				matchBeginDate = def.BeginInstant.ToShortDateString().Replace('/', '-'),
-				matchID = def.MatchID,
-				matchDispName = def.DisplayName,
-				matchCreator = def.Owner.Name,
-				dirty = false,
-			};
-			Current.log.Add(new LoggableAction(LoggableAction.ActionType.MatchStart));
+			if (Current == null || Current.matchID != def.MatchID) {
+				WriteLog();
+				Current = new MatchLog() {
+					matchBeginDate = def.BeginInstant.ToShortDateString().Replace('/', '-'),
+					matchID = def.MatchID,
+					matchDispName = def.DisplayName,
+					matchCreator = def.Owner.Name,
+				};
+			}
+			Current.Log(new LoggableAction(LoggableAction.ActionType.MatchStart));
 			WriteLog();
 		}
 
 		public static void EnteringArea() {
 			if (!TrackActions()) return;
-			Current.log.Add(new LoggableAction(LoggableAction.ActionType.AreaEnter));
+			Current.Log(new LoggableAction(LoggableAction.ActionType.AreaEnter));
+			Current.Write();
 		}
 
 		public static void ExitingArea(LevelExit.Mode _mode) {
 			if (!TrackActions()) return;
-			Current.log.Add(new LoggableAction(LoggableAction.ActionType.AreaExit) {
+			Current.Log(new LoggableAction(LoggableAction.ActionType.AreaExit) {
 				levelExitMode = _mode.ToString(),
 			});
 		}
 
 		public static void AreaCompleted() {
 			if (!TrackActions()) return;
-			Current.log.Add(new LoggableAction(LoggableAction.ActionType.AreaComplete));
+			Current.Log(new LoggableAction(LoggableAction.ActionType.AreaComplete));
 		}
 
 		public static void EnteringRoom() {
 			if (!TrackActions()) return;
-			Current.log.Add(new LoggableAction(LoggableAction.ActionType.EnterRoom));
+			LoggableAction la = new LoggableAction(LoggableAction.ActionType.EnterRoom);
+			Current.Log(la);
+			if (!string.IsNullOrEmpty(la.checkpoint)) {
+				WriteLog();
+			}
 		}
 
 		public static void DebugView() {
 			if (!TrackActions()) return;
-			Current.log.Add(new LoggableAction(LoggableAction.ActionType.DebugView));
+			Current.Log(new LoggableAction(LoggableAction.ActionType.DebugView));
 		}
 
 		public static void DebugTeleport() {
 			if (!TrackActions()) return;
-			Current.log.Add(new LoggableAction(LoggableAction.ActionType.DebugTeleport));
+			Current.Log(new LoggableAction(LoggableAction.ActionType.DebugTeleport));
 		}
 
 		public static void ClosingApplication() {
 			if (!TrackActions()) return;
-			Current.log.Add(new LoggableAction(LoggableAction.ActionType.IntentionalCloseApplication));
+			Current.Log(new LoggableAction(LoggableAction.ActionType.IntentionalCloseApplication));
 			WriteLog();
 		}
 
-		// TODO (!!!) event for completed match
+		public static void CompletedObjective() {
+			if (!TrackActions()) return;
+			Current.Log(new LoggableAction(LoggableAction.ActionType.ObjectiveComplete));
+		}
 
-		// TODO (!!!) event for opening savefile
+		public static void CompletedPhase() {
+			if (!TrackActions()) return;
+			Current.Log(new LoggableAction(LoggableAction.ActionType.PhaseComplete));
+			WriteLog();
+		}
 
-		// TODO (!!!) event for rejoining match
+		public static void CompletedMatch() {
+			if (!TrackActions()) return;
+			Current.Log(new LoggableAction(LoggableAction.ActionType.MatchComplete));
+			Current.completedMatchWritten = true;
+			WriteLog();
+		}
+
+		public static void EnteredSavefile() {
+			if (!TrackActions()) return;
+			Current.Log(new LoggableAction(LoggableAction.ActionType.EnterSavefile));
+		}
+
+		public static void DeletedSavefile() {
+			if (!TrackActions()) return;
+			Current.Log(new LoggableAction(LoggableAction.ActionType.DeletedSavefile));
+		}
+
+		public static void RejoinMatch(string matchID) {
+			if (Current != null) {
+				WriteLog();
+				Current = null;
+			}
+			MatchLog log = LoadLog(matchID);
+			if (log != null) {
+				Current = log;
+				Current.Log(new LoggableAction(LoggableAction.ActionType.MatchRejoin));
+				WriteLog();
+			}
+		}
 	}
 
 	[Serializable]
@@ -156,7 +225,42 @@ namespace Celeste.Mod.Head2Head.IO {
 		public string matchCreator;
 		public List<LoggableAction> log = new List<LoggableAction>();
 
-		public bool dirty;
+		private bool dirty = true;
+		public bool completedMatchWritten = false;
+
+		public void Log(LoggableAction a) {
+			log.Add(a);
+			dirty = true;
+		}
+
+		/// <summary>
+		/// Writes this MatchLog to disk
+		/// </summary>
+		public bool Write() {
+			if (!dirty) return false;
+			try {
+				using (FileStream fs = new FileStream(GetLogPath(), FileMode.Create)) {
+					XmlSerializer ser = new XmlSerializer(typeof(MatchLog));
+					ser.Serialize(fs, this);
+				}
+				dirty = false;
+				return true;
+			}
+			catch (Exception e) {
+				Engine.Commands.Log("Failed to write action log: " + e.Message);
+			}
+			return false;
+		}
+
+		/// <summary>
+		/// Gets the path to write the current log to
+		/// </summary>
+		/// <returns>Returns "" if there is no appropriate path</returns>
+		private string GetLogPath() {
+			DynamicData dd = new DynamicData(typeof(UserIO));
+			string handle = dd.Invoke("GetHandle", string.Format("Head2Head {0} {1}", matchBeginDate, matchID)) as string;
+			return handle ?? "";
+		}
 	}
 
 	[Serializable]
@@ -170,7 +274,12 @@ namespace Celeste.Mod.Head2Head.IO {
 			EnterRoom = 6,
 			DebugView = 7,
 			DebugTeleport = 8,
+			EnterSavefile = 9,
+			DeletedSavefile = 10,
+			ObjectiveComplete = 11,
+			PhaseComplete = 12,
 
+			MatchRejoin = 98,
 			IntentionalCloseApplication = 99,
 
 			ErrorType = 999,
@@ -183,11 +292,15 @@ namespace Celeste.Mod.Head2Head.IO {
 		}
 
 		public LoggableAction(ActionType _type) {
+			GlobalAreaKey area = PlayerStatus.Current.CurrentArea;
 			type = _type;
 			instant = DateTime.Now.ToString();
-			fileTimer = SaveData.Instance.Time;
+			fileTimer = Dialog.FileTime(SaveData.Instance.Time);
 			areaSID = PlayerStatus.Current.CurrentArea.SID;
 			room = PlayerStatus.Current.CurrentRoom;
+			checkpoint = area.IsOverworld ? "Overworld"
+				: area.ExistsLocal ? AreaData.GetCheckpointName(area.Local_Safe, room)
+				: "[unknown area]";
 			matchID = PlayerStatus.Current.CurrentMatchID;
 			saveDataIndex = SaveData.Instance?.FileSlot ?? -99;
 			levelExitMode = "";
@@ -195,9 +308,10 @@ namespace Celeste.Mod.Head2Head.IO {
 
 		public ActionType type;
 		public string instant;
-		public long fileTimer;
+		public string fileTimer;
 		public string areaSID;
 		public string room;
+		public string checkpoint;
 		public string matchID;
 		public int saveDataIndex;
 

@@ -1,9 +1,11 @@
-﻿using FMOD.Studio;
+﻿using Celeste.Mod.UI;
+using FMOD.Studio;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static Celeste.TextMenuExt;
 
 namespace Celeste.Mod.Head2Head {
 
@@ -18,9 +20,19 @@ namespace Celeste.Mod.Head2Head {
 		[SettingName("Head2Head_Setting_AutoLaunchPhase")]
 		[SettingSubText("Head2Head_Setting_AutoLaunchPhase_Subtext")]
 		public bool AutoLaunchNextPhase { get; set; } = true;
+		[SettingInGame(false)]
 		[SettingName("Head2Head_Setting_UseActionLog")]
 		[SettingSubText("Head2Head_Setting_UseActionLog_Subtext")]
 		public bool UseActionLog { get; set; } = false;
+
+		//public string ExportDirectory { get; set; } = "";
+		public string RealExportLocation {
+			get {
+				return /*string.IsNullOrEmpty(ExportDirectory) ?*/
+					Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
+					/*: ExportDirectory*/;
+			}
+		}
 
 		// Settings with manual handling
 		[SettingIgnore]
@@ -38,6 +50,17 @@ namespace Celeste.Mod.Head2Head {
 
 		internal void CreateOptions(TextMenu menu, bool inGame, EventInstance snapshot)
 		{
+			//if (!inGame) {
+			//	ButtonExt btn = new ButtonExt(Dialog.Clean("Head2Head_menu_setExportLocation"));
+			//	btn.Pressed(() => {
+			//		Audio.Play("event:/ui/main/savefile_rename_start");
+			//		menu.SceneAs<Overworld>().Goto<OuiModOptionString>().Init<OuiModOptions>(ExportDirectory, delegate (string v)
+			//		{
+			//			ExportDirectory = v;
+			//		}, 125, 0);
+			//	});
+			//}
+
 			AddSlider(menu, "Head2Head_Setting_HudScale", HudScale,
 				new float[] { 0.1f, 0.25f, 0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 2.0f },
 				(float val) => HudScale = val);
