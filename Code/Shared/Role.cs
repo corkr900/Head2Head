@@ -31,6 +31,8 @@ namespace Celeste.Mod.Head2Head.Shared {
 				case "bta-cracked":
 				case "bta-lunar":
 					return def.RequiredRole == "bta";
+				case "bta-host":
+					return false;
 			}
 		}
 
