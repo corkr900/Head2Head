@@ -21,7 +21,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		}
 
 		public static bool AllowMatchJoin(MatchDefinition def) {
-			bool hasReq = string.IsNullOrEmpty(def.RequiredRole);
+			bool hasReq = !string.IsNullOrEmpty(def.RequiredRole);
 			switch (role) {
 				default:
 					return !hasReq;
