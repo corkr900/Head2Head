@@ -284,9 +284,9 @@ namespace Celeste.Mod.Head2Head.UI
 					cxt.Close(menu);
 				});
 				GlobalAreaKey? vchk = cxtMatch.VersionCheck();
-				if (cxtMatch.State != MatchState.Staged)
+				/*if (cxtMatch.State != MatchState.Staged)
 					btn.SoftDisable(menu, "Head2Head_menu_match_stage_wrongstatus");
-				else if (cxtMatch.MatchID == curmatch?.MatchID)
+				else*/ if (cxtMatch.MatchID == curmatch?.MatchID)
 					btn.SoftDisable(menu, "Head2Head_menu_match_stage_alreadycurrent");
 				else if (vchk != null)
 					btn.SoftDisable(menu, "Head2Head_menu_match_join_versionmismatch", vchk?.LocalVersion.ToString(), vchk?.Version.ToString());

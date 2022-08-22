@@ -207,7 +207,6 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 		public static bool IsCategoryValid(StandardCategory cat, GlobalAreaKey area)
 		{
-			// TODO the game crashes if there are zero valid categories for a map...
 			if (area.IsOverworld) return false;
 			if (!area.ExistsLocal) return false;
 			if (area.IsVanilla) {

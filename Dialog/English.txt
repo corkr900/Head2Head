@@ -12,6 +12,11 @@ Head2Head_Setting_AutoLaunchPhase_Subtext= (CURRENTLY UNUSED - multi-phase match
 If turned on, you will automatically be launched into the next phase of a match
 after completing the previous phase.
 Default: On
+Head2Head_menu_setRole= Set Role
+Head2Head_menu_setRole_subtext= Your role changes the available functionality and the matches you are able to join.
+Default: (blank)
+Head2Head_menu_removeRole= Remove Role
+Head2Head_menu_removeRole_subtext= Reset the Role setting to default
 Head2Head_Setting_UseActionLog= Use Action Logging
 Head2Head_Setting_UseActionLog_Subtext= If enabled, the system will keep track of key actions taken during a match.
 The log can be exported from the Head 2 Head Helpdesk

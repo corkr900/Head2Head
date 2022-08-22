@@ -663,6 +663,7 @@ namespace Celeste.Mod.Head2Head {
 			if (!CNetComm.Instance.IsConnected) return false;
 			if (buildingMatch == null) return false;
 			if (buildingMatch.Phases.Count == 0) return false;
+			if (!Role.AllowMatchCreate()) return false;
 			return PlayerStatus.Current.CanStageMatch();
 		}
 
@@ -670,17 +671,23 @@ namespace Celeste.Mod.Head2Head {
 			if (PlayerStatus.Current.CurrentMatch == null) return false;
 			if (PlayerStatus.Current.MatchState != MatchState.Staged) return false;
 			if (PlayerStatus.Current.CurrentMatch.Players.Contains(PlayerID.MyIDSafe)) return false;
+			if (!Role.AllowMatchJoin(PlayerStatus.Current.CurrentMatch)) return false;
 			return true;
 		}
 
 		public bool CanStartMatch() {
 			if (PlayerStatus.Current.CurrentMatch == null) return false;
 			if (PlayerStatus.Current.MatchState != MatchState.Staged) return false;
-			if (!PlayerStatus.Current.CurrentMatch.Players.Contains(PlayerID.MyIDSafe)) return false;
+			bool hasJoined = PlayerStatus.Current.CurrentMatch.Players.Contains(PlayerID.MyIDSafe);
+			if (!Role.AllowMatchStart(hasJoined)) return false;
 			return true;
 		}
 
 		public void StartMatchBuild() {
+			if (!Role.AllowMatchCreate()) {
+				Engine.Commands.Log("Your role prevents building a match");
+				return;
+			}
 			if (!(CNetComm.Instance?.IsConnected ?? false)) {
 				Engine.Commands.Log("Connect to CelesteNet before building a match");
 				return;
@@ -746,6 +753,10 @@ namespace Celeste.Mod.Head2Head {
 		}
 
 		public void StageMatch() {
+			if (!Role.AllowMatchCreate()) {
+				Engine.Commands.Log("Your role prevents creating a match");
+				return;
+			}
 			if (buildingMatch == null) {
 				Engine.Commands.Log("You need to build a match first...");
 				return;
@@ -760,6 +771,7 @@ namespace Celeste.Mod.Head2Head {
 				return;
 			}
 			buildingMatch.AssignIDs();
+			Role.HandleMatchCreation(buildingMatch);
 			buildingMatch.State = MatchState.Staged;  // Sends update
 			buildingMatch = null;
 			ClearAutoLaunchInfo();
@@ -820,6 +832,10 @@ namespace Celeste.Mod.Head2Head {
 					return;
 				}
 			}
+			if (!Role.AllowMatchJoin(def)) {
+				Engine.Commands.Log("Your role prevents joining this match");
+				return;
+			}
 			if (!def.Players.Contains(PlayerID.MyIDSafe)) {
 				def.Players.Add(PlayerID.MyIDSafe);
 				PlayerStatus.Current.MatchJoined();
@@ -837,9 +853,9 @@ namespace Celeste.Mod.Head2Head {
 				Engine.Commands.Log("Current match is not staged!");
 				return;
 			}
-			if (!def.Owner.Equals(PlayerID.MyIDSafe)
-				&& !def.Players.Contains(PlayerID.MyIDSafe)) {
-				Engine.Commands.Log("Cannot start a match I neither own nor have joined");
+			bool hasJoined = def.Players.Contains(PlayerID.MyIDSafe);
+			if (!Role.AllowMatchStart(hasJoined)) {
+				Engine.Commands.Log("Your role prevents starting this match");
 				return;
 			}
 			def.BeginInstant = DateTime.Now + new TimeSpan(0, 0, 0, 0, START_TIMER_LEAD_MS);
@@ -931,8 +947,10 @@ namespace Celeste.Mod.Head2Head {
 				return false;
 			}
 			else if (!def.Players.Contains(PlayerID.MyIDSafe)) {  // Player did not join the match
-				PlayerStatus.Current.CurrentMatch = null;
-				PlayerStatus.Current.Updated();
+				if (Role.LeaveUnjoinedMatchOnStart()) {
+					PlayerStatus.Current.CurrentMatch = null;
+					PlayerStatus.Current.Updated();
+				}
 				return true;
 			}
 			// Begin!

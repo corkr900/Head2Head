@@ -21,6 +21,7 @@ namespace Celeste.Mod.Head2Head.Shared {
         public List<MatchPhase> Phases = new List<MatchPhase>();
 
         public string DisplayNameOverride = "";
+        public string RequiredRole = "";
 
 		#endregion
 
@@ -296,6 +297,7 @@ namespace Celeste.Mod.Head2Head.Shared {
             d.Owner = reader.ReadPlayerID();
             d.SetState_NoUpdate((MatchState)Enum.Parse(typeof(MatchState), reader.ReadString()));
             d.DisplayNameOverride = reader.ReadString();
+            d.RequiredRole = reader.ReadString();
             d.CanParticipantsStart = reader.ReadBoolean();
             d.OpenEntry = reader.ReadBoolean();
             d.RequireNewSaveFile = reader.ReadBoolean();
@@ -330,6 +332,7 @@ namespace Celeste.Mod.Head2Head.Shared {
             writer.Write(m.Owner);
             writer.Write(m.State.ToString());
             writer.Write(m.DisplayNameOverride);
+            writer.Write(m.RequiredRole);
             writer.Write(m.CanParticipantsStart);
             writer.Write(m.OpenEntry);
             writer.Write(m.RequireNewSaveFile);
