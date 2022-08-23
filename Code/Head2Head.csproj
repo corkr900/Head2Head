@@ -78,6 +78,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Data\DataH2HMatchUpdate.cs" />
+    <Compile Include="Data\DataH2HMisc.cs" />
     <Compile Include="Data\DataH2HScanRequest.cs" />
     <Compile Include="Data\DataH2HScanResponse.cs" />
     <Compile Include="Entities\Helpdesk.cs" />

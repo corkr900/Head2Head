@@ -37,9 +37,11 @@ namespace Celeste.Mod.Head2Head.UI
 			}
 			public PlayerID player;
 
+			public Action<PlayerID> onPlayerSelection;
+
 			public void GoTo(Action<HelpdeskMenuContext> target, TextMenu current)
 			{
-				Audio.Play("event:/ui/main/button_confirm");  // TODO make sure this is correct
+				Audio.Play("event:/ui/main/button_confirm");
 				returnToIndex.Push(current == null ? 0 : current.IndexOf(current.Current));
 				menus.Push(target);
 				current?.RemoveSelf();
@@ -187,6 +189,18 @@ namespace Celeste.Mod.Head2Head.UI
 					cxt.Close(menu);
 				});
 				btn.AddDescription(menu, Dialog.Clean("Head2Head_menu_helpdesk_rejoin_subtext"));
+			}
+
+			// Role-based additions
+			if (Role.role == "bta-host" || Role.role == "debug") {
+				btn = menu.AddButton("Head2Head_menu_helpdesk_giveMatchPass", () => {
+					cxt.onPlayerSelection = (PlayerID id) => {
+						CNetComm.Instance.SendMisc(Head2HeadModule.BTA_MATCH_PASS, id);
+						cxt.Close(menu);
+					};
+					cxt.GoTo(PlayerSelection, menu);
+				});
+				btn.AddDescription(menu, Dialog.Clean("Head2Head_menu_helpdesk_giveMatchPass_subtext"));
 			}
 
 			// Return to Lobby
@@ -339,6 +353,39 @@ namespace Celeste.Mod.Head2Head.UI
 					btn.SoftDisable(menu, "Head2Head_menu_match_forget_current");
 				else
 					btn.AddDescription(menu, Dialog.Clean("Head2Head_menu_match_forget_subtext"));
+			}
+
+			// handle Cancel button
+			menu.OnCancel = () => {
+				cxt.Back(menu);
+			};
+			menu.Selection = menu.FirstPossibleSelection;
+			cxt.level.Add(menu);
+		}
+
+		public static void PlayerSelection(HelpdeskMenuContext cxt) {
+			cxt.level.Paused = true;
+			TextMenu menu = new TextMenu();
+			menu.AutoScroll = false;
+			menu.Position = new Vector2((float)Engine.Width / 2f, (float)Engine.Height / 2f - 100f);
+			TextMenu.Item item;
+
+			// Head 2 Head Helpdesk
+			menu.Add(new TextMenu.Header(Dialog.Clean("Head2Head_menu_helpdesk_playerselect")));
+
+			// Back
+			item = new TextMenu.Button(Dialog.Clean("Head2Head_menu_back")).Pressed(() => {
+				menu.OnCancel();
+			});
+			menu.Add(item);
+
+			// Loop over known players
+			foreach (PlayerID id in Head2HeadModule.knownPlayers.Keys) {
+				item = new TextMenu.Button(id.Name).Pressed(() => {
+					cxt.onPlayerSelection?.Invoke(id);
+					cxt.Close(menu);
+				});
+				menu.Add(item);
 			}
 
 			// handle Cancel button

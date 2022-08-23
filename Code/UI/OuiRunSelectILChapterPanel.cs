@@ -302,7 +302,7 @@ namespace Celeste.Mod.Head2Head.UI {
 			if (!selectingMode) {
 				categories.Clear();
 
-				StandardCategory[] cats = (StandardCategory[])Enum.GetValues(typeof(StandardCategory));
+				StandardCategory[] cats = Role.GetValidCategories();
 				int siblings = cats.Length;
 				foreach (StandardCategory cat in cats) {
 					if (!StandardMatches.IsCategoryValid(cat, new GlobalAreaKey(Area))) continue;

@@ -27,11 +27,18 @@ using FMOD.Studio;
 
 // TODO Force DNF if a player intentionally closes the game
 
+// TODO Support full-game runs... eventually
+
 namespace Celeste.Mod.Head2Head {
 	public class Head2HeadModule : EverestModule {
-		private static readonly int START_TIMER_LEAD_MS = 5000;
+		// Constants
+		private const int START_TIMER_LEAD_MS = 5000;
+		internal const string BTA_MATCH_PASS = "BTAMatchPass";
+
+		// Constants that might change in the future
 		public static readonly string ProtocolVersion = "1_0_0";
 
+		// Other static stuff
 		public static Head2HeadModule Instance { get; private set; }
 		public static string AssemblyVersion { get {
 				if (string.IsNullOrEmpty(_version)) {
@@ -138,6 +145,7 @@ namespace Celeste.Mod.Head2Head {
 			CNetComm.OnReceiveMatchReset += OnMatchReset;
 			CNetComm.OnReceiveScanRequest += OnScanRequest;
 			CNetComm.OnReceiveScanResponse += OnScanResponse;
+			CNetComm.OnReceiveMisc += OnMiscMessage;
 			PlayerStatus.OnMatchPhaseCompleted += OnCompletedMatchPhase;
 			// Misc other setup
 			Celeste.Instance.Components.Add(Comm = new CNetComm(Celeste.Instance));
@@ -196,6 +204,7 @@ namespace Celeste.Mod.Head2Head {
 			CNetComm.OnReceiveMatchReset -= OnMatchReset;
 			CNetComm.OnReceiveScanRequest -= OnScanRequest;
 			CNetComm.OnReceiveScanResponse -= OnScanResponse;
+			CNetComm.OnReceiveMisc -= OnMiscMessage;
 			PlayerStatus.OnMatchPhaseCompleted -= OnCompletedMatchPhase;
 			// Misc other cleanup
 			if (Celeste.Instance.Components.Contains(Comm))
@@ -332,7 +341,7 @@ namespace Celeste.Mod.Head2Head {
 
 		private void OnHeartCollected(On.Celeste.SaveData.orig_RegisterHeartGem orig, SaveData self, AreaKey area) {
 			orig(self, area);
-			PlayerStatus.Current.HeartCollected(new GlobalAreaKey(area));  // TODO find a different hook for hearts; This one fires after tapping past the poem, not when the IL timer stops (BUT this *is* consistent with file timer based full runs...)
+			PlayerStatus.Current.HeartCollected(new GlobalAreaKey(area));
 			DoPostPhaseAutoLaunch(true, MatchObjectiveType.HeartCollect);  // TODO find a better hook for returning to lobby after heart collection
 		}
 
@@ -628,6 +637,19 @@ namespace Celeste.Mod.Head2Head {
 			}
 		}
 
+		private void OnMiscMessage(DataH2HMisc data) {
+			switch (data.message) {
+				default:
+					return;
+
+				case BTA_MATCH_PASS:
+					if (data.targetPlayer.Equals(PlayerID.MyID)) {
+						Role.GiveBTAMatchPass();
+					}
+					return;
+			}
+		}
+
 		private void GetLastAreaCP(PlayerStatus stat, MatchDefinition def, out GlobalAreaKey key, out string cp) {
 			key = GlobalAreaKey.Overworld;
 			cp = null;
@@ -727,6 +749,14 @@ namespace Celeste.Mod.Head2Head {
 					break;
 				case StandardCategory.FullClearMoonBerry:
 					mp = StandardMatches.ILFCMoonBerry(area);
+					break;
+
+				// Specialty Categories
+				case StandardCategory.OneThirdBerries:
+					mp = StandardMatches.ILOneThirdBerries(area);
+					break;
+				case StandardCategory.OneFifthBerries:
+					mp = StandardMatches.ILOneFifthBerries(area);
 					break;
 			}
 			if (mp == null) {

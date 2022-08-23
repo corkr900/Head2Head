@@ -1,22 +1,26 @@
-﻿using System;
+﻿using Celeste.Mod.Head2Head.UI;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Celeste.Mod.Head2Head.UI;
 
 namespace Celeste.Mod.Head2Head.Shared {
 	public class Role {
-		private static string role { get { return Head2HeadModule.Settings.GetRole(); } }
+		internal static string role { get { return Head2HeadModule.Settings.GetRole(); } }
+		public static bool hasBTAMatchPass { get; private set; } = false;
+
+		internal static void GiveBTAMatchPass() {
+			hasBTAMatchPass = true;
+		}
+
 		public static bool AllowMatchCreate() {
 			switch (role) {
 				default:
 					return true;
-				case "bta-blue":
-				case "bta-red":
-				case "bta-yellow":
-				case "bta-cracked":
-				case "bta-lunar":
-					return false;
+				case "bta":
+					return hasBTAMatchPass;
 			}
 		}
 
@@ -25,11 +29,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			switch (role) {
 				default:
 					return !hasReq;
-				case "bta-blue":
-				case "bta-red":
-				case "bta-yellow":
-				case "bta-cracked":
-				case "bta-lunar":
+				case "bta":
 					return def.RequiredRole == "bta";
 				case "bta-host":
 					return false;
@@ -42,11 +42,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 					return hasJoinedMatch;
 				case "bta-host":
 					return true;
-				case "bta-blue":
-				case "bta-red":
-				case "bta-yellow":
-				case "bta-cracked":
-				case "bta-lunar":
+				case "bta":
 					return false;
 			}
 		}
@@ -54,6 +50,9 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public static void HandleMatchCreation(MatchDefinition def) {
 			switch (role) {
 				default:
+					return;
+				case "bta":
+					hasBTAMatchPass = false;
 					return;
 				case "bta-host":
 					def.RequiredRole = "bta";
@@ -67,6 +66,33 @@ namespace Celeste.Mod.Head2Head.Shared {
 					return true;
 				case "bta-host":
 					return false;
+			}
+		}
+
+		public static StandardCategory[] GetValidCategories() {
+			switch (role) {
+				default:
+					return new StandardCategory[] {
+						StandardCategory.Clear,
+						StandardCategory.ARB,
+						StandardCategory.ARBHeart,
+						StandardCategory.CassetteGrab,
+						StandardCategory.HeartCassette,
+						StandardCategory.FullClear,
+						StandardCategory.MoonBerry,
+						StandardCategory.FullClearMoonBerry,
+					};
+				case "debug":
+					return (StandardCategory[])Enum.GetValues(typeof(StandardCategory));
+				case "bta":
+				case "bta-host":
+				case "bta-practice":
+					return new StandardCategory[] {
+						StandardCategory.Clear,
+						StandardCategory.OneFifthBerries,
+						StandardCategory.OneThirdBerries,
+					};
+
 			}
 		}
 	}

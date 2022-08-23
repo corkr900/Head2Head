@@ -260,7 +260,18 @@ namespace Celeste.Mod.Head2Head.Shared {
         public GlobalAreaKey Area;
         public List<MatchObjective> Objectives = new List<MatchObjective>();
 
-		public string Title { get { return string.Format("{0} ({1})", Area.DisplayName, Util.TranslatedCategoryName(category)); } }
+		public string Title { 
+            get {
+				switch (category) {
+                    default:
+                        return string.Format(Dialog.Get("Head2Head_MatchTitle"), Area.DisplayName, Util.TranslatedCategoryName(category));
+                    case StandardCategory.OneThirdBerries:
+                    case StandardCategory.OneFifthBerries:
+                        int berries = Objectives.Find((MatchObjective o) => o.ObjectiveType == MatchObjectiveType.Strawberries)?.BerryGoal ?? 0;
+                        return string.Format(Dialog.Get("Head2Head_MatchTitle_BerryCount"), Area.DisplayName, berries);
+                }
+            }
+        }
 	}
 
     public class MatchObjective {

@@ -12,11 +12,9 @@ Head2Head_Setting_AutoLaunchPhase_Subtext= (CURRENTLY UNUSED - multi-phase match
 If turned on, you will automatically be launched into the next phase of a match
 after completing the previous phase.
 Default: On
-Head2Head_menu_setRole= Set Role
-Head2Head_menu_setRole_subtext= Your role changes the available functionality and the matches you are able to join.
+Head2Head_Setting_Role= Role
+Head2Head_Setting_Role_Subtext= Your role changes the available functionality and the matches you are able to join.
 Default: (blank)
-Head2Head_menu_removeRole= Remove Role
-Head2Head_menu_removeRole_subtext= Reset the Role setting to default
 Head2Head_Setting_UseActionLog= Use Action Logging
 Head2Head_Setting_UseActionLog_Subtext= If enabled, the system will keep track of key actions taken during a match.
 The log can be exported from the Head 2 Head Helpdesk
@@ -38,6 +36,9 @@ Head2Head_Setting_HudOpacityInOverworld= HUD Opacity (In Overworld)
 Head2Head_Setting_HudOpacityInOverworld_subtext= Changes the opacity of the Head 2 Head HUD in the overworld.
 Default: 0.5
 
+Head2Head_MatchTitle= {0} ({1})
+Head2Head_MatchTitle_BerryCount= {0} ({1} Berries)
+
 Head2Head_CategoryName_Clear= Chapter Clear
 Head2Head_CategoryName_HeartCassette= Heart + Cassette
 Head2Head_CategoryName_ARB= All Red Berries
@@ -46,6 +47,8 @@ Head2Head_CategoryName_CassetteGrab= Cassette Grab
 Head2Head_CategoryName_FullClear= Full Clear
 Head2Head_CategoryName_MoonBerry= Moon Berry
 Head2Head_CategoryName_FullClearMoonBerry= Full Clear with Moon Berry
+Head2Head_CategoryName_OneThirdBerries= One Third Berries
+Head2Head_CategoryName_OneFifthBerries= One Fifth Berries
 
 Head2Head_MatchStatus_None= Unknown
 Head2Head_MatchStatus_Building= Building
@@ -101,6 +104,9 @@ Head2Head_menu_helpdesk_rejoin= Scan for Rejoinable Match
 Head2Head_menu_helpdesk_rejoin_subtext= If you previously crashed out of the game during a match, use this to rejoin it.
 This feature may only be used immediately after re-entering the same savefile and reconnecting to the network.
 
+Head2Head_menu_helpdesk_giveMatchPass= Give Match Pass
+Head2Head_menu_helpdesk_giveMatchPass_subtext= Give a player permission to create one match
+
 Head2Head_menu_helpdesk_returntolobby= Return to Head 2 Head Lobby
 
 #     MATCH MENU     #
@@ -127,3 +133,7 @@ Head2Head_menu_match_export= Export Log File
 Head2Head_menu_match_export_subtext= Export the action log for this match to your Documents folder.
 
 Head2Head_menu_browsematchdescription= Created by {0}, {1} players joined. Current status: {2}
+
+#     PLAYER MENU     #
+
+Head2Head_menu_helpdesk_playerselect= Select Player

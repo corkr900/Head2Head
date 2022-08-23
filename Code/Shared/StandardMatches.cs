@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace Celeste.Mod.Head2Head.Shared {
 	public enum StandardCategory {
+		// Standard Categories
 		Clear,
 		HeartCassette,
 		ARB,
@@ -14,6 +15,10 @@ namespace Celeste.Mod.Head2Head.Shared {
 		FullClear,
 		MoonBerry,
 		FullClearMoonBerry,
+
+		// Specialty Categories
+		OneFifthBerries,
+		OneThirdBerries,
 	}
 
 	public static class StandardMatches {
@@ -205,6 +210,50 @@ namespace Celeste.Mod.Head2Head.Shared {
 			return mp;
 		}
 
+		// Specialty Categories
+
+		public static MatchPhase ILOneThirdBerries(GlobalAreaKey area) {
+			if (string.IsNullOrEmpty(area.Local?.SID)) return null;
+			if (!IsCategoryValid(StandardCategory.OneThirdBerries, area)) return null;
+
+			MatchPhase mp = new MatchPhase() {
+				category = StandardCategory.OneThirdBerries,
+				Area = area,
+				Objectives = new List<MatchObjective>() {
+					new MatchObjective() {
+						ObjectiveType = MatchObjectiveType.Strawberries,
+						BerryGoal = (int)Math.Ceiling(Util.CountBerries(area) / 3.0),
+					},
+					new MatchObjective() {
+						ObjectiveType = MatchObjectiveType.ChapterComplete,
+					},
+				}
+			};
+			return mp;
+		}
+
+		public static MatchPhase ILOneFifthBerries(GlobalAreaKey area) {
+			if (string.IsNullOrEmpty(area.Local?.SID)) return null;
+			if (!IsCategoryValid(StandardCategory.OneFifthBerries, area)) return null;
+
+			MatchPhase mp = new MatchPhase() {
+				category = StandardCategory.OneFifthBerries,
+				Area = area,
+				Objectives = new List<MatchObjective>() {
+					new MatchObjective() {
+						ObjectiveType = MatchObjectiveType.Strawberries,
+						BerryGoal = (int)Math.Ceiling(Util.CountBerries(area) / 5.0),
+					},
+					new MatchObjective() {
+						ObjectiveType = MatchObjectiveType.ChapterComplete,
+					},
+				}
+			};
+			return mp;
+		}
+
+		// More Stuff
+
 		public static bool IsCategoryValid(StandardCategory cat, GlobalAreaKey area)
 		{
 			if (area.IsOverworld) return false;
@@ -226,6 +275,8 @@ namespace Celeste.Mod.Head2Head.Shared {
 						return cat == StandardCategory.Clear
 							|| cat == StandardCategory.ARB
 							|| cat == StandardCategory.ARBHeart
+							|| cat == StandardCategory.OneFifthBerries
+							|| cat == StandardCategory.OneThirdBerries
 							|| cat == StandardCategory.HeartCassette
 							|| cat == StandardCategory.FullClear
 							|| cat == StandardCategory.CassetteGrab;
@@ -239,6 +290,8 @@ namespace Celeste.Mod.Head2Head.Shared {
 						return cat == StandardCategory.Clear;
 					case 9:  // Core
 						return cat == StandardCategory.Clear
+							|| cat == StandardCategory.OneFifthBerries
+							|| cat == StandardCategory.OneThirdBerries
 							|| cat == StandardCategory.FullClear
 							|| cat == StandardCategory.CassetteGrab;
 					case 10:  // Farewell
@@ -257,10 +310,13 @@ namespace Celeste.Mod.Head2Head.Shared {
 					default:
 						return true;
 					case StandardCategory.ARB:
+					case StandardCategory.OneThirdBerries:
+					case StandardCategory.OneFifthBerries:
 						return berries && (hasCassette || hasOptionalHeart || !canFC);
 					case StandardCategory.ARBHeart:
+						return berries && hasOptionalHeart && (hasCassette || !canFC);
 					case StandardCategory.HeartCassette:
-						return berries && hasCassette && (hasOptionalHeart || !canFC);
+						return hasOptionalHeart && hasCassette && (berries || !canFC);
 					case StandardCategory.CassetteGrab:
 						return hasCassette;
 					case StandardCategory.FullClear:

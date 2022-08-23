@@ -20,11 +20,10 @@ namespace Celeste.Mod.Head2Head {
 		[SettingName("Head2Head_Setting_AutoLaunchPhase")]
 		[SettingSubText("Head2Head_Setting_AutoLaunchPhase_Subtext")]
 		public bool AutoLaunchNextPhase { get; set; } = true;
-		//[SettingInGame(false)]
-		//[SettingName("Head2Head_Setting_UseActionLog")]
-		//[SettingSubText("Head2Head_Setting_UseActionLog_Subtext")]
-
-		private string Role { get; set; } = "";
+		[SettingName("Head2Head_Setting_Role")]
+		[SettingSubText("Head2Head_Setting_Role_Subtext")]
+		[SettingInGame(false)]
+		public string Role { get; set; } = "";
 		internal string GetRole() => Role;
 		public bool UseActionLog {
 			get {
@@ -56,23 +55,6 @@ namespace Celeste.Mod.Head2Head {
 
 		internal void CreateOptions(TextMenu menu, bool inGame, EventInstance snapshot)
 		{
-			if (!inGame) {
-				ButtonExt btn = new ButtonExt(Dialog.Clean("Head2Head_menu_setRole"));
-				btn.Pressed(() => {
-					Audio.Play("event:/ui/main/savefile_rename_start");
-					menu.SceneAs<Overworld>().Goto<OuiModOptionString>().Init<OuiModOptions>(Role, delegate (string v) {
-						Role = v.ToLower();
-					}, 125, 0);
-				});
-				menu.Add(btn);
-				btn.AddDescription(menu, Dialog.Clean("Head2Head_menu_setRole_subtext"));
-
-				btn = new ButtonExt(Dialog.Clean("Head2Head_menu_removeRole"));
-				btn.Pressed(() => { Role = ""; });
-				menu.Add(btn);
-				btn.AddDescription(menu, Dialog.Clean("Head2Head_menu_removeRole_subtext"));
-			}
-
 			AddSlider(menu, "Head2Head_Setting_HudScale", HudScale,
 				new float[] { 0.1f, 0.25f, 0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 2.0f },
 				(float val) => HudScale = val);
