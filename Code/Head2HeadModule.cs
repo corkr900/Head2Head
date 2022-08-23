@@ -970,6 +970,9 @@ namespace Celeste.Mod.Head2Head {
 				// Out of sync (data purge, crash/reload, channel switching)
 				ResultCategory cat = def.GetPlayerResultCat(PlayerID.MyIDSafe);
 				if (cat != ResultCategory.InMatch) return false;
+				if (def.Result == null) {
+					def.RegisterSaveFile();
+				}
 				if (def.Result[PlayerID.MyIDSafe]?.SaveFile != global::Celeste.SaveData.Instance.FileSlot) return false;
 				PlayerStatus.Current.CurrentMatch = def;
 			}

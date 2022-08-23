@@ -53,6 +53,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 					return;
 				case "bta":
 					hasBTAMatchPass = false;
+					def.RequiredRole = "bta";
 					return;
 				case "bta-host":
 					def.RequiredRole = "bta";
