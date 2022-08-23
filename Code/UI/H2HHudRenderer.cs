@@ -35,11 +35,11 @@ namespace Celeste.Mod.Head2Head.UI {
 		public static float Opacity(Scene scene, MatchDefinition def) {
 			if (def == null) return 0.0f;
 			if (scene is Overworld) return Head2HeadModule.Settings.HudOpacityInOverworld;
-			if (def.State == MatchState.Completed) return Head2HeadModule.Settings.HudOpacityNotInMatch;
-			if (def.State == MatchState.InProgress && def.BeginInstant <= System.DateTime.Now) {
-				return Head2HeadModule.Settings.HudOpacityInMatch;
-			}
-			return Head2HeadModule.Settings.HudOpacityNotInMatch;
+			GlobalAreaKey area = PlayerStatus.Current.CurrentArea;
+			if (area.Equals(GlobalAreaKey.Head2HeadLobby)) return Head2HeadModule.Settings.HudOpacityNotInMatch;
+			ResultCategory cat = def.GetPlayerResultCat(PlayerID.MyIDSafe);
+			if (cat == ResultCategory.Completed || cat == ResultCategory.DNF) return Head2HeadModule.Settings.HudOpacityNotInMatch;
+			return Head2HeadModule.Settings.HudOpacityInMatch;
 		}
 
 		public override void BeforeRender(Scene scene) {
@@ -55,6 +55,7 @@ namespace Celeste.Mod.Head2Head.UI {
 			if (ShouldRenderBanner(scene, def)) RenderBanner(scene, def);
 			if (ShouldShowPlayerList(scene, def)) RenderPlayerList(scene, def);
 			if (ShouldShowCountdown(scene, def)) RenderCountdown(scene, def);
+			if (ShouldShowMatchPass(scene, def)) RenderMatchPass(scene, def);
 			HiresRenderer.EndRender();
 		}
 
@@ -127,11 +128,9 @@ namespace Celeste.Mod.Head2Head.UI {
 				List<Tuple<string, ResultCategory, long>> players = new List<Tuple<string, ResultCategory, long>>();
 				float maxWidth = 0;
 				foreach (PlayerID id in def.Players) {
-					string name = id.Name;
 					ResultCategory cat = def.GetPlayerResultCat(id);
-					long timer = def.Result == null || cat != ResultCategory.Completed ? 0 : def.Result[id]?.FileTimeTotal ?? 0;
-					string statusstr = cat == ResultCategory.Completed ? Dialog.FileTime(timer) : Util.TranslatedMatchResult(cat);
-					string text = string.Format("{0} | {1}", name, statusstr);
+					string name = id.Name;
+					string text = string.Format("{0} | {1}", name, GetPlayerDetail(id, cat, def));
 					players.Add(new Tuple<string, ResultCategory, long>(
 						text,
 						cat,
@@ -179,6 +178,40 @@ namespace Celeste.Mod.Head2Head.UI {
 			}
 		}
 
+		private string GetPlayerDetail(PlayerID id, ResultCategory cat, MatchDefinition def) {
+			if (cat == ResultCategory.Completed) {
+				long timer = def.Result == null ? 0 : def.Result[id]?.FileTimeTotal ?? 0;
+				return Dialog.FileTime(timer);
+			}
+			if (cat == ResultCategory.InMatch) {
+				PlayerStatus stat = id.Equals(PlayerID.MyID) ? PlayerStatus.Current
+					: Head2HeadModule.knownPlayers.ContainsKey(id) ? Head2HeadModule.knownPlayers[id]
+					: null;
+				if (stat != null) {
+					int strawbsTotal = 0;
+					int strawbsCollected = 0;
+					int curPhase = stat.CurrentPhase();
+					if (curPhase >= 0) {
+						foreach (MatchPhase ph in def.Phases) {
+							if (ph.Order != curPhase) continue;
+							foreach (MatchObjective obj in ph.Objectives) {
+								if (obj.BerryGoal > 0) {
+									strawbsTotal += obj.BerryGoal;
+									int idx = stat.objectives.FindIndex((H2HMatchObjectiveState s) => s.ObjectiveID == obj.ID);
+									if (idx < 0) continue;
+									strawbsCollected += stat.objectives[idx].CollectedStrawbs?.Count ?? 0;
+								}
+							}
+						}
+						if (strawbsTotal > 0) {
+							return string.Format("{0}/{1}", strawbsCollected, strawbsTotal);
+						}
+					}
+				}
+			}
+			return Util.TranslatedMatchResult(cat);
+		}
+
 		#endregion
 
 		#region Countdown
@@ -191,8 +224,8 @@ namespace Celeste.Mod.Head2Head.UI {
 			TimeSpan remain = def.BeginInstant - now;
 			int cdIdx = (int)Math.Ceiling(remain.TotalSeconds);
 			if (cdIdx <= 0 || cdIdx > 5) return false;
-
-			return true;
+			GlobalAreaKey area = PlayerStatus.Current.CurrentArea;
+			return area.IsOverworld || area.Equals(GlobalAreaKey.Head2HeadLobby);
 		}
 
 		public void RenderCountdown(Scene scene, MatchDefinition def) {
@@ -210,6 +243,19 @@ namespace Celeste.Mod.Head2Head.UI {
 			Vector2 cdPos = CanvasSize / 2f;
 			Color cdColor = Color.White;
 			cdBG.DrawJustified(cdPos, justify, cdColor * _bannerOpacity, hudScale);
+		}
+
+		private bool ShouldShowMatchPass(Scene scene, MatchDefinition def) {
+			return PlayerStatus.Current.CurrentArea.Equals(GlobalAreaKey.Head2HeadLobby) && Role.hasBTAMatchPass;
+		}
+
+		private void RenderMatchPass(Scene scene, MatchDefinition def) {
+			float hudScale = Head2HeadModule.Settings.HudScale;
+			Vector2 justify = new Vector2(0, 1);
+			MTexture img = GFX.Gui["Head2Head/HUD/MatchTicket"];
+			Vector2 pos = new Vector2(0, CanvasSize.Y);
+			Color color = Color.White;
+			img.DrawJustified(pos, justify, color, hudScale);
 		}
 
 		#endregion

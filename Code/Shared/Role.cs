@@ -96,5 +96,14 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 			}
 		}
+
+		public static bool SkipCountdown() {
+			switch (role) {
+				default:
+					return false;
+				case "bta-host":
+					return true;
+			}
+		}
 	}
 }

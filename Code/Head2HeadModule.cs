@@ -671,7 +671,7 @@ namespace Celeste.Mod.Head2Head {
 
 		private void OnConnected(CelesteNetClientContext cxt) {
 			OnMatchCurrentMatchUpdated?.Invoke();
-			//PlayerStatus.Current.CNetConnected();
+			CNetComm.Instance.SendScanRequest(false);
 		}
 
 		private void OnDisconnected(CelesteNetConnection con) {
@@ -714,7 +714,6 @@ namespace Celeste.Mod.Head2Head {
 				Engine.Commands.Log("Connect to CelesteNet before building a match");
 				return;
 			}
-			Engine.Commands.Log("Starting new match build...");
 			buildingMatch = new MatchDefinition() {
 				Owner = PlayerID.MyID ?? PlayerID.Default,
 			};
@@ -766,9 +765,6 @@ namespace Celeste.Mod.Head2Head {
 			else {
 				AddMatchPhase(mp);
 			}
-			if (buildingMatch != null) {
-				Engine.Commands.Log(string.Format("Added {0} ({1})", area.DisplayName, category));
-			}
 		}
 
 		public void AddMatchPhase(MatchPhase mp) {
@@ -776,7 +772,6 @@ namespace Celeste.Mod.Head2Head {
 				StartMatchBuild();
 			}
 			if (buildingMatch == null) {
-				Engine.Commands.Log("Unable to add the match phase...");
 				return;
 			}
 			buildingMatch.Phases.Add(mp);
@@ -788,11 +783,11 @@ namespace Celeste.Mod.Head2Head {
 				return;
 			}
 			if (buildingMatch == null) {
-				Engine.Commands.Log("You need to build a match first...");
+				Engine.Commands.Log("You need to build a match first");
 				return;
 			}
 			if (buildingMatch.Phases.Count == 0) {
-				Engine.Commands.Log("You need to add a phase first...");
+				Engine.Commands.Log("You need to add a phase first");
 				return;
 			}
 			MatchDefinition def = PlayerStatus.Current.CurrentMatch;
@@ -811,12 +806,12 @@ namespace Celeste.Mod.Head2Head {
 		{
 			if (def == null)
 			{
-				Engine.Commands.Log("You need to build a match first...");
+				Engine.Commands.Log("You need to build a match before staging a match");
 				return;
 			}
 			if (def.Phases.Count == 0)
 			{
-				Engine.Commands.Log("You need to add a phase first...");
+				Engine.Commands.Log("You need to add a phase before staging a match");
 				return;
 			}
 			if (!PlayerStatus.Current.CanStageMatch())
@@ -843,21 +838,21 @@ namespace Celeste.Mod.Head2Head {
 		public void JoinStagedMatch() {
 			MatchDefinition def = PlayerStatus.Current.CurrentMatch;
 			if (def == null) {
-				Engine.Commands.Log("There is no staged match!");
+				Engine.Commands.Log("Couldn't join match - there is no staged match");
 				return;
 			}
 			if (PlayerStatus.Current.MatchState != MatchState.Staged) {
-				Engine.Commands.Log("Current match is not staged!");
+				Engine.Commands.Log("Couldn't join match - current match is not staged status");
 				return;
 			}
 			foreach (MatchPhase ph in def.Phases) {
 				if (!ph.Area.ExistsLocal) {
-					Engine.Commands.Log(string.Format("Could not join match - map not installed: {0}", ph.Area.SID));
+					Engine.Commands.Log(string.Format("Couldn't join match - map not installed: {0}", ph.Area.SID));
 					return;
 				}
 				if (!ph.Area.VersionMatchesLocal) {
 					Engine.Commands.Log(string.Format(
-						"Could not join match - map version mismatch: {0} (match initator has {1}, but {2} is installed)",
+						"Couldn't join match - map version mismatch: {0} (match initator has {1}, but {2} is installed)",
 						ph.Area.DisplayName, ph.Area.Version, ph.Area.LocalVersion));
 					return;
 				}
@@ -983,8 +978,8 @@ namespace Celeste.Mod.Head2Head {
 				if (Role.LeaveUnjoinedMatchOnStart()) {
 					PlayerStatus.Current.CurrentMatch = null;
 					PlayerStatus.Current.Updated();
+					return true;
 				}
-				return true;
 			}
 			// Begin!
 			Entity wrapper = new Entity();
@@ -1000,12 +995,12 @@ namespace Celeste.Mod.Head2Head {
 			DateTime startInstant = PlayerStatus.Current.CurrentMatch.BeginInstant;
 			DateTime now = DateTime.Now;
 			if (startInstant > now + new TimeSpan(0, 0, 15)) {
-				Engine.Commands.Log("Match begins more than 15 seconds in the future; skipping countdown.");
+				Engine.Commands.Log("Match begins more than 15 seconds in the future; skipping countdown (try syncing your system's clock)");
 			}
 			else if (startInstant < now) {
-				Engine.Commands.Log("Match begins in the past...");
+				Engine.Commands.Log("Match begins in the past; skipping countdown (if this is not a rejoin, try syncing your system's clock)");
 			}
-			else {
+			else if (!Role.SkipCountdown()) {
 				yield return (float)((startInstant - now).TotalSeconds);
 			}
 
@@ -1019,8 +1014,6 @@ namespace Celeste.Mod.Head2Head {
 			if (gak.IsOverworld) yield break;
 			new FadeWipe(currentScenes.Last(), false, () => {
 				LevelEnter.Go(new Session(gak.Local.Value, startRoom), false);
-				// TODO send a confirmation message on load-in?
-
 			});
 		}
 
