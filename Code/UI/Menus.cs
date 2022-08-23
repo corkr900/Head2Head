@@ -247,7 +247,7 @@ namespace Celeste.Mod.Head2Head.UI
 					cxt.GoTo(KnownMatchMenu, menu);
 				});
 				menu.Add(item);
-				string desc = string.Format(Dialog.Get("Head2Head_menu_browsematchdescription"),
+				string desc = string.Format(GetDialogWithLineBreaks("Head2Head_menu_browsematchdescription"),
 					def.Owner.Name, def.Players.Count, Util.TranslatedMatchState(def.State));
 				item.AddDescription(menu, desc);
 			}
@@ -285,6 +285,9 @@ namespace Celeste.Mod.Head2Head.UI
 
 				// Header
 				menu.Add(new TextMenu.SubHeader(cxtMatch.DisplayName));
+				string desc = string.Format(GetDialogWithLineBreaks("Head2Head_menu_browsematchdescription"),
+					cxtMatch.Owner.Name, cxtMatch.Players.Count, Util.TranslatedMatchState(cxtMatch.State));
+				menu.Add(new TextMenu.SubHeader(desc));
 
 				// Back
 				item = new TextMenu.Button(Dialog.Clean("Head2Head_menu_back")).Pressed(() => {

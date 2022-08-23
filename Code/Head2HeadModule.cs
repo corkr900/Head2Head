@@ -823,11 +823,16 @@ namespace Celeste.Mod.Head2Head {
 			ClearAutoLaunchInfo();
 		}
 
-		private static void MatchStaged(MatchDefinition def, bool overrideStaged = true) {
+		private static void MatchStaged(MatchDefinition def, bool overrideSoftChecks) {
+			if (!overrideSoftChecks) {
+				if (Settings.AutoStageNewMatches == Head2HeadModuleSettings.AutoStageSetting.Never) return;
+				if (Settings.AutoStageNewMatches == Head2HeadModuleSettings.AutoStageSetting.OnlyInLobby
+					&& PlayerStatus.Current.CurrentArea.Equals(GlobalAreaKey.Head2HeadLobby)) return;
+			}
 			MatchDefinition current = PlayerStatus.Current.CurrentMatch;
 			if (current != null) {
 				if (!current.PlayerCanLeaveFreely(PlayerID.MyIDSafe)) return;
-				if (!overrideStaged && current.GetPlayerResultCat(PlayerID.MyIDSafe) == ResultCategory.NotJoined) return;
+				if (!overrideSoftChecks && current.GetPlayerResultCat(PlayerID.MyIDSafe) == ResultCategory.NotJoined) return;
 			}
 			PlayerStatus.Current.CurrentMatch = def;
 			PlayerStatus.Current.MatchStaged(PlayerStatus.Current.CurrentMatch);

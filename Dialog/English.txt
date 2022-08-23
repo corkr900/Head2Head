@@ -35,9 +35,17 @@ Default: 0.25
 Head2Head_Setting_HudOpacityInOverworld= HUD Opacity (In Overworld)
 Head2Head_Setting_HudOpacityInOverworld_subtext= Changes the opacity of the Head 2 Head HUD in the overworld.
 Default: 0.5
+Head2Head_Setting_AutoStage= Auto-Stage New Matches
+Head2Head_Setting_AutoStage_Subtext= When other players create a Head2Head match, this setting controls whether
+it will be automatically set as your current match.
+Default: Only in Lobby
 
 Head2Head_MatchTitle= {0} ({1})
 Head2Head_MatchTitle_BerryCount= {0} ({1} Berries)
+
+modoptions_Head2HeadModule_autostagenewmatches_Never= Never
+modoptions_Head2HeadModule_autostagenewmatches_OnlyInLobby= Only in Lobby
+modoptions_Head2HeadModule_autostagenewmatches_Always= Always
 
 Head2Head_CategoryName_Clear= Chapter Clear
 Head2Head_CategoryName_HeartCassette= Heart + Cassette
@@ -132,7 +140,8 @@ Head2Head_menu_match_forget_current= You may not forget your current match.
 Head2Head_menu_match_export= Export Log File
 Head2Head_menu_match_export_subtext= Export the action log for this match to your Documents folder.
 
-Head2Head_menu_browsematchdescription= Created by {0}, {1} players joined. Current status: {2}
+Head2Head_menu_browsematchdescription= Created by {0}, {1} players joined.
+Current status: {2}
 
 #     PLAYER MENU     #
 

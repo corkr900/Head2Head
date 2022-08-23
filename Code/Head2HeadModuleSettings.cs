@@ -12,19 +12,35 @@ namespace Celeste.Mod.Head2Head {
 	[SettingName("Head2Head_Setting")]
 	public class Head2HeadModuleSettings : EverestModuleSettings {
 
+		public enum AutoStageSetting {
+			Never,
+			OnlyInLobby,
+			Always,
+		}
+
 		#region Settings
 
 		[SettingName("Head2Head_Setting_ReturnToLobby")]
 		[SettingSubText("Head2Head_Setting_ReturnToLobby_Subtext")]
 		public bool ReturnToLobby { get; set; } = true;
+
 		[SettingName("Head2Head_Setting_AutoLaunchPhase")]
 		[SettingSubText("Head2Head_Setting_AutoLaunchPhase_Subtext")]
 		public bool AutoLaunchNextPhase { get; set; } = true;
+
+
+		[SettingName("Head2Head_Setting_AutoStage")]
+		[SettingSubText("Head2Head_Setting_AutoStage_Subtext")]
+		public AutoStageSetting AutoStageNewMatches { get; set; } = AutoStageSetting.OnlyInLobby;
+
 		[SettingName("Head2Head_Setting_Role")]
 		[SettingSubText("Head2Head_Setting_Role_Subtext")]
 		[SettingInGame(false)]
 		public string Role { get; set; } = "";
 		internal string GetRole() => Role;
+
+		// Stuff not in menu
+
 		public bool UseActionLog {
 			get {
 				return Role == "bta";
