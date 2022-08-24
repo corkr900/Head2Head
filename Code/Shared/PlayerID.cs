@@ -12,9 +12,16 @@ namespace Celeste.Mod.Head2Head.Shared {
 	public struct PlayerID {
 		public static PlayerID? MyID {
 			get {
-				CNetComm comm = CNetComm.Instance;
-				return !comm.IsConnected ? null
-					: (PlayerID?)new PlayerID(LocalMACAddress, comm.CnetID.Value, comm.CnetClient.PlayerInfo.Name);
+				try {
+					CNetComm comm = CNetComm.Instance;
+					return !comm.IsConnected ? null
+						: (PlayerID?)new PlayerID(LocalMACAddress, comm.CnetID.Value, comm.CnetClient.PlayerInfo.Name);
+				}
+				catch (Exception e) {
+					// If we lose connection at exactly the wrong moment,
+					// comm.IsConnected returns true but comm.CnetID could be null 
+					return null;
+				}
 			}
 		}
 		public static PlayerID MyIDSafe { get { return MyID ?? Default; } }

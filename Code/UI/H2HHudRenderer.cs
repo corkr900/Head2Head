@@ -190,7 +190,7 @@ namespace Celeste.Mod.Head2Head.UI {
 				if (stat != null) {
 					int strawbsTotal = 0;
 					int strawbsCollected = 0;
-					int curPhase = stat.CurrentPhase();
+					int curPhase = stat.CurrentPhase(id);
 					if (curPhase >= 0) {
 						foreach (MatchPhase ph in def.Phases) {
 							if (ph.Order != curPhase) continue;

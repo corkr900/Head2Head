@@ -214,9 +214,9 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 		// objective help
 
-		internal int CurrentPhase() {
+		internal int CurrentPhase(PlayerID? id = null) {
 			if (CurrentMatch == null) return -1;
-			if (!IsInMatch(false)) return -1;
+			if (!IsInMatch(false, id)) return -1;
 			int max = 0;
 			foreach (H2HMatchPhaseState s in phases) {
 				int order = CurrentMatch.GetPhase(s.PhaseID)?.Order ?? -1;
