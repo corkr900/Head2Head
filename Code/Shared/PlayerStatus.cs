@@ -94,19 +94,23 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public void ChapterEntered(GlobalAreaKey area, Session session) {
 			CurrentArea = area;
 			CurrentRoom = session.Level;
-			LastCheckpoint = session.LevelData.HasCheckpoint ? session.LevelData.Name : null;
+			if (!string.IsNullOrEmpty(CurrentMatchID)) {
+				LastCheckpoint = session.LevelData.HasCheckpoint ? session.LevelData.Name : null;
+			}
 			Updated();
 		}
 		public void RoomEntered(Level level, LevelData next, Vector2 direction) {
 			CurrentRoom = next.Name;
 			if (next.HasCheckpoint) {
-				LastCheckpoint = next.Name;
-				GlobalAreaKey area = new GlobalAreaKey(level.Session.Area);
-				int index = reachedCheckpoints.FindIndex((Tuple<GlobalAreaKey, string> tpred) => {
-					return tpred.Item1.Equals(area) && tpred.Item2 == LastCheckpoint;
-				});
-				if (index < 0 || index >= reachedCheckpoints.Count) {
-					reachedCheckpoints.Add(new Tuple<GlobalAreaKey, string>(area, LastCheckpoint));
+				if (!string.IsNullOrEmpty(CurrentMatchID)) {
+					LastCheckpoint = next.Name;
+					GlobalAreaKey area = new GlobalAreaKey(level.Session.Area);
+					int index = reachedCheckpoints.FindIndex((Tuple<GlobalAreaKey, string> tpred) => {
+						return tpred.Item1.Equals(area) && tpred.Item2 == LastCheckpoint;
+					});
+					if (index < 0 || index >= reachedCheckpoints.Count) {
+						reachedCheckpoints.Add(new Tuple<GlobalAreaKey, string>(area, LastCheckpoint));
+					}
 				}
 				ActionLogger.EnteringRoom();
 			}
@@ -129,6 +133,9 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public void ChapterExited(LevelExit.Mode mode, Session session) {
 			CurrentArea = GlobalAreaKey.Overworld;
 			CurrentRoom = "";
+			if (!string.IsNullOrEmpty(CurrentMatchID)) {
+				LastCheckpoint = null;
+			}
 			Updated();
 		}
 

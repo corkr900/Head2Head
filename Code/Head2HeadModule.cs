@@ -533,10 +533,6 @@ namespace Celeste.Mod.Head2Head {
 		private void OnPlayerStatusUpdate(DataH2HPlayerStatus data) {
 			if (!data.playerID.Equals(PlayerID.MyID)) {
 				if (knownPlayers.ContainsKey(data.playerID)) {
-					// don't overwrite the cp so it can be used in a rejoin
-					if (string.IsNullOrEmpty(data.Status.LastCheckpoint)) {
-						data.Status.LastCheckpoint = knownPlayers[data.playerID].LastCheckpoint;
-					}
 					knownPlayers[data.playerID] = data.Status;
 				}
 				else knownPlayers.Add(data.playerID, data.Status);
@@ -609,11 +605,11 @@ namespace Celeste.Mod.Head2Head {
 				{
 					PlayerStatus.Current.CurrentMatch = def;
 					PlayerStatus.Current.Merge(data.RequestorStatus);
-					if (global::Celeste.SaveData.Instance != null) {
-						global::Celeste.SaveData.Instance.Time = Math.Max(
-							global::Celeste.SaveData.Instance.Time,
-							data.RequestorStatus.CurrentFileTimer);
-					}
+					//if (global::Celeste.SaveData.Instance != null) {
+					//	global::Celeste.SaveData.Instance.Time = Math.Max(
+					//		global::Celeste.SaveData.Instance.Time,
+					//		data.RequestorStatus.CurrentFileTimer);
+					//}
 					PlayerStatus.Current.Updated();
 
 					Entity wrapper = new Entity();
