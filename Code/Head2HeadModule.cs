@@ -605,16 +605,13 @@ namespace Celeste.Mod.Head2Head {
 				{
 					PlayerStatus.Current.CurrentMatch = def;
 					PlayerStatus.Current.Merge(data.RequestorStatus);
-					//if (global::Celeste.SaveData.Instance != null) {
-					//	global::Celeste.SaveData.Instance.Time = Math.Max(
-					//		global::Celeste.SaveData.Instance.Time,
-					//		data.RequestorStatus.CurrentFileTimer);
-					//}
 					PlayerStatus.Current.Updated();
 
+					Level level = GetLevelForCoroutine();
+					ForceUnpause(level);
 					Entity wrapper = new Entity();
 					wrapper.AddTag(Tags.Persistent);
-					currentScenes.Last().Add(wrapper);
+					level?.Add(wrapper);
 					GlobalAreaKey key;
 					string cp;
 					GetLastAreaCP(data.RequestorStatus, def, out key, out cp);
@@ -985,11 +982,35 @@ namespace Celeste.Mod.Head2Head {
 				}
 			}
 			// Begin!
+			Level level = GetLevelForCoroutine();
+			ForceUnpause(level);
 			Entity wrapper = new Entity();
 			wrapper.AddTag(Tags.Persistent);
-			currentScenes.Last().Add(wrapper);
+			level?.Add(wrapper);
 			wrapper.Add(new Coroutine(StartMatchCoroutine(def.Phases[0].Area)));
 			return true;
+		}
+
+		private Level GetLevelForCoroutine() {
+			for (int i = currentScenes.Count - 1; i >= 0; i--) {
+				Scene s = currentScenes[i];
+				if (s == null) continue;
+				if (s is Level) return s as Level;
+			}
+			return null;
+		}
+
+		private void ForceUnpause(Level level) {
+			if (level == null) return;
+			DynamicData dd = new DynamicData(level);
+			dd.Set("unpauseTimer", 0.15f);
+			level.Paused = false;
+			foreach (Entity e in level.Entities) {
+				if (e is TextMenu menu) {
+					menu.RemoveSelf();
+				}
+
+			}
 		}
 
 		private IEnumerator StartMatchCoroutine(GlobalAreaKey gak, string startRoom = null) {
@@ -1004,7 +1025,10 @@ namespace Celeste.Mod.Head2Head {
 				Engine.Commands.Log("Match begins in the past; skipping countdown (if this is not a rejoin, try syncing your system's clock)");
 			}
 			else if (!Role.SkipCountdown()) {
+				Level level = GetLevelForCoroutine();
+				if (level != null) level.PauseLock = true;
 				yield return (float)((startInstant - now).TotalSeconds);
+				if (level != null) level.PauseLock = false;
 			}
 
 			if (PlayerStatus.Current.CurrentMatchID != idCheck) yield break;
@@ -1015,7 +1039,7 @@ namespace Celeste.Mod.Head2Head {
 			def.RegisterSaveFile();
 			ActionLogger.StartingMatch(def);
 			if (gak.IsOverworld) yield break;
-			new FadeWipe(currentScenes.Last(), false, () => {
+			new FadeWipe(GetLevelForCoroutine(), false, () => {
 				LevelEnter.Go(new Session(gak.Local.Value, startRoom), false);
 			});
 		}
