@@ -638,6 +638,7 @@ namespace Celeste.Mod.Head2Head {
 				case BTA_MATCH_PASS:
 					if (data.targetPlayer.Equals(PlayerID.MyID)) {
 						Role.GiveBTAMatchPass();
+						OnMatchCurrentMatchUpdated?.Invoke();
 					}
 					return;
 			}

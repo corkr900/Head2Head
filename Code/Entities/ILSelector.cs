@@ -15,6 +15,7 @@ using Celeste.Mod.UI;
 using Celeste.Mod.Head2Head.UI;
 using Celeste.Mod.Head2Head.Shared;
 using FMOD.Studio;
+using Celeste.Mod.Head2Head.IO;
 
 namespace Celeste.Mod.Head2Head.Entities {
 	[CustomEntity("Head2Head/ILSelector")]
@@ -29,6 +30,7 @@ namespace Celeste.Mod.Head2Head.Entities {
 		public StandardCategory Category;
 
 		private Sprite sprite;
+		private TalkComponent talkComponent;
 
 		public ILSelector(EntityData data, Vector2 offset) {
 			//map = data.Attr("map");
@@ -36,13 +38,34 @@ namespace Celeste.Mod.Head2Head.Entities {
 			Add(sprite = GFX.SpriteBank.Create("Head2Head_ILSelector"));
 			sprite.Play("idle");
 			sprite.Position = new Vector2(-8, -16);
-			Add(new TalkComponent(
+			Add(talkComponent = new TalkComponent(
 				new Rectangle(-16, -16, 32, 32),
 				new Vector2(0, -16),
 				(Player player) => {
 					OpenUI(player);
 				}
 			) { PlayerMustBeFacing = false });
+		}
+
+		public override void Added(Scene scene) {
+			base.Added(scene);
+			UpdateEnabledState();
+			Head2HeadModule.OnMatchCurrentMatchUpdated += UpdateEnabledState;
+		}
+
+		public override void Removed(Scene scene) {
+			base.Removed(scene);
+			Head2HeadModule.OnMatchCurrentMatchUpdated -= UpdateEnabledState;
+		}
+
+		private bool ShouldEnable() {
+			if (!CNetComm.Instance.IsConnected) return false;
+			if (!Role.AllowMatchCreate()) return false;
+			return PlayerStatus.Current.CanStageMatch();
+		}
+
+		private void UpdateEnabledState() {
+			talkComponent.Enabled = ShouldEnable();
 		}
 
 		private void OpenUI(Player player) {
