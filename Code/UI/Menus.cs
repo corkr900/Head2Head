@@ -161,26 +161,34 @@ namespace Celeste.Mod.Head2Head.UI
 				btn.AddDescription(menu, Dialog.Clean("Head2Head_menu_helpdesk_dropout_subtext"));
 
 			// Force End
-			btn = menu.AddButton("Head2Head_menu_helpdesk_forceend", () => {
-				MatchDefinition def = PlayerStatus.Current.CurrentMatch;
-				if (def != null && def.State == MatchState.InProgress) {
-					def.State = MatchState.Completed;  // Broadcasts update
-				}
+			if (Role.AllowKillingMatch()) {
+				btn = menu.AddButton("Head2Head_menu_helpdesk_forceend", () => {
+					MatchDefinition def = PlayerStatus.Current.CurrentMatch;
+					if (def != null && def.State < MatchState.Completed) {
+						def.State = MatchState.Completed;  // Broadcasts update
+					}
+					cxt.Refresh(menu);
+				});
+				if (def_menu == null)
+					btn.SoftDisable(menu, "Head2Head_menu_helpdesk_forceend_nocurrent");
+				else if (def_menu.State == MatchState.Completed)
+					btn.SoftDisable(menu, "Head2Head_menu_helpdesk_forceend_completed");
+				else btn.AddDescription(menu, Dialog.Clean("Head2Head_menu_helpdesk_forceend_subtext"));
+			}
+
+			// Purge Data
+			btn = menu.AddButton("Head2Head_menu_helpdesk_purge", () => {
+				Head2HeadModule.Instance.PurgeAllData();
 				cxt.Refresh(menu);
 			});
-			if (def_menu == null)
-				btn.SoftDisable(menu, "Head2Head_menu_helpdesk_forceend_nocurrent");
-			else if (def_menu.State != MatchState.InProgress)
-				btn.SoftDisable(menu, "Head2Head_menu_helpdesk_forceend_notinprogress");
-			else btn.AddDescription(menu, Dialog.Clean("Head2Head_menu_helpdesk_forceend_subtext"));
+			btn.AddDescription(menu, Dialog.Clean("Head2Head_menu_helpdesk_purge_subtext"));
 
-			// Clean
-			btn = menu.AddButton("Head2Head_menu_helpdesk_clean", () => {
-				Head2HeadModule.Instance.PurgeAllData();
+			// Pull Data
+			btn = menu.AddButton("Head2Head_menu_helpdesk_pulldata", () => {
 				CNetComm.Instance.SendScanRequest(false);
-				cxt.Close(menu);
+				cxt.Refresh(menu);
 			});
-			btn.AddDescription(menu, Dialog.Clean("Head2Head_menu_helpdesk_clean_subtext"));
+			btn.AddDescription(menu, Dialog.Clean("Head2Head_menu_helpdesk_pulldata_subtext"));
 
 			// Scan & Rejoin
 			if (!Head2HeadModule.Instance.PlayerCompletedARoom && def_menu == null) {

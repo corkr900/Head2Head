@@ -15,7 +15,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 				try {
 					CNetComm comm = CNetComm.Instance;
 					return !comm.IsConnected ? null
-						: (PlayerID?)new PlayerID(LocalMACAddress, comm.CnetID.Value, comm.CnetClient.PlayerInfo.Name);
+						: (PlayerID?)new PlayerID(LocalMACAddressHash, comm.CnetID.Value, comm.CnetClient.PlayerInfo.Name);
 				}
 				catch (Exception e) {
 					// If we lose connection at exactly the wrong moment,
@@ -25,20 +25,20 @@ namespace Celeste.Mod.Head2Head.Shared {
 			}
 		}
 		public static PlayerID MyIDSafe { get { return MyID ?? Default; } }
-		public static string LocalMACAddress {
+		public static int LocalMACAddressHash {
 			get {
-				if (string.IsNullOrEmpty(_localMACAddress)) SearchMACAddress();
-				return _localMACAddress;
+				if (_localMACHash == null) SearchMACAddress();
+				return _localMACHash ?? 0;
 			}
 		}
-		private static string _localMACAddress = null;
+		private static int? _localMACHash = null;
 		private static void SearchMACAddress() {
 			try {
-				_localMACAddress = (
+				_localMACHash = (
 					from nic in NetworkInterface.GetAllNetworkInterfaces()
 					where nic.OperationalStatus == OperationalStatus.Up
 					select nic.GetPhysicalAddress().ToString()
-				).FirstOrDefault();
+				)?.FirstOrDefault()?.GetHashCode();
 			}
 			catch (Exception e) {
 				Engine.Commands.Log("ERROR: Could not get MAC address: " + e.Message);
@@ -46,21 +46,21 @@ namespace Celeste.Mod.Head2Head.Shared {
 		}
 		public static PlayerID Default {
 			get {
-				return new PlayerID("", uint.MaxValue, "");
+				return new PlayerID(null, uint.MaxValue, "");
 			}
 		}
 
-		public PlayerID(string addr, uint cnetID, string name) {
-			MacAddress = addr;
+		public PlayerID(int? addrHash, uint cnetID, string name) {
+			MacAddressHash = addrHash;
 			CNetID = cnetID;
 			Name = name;
 		}
 		public PlayerID(PlayerID orig) {
-			MacAddress = orig.MacAddress;
+			MacAddressHash = orig.MacAddressHash;
 			CNetID = orig.CNetID;
 			Name = orig.Name;
 		}
-		public string MacAddress { get; private set; }
+		public int? MacAddressHash { get; private set; }
 		public string Name { get; private set; }
 		public uint CNetID { get; private set; }
 
@@ -73,27 +73,34 @@ namespace Celeste.Mod.Head2Head.Shared {
 		}
 
 		public bool IsDefault() {
-			return string.IsNullOrEmpty(MacAddress) && string.IsNullOrEmpty(Name);
+			return MacAddressHash == null && string.IsNullOrEmpty(Name);
 		}
 
 		public override bool Equals(object obj) {
-			return obj != null && obj is PlayerID id && id.MacAddress == MacAddress && id.Name == Name;
+			return obj != null && obj is PlayerID id && id.MacAddressHash == MacAddressHash && id.Name == Name;
 		}
 
 		public override int GetHashCode() {
-			return (MacAddress + Name).GetHashCode();
+			return ((MacAddressHash ?? 0) + Name).GetHashCode();
 		}
 	}
 
 	public static class PlayerIDExt {
 		public static PlayerID ReadPlayerID(this CelesteNetBinaryReader r) {
-			string mac = r.ReadString();
+			bool hasmac = r.ReadBoolean();
+			int? mac = hasmac ? (int?)r.ReadInt32() : null;
 			string name = r.ReadString();
 			uint cnetid = r.ReadUInt32();
 			return new PlayerID(mac, cnetid, name);
 		}
 		public static void Write(this CelesteNetBinaryWriter w, PlayerID id) {
-			w.Write(id.MacAddress);
+			if (id.MacAddressHash == null) {
+				w.Write(false);
+			}
+			else {
+				w.Write(true);
+				w.Write(id.MacAddressHash ?? 0);
+			}
 			w.Write(id.Name);
 			w.Write(id.CNetID);
 		}

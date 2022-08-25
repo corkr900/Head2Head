@@ -102,11 +102,14 @@ Head2Head_menu_helpdesk_forceend= End Current Match
 Head2Head_menu_helpdesk_forceend_subtext= Force the current match to end and mark all unfinished players as DNF.
 This cannot be undone.
 Head2Head_menu_helpdesk_forceend_nocurrent= There is no current match.
-Head2Head_menu_helpdesk_forceend_notinprogress= The current match is not in progress.
+Head2Head_menu_helpdesk_forceend_completed= The current match is already completed.
 
-Head2Head_menu_helpdesk_clean= Clean Up Data
-Head2Head_menu_helpdesk_clean_subtext= Remove all Head 2 Head data and ask everyone else for up-to-date matches & statuses.
+Head2Head_menu_helpdesk_purge= Purge Local Data
+Head2Head_menu_helpdesk_purge_subtext= Remove all local Head 2 Head match and player data.
 This cannot be undone.
+
+Head2Head_menu_helpdesk_pulldata= Pull Fresh Data
+Head2Head_menu_helpdesk_pulldata_subtext= Pull new Head 2 Head match and player data from other clients.
 
 Head2Head_menu_helpdesk_rejoin= Scan for Rejoinable Match
 Head2Head_menu_helpdesk_rejoin_subtext= If you previously crashed out of the game during a match, use this to rejoin it.

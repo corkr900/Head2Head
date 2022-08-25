@@ -105,5 +105,14 @@ namespace Celeste.Mod.Head2Head.Shared {
 					return true;
 			}
 		}
+
+		internal static bool AllowKillingMatch() {
+			switch (role) {
+				default:
+					return true;
+				case "bta":
+					return false;
+			}
+		}
 	}
 }
