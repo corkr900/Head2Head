@@ -599,26 +599,7 @@ namespace Celeste.Mod.Head2Head {
 
 			// try join (in progress takes priority)
 			foreach (MatchDefinition def in knownMatches.Values) {
-				ResultCategory cat = def.GetPlayerResultCat(PlayerID.MyIDSafe);
-				if (cat == ResultCategory.InMatch
-					&& def.Result[PlayerID.MyIDSafe]?.SaveFile == global::Celeste.SaveData.Instance.FileSlot)
-				{
-					PlayerStatus.Current.CurrentMatch = def;
-					PlayerStatus.Current.Merge(data.RequestorStatus);
-					PlayerStatus.Current.Updated();
-
-					Level level = GetLevelForCoroutine();
-					ForceUnpause(level);
-					Entity wrapper = new Entity();
-					wrapper.AddTag(Tags.Persistent);
-					level?.Add(wrapper);
-					GlobalAreaKey key;
-					string cp;
-					GetLastAreaCP(data.RequestorStatus, def, out key, out cp);
-					ActionLogger.RejoinMatch(def.MatchID);
-					wrapper.Add(new Coroutine(StartMatchCoroutine(key, cp)));
-					return;
-				}
+				if (RejoinMatch(def, data.RequestorStatus)) return;
 			}
 			// try join (joined, not started)
 			foreach (MatchDefinition def in knownMatches.Values) {
@@ -993,6 +974,32 @@ namespace Celeste.Mod.Head2Head {
 			level?.Add(wrapper);
 			wrapper.Add(new Coroutine(StartMatchCoroutine(def.Phases[0].Area)));
 			return true;
+		}
+
+		internal bool RejoinMatch(MatchDefinition def, PlayerStatus requestorStatus) {
+			ResultCategory cat = def.GetPlayerResultCat(PlayerID.MyIDSafe);
+			if (cat == ResultCategory.InMatch
+					&& def.Result[PlayerID.MyIDSafe]?.SaveFile == global::Celeste.SaveData.Instance.FileSlot) {
+				PlayerStatus.Current.CurrentMatch = def;
+				PlayerStatus.Current.Merge(requestorStatus);
+				PlayerStatus.Current.Updated();
+
+				if (global::Celeste.SaveData.Instance.Time < requestorStatus.FileTimerAtLastCheckpoint) {
+					global::Celeste.SaveData.Instance.Time = requestorStatus.FileTimerAtLastCheckpoint;
+				}
+				Level level = GetLevelForCoroutine();
+				ForceUnpause(level);
+				Entity wrapper = new Entity();
+				wrapper.AddTag(Tags.Persistent);
+				level?.Add(wrapper);
+				GlobalAreaKey key;
+				string cp;
+				GetLastAreaCP(requestorStatus, def, out key, out cp);
+				ActionLogger.RejoinMatch(def.MatchID);
+				wrapper.Add(new Coroutine(StartMatchCoroutine(key, cp)));
+				return true;
+			}
+			return false;
 		}
 
 		private Level GetLevelForCoroutine() {
