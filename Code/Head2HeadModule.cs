@@ -972,7 +972,7 @@ namespace Celeste.Mod.Head2Head {
 			Entity wrapper = new Entity();
 			wrapper.AddTag(Tags.Persistent);
 			level?.Add(wrapper);
-			wrapper.Add(new Coroutine(StartMatchCoroutine(def.Phases[0].Area)));
+			wrapper.Add(new Coroutine(StartMatchCoroutine(def.Phases[0].Area, false)));
 			return true;
 		}
 
@@ -996,7 +996,7 @@ namespace Celeste.Mod.Head2Head {
 				string cp;
 				GetLastAreaCP(requestorStatus, def, out key, out cp);
 				ActionLogger.RejoinMatch(def.MatchID);
-				wrapper.Add(new Coroutine(StartMatchCoroutine(key, cp)));
+				wrapper.Add(new Coroutine(StartMatchCoroutine(key, true, cp)));
 				return true;
 			}
 			return false;
@@ -1024,7 +1024,7 @@ namespace Celeste.Mod.Head2Head {
 			}
 		}
 
-		private IEnumerator StartMatchCoroutine(GlobalAreaKey gak, string startRoom = null) {
+		private IEnumerator StartMatchCoroutine(GlobalAreaKey gak, bool isRejoin, string startRoom = null) {
 			if (PlayerStatus.Current.CurrentMatch == null) yield break;
 			string idCheck = PlayerStatus.Current.CurrentMatchID;
 			DateTime startInstant = PlayerStatus.Current.CurrentMatch.BeginInstant;
@@ -1046,7 +1046,7 @@ namespace Celeste.Mod.Head2Head {
 			MatchDefinition def = PlayerStatus.Current.CurrentMatch;
 			if (def == null) yield break;
 			if (def.State != MatchState.InProgress) yield break;
-			PlayerStatus.Current.MatchStarted();
+			if (!isRejoin) PlayerStatus.Current.MatchStarted();
 			def.RegisterSaveFile();
 			ActionLogger.StartingMatch(def);
 			if (gak.IsOverworld) yield break;

@@ -98,7 +98,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			if (!string.IsNullOrEmpty(CurrentMatchID)) {
 				LastCheckpoint = session.LevelData.HasCheckpoint ? session.LevelData.Name : null;
 				FileTimerAtLastCheckpoint = SaveData.Instance?.Time ?? FileTimerAtLastCheckpoint;
-				ConfirmStrawberries(area);
+				ConfirmStrawberries();
 			}
 			Updated();
 		}
@@ -109,7 +109,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 					LastCheckpoint = next.Name;
 					FileTimerAtLastCheckpoint = SaveData.Instance?.Time ?? FileTimerAtLastCheckpoint;
 					GlobalAreaKey area = new GlobalAreaKey(level.Session.Area);
-					ConfirmStrawberries(area);
+					ConfirmStrawberries();
 					int index = reachedCheckpoints.FindIndex((Tuple<GlobalAreaKey, string> tpred) => {
 						return tpred.Item1.Equals(area) && tpred.Item2 == LastCheckpoint;
 					});
@@ -141,7 +141,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			if (!string.IsNullOrEmpty(CurrentMatchID)) {
 				LastCheckpoint = null;
 				FileTimerAtLastCheckpoint = SaveData.Instance?.Time ?? FileTimerAtLastCheckpoint;
-				ConfirmStrawberries(new GlobalAreaKey(session.Area));
+				ConfirmStrawberries();
 			}
 			Updated();
 		}
@@ -195,11 +195,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			MatchObjective ob = FindObjective(MatchObjectiveType.CassetteCollect, area, false);
 			if (ob != null && MarkObjectiveComplete(ob, area)) Updated();
 		}
-		private void ConfirmStrawberries(GlobalAreaKey area) {
-			ConfirmStrawberries(MatchObjectiveType.Strawberries, area);
-			ConfirmStrawberries(MatchObjectiveType.MoonBerry, area);
-		}
-		private void ConfirmStrawberries(MatchObjectiveType objtype, GlobalAreaKey area) {
+		private void ConfirmStrawberries() {
 			MatchDefinition def = CurrentMatch;
 			for (int i = 0; i < objectives.Count; i++) {
 				MatchObjective obj = def.GetObjective(objectives[i].ObjectiveID);
@@ -313,7 +309,6 @@ namespace Celeste.Mod.Head2Head.Shared {
 				});
 				FileTimerAtLastObjectiveComplete = SaveData.Instance.Time;
 			}
-			ConfirmStrawberries(area);
 			TryMarkPhaseComplete(ob);
 			return true;
 		}
@@ -368,6 +363,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 					}
 				}
 				if (matchFinished) {  // All phases are complete
+					ConfirmStrawberries();
 					CurrentMatch.PlayerFinished(PlayerID.MyIDSafe, this);
 				}
 				OnMatchPhaseCompleted?.Invoke(new OnMatchPhaseCompletedArgs(
@@ -413,14 +409,24 @@ namespace Celeste.Mod.Head2Head.Shared {
 			FileTimerAtLastObjectiveComplete = other.FileTimerAtLastObjectiveComplete;
 
 			// Remove unconfirmed strawbs
+			// TODO un-complete onjective types besides strawbs
 			MatchDefinition def = CurrentMatch;
 			if (def != null) {
-				foreach (H2HMatchObjectiveState ost in objectives) {
-					for (int i = 0; i < ost.CollectedStrawbs.Count; i++) {
-						if (!ost.CollectedStrawbs[i].Item2) {
-							ost.CollectedStrawbs.RemoveAt(i);
-							i--;
+				for (int i1 = 0; i1 < objectives.Count; i1++) {
+					bool removed = false;
+					for (int i2 = 0; i2 < objectives[i1].CollectedStrawbs.Count; i2++) {
+						if (!objectives[i1].CollectedStrawbs[i2].Item2) {
+							objectives[i1].CollectedStrawbs.RemoveAt(i2);
+							i2--;
+							removed = true;
 						}
+					}
+					if (removed) {
+						objectives[i1] = new H2HMatchObjectiveState() {
+							ObjectiveID = objectives[i1].ObjectiveID,
+							CollectedStrawbs = objectives[i1].CollectedStrawbs,
+							Completed = false,
+						};
 					}
 				}
 			}
