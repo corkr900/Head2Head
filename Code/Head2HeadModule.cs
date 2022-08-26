@@ -822,6 +822,7 @@ namespace Celeste.Mod.Head2Head {
 				if (Settings.AutoStageNewMatches == Head2HeadModuleSettings.AutoStageSetting.Never) return;
 				if (Settings.AutoStageNewMatches == Head2HeadModuleSettings.AutoStageSetting.OnlyInLobby
 					&& !PlayerStatus.Current.CurrentArea.Equals(GlobalAreaKey.Head2HeadLobby)) return;
+				if (!Role.AllowAutoStage(def)) return;
 			}
 			MatchDefinition current = PlayerStatus.Current.CurrentMatch;
 			if (current != null) {
@@ -830,6 +831,7 @@ namespace Celeste.Mod.Head2Head {
 					&& current.State <= MatchState.InProgress
 					&& current.GetPlayerResultCat(PlayerID.MyIDSafe) == ResultCategory.NotJoined) return;
 			}
+			// Actually stage it locally
 			PlayerStatus.Current.CurrentMatch = def;
 			PlayerStatus.Current.MatchStaged(PlayerStatus.Current.CurrentMatch);
 			OnMatchCurrentMatchUpdated?.Invoke();
@@ -931,6 +933,7 @@ namespace Celeste.Mod.Head2Head {
 			knownPlayers.Clear();
 			Instance.ClearAutoLaunchInfo();
 			Instance.buildingMatch = null;
+			Role.RemoveBTAPass();
 			if (curdef != null && !curdef.PlayerCanLeaveFreely(PlayerID.MyIDSafe)) {
 				knownMatches.Add(curdef.MatchID, curdef);
 			}

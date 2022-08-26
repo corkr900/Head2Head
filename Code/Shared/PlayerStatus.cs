@@ -75,6 +75,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public bool IsInDebug { get; internal set; }
 		public long CurrentFileTimer { get; internal set; }
 		public long FileTimerAtMatchBegin { get; internal set; }
+		public long FileTimerAtLastCheckpoint { get; internal set; }
 		public long FileTimerAtLastObjectiveComplete { get; internal set; }
 		public List<H2HMatchPhaseState> phases { get; internal set; } = new List<H2HMatchPhaseState>();
 		public List<H2HMatchObjectiveState> objectives { get; internal set; } = new List<H2HMatchObjectiveState>();
@@ -96,6 +97,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			CurrentRoom = session.Level;
 			if (!string.IsNullOrEmpty(CurrentMatchID)) {
 				LastCheckpoint = session.LevelData.HasCheckpoint ? session.LevelData.Name : null;
+				FileTimerAtLastCheckpoint = SaveData.Instance?.Time ?? FileTimerAtLastCheckpoint;
 			}
 			Updated();
 		}
@@ -104,6 +106,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			if (next.HasCheckpoint) {
 				if (!string.IsNullOrEmpty(CurrentMatchID)) {
 					LastCheckpoint = next.Name;
+					FileTimerAtLastCheckpoint = SaveData.Instance?.Time ?? FileTimerAtLastCheckpoint;
 					GlobalAreaKey area = new GlobalAreaKey(level.Session.Area);
 					int index = reachedCheckpoints.FindIndex((Tuple<GlobalAreaKey, string> tpred) => {
 						return tpred.Item1.Equals(area) && tpred.Item2 == LastCheckpoint;
@@ -135,6 +138,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			CurrentRoom = "";
 			if (!string.IsNullOrEmpty(CurrentMatchID)) {
 				LastCheckpoint = null;
+				FileTimerAtLastCheckpoint = SaveData.Instance?.Time ?? FileTimerAtLastCheckpoint;
 			}
 			Updated();
 		}
@@ -157,6 +161,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			objectives.Clear();
 			reachedCheckpoints.Clear();
 			FileTimerAtMatchBegin = SaveData.Instance.Time;
+			FileTimerAtLastCheckpoint = SaveData.Instance.Time;
 			Updated();
 		}
 		public void MatchReset() {
@@ -420,6 +425,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			if (string.IsNullOrEmpty(pms.LastCheckpoint)) pms.LastCheckpoint = null;
 			pms.CurrentFileTimer = r.ReadInt64();
 			pms.FileTimerAtMatchBegin = r.ReadInt64();
+			pms.FileTimerAtLastCheckpoint = r.ReadInt64();
 			pms.FileTimerAtLastObjectiveComplete = r.ReadInt64();
 			int numPhases = r.ReadInt32();
 			for (int i = 0; i < numPhases; i++) {
@@ -445,6 +451,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			w.Write(s.LastCheckpoint ?? "");
 			w.Write(s.CurrentFileTimer);
 			w.Write(s.FileTimerAtMatchBegin);
+			w.Write(s.FileTimerAtLastCheckpoint);
 			w.Write(s.FileTimerAtLastObjectiveComplete);
 			w.Write(s.phases.Count);
 			foreach (H2HMatchPhaseState st in s.phases) {

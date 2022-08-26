@@ -8,12 +8,18 @@ using Celeste.Mod.Head2Head.UI;
 
 namespace Celeste.Mod.Head2Head.Shared {
 	public class Role {
-		internal static string role { get { return Head2HeadModule.Settings.GetRole(); } }
+		internal static string role { get { return Head2HeadModule.Settings.Role; } }
 		public static bool hasBTAMatchPass { get; private set; } = false;
 
 		internal static void GiveBTAMatchPass() {
 			hasBTAMatchPass = true;
 		}
+
+		internal static void RemoveBTAPass() {
+			hasBTAMatchPass = false;
+		}
+
+		#region Role-specific behavior
 
 		public static bool AllowMatchCreate() {
 			switch (role) {
@@ -21,6 +27,17 @@ namespace Celeste.Mod.Head2Head.Shared {
 					return true;
 				case "bta":
 					return hasBTAMatchPass;
+			}
+		}
+
+		public static bool AllowAutoStage(MatchDefinition def) {
+			bool hasReq = !string.IsNullOrEmpty(def.RequiredRole);
+			switch (role) {
+				default:
+					return !hasReq;
+				case "bta":
+				case "bta-host":
+					return def.RequiredRole == "bta";
 			}
 		}
 
@@ -114,5 +131,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 					return false;
 			}
 		}
+
+		#endregion
 	}
 }

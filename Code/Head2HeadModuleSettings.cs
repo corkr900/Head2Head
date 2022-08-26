@@ -36,8 +36,9 @@ namespace Celeste.Mod.Head2Head {
 		[SettingName("Head2Head_Setting_Role")]
 		[SettingSubText("Head2Head_Setting_Role_Subtext")]
 		[SettingInGame(false)]
+		[SettingMinLength(0)]
+		[SettingMaxLength(12)]
 		public string Role { get; set; } = "";
-		internal string GetRole() => Role;
 
 		// Stuff not in menu
 
