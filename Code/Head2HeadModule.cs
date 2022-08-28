@@ -707,10 +707,12 @@ namespace Celeste.Mod.Head2Head {
 		}
 
 		public bool CanJoinMatch() {
-			if (PlayerStatus.Current.CurrentMatch == null) return false;
-			if (PlayerStatus.Current.MatchState != MatchState.Staged) return false;
-			if (PlayerStatus.Current.CurrentMatch.Players.Contains(PlayerID.MyIDSafe)) return false;
-			if (!Role.AllowMatchJoin(PlayerStatus.Current.CurrentMatch)) return false;
+			MatchDefinition def = PlayerStatus.Current.CurrentMatch;
+			if (def == null) return false;
+			if (def.State != MatchState.Staged) return false;
+			if (def.Players.Contains(PlayerID.MyIDSafe)) return false;
+			if (!Role.AllowMatchJoin(def)) return false;
+			if (def.VersionCheck() != null) return false;
 			return true;
 		}
 

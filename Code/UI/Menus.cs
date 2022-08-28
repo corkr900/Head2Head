@@ -345,7 +345,10 @@ namespace Celeste.Mod.Head2Head.UI
 					Head2HeadModule.Instance.JoinStagedMatch();
 					cxt.Close(menu);
 				});
-				if (cxtMatch.State != MatchState.Staged)
+				GlobalAreaKey? k = curmatch?.VersionCheck();
+				if (k != null)
+					btn.SoftDisable(menu, "Head2Head_menu_match_join_versionmismatch", k.Value.LocalVersion.ToString(), k.Value.Version.ToString());
+				else if (cxtMatch.State != MatchState.Staged)
 					btn.SoftDisable(menu, "Head2Head_menu_match_stage_wrongstatus");
 				else if (cxtMatch.GetPlayerResultCat(PlayerID.MyIDSafe) >= ResultCategory.Joined)
 					btn.SoftDisable(menu, "Head2Head_menu_match_join_alreadyjoined");
