@@ -86,18 +86,11 @@ namespace Celeste.Mod.Head2Head.Control {
 			bool isFloat = float.TryParse(val, out valFloat);
 
 			switch (id) {
-				//case "x":
-				//	if (!isFloat) return;
-				//	H2HHudRenderer.listMarginX = (int)valFloat;
-				//	return;
-				//case "y":
-				//	if (!isFloat) return;
-				//	H2HHudRenderer.listMarginY = (int)valFloat;
-				//	return;
-				//case "scale":
-				//	if (!isFloat) return;
-				//	H2HHudRenderer.listBgScale = (int)valFloat;
-				//	return;
+				case "messagecount":
+				case "msgcnt":
+					Engine.Commands.Log(CNetComm.MessageCounter);
+					if (val == "reset") CNetComm.MessageCounter = 0;
+					return;
 				case "help":
 				case "-h":
 				default:

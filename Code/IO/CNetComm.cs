@@ -39,6 +39,8 @@ namespace Celeste.Mod.Head2Head.IO {
 			}
 		}
 
+		internal static long MessageCounter = 0;
+
 		// #############################################
 
 		public delegate void OnConnectedHandler(CelesteNetClientContext cxt);
@@ -134,6 +136,7 @@ namespace Celeste.Mod.Head2Head.IO {
 			CnetClient.SendAndHandle(new DataH2HPlayerStatus() {
 				Status = stat,
 			});
+			MessageCounter++;
 		}
 
 		internal void SendMatchReset(string matchID) {
@@ -144,6 +147,7 @@ namespace Celeste.Mod.Head2Head.IO {
 			CnetClient.SendAndHandle(new DataH2HMatchReset() {
 				MatchID = matchID,
 			});
+			MessageCounter++;
 		}
 
 		internal void SendMatchUpdate(MatchDefinition def) {
@@ -154,6 +158,7 @@ namespace Celeste.Mod.Head2Head.IO {
 			CnetClient.SendAndHandle(new DataH2HMatchUpdate() {
 				NewDef = def,
 			});
+			MessageCounter++;
 		}
 
 		internal void SendScanRequest(bool autoRejoin) {
@@ -163,6 +168,7 @@ namespace Celeste.Mod.Head2Head.IO {
 			CnetClient.SendAndHandle(new DataH2HScanRequest() {
 				AutoRejoin = autoRejoin,
 			});
+			MessageCounter++;
 		}
 
 		internal void SendScanResponse(PlayerID requestor, PlayerStatus reqstat) {
@@ -177,6 +183,7 @@ namespace Celeste.Mod.Head2Head.IO {
 					return def.State == MatchState.Staged || def.State == MatchState.InProgress;
 				}),
 			});
+			MessageCounter++;
 		}
 
 		internal void SendMisc(string message, PlayerID targetPlayer) {
@@ -187,6 +194,7 @@ namespace Celeste.Mod.Head2Head.IO {
 				message = message,
 				targetPlayer = targetPlayer,
 			});
+			MessageCounter++;
 		}
 
 		// #############################################
