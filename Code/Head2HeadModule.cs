@@ -23,7 +23,6 @@ using MonoMod.Cil;
 using Mono.Cecil.Cil;
 using Celeste.Mod.UI;
 using Celeste.Mod.Head2Head.UI;
-using FMOD.Studio;
 
 // TODO Force DNF if a player intentionally closes the game
 
@@ -53,6 +52,8 @@ namespace Celeste.Mod.Head2Head {
 
 		private static IDetour hook_Strawberry_orig_OnCollect;
 		private static IDetour hook_OuiChapterSelectIcon_Get_IdlePosition;
+		private static IDetour hook_SaveData_Get_UnlockedAreas_Safe;
+		private static IDetour hook_SaveData_Set_UnlockedAreas_Safe;
 
 		// #######################################################
 
@@ -98,6 +99,12 @@ namespace Celeste.Mod.Head2Head {
 			hook_OuiChapterSelectIcon_Get_IdlePosition = new Hook(
 				typeof(OuiChapterSelectIcon).GetProperty("IdlePosition").GetAccessors()[0],
 				typeof(Head2HeadModule).GetMethod("OnOuiChapterSelectIconGetIdlePosition"));
+			hook_SaveData_Get_UnlockedAreas_Safe = new Hook(
+				typeof(SaveData).GetProperty("UnlockedAreas_Safe").GetGetMethod(),
+				typeof(Head2HeadModule).GetMethod("OnSaveDataGetUnlockedAreas_Safe"));
+			hook_SaveData_Set_UnlockedAreas_Safe = new Hook(
+				typeof(SaveData).GetProperty("UnlockedAreas_Safe").GetSetMethod(),
+				typeof(Head2HeadModule).GetMethod("OnSaveDataSetUnlockedAreas_Safe"));
 			IL.Celeste.LevelLoader.LoadingThread += Level_LoadingThread;
 			IL.Celeste.Level.CompleteArea_bool_bool_bool += Level_CompleteArea;
 			// Monocle + Celeste Hooks
@@ -157,6 +164,10 @@ namespace Celeste.Mod.Head2Head {
 			hook_Strawberry_orig_OnCollect = null;
 			hook_OuiChapterSelectIcon_Get_IdlePosition?.Dispose();
 			hook_OuiChapterSelectIcon_Get_IdlePosition = null;
+			hook_SaveData_Get_UnlockedAreas_Safe?.Dispose();
+			hook_SaveData_Get_UnlockedAreas_Safe = null;
+			hook_SaveData_Set_UnlockedAreas_Safe?.Dispose();
+			hook_SaveData_Set_UnlockedAreas_Safe = null;
 			IL.Celeste.LevelLoader.LoadingThread -= Level_LoadingThread;
 			IL.Celeste.Level.CompleteArea_bool_bool_bool -= Level_CompleteArea;
 			// Monocle + Celeste Hooks
@@ -211,7 +222,7 @@ namespace Celeste.Mod.Head2Head {
 				Celeste.Instance.Components.Remove(Comm);
 		}
 
-		public override void CreateModMenuSection(TextMenu menu, bool inGame, EventInstance snapshot)
+		public override void CreateModMenuSection(TextMenu menu, bool inGame, FMOD.Studio.EventInstance snapshot)
 		{
 			base.CreateModMenuSection(menu, inGame, snapshot);
 			Settings.CreateOptions(menu, inGame, snapshot);
@@ -509,6 +520,24 @@ namespace Celeste.Mod.Head2Head {
 				return set;
 			}
 			else return orig(save, area);
+		}
+
+		public static int OnSaveDataGetUnlockedAreas_Safe(Func<SaveData, int> orig, SaveData self) {
+			// Show all chapters in file select when in match so that RTM doesnt cause issues in a fresh savefile
+			MatchDefinition def = PlayerStatus.Current.CurrentMatch;
+			if (def != null && def.GetPlayerResultCat(PlayerID.MyIDSafe) == ResultCategory.InMatch) {
+				return self.LevelSetStats.AreaOffset + self.LevelSetStats.MaxArea;
+			}
+			else return orig(self);
+		}
+
+		public static void OnSaveDataSetUnlockedAreas_Safe(Action<SaveData, int> orig, SaveData self, int val) {
+			// Don't update the unlocked areas while in a match because we're exposing all of them anyway
+			MatchDefinition def = PlayerStatus.Current.CurrentMatch;
+			if (def != null && def.GetPlayerResultCat(PlayerID.MyIDSafe) == ResultCategory.InMatch) {
+				return;
+			}
+			else orig(self, val);
 		}
 
 		private void OnLevelRegisterAreaComplete(On.Celeste.Level.orig_RegisterAreaComplete orig, Level self) {
