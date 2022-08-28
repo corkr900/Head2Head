@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Celeste.Mod.CelesteNet.Client.Components;
 
 namespace Celeste.Mod.Head2Head.IO {
 	public class CNetComm : GameComponent {
@@ -20,6 +21,23 @@ namespace Celeste.Mod.Head2Head.IO {
 		public CelesteNetClient CnetClient { get { return CelesteNetClientModule.Instance?.Client; } }
 		public bool IsConnected { get { return CnetClient?.Con?.IsConnected ?? false; } }
 		public uint? CnetID { get { return IsConnected ? (uint?)CnetClient?.PlayerInfo?.ID : null; } }
+
+		public DataChannelList.Channel CurrentChannel {
+			get {
+				KeyValuePair<Type, CelesteNetGameComponent> listComp = CnetContext.Components.FirstOrDefault((KeyValuePair<Type, CelesteNetGameComponent> kvp) => {
+					return kvp.Key == typeof(CelesteNetPlayerListComponent);
+				});
+				if (listComp.Equals(default(KeyValuePair<Type, CelesteNetGameComponent>))) return null;
+				CelesteNetPlayerListComponent comp = listComp.Value as CelesteNetPlayerListComponent;
+				DataChannelList.Channel[] list = comp.Channels?.List;
+				return list?.FirstOrDefault(c => c.Players.Contains(CnetClient.PlayerInfo.ID));
+			}
+		}
+		public bool CurrentChannelIsMain {
+			get {
+				return CurrentChannel?.Name?.ToLower() == "main";
+			}
+		}
 
 		// #############################################
 

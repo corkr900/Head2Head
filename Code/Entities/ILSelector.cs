@@ -58,14 +58,8 @@ namespace Celeste.Mod.Head2Head.Entities {
 			Head2HeadModule.OnMatchCurrentMatchUpdated -= UpdateEnabledState;
 		}
 
-		private bool ShouldEnable() {
-			if (!CNetComm.Instance.IsConnected) return false;
-			if (!Role.AllowMatchCreate()) return false;
-			return PlayerStatus.Current.CanStageMatch();
-		}
-
 		private void UpdateEnabledState() {
-			talkComponent.Enabled = ShouldEnable();
+			talkComponent.Enabled = Head2HeadModule.Instance.CanBuildMatch();
 		}
 
 		private void OpenUI(Player player) {

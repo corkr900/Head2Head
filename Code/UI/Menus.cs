@@ -131,6 +131,21 @@ namespace Celeste.Mod.Head2Head.UI
 				menu.OnCancel();
 			});
 			menu.Add(item);
+			
+			// Why can't I Create a Match?
+			if ((PlayerStatus.Current?.CurrentArea.Equals(GlobalAreaKey.Head2HeadLobby) ?? true) && !Head2HeadModule.Instance.CanBuildMatch()) {
+				btn = menu.AddButton("Head2Head_menu_helpdesk_whynocreatematch", () => { });
+				if (!CNetComm.Instance.IsConnected)
+					btn.SoftDisable(menu, "Head2Head_menu_helpdesk_whynocreatematch_notconnected");
+				else if (CNetComm.Instance.CurrentChannelIsMain)
+					btn.SoftDisable(menu, "Head2Head_menu_helpdesk_whynocreatematch_mainchannel");
+				else if (!Role.AllowMatchCreate())
+					btn.SoftDisable(menu, "Head2Head_menu_helpdesk_whynocreatematch_role");
+				else if (!PlayerStatus.Current.CanStageMatch())
+					btn.SoftDisable(menu, "Head2Head_menu_helpdesk_whynocreatematch_playerstatus");
+				else
+					btn.SoftDisable(menu, "Head2Head_menu_helpdesk_whynocreatematch_other");
+			}
 
 			// Browse
 			item = new TextMenu.Button(Dialog.Clean("Head2Head_menu_helpdesk_browse")).Pressed(() => {
@@ -214,10 +229,11 @@ namespace Celeste.Mod.Head2Head.UI
 			// Return to Lobby
 			if (!PlayerStatus.Current.CurrentArea.Equals(GlobalAreaKey.Head2HeadLobby)) {
 				btn = menu.AddButton("Head2Head_menu_helpdesk_returntolobby", () => {
-					cxt.Close(menu);
 					new FadeWipe(menu.Scene, false, () => {
 						LevelEnter.Go(new Session(GlobalAreaKey.Head2HeadLobby.Local.Value), false);
 					});
+					Head2HeadModule.Instance.ClearAutoLaunchInfo();
+					cxt.Close(menu);
 				});
 			}
 

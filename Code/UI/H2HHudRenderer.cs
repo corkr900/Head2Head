@@ -78,15 +78,16 @@ namespace Celeste.Mod.Head2Head.UI {
 				Color captionColor = Color.Black;
 
 				float midWidth = Math.Max(ActiveFont.Measure(matchCaption).X - (BannerLeft.Width * 2) + titleMarginX * 2, 0) * hudScale;
+				float anchorY = 0;
+				if (!showCreator) {
+					//float offset = Vector2.UnitY * (lineOffset - 16);
+					anchorY = (lineOffset - 16) / (float)BannerMid.Height;
+				}
 				Vector2 bannerPositionL = new Vector2((CanvasSize.X - midWidth) / 2f, -1f);
 				Vector2 bannerPositionR = new Vector2((CanvasSize.X + midWidth) / 2f, -1f);
-				if (!showCreator) {
-					bannerPositionL -= Vector2.UnitY * (lineOffset - 16);
-					bannerPositionR -= Vector2.UnitY * (lineOffset - 16);
-				}
-				BannerLeft.DrawJustified(bannerPositionL, new Vector2(1, 0), Color.White * _bannerOpacity, hudScale);
-				BannerMid.DrawJustified(bannerPositionL, new Vector2(0, 0), Color.White * _bannerOpacity, new Vector2(midWidth / (BannerMid.Width * hudScale), 1) * hudScale);
-				BannerRight.DrawJustified(bannerPositionR, new Vector2(0, 0), Color.White * _bannerOpacity, hudScale);
+				BannerLeft.DrawJustified(bannerPositionL, new Vector2(1, anchorY), Color.White * _bannerOpacity, hudScale);
+				BannerMid.DrawJustified(bannerPositionL, new Vector2(0, anchorY), Color.White * _bannerOpacity, new Vector2(midWidth / (BannerMid.Width * hudScale), 1) * hudScale);
+				BannerRight.DrawJustified(bannerPositionR, new Vector2(0, anchorY), Color.White * _bannerOpacity, hudScale);
 
 				ActiveFont.Draw(matchCaption, captionPos, justify, captionScale, captionColor * _bannerOpacity);
 

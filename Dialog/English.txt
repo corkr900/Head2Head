@@ -90,6 +90,17 @@ Head2Head_hud_playerlist_title= {0} Players
 Head2Head_menu_back= Back
 Head2Head_menu_helpdesk= Head 2 Head Helpdesk
 
+Head2Head_menu_helpdesk_whynocreatematch= Why Can't I Create a Match?
+Head2Head_menu_helpdesk_whynocreatematch_notconnected= You are not connected to Celestenet
+Head2Head_menu_helpdesk_whynocreatematch_mainchannel= To avoid spam, you may not create matches in the main channel.
+Join a different Celestenet channel before creating a match.
+Head2Head_menu_helpdesk_whynocreatematch_role= Your current role prevents you from creating a match.
+Unless you know what you're doing or have specific instructions, you probably want no role.
+(Clear out the Role setting in Main Menu -> Mod Options -> Head2Head)
+Head2Head_menu_helpdesk_whynocreatematch_playerstatus= Your current status prevents you from creating a match. Are you already in one?
+Head2Head_menu_helpdesk_whynocreatematch_other= Some unknown issue. Recommend purging local data and/or restarting Celeste.
+This message should never appear. If it does, let corkr900 know how you got here.
+
 Head2Head_menu_helpdesk_browse= Browse Known Matches
 
 Head2Head_menu_helpdesk_dropout= Drop Out of Current Match

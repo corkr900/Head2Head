@@ -22,6 +22,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 
         public string DisplayNameOverride = "";
         public string RequiredRole = "";
+        public DateTime CreationInstant;
 
 		#endregion
 
@@ -306,6 +307,7 @@ namespace Celeste.Mod.Head2Head.Shared {
             MatchDefinition d = new MatchDefinition();
             d.MatchID = reader.ReadString();
             d.Owner = reader.ReadPlayerID();
+            d.CreationInstant = reader.ReadDateTime();
             d.SetState_NoUpdate((MatchState)Enum.Parse(typeof(MatchState), reader.ReadString()));
             d.DisplayNameOverride = reader.ReadString();
             d.RequiredRole = reader.ReadString();
@@ -341,6 +343,7 @@ namespace Celeste.Mod.Head2Head.Shared {
             else writer.Write(true);
             writer.Write(m.MatchID);
             writer.Write(m.Owner);
+            writer.Write(m.CreationInstant);
             writer.Write(m.State.ToString());
             writer.Write(m.DisplayNameOverride);
             writer.Write(m.RequiredRole);

@@ -407,6 +407,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			CurrentFileTimer = other.CurrentFileTimer;
 			FileTimerAtMatchBegin = other.FileTimerAtMatchBegin;
 			FileTimerAtLastObjectiveComplete = other.FileTimerAtLastObjectiveComplete;
+			reachedCheckpoints = other.reachedCheckpoints;
 
 			// Remove unconfirmed strawbs
 			// TODO un-complete onjective types besides strawbs

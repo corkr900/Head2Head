@@ -638,10 +638,18 @@ namespace Celeste.Mod.Head2Head {
 		}
 
 		private void OnChannelMove(DataChannelMove data) {
-			// TODO handle channel moves
-			Engine.Commands.Log("Channel Move Received for " + data.Player?.FullName);
+			if (data.Player?.ID == CelesteNetClientModule.Instance?.Client?.PlayerInfo?.ID) {
+				MatchDefinition def = PlayerStatus.Current.CurrentMatch;
+				if (def != null && def.GetPlayerResultCat(PlayerID.MyIDSafe) == ResultCategory.InMatch) {
+					def.PlayerDNF();
+				}
+				PurgeAllData();
+			}
+			else {
+				DiscardStaleData();
+			}
+			CNetComm.Instance.SendScanRequest(false);
 			OnMatchCurrentMatchUpdated?.Invoke();
-			DiscardStaleData();
 		}
 
 		private void OnConnected(CelesteNetClientContext cxt) {
@@ -651,17 +659,22 @@ namespace Celeste.Mod.Head2Head {
 
 		private void OnDisconnected(CelesteNetConnection con) {
 			OnMatchCurrentMatchUpdated?.Invoke();
-			//PlayerStatus.Current.CNetDisconnected();
 		}
 
 		// #######################################################
 
-		public bool CanStageMatch() {
+		public bool CanBuildMatch() {
 			if (!CNetComm.Instance.IsConnected) return false;
+			if (CNetComm.Instance.CurrentChannelIsMain) return false;
+			if (!Role.AllowMatchCreate()) return false;
+			return PlayerStatus.Current.CanStageMatch(); ;
+		}
+
+		public bool CanStageMatch() {
+			if (!CanBuildMatch()) return false;
 			if (buildingMatch == null) return false;
 			if (buildingMatch.Phases.Count == 0) return false;
-			if (!Role.AllowMatchCreate()) return false;
-			return PlayerStatus.Current.CanStageMatch();
+			return true;
 		}
 
 		public bool CanJoinMatch() {
@@ -691,6 +704,7 @@ namespace Celeste.Mod.Head2Head {
 			}
 			buildingMatch = new MatchDefinition() {
 				Owner = PlayerID.MyID ?? PlayerID.Default,
+				CreationInstant = DateTime.Now,
 			};
 		}
 
@@ -931,6 +945,7 @@ namespace Celeste.Mod.Head2Head {
 			if (def.State == MatchState.None) return true;
 			if (def.State == MatchState.Completed) return true;
 			if (def.State == MatchState.Building && buildingMatch.MatchID != def.MatchID) return true;
+			if (def.State == MatchState.Staged && (DateTime.Now - def.CreationInstant).TotalMinutes > 20) return true;
 			return false;
 		}
 
