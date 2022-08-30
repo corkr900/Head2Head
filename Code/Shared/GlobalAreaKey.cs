@@ -21,7 +21,7 @@ namespace Celeste.Mod.Head2Head.Shared {
         public string SID { get { return _sid; } }
         public Version LocalVersion {
 			get {
-                if (IsOverworld || !ExistsLocal || IsVanilla) return Everest.Version;
+                if (IsOverworld || !ExistsLocal || IsVanilla) return Celeste.Instance.Version;
                 else return ModContent.Mod.Version;
             }
 		}
