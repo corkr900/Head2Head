@@ -42,7 +42,7 @@ namespace Celeste.Mod.Head2Head.UI {
 			for (int num = (count + iD + Direction) % count; num != iD; num = (count + num + Direction) % count) {
 				AreaData areaData = AreaData.Get(num);
 				string set = areaData.GetLevelSet();
-				if (areaData == null || (set != levelSet && set != "Head2Head")) {
+				if (areaData == null || (!string.IsNullOrEmpty(set) && set != levelSet && set != "Head2Head")) {
 					ILSelector.LastArea = new GlobalAreaKey(areaData.ToKey());
 					break;
 				}
