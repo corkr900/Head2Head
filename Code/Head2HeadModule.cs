@@ -55,6 +55,7 @@ namespace Celeste.Mod.Head2Head {
 		private static IDetour hook_OuiChapterSelectIcon_Get_IdlePosition;
 		private static IDetour hook_SaveData_Get_UnlockedAreas_Safe;
 		private static IDetour hook_SaveData_Set_UnlockedAreas_Safe;
+		private static IDetour hook_HeartGemDoor_Get_HeartGems;
 
 		// #######################################################
 
@@ -106,6 +107,9 @@ namespace Celeste.Mod.Head2Head {
 			hook_SaveData_Set_UnlockedAreas_Safe = new Hook(
 				typeof(SaveData).GetProperty("UnlockedAreas_Safe").GetSetMethod(),
 				typeof(Head2HeadModule).GetMethod("OnSaveDataSetUnlockedAreas_Safe"));
+			hook_HeartGemDoor_Get_HeartGems = new Hook(
+				typeof(HeartGemDoor).GetProperty("HeartGems").GetGetMethod(),
+				typeof(Head2HeadModule).GetMethod("OnHeartGemDoorGetHeartGems"));
 			IL.Celeste.LevelLoader.LoadingThread += Level_LoadingThread;
 			IL.Celeste.Level.CompleteArea_bool_bool_bool += Level_CompleteArea;
 			// Monocle + Celeste Hooks
@@ -170,6 +174,8 @@ namespace Celeste.Mod.Head2Head {
 			hook_SaveData_Get_UnlockedAreas_Safe = null;
 			hook_SaveData_Set_UnlockedAreas_Safe?.Dispose();
 			hook_SaveData_Set_UnlockedAreas_Safe = null;
+			hook_HeartGemDoor_Get_HeartGems?.Dispose();
+			hook_HeartGemDoor_Get_HeartGems = null;
 			IL.Celeste.LevelLoader.LoadingThread -= Level_LoadingThread;
 			IL.Celeste.Level.CompleteArea_bool_bool_bool -= Level_CompleteArea;
 			// Monocle + Celeste Hooks
@@ -541,6 +547,15 @@ namespace Celeste.Mod.Head2Head {
 				return;
 			}
 			else orig(self, val);
+		}
+
+		public static int OnHeartGemDoorGetHeartGems(Func<HeartGemDoor, int> orig, HeartGemDoor self) {
+			// Allow all heart gem doors to open while in a match
+			MatchDefinition def = PlayerStatus.Current.CurrentMatch;
+			if (def != null && def.GetPlayerResultCat(PlayerID.MyIDSafe) == ResultCategory.InMatch) {
+				return self.Requires;
+			}
+			else return orig(self);
 		}
 
 		private void OnLevelRegisterAreaComplete(On.Celeste.Level.orig_RegisterAreaComplete orig, Level self) {
