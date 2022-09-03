@@ -456,6 +456,7 @@ namespace Celeste.Mod.Head2Head.Shared {
             mo.ID = reader.ReadUInt32();
             mo.ObjectiveType = (MatchObjectiveType)Enum.Parse(typeof(MatchObjectiveType), reader.ReadString());
             mo.BerryGoal = reader.ReadInt32();
+            mo.TimeLimit = reader.ReadInt64();
 
             int count = reader.ReadInt32();
             List<Tuple<PlayerID, long>> list = new List<Tuple<PlayerID, long>>(count);
