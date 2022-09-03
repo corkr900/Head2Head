@@ -198,7 +198,7 @@ namespace Celeste.Mod.Head2Head.UI {
 					if (def.Phases[0].category == StandardCategory.TimeLimit) {
 						MatchObjective ob = def.Phases[0].Objectives[0];
 						long timeRemaining = Math.Max(stat.FileTimerAtMatchBegin + ob.AdjustedTimeLimit(id) - stat.CurrentFileTimer, 0);
-						return Util.ReadableTimeSpanTitle(timeRemaining);
+						return string.Format(Dialog.Get("Head2Head_hud_playerlist_timeremain"), Util.ReadableTimeSpanTitle(timeRemaining));
 					}
 					int strawbsTotal = 0;
 					int strawbsCollected = 0;

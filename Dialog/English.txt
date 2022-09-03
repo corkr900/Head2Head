@@ -82,7 +82,7 @@ Head2Head_UntitledMatch= Untitled Match
 
 Head2Head_hud_createdby= Created By {0}
 Head2Head_hud_playerlist_title= {0} Players
-
+Head2Head_hud_playerlist_timeremain= {0} left
 
 
 ####################
