@@ -30,6 +30,7 @@ namespace Celeste.Mod.Head2Head.Shared {
         public long FileTimeStart;
         public long FileTimeEnd;
 		public int SaveFile;
+        public string FinalRoom;
 
 		public long FileTimeTotal { get { return FileTimeEnd - FileTimeStart; } }
     }
@@ -73,6 +74,7 @@ namespace Celeste.Mod.Head2Head.Shared {
             res.FileTimeStart = r.ReadInt64();
             res.FileTimeEnd = r.ReadInt64();
             res.SaveFile = r.ReadInt32();
+            res.FinalRoom = r.ReadString();
             return res;
         }
 
@@ -82,6 +84,7 @@ namespace Celeste.Mod.Head2Head.Shared {
             w.Write(m.FileTimeStart);
             w.Write(m.FileTimeEnd);
             w.Write(m.SaveFile);
+            w.Write(m.FinalRoom);
         }
     }
 }

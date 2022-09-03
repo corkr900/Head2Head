@@ -19,6 +19,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		// Specialty Categories
 		OneFifthBerries,
 		OneThirdBerries,
+		TimeLimit,
 	}
 
 	public static class StandardMatches {
@@ -252,6 +253,23 @@ namespace Celeste.Mod.Head2Head.Shared {
 			return mp;
 		}
 
+		public static MatchPhase ILTimeLimit(GlobalAreaKey area, long timeLimit) {
+			if (string.IsNullOrEmpty(area.Local?.SID)) return null;
+			if (!IsCategoryValid(StandardCategory.TimeLimit, area)) return null;
+
+			MatchPhase mp = new MatchPhase() {
+				category = StandardCategory.TimeLimit,
+				Area = area,
+				Objectives = new List<MatchObjective>() {
+					new MatchObjective() {
+						ObjectiveType = MatchObjectiveType.TimeLimit,
+						TimeLimit = timeLimit,
+					},
+				}
+			};
+			return mp;
+		}
+
 		// More Stuff
 
 		public static bool IsCategoryValid(StandardCategory cat, GlobalAreaKey area)
@@ -296,7 +314,8 @@ namespace Celeste.Mod.Head2Head.Shared {
 							|| cat == StandardCategory.CassetteGrab;
 					case 10:  // Farewell
 						return cat == StandardCategory.Clear
-							|| cat == StandardCategory.MoonBerry;
+							|| cat == StandardCategory.MoonBerry
+							|| cat == StandardCategory.TimeLimit;
 				}
 			}
 			else {

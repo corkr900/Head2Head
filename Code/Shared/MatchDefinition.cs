@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Monocle;
 
 namespace Celeste.Mod.Head2Head.Shared {
 
@@ -165,6 +166,7 @@ namespace Celeste.Mod.Head2Head.Shared {
                 if (Result.players.ContainsKey(id)) {
                     Result[id].Result = ResultCategory.DNF;
                     Result[id].FileTimeEnd = stat.FileTimerAtLastObjectiveComplete;
+                    Result[id].FinalRoom = stat.CurrentRoom;
                 }
                 else {
                     Result[id] = new MatchResultPlayer() {
@@ -172,6 +174,7 @@ namespace Celeste.Mod.Head2Head.Shared {
                         Result = ResultCategory.DNF,
                         FileTimeStart = stat.FileTimerAtMatchBegin,
                         FileTimeEnd = stat.FileTimerAtLastObjectiveComplete,
+                        FinalRoom = stat.CurrentRoom,
                     };
                 }
                 CompleteIfNoRunners();
@@ -186,13 +189,15 @@ namespace Celeste.Mod.Head2Head.Shared {
                 if (Result.players.ContainsKey(id)) {
                     Result[id].Result = ResultCategory.Completed;
                     Result[id].FileTimeEnd = stat.FileTimerAtLastObjectiveComplete;
-				}
+                    Result[id].FinalRoom = stat.CurrentRoom;
+                }
 				else {
                     Result[id] = new MatchResultPlayer() {
                         ID = id,
                         Result = ResultCategory.Completed,
                         FileTimeStart = stat.FileTimerAtMatchBegin,
                         FileTimeEnd = stat.FileTimerAtLastObjectiveComplete,
+                        FinalRoom = stat.CurrentRoom,
                     };
 				}
                 CompleteIfNoRunners();
@@ -211,11 +216,11 @@ namespace Celeste.Mod.Head2Head.Shared {
 
         public void MergeDynamic(MatchDefinition newer) {
             if (newer == null) return;
-            // merge overall state
+            // Merge overall state
             _state = (MatchState)Math.Max((int)_state, (int)newer._state);
             BeginInstant = newer.BeginInstant > BeginInstant ? newer.BeginInstant : BeginInstant;
 
-            // merge player list
+            // Merge player list
             foreach (PlayerID id in newer.Players)
 			{
                 if (!Players.Contains(id)) {
@@ -223,7 +228,20 @@ namespace Celeste.Mod.Head2Head.Shared {
                 }
 			}
 
-            // merge result object
+            foreach (MatchPhase ph in newer.Phases) {
+                foreach (MatchObjective ob in ph.Objectives) {
+                    if (ob.TimeLimitAdjustments == null) continue;
+                    if (ob.ObjectiveType != MatchObjectiveType.TimeLimit) continue;
+                    MatchObjective local = GetObjective(ob.ID);
+                    if (local == null) {  // This shouldn't be possible but, just in case...
+                        Engine.Commands.Log("ERROR: match definition does not match: " + DisplayName);
+                        continue;
+                    }
+                    MergeObjective(local, ob);
+                }
+			}
+
+            // Merge result object
             if (Result == null) Result = newer.Result;
 			else {
                 if (newer.Result != null) {
@@ -252,6 +270,24 @@ namespace Celeste.Mod.Head2Head.Shared {
 				}
             }
         }
+
+        private void MergeObjective(MatchObjective local, MatchObjective update) {
+            if (local.TimeLimitAdjustments == null) {
+                local.TimeLimitAdjustments = update.TimeLimitAdjustments;
+                return;
+            }
+            foreach (Tuple<PlayerID, long> t in update.TimeLimitAdjustments) {
+                Tuple<PlayerID, long> localtup = local.TimeLimitAdjustments.FirstOrDefault(
+                    (Tuple<PlayerID, long> tup) => tup.Item1.Equals(t.Item1));
+                if (localtup == null) {
+                    local.TimeLimitAdjustments.Add(t);
+                }
+                else if (localtup.Item2 != t.Item2) {
+                    local.TimeLimitAdjustments.Remove(localtup);
+                    local.TimeLimitAdjustments.Add(t);
+                }
+            }
+        }
     }
 
     public class MatchPhase {
@@ -270,6 +306,9 @@ namespace Celeste.Mod.Head2Head.Shared {
                     case StandardCategory.OneFifthBerries:
                         int berries = Objectives.Find((MatchObjective o) => o.ObjectiveType == MatchObjectiveType.Strawberries)?.BerryGoal ?? 0;
                         return string.Format(Dialog.Get("Head2Head_MatchTitle_BerryCount"), Area.DisplayName, berries);
+                    case StandardCategory.TimeLimit:
+                        return string.Format(Dialog.Get("Head2Head_MatchTitle_TimeLimit"),
+                            Area.DisplayName, Util.ReadableTimeSpanTitle(Objectives[0].AdjustedTimeLimit(PlayerID.MyIDSafe)));
                 }
             }
         }
@@ -279,7 +318,20 @@ namespace Celeste.Mod.Head2Head.Shared {
         public uint ID;
         public MatchObjectiveType ObjectiveType;
         public int BerryGoal = -1;
-	}
+        public long TimeLimit = 0;
+        public List<Tuple<PlayerID, long>> TimeLimitAdjustments = new List<Tuple<PlayerID, long>>();
+
+        public long AdjustedTimeLimit(PlayerID id) {
+            if (TimeLimitAdjustments != null) {
+                foreach (Tuple<PlayerID, long> t in TimeLimitAdjustments) {
+                    if (t.Item1.Equals(id)) {
+                        return t.Item2 + TimeLimit;
+                    }
+                }
+            }
+            return TimeLimit;
+		}
+    }
 
     public enum MatchObjectiveType {
         ChapterComplete,
@@ -287,6 +339,8 @@ namespace Celeste.Mod.Head2Head.Shared {
         CassetteCollect,
         Strawberries,
         MoonBerry,
+
+        TimeLimit,
     }
 
     /// <summary>
@@ -402,6 +456,16 @@ namespace Celeste.Mod.Head2Head.Shared {
             mo.ID = reader.ReadUInt32();
             mo.ObjectiveType = (MatchObjectiveType)Enum.Parse(typeof(MatchObjectiveType), reader.ReadString());
             mo.BerryGoal = reader.ReadInt32();
+
+            int count = reader.ReadInt32();
+            List<Tuple<PlayerID, long>> list = new List<Tuple<PlayerID, long>>(count);
+            for (int i = 0; i < count; i++) {
+                PlayerID id = reader.ReadPlayerID();
+                long time = reader.ReadInt64();
+                list.Add(new Tuple<PlayerID, long>(id, time));
+			}
+            mo.TimeLimitAdjustments = list;
+
             return mo;
         }
 
@@ -409,6 +473,14 @@ namespace Celeste.Mod.Head2Head.Shared {
             writer.Write(mo.ID);
             writer.Write(mo.ObjectiveType.ToString());
             writer.Write(mo.BerryGoal);
+            writer.Write(mo.TimeLimit);
+            writer.Write(mo.TimeLimitAdjustments?.Count ?? 0);
+            if (mo.TimeLimitAdjustments != null) {
+                foreach (Tuple<PlayerID, long> t in mo.TimeLimitAdjustments) {
+                    writer.Write(t.Item1);
+                    writer.Write(t.Item2);
+				}
+			}
         }
     }
 }

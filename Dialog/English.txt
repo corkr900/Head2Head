@@ -42,6 +42,7 @@ Default: Only in Lobby
 
 Head2Head_MatchTitle= {0} ({1})
 Head2Head_MatchTitle_BerryCount= {0} ({1} Berries)
+Head2Head_MatchTitle_TimeLimit= {0} ({1} Limit)
 
 modoptions_Head2HeadModule_autostagenewmatches_Never= Never
 modoptions_Head2HeadModule_autostagenewmatches_OnlyInLobby= Only in Lobby
@@ -57,6 +58,7 @@ Head2Head_CategoryName_MoonBerry= Moon Berry
 Head2Head_CategoryName_FullClearMoonBerry= Full Clear with Moon Berry
 Head2Head_CategoryName_OneThirdBerries= One Third Berries
 Head2Head_CategoryName_OneFifthBerries= One Fifth Berries
+Head2Head_CategoryName_TimeLimit= Time Limited
 
 Head2Head_MatchStatus_None= Unknown
 Head2Head_MatchStatus_Building= Building

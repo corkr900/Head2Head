@@ -124,5 +124,17 @@ namespace Celeste.Mod.Head2Head.Shared {
 			// Vivhelper Dash Code Heart Controller
 			return false;
 		}
+
+		internal static long TimeValueInternal(int minutes, int seconds, int milliseconds = 0) {
+			return new TimeSpan(0, 0, minutes, seconds, milliseconds).Ticks;
+		}
+
+		internal static string ReadableTimeSpanTitle(long ticks) {
+			TimeSpan timeSpan = TimeSpan.FromTicks(ticks);
+			if (timeSpan.TotalHours >= 1.0) {
+				return (int)timeSpan.TotalHours + timeSpan.ToString("h\\:mm\\:ss");
+			}
+			return timeSpan.ToString("m\\:ss");
+		}
 	}
 }

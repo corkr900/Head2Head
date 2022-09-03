@@ -184,8 +184,17 @@ namespace Celeste.Mod.Head2Head.Shared {
 		// CHECKING OFF OBJECTIVES/PHASES
 
 		public void ChapterCompleted(GlobalAreaKey area) {
+			bool changes = false;
 			MatchObjective ob = FindObjective(MatchObjectiveType.ChapterComplete, area, false);
-			if (ob != null && MarkObjectiveComplete(ob, area)) Updated();
+			if (ob != null && MarkObjectiveComplete(ob, area)) changes = true;
+			ob = FindObjective(MatchObjectiveType.TimeLimit, area, false);
+			if (ob != null) {
+				string tmp = CurrentRoom;
+				CurrentRoom = "h2h_chapter_completed";  // Signals to the overlay to show time instead of final room
+				if (MarkObjectiveComplete(ob, area)) changes = true;
+				CurrentRoom = tmp;  // restore to the actual real value
+			}
+			if (changes) Updated();
 		}
 		public void HeartCollected(GlobalAreaKey area) {
 			MatchObjective ob = FindObjective(MatchObjectiveType.HeartCollect, area, false);
@@ -237,6 +246,16 @@ namespace Celeste.Mod.Head2Head.Shared {
 				updated |= MarkObjectiveComplete(ob, area);
 			}
 			if (updated) Updated();
+		}
+		public void CheckForTimeLimit(GlobalAreaKey area) {
+			MatchObjective ob = FindObjective(MatchObjectiveType.TimeLimit, area, false);
+			if (ob == null) return;
+			MatchResultPlayer res = CurrentMatch?.Result?[PlayerID.MyIDSafe];
+			if (res == null) return;
+			long endTime = res.FileTimeStart + ob.AdjustedTimeLimit(PlayerID.MyIDSafe);
+			if (SaveData.Instance?.Time >= endTime) {
+				if (MarkObjectiveComplete(ob, area)) Updated();
+			}
 		}
 
 		// objective help
@@ -296,6 +315,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 					else {
 						found = true;
 						st.Completed = true;
+						st.FinalRoom = CurrentRoom;
 						objectives[i] = st;
 						FileTimerAtLastObjectiveComplete = SaveData.Instance.Time;
 						break;
@@ -306,7 +326,8 @@ namespace Celeste.Mod.Head2Head.Shared {
 				objectives.Add(new H2HMatchObjectiveState() {
 					ObjectiveID = ob.ID,
 					Completed = true,
-				});
+					FinalRoom = CurrentRoom,
+			});
 				FileTimerAtLastObjectiveComplete = SaveData.Instance.Time;
 			}
 			TryMarkPhaseComplete(ob);
@@ -441,8 +462,9 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 	public struct H2HMatchObjectiveState {
 		public uint ObjectiveID;
-		public List<Tuple<EntityID, bool>> CollectedStrawbs;
 		public bool Completed;
+		public List<Tuple<EntityID, bool>> CollectedStrawbs;
+		public string FinalRoom;
 	}
 
 	public enum PlayerStateCategory {
@@ -519,6 +541,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			H2HMatchObjectiveState s = new H2HMatchObjectiveState();
 			s.ObjectiveID = r.ReadUInt32();
 			s.Completed = r.ReadBoolean();
+			s.FinalRoom = r.ReadString();
 			int berries = r.ReadInt32();
 			if (berries >= 0) {
 				s.CollectedStrawbs = new List<Tuple<EntityID, bool>> ();
@@ -535,6 +558,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public static void Write(this CelesteNetBinaryWriter w, H2HMatchObjectiveState s) {
 			w.Write(s.ObjectiveID);
 			w.Write(s.Completed);
+			w.Write(s.FinalRoom);
 			if (s.CollectedStrawbs == null) {
 				w.Write(-1);
 			}

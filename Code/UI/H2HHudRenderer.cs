@@ -181,6 +181,12 @@ namespace Celeste.Mod.Head2Head.UI {
 
 		private string GetPlayerDetail(PlayerID id, ResultCategory cat, MatchDefinition def) {
 			if (cat == ResultCategory.Completed) {
+				if (def.Phases[0].category == StandardCategory.TimeLimit) {
+					MatchResultPlayer res = def.Result[id];
+					if (res.FinalRoom != "h2h_chapter_completed") {
+						return res.FinalRoom;
+					}
+				}
 				long timer = def.Result == null ? 0 : def.Result[id]?.FileTimeTotal ?? 0;
 				return Dialog.FileTime(timer);
 			}

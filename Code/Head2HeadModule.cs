@@ -35,7 +35,7 @@ namespace Celeste.Mod.Head2Head {
 		internal const string BTA_MATCH_PASS = "BTAMatchPass";
 
 		// Constants that might change in the future
-		public static readonly string ProtocolVersion = "1_0_0";
+		public static readonly string ProtocolVersion = "1_0_2";
 
 		// Other static stuff
 		public static Head2HeadModule Instance { get; private set; }
@@ -116,6 +116,7 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.Level.UpdateTime += OnLevelUpdateTime;
 			On.Celeste.Level.RegisterAreaComplete += OnLevelRegisterAreaComplete;
 			On.Celeste.Level.CompleteArea_bool_bool_bool += OnLevelAreaComplete;
+			On.Celeste.Player.Update += OnPlayerUpdate;
 			On.Celeste.MapData.ctor += OnMapDataCtor;
 			On.Celeste.Postcard.DisplayRoutine += OnPostcardDisplayRoutine;
 			On.Celeste.SaveData.RegisterCassette += OnCassetteCollected;
@@ -179,6 +180,7 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.Level.UpdateTime -= OnLevelUpdateTime;
 			On.Celeste.Level.RegisterAreaComplete -= OnLevelRegisterAreaComplete;
 			On.Celeste.Level.CompleteArea_bool_bool_bool -= OnLevelAreaComplete;
+			On.Celeste.Player.Update -= OnPlayerUpdate;
 			On.Celeste.MapData.ctor -= OnMapDataCtor;
 			On.Celeste.Postcard.DisplayRoutine -= OnPostcardDisplayRoutine;
 			On.Celeste.SaveData.RegisterCassette -= OnCassetteCollected;
@@ -557,6 +559,13 @@ namespace Celeste.Mod.Head2Head {
 			ActionLogger.WriteLog();
 		}
 
+		private void OnPlayerUpdate(On.Celeste.Player.orig_Update orig, Player self) {
+			if (self.Scene is Level level) {
+				PlayerStatus.Current.CheckForTimeLimit(new GlobalAreaKey(level.Session.Area));
+			}
+			orig(self);
+		}
+
 		// ########################################
 
 		private void OnPlayerStatusUpdate(DataH2HPlayerStatus data) {
@@ -776,6 +785,9 @@ namespace Celeste.Mod.Head2Head {
 					break;
 				case StandardCategory.OneFifthBerries:
 					mp = StandardMatches.ILOneFifthBerries(area);
+					break;
+				case StandardCategory.TimeLimit:
+					mp = StandardMatches.ILTimeLimit(area, Util.TimeValueInternal(15, 0));
 					break;
 			}
 			if (mp == null) {

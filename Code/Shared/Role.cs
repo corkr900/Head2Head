@@ -109,6 +109,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 						StandardCategory.Clear,
 						StandardCategory.OneFifthBerries,
 						StandardCategory.OneThirdBerries,
+						StandardCategory.TimeLimit,
 					};
 
 			}
