@@ -136,5 +136,10 @@ namespace Celeste.Mod.Head2Head.Shared {
 			}
 			return timeSpan.ToString("m\\:ss");
 		}
+
+		internal static double TimeToSeconds(long ticks) {
+			TimeSpan timeSpan = TimeSpan.FromTicks(ticks);
+			return timeSpan.TotalSeconds;
+		}
 	}
 }

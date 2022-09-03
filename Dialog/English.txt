@@ -91,6 +91,8 @@ Head2Head_hud_playerlist_title= {0} Players
 
 Head2Head_menu_back= Back
 Head2Head_menu_helpdesk= Head 2 Head Helpdesk
+Head2Head_menu_confirm= Confirm
+Head2Head_menu_cancel= Cancel
 
 Head2Head_menu_helpdesk_whynocreatematch= Why Can't I Create a Match?
 Head2Head_menu_helpdesk_whynocreatematch_notconnected= You are not connected to Celestenet
@@ -163,3 +165,8 @@ Current status: {2}
 #     PLAYER MENU     #
 
 Head2Head_menu_helpdesk_playerselect= Select Player
+
+#     TIME ADJUSTMENT     #
+
+Head2Head_menu_helpdesk_timeadjust= Time Adjustment
+Head2Head_menu_helpdesk_notimeadjust= Time adjustments cannot be applied to this match.

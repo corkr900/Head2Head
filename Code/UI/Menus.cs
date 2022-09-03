@@ -224,6 +224,12 @@ namespace Celeste.Mod.Head2Head.UI
 					cxt.GoTo(PlayerSelection, menu);
 				});
 				btn.AddDescription(menu, Dialog.Clean("Head2Head_menu_helpdesk_giveMatchPass_subtext"));
+
+				if (def_menu?.CanApplyTimeAdjustments() ?? false) {
+					btn = menu.AddButton("Head2Head_menu_helpdesk_timeadjust", () => {
+						cxt.GoTo(GiveAdditionalTime, menu);
+					});
+				}
 			}
 
 			// Return to Lobby
@@ -417,6 +423,62 @@ namespace Celeste.Mod.Head2Head.UI
 				});
 				menu.Add(item);
 			}
+
+			// handle Cancel button
+			menu.OnCancel = () => {
+				cxt.Back(menu);
+			};
+			menu.Selection = menu.FirstPossibleSelection;
+			cxt.level.Add(menu);
+		}
+
+		public static void GiveAdditionalTime(HelpdeskMenuContext cxt) {
+			cxt.level.Paused = true;
+			TextMenu menu = new TextMenu();
+			menu.AutoScroll = false;
+			menu.Position = new Vector2((float)Engine.Width / 2f, (float)Engine.Height / 2f - 100f);
+			TextMenu.Item item;
+			MatchDefinition curdef = PlayerStatus.Current.CurrentMatch;
+			Dictionary<PlayerID, int> adjustments = new Dictionary<PlayerID, int>();
+
+			// Head 2 Head Helpdesk
+			menu.Add(new TextMenu.Header(Dialog.Clean("Head2Head_menu_helpdesk_timeadjust")));
+
+			if (curdef != null && curdef.CanApplyTimeAdjustments()) {
+				MatchObjective ob = curdef.Phases[0].Objectives[0];
+				int maxAdjust = (int)(ob.TimeLimit / Util.TimeValueInternal(0, 1));
+
+				// Loop over known players
+				foreach (PlayerID id in curdef.Players) {
+					int curadj = (int)Util.TimeToSeconds(ob.GetAdjustment(id));
+					adjustments.Add(id, curadj);
+
+					TextMenuExt.IntSlider slider = new TextMenuExt.IntSlider(id.Name, -maxAdjust + 1, maxAdjust * 2, curadj);
+					slider.Change((int newVal) => {
+						adjustments[id] = newVal;
+					});
+					menu.Add(slider);
+				}
+
+				// Confirm
+				item = new TextMenu.Button(Dialog.Clean("Head2Head_menu_confirm")).Pressed(() => {
+					foreach(KeyValuePair<PlayerID, int> kvp in adjustments) {
+						ob.SetAdjustment(kvp.Key, Util.TimeValueInternal(0, kvp.Value));
+					}
+					curdef.BroadcastUpdate();
+					cxt.Close(menu);
+				});
+				menu.Add(item);
+			}
+			else {
+				menu.Add(new TextMenu.SubHeader(Dialog.Clean("Head2Head_menu_helpdesk_notimeadjust")));
+			}
+
+			// Cancel
+			item = new TextMenu.Button(Dialog.Clean("Head2Head_menu_cancel")).Pressed(() => {
+				menu.OnCancel();
+			});
+			menu.Add(item);
 
 			// handle Cancel button
 			menu.OnCancel = () => {

@@ -195,6 +195,12 @@ namespace Celeste.Mod.Head2Head.UI {
 					: Head2HeadModule.knownPlayers.ContainsKey(id) ? Head2HeadModule.knownPlayers[id]
 					: null;
 				if (stat != null) {
+					if (def.Phases[0].category == StandardCategory.TimeLimit) {
+						MatchObjective ob = def.Phases[0].Objectives[0];
+						MatchResultPlayer res = def.Result[id];
+						long timeRemaining = Math.Max(stat.CurrentFileTimer - (stat.FileTimerAtMatchBegin + ob.AdjustedTimeLimit(id)), 0);
+						return Util.ReadableTimeSpanTitle(timeRemaining);
+					}
 					int strawbsTotal = 0;
 					int strawbsCollected = 0;
 					int curPhase = stat.CurrentPhase(id);

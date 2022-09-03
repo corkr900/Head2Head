@@ -157,6 +157,12 @@ namespace Celeste.Mod.Head2Head.Shared {
                 || cat == ResultCategory.DNF;
 		}
 
+        public bool CanApplyTimeAdjustments() {
+            return (State == MatchState.Staged || State == MatchState.InProgress)
+                && Phases.Count > 0
+                && Phases[0].category == StandardCategory.TimeLimit;
+        }
+
         public void PlayerDNF() {
             PlayerID id = PlayerID.MyIDSafe;
             PlayerStatus stat = PlayerStatus.Current;
@@ -322,15 +328,32 @@ namespace Celeste.Mod.Head2Head.Shared {
         public List<Tuple<PlayerID, long>> TimeLimitAdjustments = new List<Tuple<PlayerID, long>>();
 
         public long AdjustedTimeLimit(PlayerID id) {
+            return TimeLimit + GetAdjustment(id);
+		}
+
+        public long GetAdjustment(PlayerID id) {
             if (TimeLimitAdjustments != null) {
                 foreach (Tuple<PlayerID, long> t in TimeLimitAdjustments) {
                     if (t.Item1.Equals(id)) {
-                        return t.Item2 + TimeLimit;
+                        return t.Item2;
                     }
                 }
             }
-            return TimeLimit;
-		}
+            return 0;
+        }
+
+        public void SetAdjustment(PlayerID id, long adj) {
+            if (TimeLimitAdjustments == null) TimeLimitAdjustments = new List<Tuple<PlayerID, long>>();
+            Tuple<PlayerID, long> localtup = TimeLimitAdjustments.FirstOrDefault(
+                    (Tuple<PlayerID, long> tup) => tup.Item1.Equals(id));
+            if (localtup == null) {
+                TimeLimitAdjustments.Add(new Tuple<PlayerID, long>(id, adj));
+            }
+            else if (localtup.Item2 != adj) {
+                TimeLimitAdjustments.Remove(localtup);
+                TimeLimitAdjustments.Add(new Tuple<PlayerID, long>(id, adj));
+            }
+        }
     }
 
     public enum MatchObjectiveType {
