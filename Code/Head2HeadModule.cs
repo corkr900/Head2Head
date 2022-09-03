@@ -33,6 +33,7 @@ namespace Celeste.Mod.Head2Head {
 		// Constants
 		private const int START_TIMER_LEAD_MS = 5000;
 		internal const string BTA_MATCH_PASS = "BTAMatchPass";
+		internal int MatchTimeoutMinutes = 15;
 
 		// Constants that might change in the future
 		public static readonly string ProtocolVersion = "1_0_2";
@@ -787,7 +788,7 @@ namespace Celeste.Mod.Head2Head {
 					mp = StandardMatches.ILOneFifthBerries(area);
 					break;
 				case StandardCategory.TimeLimit:
-					mp = StandardMatches.ILTimeLimit(area, Util.TimeValueInternal(15, 0));
+					mp = StandardMatches.ILTimeLimit(area, Util.TimeValueInternal(MatchTimeoutMinutes, 0));
 					break;
 			}
 			if (mp == null) {

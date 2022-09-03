@@ -91,6 +91,18 @@ namespace Celeste.Mod.Head2Head.Control {
 					Engine.Commands.Log(CNetComm.MessageCounter);
 					if (val == "reset") CNetComm.MessageCounter = 0;
 					return;
+				case "timelimit":
+					if (!isFloat) {
+						Engine.Commands.Log(string.Format("Error: value {0} is not a number", val));
+						return;
+					}
+					if (valFloat < 1) {
+						Engine.Commands.Log("Error: value must be at least 1");
+						return;
+					}
+					Head2HeadModule.Instance.MatchTimeoutMinutes = (int)valFloat;
+					Engine.Commands.Log(string.Format("Set Time Limit match time to {0} minutes", (int)valFloat));
+					return;
 				case "help":
 				case "-h":
 				default:
