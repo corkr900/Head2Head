@@ -84,7 +84,7 @@ namespace Celeste.Mod.Head2Head.Shared {
             w.Write(m.FileTimeStart);
             w.Write(m.FileTimeEnd);
             w.Write(m.SaveFile);
-            w.Write(m.FinalRoom);
+            w.Write(m.FinalRoom ?? "");
         }
     }
 }
