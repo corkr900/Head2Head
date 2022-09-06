@@ -558,7 +558,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public static void Write(this CelesteNetBinaryWriter w, H2HMatchObjectiveState s) {
 			w.Write(s.ObjectiveID);
 			w.Write(s.Completed);
-			w.Write(s.FinalRoom);
+			w.Write(s.FinalRoom ?? "");
 			if (s.CollectedStrawbs == null) {
 				w.Write(-1);
 			}
