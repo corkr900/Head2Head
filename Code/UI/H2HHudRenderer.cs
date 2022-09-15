@@ -49,6 +49,12 @@ namespace Celeste.Mod.Head2Head.UI {
 			}
 		}
 
+		public override void Render(Scene scene) {
+			if (!DrawToBuffer) {
+				RenderContent(scene);
+			}
+		}
+
 		public override void RenderContent(Scene scene) {
 			MatchDefinition def = PlayerStatus.Current.CurrentMatch;
 			HiresRenderer.BeginRender();
