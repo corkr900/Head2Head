@@ -418,12 +418,12 @@ namespace Celeste.Mod.Head2Head.Shared {
                 return;
             }
             else writer.Write(true);
-            writer.Write(m.MatchID);
+            writer.Write(m.MatchID ?? "");
             writer.Write(m.Owner);
             writer.Write(m.CreationInstant);
-            writer.Write(m.State.ToString());
-            writer.Write(m.DisplayNameOverride);
-            writer.Write(m.RequiredRole);
+            writer.Write(m.State.ToString() ?? "");
+            writer.Write(m.DisplayNameOverride ?? "");
+            writer.Write(m.RequiredRole ?? "");
             writer.Write(m.CanParticipantsStart);
             writer.Write(m.OpenEntry);
             writer.Write(m.RequireNewSaveFile);
@@ -431,10 +431,12 @@ namespace Celeste.Mod.Head2Head.Shared {
             writer.Write(m.AllowDebugView);
             writer.Write(m.AllowDebugTeleport);
             writer.Write(m.BeginInstant);
+
             writer.Write(m.Players.Count);
             foreach(PlayerID pid in m.Players) {
                 writer.Write(pid);
             }
+
             writer.Write(m.Phases.Count);
             foreach (MatchPhase ph in m.Phases) {
                 writer.Write(ph);
@@ -464,7 +466,7 @@ namespace Celeste.Mod.Head2Head.Shared {
         }
 
         public static void Write(this CelesteNetBinaryWriter writer, MatchPhase mp) {
-            writer.Write(mp.category.ToString());
+            writer.Write(mp.category.ToString() ?? "");
             writer.Write(mp.ID);
             writer.Write(mp.Order);
             writer.Write(mp.Area);
@@ -495,7 +497,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 
         public static void Write(this CelesteNetBinaryWriter writer, MatchObjective mo) {
             writer.Write(mo.ID);
-            writer.Write(mo.ObjectiveType.ToString());
+            writer.Write(mo.ObjectiveType.ToString() ?? "");
             writer.Write(mo.BerryGoal);
             writer.Write(mo.TimeLimit);
             writer.Write(mo.TimeLimitAdjustments?.Count ?? 0);

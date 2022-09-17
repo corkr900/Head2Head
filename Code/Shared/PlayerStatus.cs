@@ -509,7 +509,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			w.Write(s.IsInDebug);
 			w.Write(s.CurrentMatch);
 			w.Write(s.CurrentArea);
-			w.Write(s.CurrentRoom);
+			w.Write(s.CurrentRoom ?? "");
 			w.Write(s.LastCheckpoint ?? "");
 			w.Write(s.CurrentFileTimer);
 			w.Write(s.FileTimerAtMatchBegin);
@@ -565,7 +565,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			else {
 				w.Write(s.CollectedStrawbs.Count);
 				foreach (Tuple<EntityID, bool> id in s.CollectedStrawbs) {
-					w.Write(id.Item1.Key);
+					w.Write(id.Item1.Key ?? "");
 					w.Write(id.Item2);
 				}
 			}
