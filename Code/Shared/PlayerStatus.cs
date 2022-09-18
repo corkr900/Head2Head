@@ -68,7 +68,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			return cat == ResultCategory.InMatch || (includeJoined && cat == ResultCategory.Joined);
 		}
 
-		public string CurrentMatchID { get; private set; }
+		public string CurrentMatchID { get; internal set; }
 		public GlobalAreaKey CurrentArea { get; internal set; }
 		public string CurrentRoom { get; internal set; }
 		public string LastCheckpoint { get; internal set; } = null;
@@ -480,7 +480,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			if (!r.ReadBoolean()) return null;
 			PlayerStatus pms = new PlayerStatus();
 			pms.IsInDebug = r.ReadBoolean();
-			pms.CurrentMatch = r.ReadMatch();
+			pms.CurrentMatchID = r.ReadString();
 			pms.CurrentArea = r.ReadAreaKey();
 			pms.CurrentRoom = r.ReadString();
 			pms.LastCheckpoint = r.ReadString();
@@ -507,7 +507,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			}
 			w.Write(true);
 			w.Write(s.IsInDebug);
-			w.Write(s.CurrentMatch);
+			w.Write(s.CurrentMatchID ?? "");
 			w.Write(s.CurrentArea);
 			w.Write(s.CurrentRoom ?? "");
 			w.Write(s.LastCheckpoint ?? "");
