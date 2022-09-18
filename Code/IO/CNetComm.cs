@@ -39,6 +39,12 @@ namespace Celeste.Mod.Head2Head.IO {
 			}
 		}
 
+		public bool CanSendMessages {
+			get {
+				return IsConnected && !CurrentChannelIsMain;
+			}
+		}
+
 		internal static long MessageCounter = 0;
 
 		// #############################################
@@ -119,7 +125,7 @@ namespace Celeste.Mod.Head2Head.IO {
 
 		// #############################################
 		public void SendTestMessage() {
-			if (!IsConnected) {
+			if (!CanSendMessages) {
 				Engine.Commands.Log("Cannot send test message: not connected to CelesteNet.");
 				return;
 			}
@@ -129,7 +135,7 @@ namespace Celeste.Mod.Head2Head.IO {
 		}
 
 		internal void SendPlayerStatus(PlayerStatus stat) {
-			if (!IsConnected) {
+			if (!CanSendMessages) {
 				Engine.Commands.Log("Cannot send player status message: not connected to CelesteNet.");
 				return;
 			}
@@ -140,7 +146,7 @@ namespace Celeste.Mod.Head2Head.IO {
 		}
 
 		internal void SendMatchReset(string matchID) {
-			if (!IsConnected) {
+			if (!CanSendMessages) {
 				Engine.Commands.Log("Cannot send match reset message: not connected to CelesteNet.");
 				return;
 			}
@@ -151,7 +157,7 @@ namespace Celeste.Mod.Head2Head.IO {
 		}
 
 		internal void SendMatchUpdate(MatchDefinition def) {
-			if (!IsConnected) {
+			if (!CanSendMessages) {
 				Engine.Commands.Log("Cannot send match update message: not connected to CelesteNet.");
 				return;
 			}
@@ -162,7 +168,7 @@ namespace Celeste.Mod.Head2Head.IO {
 		}
 
 		internal void SendScanRequest(bool autoRejoin) {
-			if (!IsConnected) {
+			if (!CanSendMessages) {
 				return;
 			}
 			CnetClient.SendAndHandle(new DataH2HScanRequest() {
@@ -172,7 +178,7 @@ namespace Celeste.Mod.Head2Head.IO {
 		}
 
 		internal void SendScanResponse(PlayerID requestor, PlayerStatus reqstat) {
-			if (!IsConnected) {
+			if (!CanSendMessages) {
 				return;
 			}
 			CnetClient.SendAndHandle(new DataH2HScanResponse() {
@@ -187,7 +193,7 @@ namespace Celeste.Mod.Head2Head.IO {
 		}
 
 		internal void SendMisc(string message, PlayerID targetPlayer) {
-			if (!IsConnected) {
+			if (!CanSendMessages) {
 				return;
 			}
 			CnetClient.SendAndHandle(new DataH2HMisc() {
