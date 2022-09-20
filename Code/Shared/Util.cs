@@ -1,4 +1,5 @@
-﻿using Celeste.Mod.Meta;
+﻿using Celeste.Mod.Helpers;
+using Celeste.Mod.Meta;
 using MonoMod.Utils;
 using System;
 using System.Collections.Generic;
@@ -31,6 +32,8 @@ namespace Celeste.Mod.Head2Head.Shared {
 	}
 
 	public static class Util {
+
+		internal static string DLL { get { return CleanDLL(Head2HeadModule.Instance.Metadata); } }
 
 		/// <summary>
 		/// Counts the number of berries in a chapter. Returns -1 if the area could not be localized or data could not be found.
@@ -140,6 +143,25 @@ namespace Celeste.Mod.Head2Head.Shared {
 		internal static double TimeToSeconds(long ticks) {
 			TimeSpan timeSpan = TimeSpan.FromTicks(ticks);
 			return timeSpan.TotalSeconds;
+		}
+
+		internal static string CleanDLL(EverestModuleMetadata meta) {
+			string ret;
+			if (string.IsNullOrEmpty(meta.DLL)) ret = meta.DLL;
+			else if (string.IsNullOrEmpty(meta.PathDirectory)) ret = meta.DLL;
+			else if (meta.PathDirectory.Length + 1 >= meta.DLL.Length) ret = meta.DLL;  // Probably impossible. But probably is not a promise.
+			else ret = meta.DLL.Substring(meta.PathDirectory.Length + 1);
+			return ret?.Replace('\\', '/');
+		}
+
+		internal static bool IsUpdateAvailable() {
+			SortedDictionary<ModUpdateInfo, EverestModuleMetadata> updates = ModUpdaterHelper.GetAsyncLoadedModUpdates();
+			foreach(EverestModuleMetadata meta in updates.Values) {
+				if (CleanDLL(meta) == DLL) {
+					return true;
+				}
+			}
+			return false;
 		}
 	}
 }

@@ -36,7 +36,7 @@ namespace Celeste.Mod.Head2Head {
 		internal int MatchTimeoutMinutes = 15;
 
 		// Constants that might change in the future
-		public static readonly string ProtocolVersion = "1_0_5";
+		public static readonly string ProtocolVersion = "1_0_6";
 
 		// Other static stuff
 		public static Head2HeadModule Instance { get; private set; }
@@ -631,7 +631,9 @@ namespace Celeste.Mod.Head2Head {
 
 		private void OnScanRequest(DataH2HScanRequest data) {
 			if (data.playerID.Equals(PlayerID.MyIDSafe)) return;
-			CNetComm.Instance.SendScanResponse(data.playerID,
+			MatchDefinition def = PlayerStatus.Current.CurrentMatch;
+			if (def == null) return;
+			CNetComm.Instance.SendScanResponse(data.playerID, def,
 				!data.AutoRejoin ? null
 				: knownPlayers.ContainsKey(data.playerID) ? knownPlayers[data.playerID] : null);
 		}
@@ -642,26 +644,21 @@ namespace Celeste.Mod.Head2Head {
 			// sync data
 			if (knownPlayers.ContainsKey(data.playerID)) knownPlayers[data.playerID] = data.SenderStatus;
 			else knownPlayers.Add(data.playerID, data.SenderStatus);
-			foreach (MatchDefinition def in data.Matches) {
-				if (knownMatches.ContainsKey(def.MatchID)) knownMatches[def.MatchID].MergeDynamic(def);
-				else knownMatches.Add(def.MatchID, def);
-			}
+			MatchDefinition def = data.MatchDef;
+			if (knownMatches.ContainsKey(def.MatchID)) knownMatches[def.MatchID].MergeDynamic(def);
+			else knownMatches.Add(def.MatchID, def);
 
 			MatchDefinition curdef = PlayerStatus.Current.CurrentMatch;
 			bool tryJoin = data.RequestorStatus != null && (curdef == null || curdef.PlayerCanLeaveFreely(PlayerID.MyIDSafe));
 			if (!tryJoin) return;
 
 			// try join (in progress takes priority)
-			foreach (MatchDefinition def in knownMatches.Values) {
-				if (RejoinMatch(def, data.RequestorStatus)) return;
-			}
+			if (RejoinMatch(def, data.RequestorStatus)) return;
 			// try join (joined, not started)
-			foreach (MatchDefinition def in knownMatches.Values) {
-				ResultCategory cat = def.GetPlayerResultCat(PlayerID.MyIDSafe);
-				if (cat == ResultCategory.Joined) {
-					PlayerStatus.Current.CurrentMatch = def;
-					PlayerStatus.Current.Updated();
-				}
+			ResultCategory cat = def.GetPlayerResultCat(PlayerID.MyIDSafe);
+			if (cat == ResultCategory.Joined) {
+				PlayerStatus.Current.CurrentMatch = def;
+				PlayerStatus.Current.Updated();
 			}
 		}
 
@@ -721,6 +718,7 @@ namespace Celeste.Mod.Head2Head {
 			if (!CNetComm.Instance.IsConnected) return false;
 			if (CNetComm.Instance.CurrentChannelIsMain) return false;
 			if (!Role.AllowMatchCreate()) return false;
+			if (Util.IsUpdateAvailable()) return false;
 			return PlayerStatus.Current.CanStageMatch(); ;
 		}
 
@@ -732,6 +730,7 @@ namespace Celeste.Mod.Head2Head {
 		}
 
 		public bool CanJoinMatch() {
+			if (Util.IsUpdateAvailable()) return false;
 			MatchDefinition def = PlayerStatus.Current.CurrentMatch;
 			if (def == null) return false;
 			if (def.State != MatchState.Staged) return false;
@@ -742,6 +741,7 @@ namespace Celeste.Mod.Head2Head {
 		}
 
 		public bool CanStartMatch() {
+			if (Util.IsUpdateAvailable()) return false;
 			if (PlayerStatus.Current.CurrentMatch == null) return false;
 			if (PlayerStatus.Current.MatchState != MatchState.Staged) return false;
 			bool hasJoined = PlayerStatus.Current.CurrentMatch.Players.Contains(PlayerID.MyIDSafe);
@@ -750,6 +750,10 @@ namespace Celeste.Mod.Head2Head {
 		}
 
 		public void StartMatchBuild() {
+			if (Util.IsUpdateAvailable()) {
+				Engine.Commands.Log("Cannot build match: you are using an outdated version of Head 2 Head");
+				return;
+			}
 			if (!Role.AllowMatchCreate()) {
 				Engine.Commands.Log("Your role prevents building a match");
 				return;
@@ -826,6 +830,10 @@ namespace Celeste.Mod.Head2Head {
 		}
 
 		public void StageMatch() {
+			if (Util.IsUpdateAvailable()) {
+				Engine.Commands.Log("Cannot stage match: you are using an outdated version of Head 2 Head");
+				return;
+			}
 			if (!Role.AllowMatchCreate()) {
 				Engine.Commands.Log("Your role prevents creating a match");
 				return;
@@ -850,8 +858,11 @@ namespace Celeste.Mod.Head2Head {
 			ClearAutoLaunchInfo();
 		}
 
-		public void StageMatch(MatchDefinition def)
-		{
+		public void StageMatch(MatchDefinition def) {
+			if (Util.IsUpdateAvailable()) {
+				Engine.Commands.Log("Cannot stage match: you are using an outdated version of Head 2 Head");
+				return;
+			}
 			if (def == null)
 			{
 				Engine.Commands.Log("You need to build a match before staging a match");
@@ -893,6 +904,10 @@ namespace Celeste.Mod.Head2Head {
 		}
 
 		public void JoinStagedMatch() {
+			if (Util.IsUpdateAvailable()) {
+				Engine.Commands.Log("Cannot join match: you are using an outdated version of Head 2 Head");
+				return;
+			}
 			MatchDefinition def = PlayerStatus.Current.CurrentMatch;
 			if (def == null) {
 				Engine.Commands.Log("Couldn't join match - there is no staged match");
@@ -926,6 +941,10 @@ namespace Celeste.Mod.Head2Head {
 		}
 
 		public void BeginStagedMatch() {
+			if (Util.IsUpdateAvailable()) {
+				Engine.Commands.Log("Cannot begin match: you are using an outdated version of Head 2 Head");
+				return;
+			}
 			MatchDefinition def = PlayerStatus.Current.CurrentMatch;
 			if (def == null) {
 				Engine.Commands.Log("There is no staged match!");

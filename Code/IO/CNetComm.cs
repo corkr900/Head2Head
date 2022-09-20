@@ -177,7 +177,7 @@ namespace Celeste.Mod.Head2Head.IO {
 			MessageCounter++;
 		}
 
-		internal void SendScanResponse(PlayerID requestor, PlayerStatus reqstat) {
+		internal void SendScanResponse(PlayerID requestor, MatchDefinition def, PlayerStatus reqstat) {
 			if (!CanSendMessages) {
 				return;
 			}
@@ -185,9 +185,7 @@ namespace Celeste.Mod.Head2Head.IO {
 				Requestor = requestor,
 				RequestorStatus = reqstat,
 				SenderStatus = PlayerStatus.Current,
-				Matches = Head2HeadModule.knownMatches.Values.Where((MatchDefinition def) => {
-					return def.State == MatchState.Staged || def.State == MatchState.InProgress;
-				}),
+				MatchDef = def,
 			});
 			MessageCounter++;
 		}

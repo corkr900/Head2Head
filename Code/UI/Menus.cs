@@ -135,7 +135,9 @@ namespace Celeste.Mod.Head2Head.UI
 			// Why can't I Create a Match?
 			if ((PlayerStatus.Current?.CurrentArea.Equals(GlobalAreaKey.Head2HeadLobby) ?? true) && !Head2HeadModule.Instance.CanBuildMatch()) {
 				btn = menu.AddButton("Head2Head_menu_helpdesk_whynocreatematch", () => { });
-				if (!CNetComm.Instance.IsConnected)
+				if (Util.IsUpdateAvailable())
+					btn.SoftDisable(menu, "Head2Head_menu_helpdesk_whynocreatematch_update");
+				else if (!CNetComm.Instance.IsConnected)
 					btn.SoftDisable(menu, "Head2Head_menu_helpdesk_whynocreatematch_notconnected");
 				else if (CNetComm.Instance.CurrentChannelIsMain)
 					btn.SoftDisable(menu, "Head2Head_menu_helpdesk_whynocreatematch_mainchannel");
@@ -331,9 +333,9 @@ namespace Celeste.Mod.Head2Head.UI
 					cxt.Close(menu);
 				});
 				GlobalAreaKey? vchk = cxtMatch.VersionCheck();
-				/*if (cxtMatch.State != MatchState.Staged)
-					btn.SoftDisable(menu, "Head2Head_menu_match_stage_wrongstatus");
-				else*/ if (cxtMatch.MatchID == curmatch?.MatchID)
+				if (cxtMatch.MatchID == curmatch?.MatchID)
+					btn.SoftDisable(menu, "Head2Head_menu_match_stage_update");
+				else if (cxtMatch.MatchID == curmatch?.MatchID)
 					btn.SoftDisable(menu, "Head2Head_menu_match_stage_alreadycurrent");
 				else if (vchk != null)
 					btn.SoftDisable(menu, "Head2Head_menu_match_join_versionmismatch", vchk?.LocalVersion.ToString(), vchk?.Version.ToString());
@@ -352,7 +354,11 @@ namespace Celeste.Mod.Head2Head.UI
 					cxt.Close(menu);
 				});
 				GlobalAreaKey? k = curmatch?.VersionCheck();
-				if (k != null)
+				if (cxtMatch.MatchID == curmatch?.MatchID)
+					btn.SoftDisable(menu, "Head2Head_menu_match_stage_update");
+				else if (!Role.AllowMatchJoin(cxtMatch))
+					btn.SoftDisable(menu, "Head2Head_menu_match_join_role");
+				else if (k != null)
 					btn.SoftDisable(menu, "Head2Head_menu_match_join_versionmismatch", k.Value.LocalVersion.ToString(), k.Value.Version.ToString());
 				else if (cxtMatch.State != MatchState.Staged)
 					btn.SoftDisable(menu, "Head2Head_menu_match_stage_wrongstatus");

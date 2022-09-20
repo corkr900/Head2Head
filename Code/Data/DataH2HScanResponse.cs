@@ -17,19 +17,14 @@ namespace Celeste.Mod.Head2Head.Data {
         public PlayerID Requestor;
         public PlayerStatus SenderStatus;
         public PlayerStatus RequestorStatus;
-        public IEnumerable<MatchDefinition> Matches;
+        public MatchDefinition MatchDef;
 
         protected override void Read(CelesteNetBinaryReader reader) {
             base.Read(reader);
             Requestor = reader.ReadPlayerID();
             SenderStatus = reader.ReadPlayerState();
             RequestorStatus = reader.ReadPlayerState();
-            int num = reader.ReadInt32();
-			List<MatchDefinition> list = new List<MatchDefinition>(num);
-            for (int i = 0; i < num; i++) {
-                list.Add(reader.ReadMatch());
-			}
-            Matches = list;
+            MatchDef = reader.ReadMatch();
         }
 
         protected override void Write(CelesteNetBinaryWriter writer) {
@@ -37,10 +32,7 @@ namespace Celeste.Mod.Head2Head.Data {
             writer.Write(Requestor);
             writer.Write(SenderStatus);
             writer.Write(RequestorStatus);
-            writer.Write(Matches.Count());
-            foreach (MatchDefinition def in Matches) {
-                writer.Write(def);
-			}
+            writer.Write(MatchDef);
         }
     }
 }
