@@ -1,4 +1,5 @@
 ﻿using Celeste.Mod.Head2Head.Entities;
+using Celeste.Mod.Head2Head.Integration;
 using Celeste.Mod.Head2Head.Shared;
 using System;
 using System.Collections;
@@ -34,18 +35,29 @@ namespace Celeste.Mod.Head2Head.UI {
 		}
 
 		public void SetNext() {
-			// TODO handle collab lobbies better
 			int iD = ILSelector.LastArea.Local_Safe.ID;
 			string levelSet = ILSelector.LastArea.Local_Safe.LevelSet;
 
 			int count = AreaData.Areas.Count;
 			for (int num = (count + iD + Direction) % count; num != iD; num = (count + num + Direction) % count) {
 				AreaData areaData = AreaData.Get(num);
+				if (areaData == null) continue;
 				string set = areaData.GetLevelSet();
-				if (areaData == null || (!string.IsNullOrEmpty(set) && set != levelSet && set != "Head2Head")) {
-					ILSelector.LastArea = new GlobalAreaKey(areaData.ToKey());
-					break;
+				if (string.IsNullOrEmpty(set) || set == levelSet) continue;
+				if (set == "Head2Head") continue;
+
+				// TODO handle collab lobbies better
+				if (CollabUtils2Integration.IsCollabUtils2Installed) {
+					string collab = CollabUtils2Integration.GetCollabNameForSID(areaData.SID);
+					if (!string.IsNullOrEmpty(collab)) {
+						string lobby = CollabUtils2Integration.GetLobbyForLevelSet(set);
+						if (string.IsNullOrEmpty(lobby)) continue;  // Exclude lobbies and gyms... for now.
+					}
 				}
+
+				// If we get here, this is our new level set
+				ILSelector.LastArea = new GlobalAreaKey(areaData.ToKey());
+				break;
 			}
 		}
 	}

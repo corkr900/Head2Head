@@ -91,6 +91,7 @@
     <Compile Include="Data\DataH2HPlayerStatus.cs" />
     <Compile Include="Data\DataH2HTest.cs" />
     <Compile Include="Head2HeadModuleSettings.cs" />
+    <Compile Include="Integration\CollabUtils2Integration.cs" />
     <Compile Include="IO\ActionLogger.cs" />
     <Compile Include="IO\CNetComm.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
