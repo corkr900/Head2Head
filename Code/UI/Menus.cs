@@ -41,7 +41,12 @@ namespace Celeste.Mod.Head2Head.UI
 
 			public void GoTo(Action<HelpdeskMenuContext> target, TextMenu current)
 			{
-				Audio.Play("event:/ui/main/button_confirm");
+				if (current == null) {
+					Audio.Play("event:/ui/game/pause");
+				}
+				else {
+					Audio.Play("event:/ui/main/button_select");
+				}
 				returnToIndex.Push(current == null ? 0 : current.IndexOf(current.Current));
 				menus.Push(target);
 				current?.RemoveSelf();
@@ -69,6 +74,7 @@ namespace Celeste.Mod.Head2Head.UI
 			}
 
 			public void Refresh(TextMenu current) {
+				Audio.Play("event:/ui/main/button_lowkey");
 				current.RemoveSelf();
 				menus.Peek().Invoke(this);
 			}
@@ -85,13 +91,17 @@ namespace Celeste.Mod.Head2Head.UI
 
 		#region Helpers
 
-		private static ButtonExt AddButton(this TextMenu menu, string labelDesc, Action onPress) {
-			ButtonExt btn = new ButtonExt(Dialog.Clean(labelDesc));
+		private static ButtonExt AddButton(this TextMenu menu, string labelDesc, Action onPress, bool labelIsLiteral = false) {
+			ButtonExt btn = new ButtonExt(labelIsLiteral ? labelDesc : Dialog.Clean(labelDesc));
+			btn.ConfirmSfx = "";
 			DynamicData dd = new DynamicData(btn);
 			dd.Set("H2H_SoftDisable", false);
 			btn.Pressed(() => {
 				DynamicData dd2 = new DynamicData(btn);
-				if (dd2.Get<bool>("H2H_SoftDisable")) return;
+				if (dd2.Get<bool>("H2H_SoftDisable")) {
+					Audio.Play("event:/ui/main/button_invalid");
+					return;
+				}
 				onPress();
 			});
 			menu.Add(btn);
@@ -119,7 +129,6 @@ namespace Celeste.Mod.Head2Head.UI
 			TextMenu menu = new TextMenu();
 			menu.AutoScroll = false;
 			menu.Position = new Vector2((float)Engine.Width / 2f, (float)Engine.Height / 2f - 100f);
-			TextMenu.Item item;
 			ButtonExt btn;
 			MatchDefinition def_menu = PlayerStatus.Current.CurrentMatch;
 
@@ -127,10 +136,9 @@ namespace Celeste.Mod.Head2Head.UI
 			menu.Add(new TextMenu.Header(Dialog.Clean("Head2Head_menu_helpdesk")));
 
 			// Back
-			item = new TextMenu.Button(Dialog.Clean("Head2Head_menu_back")).Pressed(() => {
+			btn = menu.AddButton("Head2Head_menu_back", () => {
 				menu.OnCancel();
 			});
-			menu.Add(item);
 			
 			// Why can't I Create a Match?
 			if ((PlayerStatus.Current?.CurrentArea.Equals(GlobalAreaKey.Head2HeadLobby) ?? true) && !Head2HeadModule.Instance.CanBuildMatch()) {
@@ -150,11 +158,9 @@ namespace Celeste.Mod.Head2Head.UI
 			}
 
 			// Browse
-			item = new TextMenu.Button(Dialog.Clean("Head2Head_menu_helpdesk_browse")).Pressed(() => {
+			btn = menu.AddButton("Head2Head_menu_helpdesk_browse", () => {
 				cxt.GoTo(BrowseMatches, menu);
 			});
-			menu.Add(item);
-			//item.AddDescription(menu, Dialog.Clean("Head2Head_menu_helpdesk_browse_subtext"));
 
 			// Drop Out
 			btn = menu.AddButton("Head2Head_menu_helpdesk_dropout", () => {
@@ -259,29 +265,27 @@ namespace Celeste.Mod.Head2Head.UI
 			TextMenu menu = new TextMenu();
 			menu.AutoScroll = false;
 			menu.Position = new Vector2((float)Engine.Width / 2f, (float)Engine.Height / 2f - 100f);
-			TextMenu.Item item;
+			ButtonExt btn;
 
 			// Head 2 Head Helpdesk
 			menu.Add(new TextMenu.Header(Dialog.Clean("Head2Head_menu_helpdesk_browse")));
 
 			// Back
-			item = new TextMenu.Button(Dialog.Clean("Head2Head_menu_back")).Pressed(() => {
+			btn = menu.AddButton("Head2Head_menu_back", () => {
 				menu.OnCancel();
 			});
-			menu.Add(item);
 
 			// Loop over known matches
 			Head2HeadModule.Instance.DiscardStaleData();
 			foreach (MatchDefinition def in Head2HeadModule.knownMatches.Values)
 			{
-				item = new TextMenu.Button(def.DisplayName).Pressed(() => {
+				btn = menu.AddButton(def.DisplayName, () => {
 					cxt.matchID = def.MatchID;
 					cxt.GoTo(KnownMatchMenu, menu);
-				});
-				menu.Add(item);
+				}, true);
 				string desc = string.Format(GetDialogWithLineBreaks("Head2Head_menu_browsematchdescription"),
 					def.Owner.Name, def.Players.Count, Util.TranslatedMatchState(def.State));
-				item.AddDescription(menu, desc);
+				btn.AddDescription(menu, desc);
 			}
 
 			// handle Cancel button
@@ -298,7 +302,7 @@ namespace Celeste.Mod.Head2Head.UI
 			TextMenu menu = new TextMenu();
 			menu.AutoScroll = false;
 			menu.Position = new Vector2((float)Engine.Width / 2f, (float)Engine.Height / 2f - 100f);
-			TextMenu.Item item;
+			ButtonExt btn;
 			MatchDefinition cxtMatch = cxt.match;
 
 			if (cxtMatch == null)
@@ -307,10 +311,9 @@ namespace Celeste.Mod.Head2Head.UI
 				menu.Add(new TextMenu.Header(Dialog.Clean("Head2Head_menu_match_invalidmatch")));
 
 				// Back
-				item = new TextMenu.Button(Dialog.Clean("Head2Head_menu_back")).Pressed(() => {
+				btn = menu.AddButton("Head2Head_menu_back", () => {
 					menu.OnCancel();
 				});
-				menu.Add(item);
 			}
 			else {
 				MatchDefinition curmatch = PlayerStatus.Current.CurrentMatch;
@@ -322,13 +325,12 @@ namespace Celeste.Mod.Head2Head.UI
 				menu.Add(new TextMenu.SubHeader(desc));
 
 				// Back
-				item = new TextMenu.Button(Dialog.Clean("Head2Head_menu_back")).Pressed(() => {
+				btn = menu.AddButton("Head2Head_menu_back", () => {
 					menu.OnCancel();
 				});
-				menu.Add(item);
 
 				// Stage
-				ButtonExt btn = menu.AddButton("Head2Head_menu_match_stage", () => {
+				btn = menu.AddButton("Head2Head_menu_match_stage", () => {
 					Head2HeadModule.Instance.StageMatch(cxtMatch);
 					cxt.Close(menu);
 				});
@@ -410,24 +412,22 @@ namespace Celeste.Mod.Head2Head.UI
 			TextMenu menu = new TextMenu();
 			menu.AutoScroll = false;
 			menu.Position = new Vector2((float)Engine.Width / 2f, (float)Engine.Height / 2f - 100f);
-			TextMenu.Item item;
+			ButtonExt btn;
 
 			// Head 2 Head Helpdesk
 			menu.Add(new TextMenu.Header(Dialog.Clean("Head2Head_menu_helpdesk_playerselect")));
 
 			// Back
-			item = new TextMenu.Button(Dialog.Clean("Head2Head_menu_back")).Pressed(() => {
+			btn = menu.AddButton("Head2Head_menu_back", () => {
 				menu.OnCancel();
 			});
-			menu.Add(item);
 
 			// Loop over known players
 			foreach (PlayerID id in Head2HeadModule.knownPlayers.Keys) {
-				item = new TextMenu.Button(id.Name).Pressed(() => {
+				btn = menu.AddButton(id.Name, () => {
 					cxt.onPlayerSelection?.Invoke(id);
 					cxt.Close(menu);
-				});
-				menu.Add(item);
+				}, true);
 			}
 
 			// handle Cancel button
@@ -443,7 +443,7 @@ namespace Celeste.Mod.Head2Head.UI
 			TextMenu menu = new TextMenu();
 			menu.AutoScroll = false;
 			menu.Position = new Vector2((float)Engine.Width / 2f, (float)Engine.Height / 2f - 100f);
-			TextMenu.Item item;
+			ButtonExt btn;
 			MatchDefinition curdef = PlayerStatus.Current.CurrentMatch;
 			Dictionary<PlayerID, int> adjustments = new Dictionary<PlayerID, int>();
 
@@ -467,24 +467,22 @@ namespace Celeste.Mod.Head2Head.UI
 				}
 
 				// Confirm
-				item = new TextMenu.Button(Dialog.Clean("Head2Head_menu_confirm")).Pressed(() => {
+				btn = menu.AddButton("Head2Head_menu_confirm", () => {
 					foreach(KeyValuePair<PlayerID, int> kvp in adjustments) {
 						ob.SetAdjustment(kvp.Key, Util.TimeValueInternal(0, kvp.Value));
 					}
 					curdef.BroadcastUpdate();
 					cxt.Close(menu);
 				});
-				menu.Add(item);
 			}
 			else {
 				menu.Add(new TextMenu.SubHeader(Dialog.Clean("Head2Head_menu_helpdesk_notimeadjust")));
 			}
 
 			// Cancel
-			item = new TextMenu.Button(Dialog.Clean("Head2Head_menu_cancel")).Pressed(() => {
+			btn = menu.AddButton("Head2Head_menu_cancel", () => {
 				menu.OnCancel();
 			});
-			menu.Add(item);
 
 			// handle Cancel button
 			menu.OnCancel = () => {
