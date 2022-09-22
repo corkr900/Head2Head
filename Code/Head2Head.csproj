@@ -109,6 +109,7 @@
     <Compile Include="UI\OuiRunSelectILChapterIcon.cs" />
     <Compile Include="UI\OuiRunSelectILChapterPanel.cs" />
     <Compile Include="UI\OuiRunSelectILChapterSelect.cs" />
+    <Compile Include="UI\OuiRunSelectILCollabMapSelect.cs" />
     <Compile Include="UI\OuiRunSelectILExit.cs" />
     <Compile Include="UI\OuiRunSelectILLevelSet.cs" />
   </ItemGroup>
