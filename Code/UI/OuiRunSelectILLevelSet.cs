@@ -46,12 +46,10 @@ namespace Celeste.Mod.Head2Head.UI {
 				if (string.IsNullOrEmpty(set) || set == levelSet) continue;
 				if (set == "Head2Head") continue;
 
-				// TODO handle collab lobbies better
 				if (CollabUtils2Integration.IsCollabUtils2Installed) {
-					string collab = CollabUtils2Integration.GetCollabNameForSID(areaData.SID);
-					if (!string.IsNullOrEmpty(collab)) {
-						string lobby = CollabUtils2Integration.GetLobbyForLevelSet(set);
-						if (string.IsNullOrEmpty(lobby)) continue;  // Exclude lobbies and gyms... for now.
+					if (!string.IsNullOrEmpty(CollabUtils2Integration.GetCollabNameForSID(areaData.SID))
+						&& string.IsNullOrEmpty(CollabUtils2Integration.GetLobbyLevelSet(areaData.SID))) {
+						continue;  // Exclude non-lobbies from collabs
 					}
 				}
 

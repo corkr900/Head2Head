@@ -1,4 +1,7 @@
-﻿using Microsoft.Xna.Framework;
+﻿using Celeste.Mod.Head2Head.Entities;
+using Celeste.Mod.Head2Head.Integration;
+using Celeste.Mod.Head2Head.Shared;
+using Microsoft.Xna.Framework;
 using Monocle;
 using System;
 using System.Collections;
@@ -11,15 +14,17 @@ namespace Celeste.Mod.Head2Head.UI {
 	class OuiRunSelectILCollabMapSelect : Oui {
 
 		public class CollabMap : Entity {
-			private float EnterEaseTime { get { return 0.4f; } }
-			private float SelectEaseTime { get { return 0.2f; } }
+			private float EnterEaseTime { get { return 0.3f; } }
+			private float SelectEaseTime { get { return 0.15f; } }
 			private float SelectedXOffset { get { return 60f; } }
 			private float IconSize { get { return 90f; } }
 
-			public static CollabMap Add(Scene scene, string sid, float yPos) {
-				AreaData data = AreaData.Get(sid);
+			public static CollabMap Add(Scene scene, int localID, float yPos) {
+				AreaData data = AreaData.Get(localID);
+				string sid = data.SID;
 				CollabMap map = new CollabMap() {
-					Title = data.Name,
+					LocalID = localID,
+					Title = Dialog.Clean(data.Name),
 					Icon = string.IsNullOrEmpty(data.Icon) ? null : GFX.Gui.Has(data.Icon) ? GFX.Gui[data.Icon] : null,
 					YPosition = yPos,
 					Tag = Tags.HUD,
@@ -28,8 +33,9 @@ namespace Celeste.Mod.Head2Head.UI {
 				return map;
 			}
 
-			public string Title { get; set; }
-			public MTexture Icon { get; set; }
+			public int LocalID { get; private set; }
+			public string Title { get; private set; }
+			public MTexture Icon { get; private set; }
 			public float YPosition { get; set; }
 			public bool Show { get; set; } = false;
 			public bool Hovered { get; set; } = false;
@@ -71,12 +77,12 @@ namespace Celeste.Mod.Head2Head.UI {
 				ActiveFont.DrawOutline(Title, new Vector2(xpos, YPosition), new Vector2(0, 0.5f), Vector2.One, Color.White, 2f, Color.Black);
 			}
 		}
-		private MTexture Pointer { get { return MTN.Journal["poemArrow"]; } }
-		private float YPosBase { get { return 200f; } }
-		private float YPosStep { get { return 90f; } }
 
-		private string levelSet;
-		private Dictionary<string, List<CollabMap>> maps = new Dictionary<string, List<CollabMap>>();
+		private static MTexture Pointer { get { return MTN.Journal["poemArrow"]; } }
+		private static float YPosBase { get { return 200f; } }
+		private static float YPosStep { get { return 90f; } }
+		private static Dictionary<string, List<CollabMap>> maps { get; set; } = new Dictionary<string, List<CollabMap>>();
+
 
 		private bool entering = false;
 
@@ -84,20 +90,25 @@ namespace Celeste.Mod.Head2Head.UI {
 
 		public override void Added(Scene scene) {
 			base.Added(scene);
-
+			// Get all the lobbies
+			maps.Clear();
 			int count = AreaData.Areas.Count;
-			float ypos = YPosBase;
-			string lastSet = "";
+			for (int i = 0; i < count; i++) {
+				AreaData data = AreaData.Areas[i];
+				string collabSet = CollabUtils2Integration.GetLobbyLevelSet(data.SID);
+				if (string.IsNullOrEmpty(collabSet)) continue;  // Not a collab lobby
+				if (!maps.ContainsKey(data.SID)) {
+					maps.Add(data.SID, new List<CollabMap>());
+				}
+			}
+			// Get all the maps
 			for (int i = 0; i < count; i++) {
 				AreaData data = AreaData.Areas[i];
 				string set = data.LevelSet;
-				if (!maps.ContainsKey(set)) {
-					maps.Add(set, new List<CollabMap>());
-				}
-				if (lastSet != set) ypos = YPosBase;
-				else ypos += YPosStep;
-				maps[set].Add(CollabMap.Add(scene, data.SID, ypos));
-				lastSet = set;
+				if (!CollabUtils2Integration.IsCollabLevelSet(set)) continue;  // Not a collab lobby
+				string lobby = CollabUtils2Integration.GetLobbyForLevelSet(set);
+				if (!maps.ContainsKey(lobby)) continue;
+				maps[lobby].Add(CollabMap.Add(scene, i, YPosBase + maps[lobby].Count * YPosStep));
 			}
 		}
 
@@ -109,10 +120,11 @@ namespace Celeste.Mod.Head2Head.UI {
 					map.Enabled = kvp.Key == kvp.Key;
 				}
 			}
-
-			foreach (CollabMap map in maps[levelSet]) {
-				map.Show = true;
-				yield return 0.05f;
+			if (maps.ContainsKey(ILSelector.LastArea.SID)) {
+				foreach (CollabMap map in maps[ILSelector.LastArea.SID]) {
+					map.Show = true;
+					yield return 0.02f;
+				}
 			}
 			entering = false;
 		}
@@ -124,12 +136,28 @@ namespace Celeste.Mod.Head2Head.UI {
 					map.Enabled = false;
 				}
 			}
-			foreach (CollabMap map in maps[levelSet]) {
-				map.Show = false;
-				yield return 0.05f;
+			if (maps.ContainsKey(ILSelector.LastArea.SID)) {
+				foreach (CollabMap map in maps[ILSelector.LastArea.SID]) {
+					map.Show = false;
+					yield return 0.01f;
+				}
 			}
 		}
 
-		// TODO (!!!) Navigation
+		public override void Update() {
+			base.Update();
+			if (Focused) {
+				if (Input.MenuCancel.Pressed) {
+					Audio.Play("event:/ui/world_map/chapter/back");
+					//ILSelector.LastArea = new GlobalAreaKey(CollabUtils2Integration.GetLobbyForLevelSet(ILSelector.LastArea.Data.LevelSet), AreaMode.Normal);
+					Overworld.Goto<OuiRunSelectILChapterSelect>();
+				}
+				else if (Input.MenuConfirm.Pressed) {
+					Audio.Play("event:/ui/world_map/icon/select");
+					ILSelector.LastArea = new GlobalAreaKey(maps[ILSelector.LastArea.SID][0].LocalID, AreaMode.Normal);
+					Overworld.Goto<OuiRunSelectILChapterPanel>();
+				}
+			}
+		}
 	}
 }
