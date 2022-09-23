@@ -112,7 +112,10 @@ namespace Celeste.Mod.Head2Head.UI {
 
 			public override void Render(){
 				base.Render();
-				Texture.DrawJustified(posactual, new Vector2(0, 0.5f));
+
+				if (Shown) {
+					Texture.DrawJustified(posactual, new Vector2(0, 0.5f));
+				}
 			}
 		}
 
