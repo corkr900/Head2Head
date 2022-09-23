@@ -1,4 +1,5 @@
 ﻿using Celeste.Mod.Head2Head.Entities;
+using Celeste.Mod.Head2Head.Integration;
 using Celeste.Mod.Head2Head.Shared;
 using Celeste.Mod.UI;
 using FMOD.Studio;
@@ -182,7 +183,7 @@ namespace Celeste.Mod.Head2Head.UI {
 
 		public override IEnumerator Enter(Oui from) {
 			if (instantClose) {
-				Overworld.Goto<OuiRunSelectILChapterSelect>();
+				GoBack();
 				Visible = false;
 				instantClose = false;
 				yield break;
@@ -336,11 +337,13 @@ namespace Celeste.Mod.Head2Head.UI {
 
 		public override void Update() {
 			if (Selected && Focused && Input.QuickRestart.Pressed) {
-				Overworld.Goto<OuiRunSelectILChapterSelect>();
+				string lobby = CollabUtils2Integration.GetLobbyForLevelSet(ILSelector.LastArea.Data.LevelSet);
+				if (!string.IsNullOrEmpty(lobby)) ILSelector.LastArea = new GlobalAreaKey(lobby);
+				Overworld.Goto<OuiRunSelectILCollabMapSelect>();
 				Overworld.Goto<OuiMapSearch>();
 			}
 			else if (instantClose) {
-				Overworld.Goto<OuiRunSelectILChapterSelect>();
+				GoBack();
 				Visible = false;
 				instantClose = false;
 			}
@@ -477,7 +480,7 @@ namespace Celeste.Mod.Head2Head.UI {
 				else if (Input.MenuCancel.Pressed) {
 					if (selectingMode) {
 						Audio.Play("event:/ui/world_map/chapter/back");
-						Overworld.Goto<OuiRunSelectILChapterSelect>();
+						GoBack();
 					}
 					else {
 						Audio.Play("event:/ui/world_map/chapter/checkpoint_back");
@@ -506,6 +509,17 @@ namespace Celeste.Mod.Head2Head.UI {
 		private float _FixTitleLength(float vanillaValue) {
 			float x = ActiveFont.Measure(Dialog.Clean(AreaData.Get(Area).Name)).X;
 			return vanillaValue - Math.Max(0f, x + vanillaValue - 490f);
+		}
+
+		private void GoBack() {
+			string lobby = CollabUtils2Integration.GetLobbyForLevelSet(ILSelector.LastArea.Data.LevelSet);
+			if (string.IsNullOrEmpty(lobby)) {
+				Overworld.Goto<OuiRunSelectILChapterSelect>();
+			}
+			else {
+				ILSelector.LastArea = new GlobalAreaKey(lobby);
+				Overworld.Goto<OuiRunSelectILCollabMapSelect>();
+			}
 		}
 	}
 }

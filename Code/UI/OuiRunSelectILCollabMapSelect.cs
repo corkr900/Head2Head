@@ -14,10 +14,11 @@ namespace Celeste.Mod.Head2Head.UI {
 	class OuiRunSelectILCollabMapSelect : Oui {
 
 		public class CollabMap : Entity {
-			private float EnterEaseTime { get { return 0.3f; } }
-			private float SelectEaseTime { get { return 0.15f; } }
-			private float SelectedXOffset { get { return 60f; } }
-			private float IconSize { get { return 90f; } }
+			internal static float EnterEaseTime { get { return 0.3f; } }
+			internal static float SelectEaseTime { get { return 0.15f; } }
+			internal static float SelectedXOffset { get { return 60f; } }
+			internal static float IconSize { get { return 90f; } }
+			internal static float Margin { get { return 15f; } }
 
 			public static CollabMap Add(Scene scene, int localID, float yPos) {
 				AreaData data = AreaData.Get(localID);
@@ -66,30 +67,73 @@ namespace Celeste.Mod.Head2Head.UI {
 
 				Vector2 size = Size;
 				float xmin = -size.X;
-				float xmax = 0;
+				float xmax = Margin;
 				float xpos = Calc.LerpClamp(xmin, xmax, Ease.CubeIn(EnterEase));
-				xpos += Calc.LerpClamp(0, SelectedXOffset, Ease.CubeIn(SelectEase));
+				xpos += Calc.LerpClamp(0, SelectedXOffset + Margin, Ease.CubeInOut(SelectEase));
 
 				if (Icon != null) {
 					Icon.DrawJustified(new Vector2(xpos, YPosition), new Vector2(0, 0.5f), Color.White, 0.5f);
-					xpos += IconSize;
+					xpos += IconSize + Margin;
 				}
-				ActiveFont.DrawOutline(Title, new Vector2(xpos, YPosition), new Vector2(0, 0.5f), Vector2.One, Color.White, 2f, Color.Black);
+				ActiveFont.DrawOutline(Title, new Vector2(xpos, YPosition), new Vector2(0, 0.5f), Vector2.One, Color.White, 5f, Color.Black);
 			}
 		}
 
-		private static MTexture Pointer { get { return MTN.Journal["poemArrow"]; } }
+		public class Pointer : Entity {
+			public bool Shown { get; set; } = false;
+
+			private static MTexture Texture { get { return MTN.Journal["poemArrow"]; } }
+
+			private Vector2 posbase;
+			private Vector2 postarget;
+			private float poslerp;
+			private Vector2 posactual;
+
+			public void SetInitialTarget(Vector2 target) {
+				posactual = posbase = postarget = target;
+				poslerp = 1;
+			}
+
+			public void SetNewTarget(Vector2 target) {
+
+				posbase = posactual;
+				postarget = target;
+				poslerp = 0;
+			}
+
+			public override void Update() {
+				base.Update();
+
+				poslerp = Calc.Approach(poslerp, 1, Engine.DeltaTime / CollabMap.SelectEaseTime);
+				posactual = new Vector2(
+					Calc.LerpClamp(posbase.X, postarget.X, Ease.CubeInOut(poslerp)),
+					Calc.LerpClamp(posbase.Y, postarget.Y, Ease.CubeInOut(poslerp)));
+			}
+
+			public override void Render(){
+				base.Render();
+				Texture.DrawJustified(posactual, new Vector2(0, 0.5f));
+			}
+		}
+
 		private static float YPosBase { get { return 200f; } }
 		private static float YPosStep { get { return 90f; } }
 		private static Dictionary<string, List<CollabMap>> maps { get; set; } = new Dictionary<string, List<CollabMap>>();
 
-
-		private bool entering = false;
+		private Pointer pointer;
+		private int hovered = 0;
 
 		public override bool IsStart(Overworld overworld, Overworld.StartMode start) => false;
 
 		public override void Added(Scene scene) {
 			base.Added(scene);
+
+			// Misc
+			pointer = new Pointer();
+			pointer.Shown = false;
+			pointer.Tag = Tags.HUD;
+			scene.Add(pointer);
+
 			// Get all the lobbies
 			maps.Clear();
 			int count = AreaData.Areas.Count;
@@ -107,37 +151,43 @@ namespace Celeste.Mod.Head2Head.UI {
 				string set = data.LevelSet;
 				if (!CollabUtils2Integration.IsCollabLevelSet(set)) continue;  // Not a collab lobby
 				string lobby = CollabUtils2Integration.GetLobbyForLevelSet(set);
-				if (!maps.ContainsKey(lobby)) continue;
+				if (string.IsNullOrEmpty(lobby) || !maps.ContainsKey(lobby)) continue;
 				maps[lobby].Add(CollabMap.Add(scene, i, YPosBase + maps[lobby].Count * YPosStep));
 			}
 		}
 
 		public override IEnumerator Enter(Oui from) {
-			entering = true;
 			foreach (KeyValuePair<string, List<CollabMap>> kvp in maps) {
 				foreach (CollabMap map in kvp.Value) {
 					map.Show = false;
+					map.Hovered = false;
 					map.Enabled = kvp.Key == kvp.Key;
 				}
 			}
 			if (maps.ContainsKey(ILSelector.LastArea.SID)) {
+				hovered = Calc.Clamp(hovered, 0, maps[ILSelector.LastArea.SID].Count - 1);
 				foreach (CollabMap map in maps[ILSelector.LastArea.SID]) {
 					map.Show = true;
+					if (maps[ILSelector.LastArea.SID].IndexOf(map) == hovered) {
+						map.Hovered = true;
+						pointer.SetInitialTarget(new Vector2(CollabMap.Margin, map.YPosition));
+						pointer.Shown = true;
+					}
 					yield return 0.02f;
 				}
 			}
-			entering = false;
 		}
 
 		public override IEnumerator Leave(Oui next) {
-			while (entering) { yield return null; }
+			pointer.Shown = false;
 			foreach (KeyValuePair<string, List<CollabMap>> kvp in maps) {
 				foreach (CollabMap map in kvp.Value) {
 					map.Enabled = false;
 				}
 			}
-			if (maps.ContainsKey(ILSelector.LastArea.SID)) {
-				foreach (CollabMap map in maps[ILSelector.LastArea.SID]) {
+			foreach (KeyValuePair<string, List<CollabMap>> kvp in maps) {
+				foreach (CollabMap map in kvp.Value) {
+					if (!map.Show) continue;
 					map.Show = false;
 					yield return 0.01f;
 				}
@@ -146,15 +196,31 @@ namespace Celeste.Mod.Head2Head.UI {
 
 		public override void Update() {
 			base.Update();
+
 			if (Focused) {
-				if (Input.MenuCancel.Pressed) {
+				if (Input.MenuUp.Pressed && hovered > 0) {
+					Audio.Play("event:/ui/world_map/chapter/tab_roll_left");
+					List<CollabMap> list = maps[ILSelector.LastArea.SID];
+					list[hovered].Hovered = false;
+					hovered--;
+					list[hovered].Hovered = true;
+					pointer.SetNewTarget(new Vector2(CollabMap.Margin, list[hovered].YPosition));
+				}
+				else if (Input.MenuDown.Pressed && hovered < maps[ILSelector.LastArea.SID].Count - 1) {
+					Audio.Play("event:/ui/world_map/chapter/tab_roll_right");
+					List<CollabMap> list = maps[ILSelector.LastArea.SID];
+					list[hovered].Hovered = false;
+					hovered++;
+					list[hovered].Hovered = true;
+					pointer.SetNewTarget(new Vector2(CollabMap.Margin, list[hovered].YPosition));
+				}
+				else if (Input.MenuCancel.Pressed) {
 					Audio.Play("event:/ui/world_map/chapter/back");
-					//ILSelector.LastArea = new GlobalAreaKey(CollabUtils2Integration.GetLobbyForLevelSet(ILSelector.LastArea.Data.LevelSet), AreaMode.Normal);
 					Overworld.Goto<OuiRunSelectILChapterSelect>();
 				}
 				else if (Input.MenuConfirm.Pressed) {
 					Audio.Play("event:/ui/world_map/icon/select");
-					ILSelector.LastArea = new GlobalAreaKey(maps[ILSelector.LastArea.SID][0].LocalID, AreaMode.Normal);
+					ILSelector.LastArea = new GlobalAreaKey(maps[ILSelector.LastArea.SID][hovered].LocalID, AreaMode.Normal);
 					Overworld.Goto<OuiRunSelectILChapterPanel>();
 				}
 			}
