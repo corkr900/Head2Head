@@ -23,6 +23,7 @@ using MonoMod.Cil;
 using Mono.Cecil.Cil;
 using Celeste.Mod.UI;
 using Celeste.Mod.Head2Head.UI;
+using Celeste.Mod.Head2Head.Integration;
 
 // TODO Force DNF if a player intentionally closes the game
 
@@ -162,6 +163,8 @@ namespace Celeste.Mod.Head2Head {
 			PlayerStatus.OnMatchPhaseCompleted += OnCompletedMatchPhase;
 			// Misc other setup
 			Celeste.Instance.Components.Add(Comm = new CNetComm(Celeste.Instance));
+
+			CollabUtils2Integration.Load();
 		}
 
 		public override void Unload() {
@@ -1175,7 +1178,7 @@ namespace Celeste.Mod.Head2Head {
 			doAutoLaunch = true;
 		}
 
-		private bool DoPostPhaseAutoLaunch(bool doFadeWipe, MatchObjectiveType? ifType = null)
+		internal bool DoPostPhaseAutoLaunch(bool doFadeWipe, MatchObjectiveType? ifType = null)
 		{
 			if (!doAutoLaunch) return false;
 			if (ifType != null && lastObjectiveType != ifType.Value) return false;

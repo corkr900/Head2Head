@@ -1,4 +1,5 @@
 ﻿using Celeste.Mod.Head2Head.Entities;
+using Celeste.Mod.Head2Head.Integration;
 using Celeste.Mod.Head2Head.Shared;
 using Celeste.Mod.UI;
 using Microsoft.Xna.Framework;
@@ -264,8 +265,14 @@ namespace Celeste.Mod.Head2Head.UI {
 					}
 					else if (Input.MenuConfirm.Pressed) {
 						Audio.Play("event:/ui/world_map/icon/select");
-						ILSelector.LastArea = new GlobalAreaKey(ILSelector.LastArea.SID, AreaMode.Normal);
-						Overworld.Goto<OuiRunSelectILChapterPanel>();
+						if (string.IsNullOrEmpty(CollabUtils2Integration.GetLobbyLevelSet(ILSelector.LastArea.SID))) {
+							// not a collab lobby
+							Overworld.Goto<OuiRunSelectILChapterPanel>();
+						}
+						else {
+							// is a collab lobby
+							Overworld.Goto<OuiRunSelectILCollabMapSelect>();
+						}
 					}
 				}
 			}

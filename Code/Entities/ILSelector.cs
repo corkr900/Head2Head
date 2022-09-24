@@ -16,6 +16,7 @@ using Celeste.Mod.Head2Head.UI;
 using Celeste.Mod.Head2Head.Shared;
 using FMOD.Studio;
 using Celeste.Mod.Head2Head.IO;
+using Celeste.Mod.Head2Head.Integration;
 
 namespace Celeste.Mod.Head2Head.Entities {
 	[CustomEntity("Head2Head/ILSelector")]
@@ -69,6 +70,11 @@ namespace Celeste.Mod.Head2Head.Entities {
 			ActiveSelector = this;
 			Area = GlobalAreaKey.Overworld;
 			Category = StandardCategory.Clear;
+
+			string collabLobby = CollabUtils2Integration.GetLobbyForLevelSet(LastArea.Data.LevelSet);
+			if (!string.IsNullOrEmpty(collabLobby)) {
+				LastArea = new GlobalAreaKey(collabLobby);
+			}
 
 			player.StateMachine.State = Player.StDummy;
 			OuiRunSelectIL.Start = true;

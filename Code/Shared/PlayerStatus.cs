@@ -95,7 +95,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public void ChapterEntered(GlobalAreaKey area, Session session) {
 			CurrentArea = area;
 			CurrentRoom = session.Level;
-			if (!string.IsNullOrEmpty(CurrentMatchID)) {
+			if (IsInMatch(false)) {
 				LastCheckpoint = session.LevelData.HasCheckpoint ? session.LevelData.Name : null;
 				FileTimerAtLastCheckpoint = SaveData.Instance?.Time ?? FileTimerAtLastCheckpoint;
 				ConfirmStrawberries();
@@ -105,7 +105,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public void RoomEntered(Level level, LevelData next, Vector2 direction) {
 			CurrentRoom = next.Name;
 			if (next.HasCheckpoint) {
-				if (!string.IsNullOrEmpty(CurrentMatchID)) {
+				if (IsInMatch(false)) {
 					LastCheckpoint = next.Name;
 					FileTimerAtLastCheckpoint = SaveData.Instance?.Time ?? FileTimerAtLastCheckpoint;
 					GlobalAreaKey area = new GlobalAreaKey(level.Session.Area);
@@ -138,7 +138,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public void ChapterExited(LevelExit.Mode mode, Session session) {
 			CurrentArea = GlobalAreaKey.Overworld;
 			CurrentRoom = "";
-			if (!string.IsNullOrEmpty(CurrentMatchID)) {
+			if (IsInMatch(false)) {
 				LastCheckpoint = null;
 				FileTimerAtLastCheckpoint = SaveData.Instance?.Time ?? FileTimerAtLastCheckpoint;
 				ConfirmStrawberries();

@@ -91,6 +91,7 @@
     <Compile Include="Data\DataH2HPlayerStatus.cs" />
     <Compile Include="Data\DataH2HTest.cs" />
     <Compile Include="Head2HeadModuleSettings.cs" />
+    <Compile Include="Integration\CollabUtils2Integration.cs" />
     <Compile Include="IO\ActionLogger.cs" />
     <Compile Include="IO\CNetComm.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -108,6 +109,7 @@
     <Compile Include="UI\OuiRunSelectILChapterIcon.cs" />
     <Compile Include="UI\OuiRunSelectILChapterPanel.cs" />
     <Compile Include="UI\OuiRunSelectILChapterSelect.cs" />
+    <Compile Include="UI\OuiRunSelectILCollabMapSelect.cs" />
     <Compile Include="UI\OuiRunSelectILExit.cs" />
     <Compile Include="UI\OuiRunSelectILLevelSet.cs" />
   </ItemGroup>
