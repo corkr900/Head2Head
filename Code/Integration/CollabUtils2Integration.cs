@@ -1,4 +1,7 @@
-﻿using System;
+﻿using Celeste.Mod.Head2Head.Shared;
+using MonoMod.RuntimeDetour;
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -17,8 +20,15 @@ namespace Celeste.Mod.Head2Head.Integration {
 		private static MethodInfo LobbyHelper_GetCollabNameForSID;
 		private static MethodInfo LobbyHelper_IsHeartSide;
 
+		internal static Type MiniHeart;
+		internal static Type ReturnToLobbyHelper;
+
+		private static IDetour hook_MiniHeart_SmashRoutine;
+		private static IDetour hook_ReturnToLobbyHelper_onLevelEnterGo;
+
 		internal static void Load() {
 			try {
+				// Get type info and functions
 				LobbyHelper = Type.GetType("Celeste.Mod.CollabUtils2.LobbyHelper,CollabUtils2");
 				LobbyHelper_GetLobbyLevelSet = LobbyHelper.GetMethod("GetLobbyLevelSet", BindingFlags.Public | BindingFlags.Static);
 				LobbyHelper_IsCollabLevelSet = LobbyHelper.GetMethod("IsCollabLevelSet", BindingFlags.Public | BindingFlags.Static);
@@ -27,12 +37,27 @@ namespace Celeste.Mod.Head2Head.Integration {
 				LobbyHelper_GetCollabNameForSID = LobbyHelper.GetMethod("GetCollabNameForSID", BindingFlags.Public | BindingFlags.Static);
 				LobbyHelper_IsHeartSide = LobbyHelper.GetMethod("IsHeartSide", BindingFlags.Public | BindingFlags.Static);
 
+				MiniHeart = Type.GetType("Celeste.Mod.CollabUtils2.Entities.MiniHeart,CollabUtils2");
+				ReturnToLobbyHelper = Type.GetType("Celeste.Mod.CollabUtils2.UI.ReturnToLobbyHelper,CollabUtils2");
+
+				// Set up hooks
+				hook_MiniHeart_SmashRoutine = new Hook(
+					MiniHeart.GetMethod("SmashRoutine", BindingFlags.NonPublic | BindingFlags.Instance),
+					typeof(CollabUtils2Integration).GetMethod("OnMiniHeartCollect"));
+
+				hook_ReturnToLobbyHelper_onLevelEnterGo = new Hook(
+					ReturnToLobbyHelper.GetMethod("onLevelEnterGo", BindingFlags.NonPublic | BindingFlags.Static),
+					typeof(CollabUtils2Integration).GetMethod("OnCollabOnLevelEnterGo"));
+
+				// Misc
 				IsCollabUtils2Installed = true;
 			}
 			catch(Exception e) {
 				IsCollabUtils2Installed = false;
 			}
 		}
+
+		#region Mod Interface
 
 		/// <summary>
 		/// Returns the level set the given lobby SID is associated to, or null if the SID given is not a lobby.
@@ -91,5 +116,28 @@ namespace Celeste.Mod.Head2Head.Integration {
 			if (!IsCollabUtils2Installed) return false;
 			return (bool)LobbyHelper_IsHeartSide?.Invoke(null, new object[] { sid });
 		}
+
+		#endregion
+
+		#region Hook code
+
+		public static IEnumerator OnMiniHeartCollect(Func<object, Player, Level, IEnumerator> orig, object miniHeart, Player player, Level level) {
+			yield return new SwapImmediately(orig(miniHeart, player, level));
+			Head2HeadModule.Instance.DoPostPhaseAutoLaunch(true);
+		}
+
+		// I hate this
+		public static void OnCollabOnLevelEnterGo(Action<On.Celeste.LevelEnter.orig_Go, Session, bool> orig,
+			On.Celeste.LevelEnter.orig_Go orig_orig, Session session, bool fromSaveData) {
+			if (PlayerStatus.Current.IsInMatch(false)) {
+				// Circumnavigate session loading when we're in a match
+				orig_orig(session, fromSaveData);
+			}
+			else {
+				orig(orig_orig, session, fromSaveData);
+			}
+		}
+
+		#endregion
 	}
 }
