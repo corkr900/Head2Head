@@ -41,6 +41,7 @@ namespace Celeste.Mod.Head2Head.UI {
 			public bool Show { get; set; } = false;
 			public bool Hovered { get; set; } = false;
 			public bool Enabled { get; set; } = false;
+			public float Scroll { get; internal set; } = 0;
 
 			private float EnterEase = 0;
 			private float SelectEase = 0;
@@ -72,32 +73,33 @@ namespace Celeste.Mod.Head2Head.UI {
 				xpos += Calc.LerpClamp(0, SelectedXOffset + Margin, Ease.CubeInOut(SelectEase));
 
 				if (Icon != null) {
-					Icon.DrawJustified(new Vector2(xpos, YPosition), new Vector2(0, 0.5f), Color.White, 0.5f);
+					Icon.DrawJustified(new Vector2(xpos, YPosition - Scroll), new Vector2(0, 0.5f), Color.White, 0.5f);
 					xpos += IconSize + Margin;
 				}
-				ActiveFont.DrawOutline(Title, new Vector2(xpos, YPosition), new Vector2(0, 0.5f), Vector2.One, Color.White, 5f, Color.Black);
+				ActiveFont.DrawOutline(Title, new Vector2(xpos, YPosition - Scroll), new Vector2(0, 0.5f), Vector2.One, Color.White, 5f, Color.Black);
 			}
 		}
 
 		public class Pointer : Entity {
 			public bool Shown { get; set; } = false;
+			public float Scroll { get; internal set; } = 0;
 
 			private static MTexture Texture { get { return MTN.Journal["poemArrow"]; } }
 
-			private Vector2 posbase;
-			private Vector2 postarget;
+			public Vector2 PosBase { get; private set; }
+			public Vector2 PosTarget { get; private set; }
 			private float poslerp;
-			private Vector2 posactual;
+			public Vector2 PosActual { get; private set; }
 
 			public void SetInitialTarget(Vector2 target) {
-				posactual = posbase = postarget = target;
+				PosActual = PosBase = PosTarget = target;
 				poslerp = 1;
 			}
 
 			public void SetNewTarget(Vector2 target) {
 
-				posbase = posactual;
-				postarget = target;
+				PosBase = PosActual;
+				PosTarget = target;
 				poslerp = 0;
 			}
 
@@ -105,26 +107,30 @@ namespace Celeste.Mod.Head2Head.UI {
 				base.Update();
 
 				poslerp = Calc.Approach(poslerp, 1, Engine.DeltaTime / CollabMap.SelectEaseTime);
-				posactual = new Vector2(
-					Calc.LerpClamp(posbase.X, postarget.X, Ease.CubeInOut(poslerp)),
-					Calc.LerpClamp(posbase.Y, postarget.Y, Ease.CubeInOut(poslerp)));
+				PosActual = new Vector2(
+					Calc.LerpClamp(PosBase.X, PosTarget.X, Ease.CubeInOut(poslerp)),
+					Calc.LerpClamp(PosBase.Y, PosTarget.Y, Ease.CubeInOut(poslerp)));
 			}
 
 			public override void Render(){
 				base.Render();
 
 				if (Shown) {
-					Texture.DrawJustified(posactual, new Vector2(0, 0.5f));
+					Texture.DrawJustified(PosActual + new Vector2(0, -Scroll), new Vector2(0, 0.5f));
 				}
 			}
 		}
 
-		private static float YPosBase { get { return 200f; } }
+		private static float YPosBase { get { return 135f; } }
 		private static float YPosStep { get { return 90f; } }
 		private static Dictionary<string, List<CollabMap>> maps { get; set; } = new Dictionary<string, List<CollabMap>>();
 
 		private Pointer pointer;
 		private int hovered = 0;
+		private float scrollBase;
+		private float scrollTarget;
+		private float scrollLerp;
+		private float scrollCurrent;
 
 		public override bool IsStart(Overworld overworld, Overworld.StartMode start) => false;
 
@@ -136,6 +142,8 @@ namespace Celeste.Mod.Head2Head.UI {
 			pointer.Shown = false;
 			pointer.Tag = Tags.HUD;
 			scene.Add(pointer);
+			scrollBase = scrollTarget = scrollTarget = 0;
+			scrollLerp = 1;
 
 			// Get all the lobbies
 			maps.Clear();
@@ -170,11 +178,11 @@ namespace Celeste.Mod.Head2Head.UI {
 			if (maps.ContainsKey(ILSelector.LastArea.SID)) {
 				hovered = Calc.Clamp(hovered, 0, maps[ILSelector.LastArea.SID].Count - 1);
 				foreach (CollabMap map in maps[ILSelector.LastArea.SID]) {
+					map.Enabled = true;
 					map.Show = true;
-					if (maps[ILSelector.LastArea.SID].IndexOf(map) == hovered) {
-						map.Hovered = true;
-						pointer.SetInitialTarget(new Vector2(CollabMap.Margin, map.YPosition));
-						pointer.Shown = true;
+					map.Scroll = scrollCurrent;
+					if (maps[ILSelector.LastArea.SID].IndexOf(map) == hovered) {  // TODO this makes an n^2 runtime (bad)
+						SetInitialHover(map);
 					}
 					yield return 0.02f;
 				}
@@ -201,21 +209,20 @@ namespace Celeste.Mod.Head2Head.UI {
 			base.Update();
 
 			if (Focused) {
+				scrollLerp = Calc.Approach(scrollLerp, 1, Engine.DeltaTime / CollabMap.SelectEaseTime);
+				scrollCurrent = Calc.LerpClamp(scrollBase, scrollTarget, Ease.CubeInOut(scrollLerp));
+				pointer.Scroll = scrollCurrent;
+				foreach (CollabMap map in maps[ILSelector.LastArea.SID]) {
+					map.Scroll = scrollCurrent;
+				}
+
 				if (Input.MenuUp.Pressed && hovered > 0) {
 					Audio.Play("event:/ui/world_map/chapter/tab_roll_left");
-					List<CollabMap> list = maps[ILSelector.LastArea.SID];
-					list[hovered].Hovered = false;
-					hovered--;
-					list[hovered].Hovered = true;
-					pointer.SetNewTarget(new Vector2(CollabMap.Margin, list[hovered].YPosition));
+					SetHover(hovered - 1);
 				}
 				else if (Input.MenuDown.Pressed && hovered < maps[ILSelector.LastArea.SID].Count - 1) {
 					Audio.Play("event:/ui/world_map/chapter/tab_roll_right");
-					List<CollabMap> list = maps[ILSelector.LastArea.SID];
-					list[hovered].Hovered = false;
-					hovered++;
-					list[hovered].Hovered = true;
-					pointer.SetNewTarget(new Vector2(CollabMap.Margin, list[hovered].YPosition));
+					SetHover(hovered + 1);
 				}
 				else if (Input.MenuCancel.Pressed) {
 					Audio.Play("event:/ui/world_map/chapter/back");
@@ -227,6 +234,44 @@ namespace Celeste.Mod.Head2Head.UI {
 					Overworld.Goto<OuiRunSelectILChapterPanel>();
 				}
 			}
+		}
+
+		private void SetInitialHover(CollabMap map) {
+			map.Hovered = true;
+			pointer.SetInitialTarget(new Vector2(CollabMap.Margin, map.YPosition));
+			pointer.Shown = true;
+			scrollBase = scrollCurrent = scrollTarget = 0;
+			scrollBase = scrollCurrent = scrollTarget = GetScrollTarget(map);
+			scrollLerp = 1;
+		}
+
+		private void SetHover(int newHover) {
+			List<CollabMap> list = maps[ILSelector.LastArea.SID];
+			list[hovered].Hovered = false;
+			hovered = newHover;
+			list[hovered].Hovered = true;
+			pointer.SetNewTarget(new Vector2(CollabMap.Margin, list[hovered].YPosition));
+			scrollBase = scrollCurrent;
+			scrollTarget = GetScrollTarget(list[hovered]);
+			scrollLerp = 0;
+		}
+
+		private float GetScrollTarget(CollabMap map) {
+			const float screenHeight = 1080f;
+			const float deadZoneMin = screenHeight / 3f;
+			const float deadZoneMax = screenHeight * 2f / 3f;
+
+			float currentPtrPos = pointer.PosTarget.Y - scrollTarget;
+			if (currentPtrPos >= deadZoneMin && currentPtrPos <= deadZoneMax) {  // Current targets are with deadzone; this is fine.
+				return scrollTarget;
+			}
+
+			float regionHeight = YPosBase * 2 + YPosStep * maps[ILSelector.LastArea.SID].Count;
+			float minScroll = 0;
+			float maxScroll = Calc.Clamp(regionHeight - screenHeight, 0, float.MaxValue);
+
+			float scrollChange = currentPtrPos <= deadZoneMin ? currentPtrPos - deadZoneMin : currentPtrPos - deadZoneMax;
+			return Calc.Clamp(scrollTarget + scrollChange, minScroll, maxScroll);
 		}
 	}
 }
