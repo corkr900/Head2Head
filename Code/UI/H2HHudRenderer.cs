@@ -11,15 +11,15 @@ namespace Celeste.Mod.Head2Head.UI {
 		public static Vector2 CanvasSize { get { return new Vector2(1920f, 1080f); } }
 		public static readonly int lineOffset = 52;
 		public static readonly int titleMarginX = 80;
-		public static readonly int listMarginX = 32;
-		public static readonly int listMarginY = 150;
-		public static readonly float listBgScale = 0.5f;
+		public static readonly int listMargin = 32;
+		//public static readonly float listBgScale = 0.5f;
 
 		MTexture Banner;
 		MTexture BannerLeft;
 		MTexture BannerMid;
 		MTexture BannerRight;
 
+		MTexture ListTitleBG;
 		MTexture ListBG;
 
 		public H2HHudRenderer() : base() {
@@ -29,7 +29,8 @@ namespace Celeste.Mod.Head2Head.UI {
 			BannerMid = new MTexture(Banner, w, 0, w, Banner.Height);
 			BannerRight = new MTexture(Banner, Banner.Width - w, 0, w, Banner.Height);
 
-			ListBG = GFX.Gui["areaselect/card"];
+			ListTitleBG = GFX.Gui["Head2Head/HUD/playerlist_title_bg"];
+			ListBG = GFX.Gui["Head2Head/HUD/playerlist_bg"];
 		}
 
 		public static float Opacity(Scene scene, MatchDefinition def) {
@@ -133,7 +134,7 @@ namespace Celeste.Mod.Head2Head.UI {
 
 			if (opacity > 0.001f) {
 				List<Tuple<string, ResultCategory, long>> players = new List<Tuple<string, ResultCategory, long>>();
-				float maxWidth = 0;
+				float listWidth = 0;
 				foreach (PlayerID id in def.Players) {
 					ResultCategory cat = def.GetPlayerResultCat(id);
 					string name = id.Name;
@@ -144,45 +145,77 @@ namespace Celeste.Mod.Head2Head.UI {
 						cat == ResultCategory.Completed ? def.Result[id]?.FileTimeTotal ?? long.MaxValue : long.MaxValue
 					));
 					float width = ActiveFont.Measure(text).X;
-					maxWidth = Math.Max(width, maxWidth);
+					listWidth = Math.Max(width, listWidth);
 				}
-				maxWidth *= listPlayerScale.X;
+				listWidth *= listPlayerScale.X;
 				string title = string.Format(Dialog.Get("Head2Head_hud_playerlist_title"), def.Players.Count);
-				maxWidth = Math.Max(maxWidth, ActiveFont.Measure(title).X * listTitleScale.X);
-				maxWidth *= hudScale;
+				Vector2 titleSize = ActiveFont.Measure(title) * hudScale;
+				listWidth *= hudScale;
 
-				Vector2 bgPos = new Vector2(CanvasSize.X, 0);
-				bgPos.X -= maxWidth + listMarginX;
-				bgPos.Y += (players.Count * lineHeight + listMarginY) * hudScale;
-				bgPos += cornerMargin;
 
-				float bgscale = listBgScale * hudScale;
-				bgscale = Math.Max(bgscale, (CanvasSize.X - bgPos.X) / ListBG.Width);
-				bgscale = Math.Max(bgscale, bgPos.Y / ListBG.Height);
+				if (players.Count == 0) {
+					// figure out the title bg position / scale
+					Vector2 titleBgPos = new Vector2(CanvasSize.X - titleSize.X, titleSize.Y) + cornerMargin;
+					Vector2 titlebgSize = new Vector2(CanvasSize.X - titleBgPos.X, titleBgPos.Y);
+					MTexture titleBGSubtex = GetSubtexLowerLeft(ListTitleBG, titlebgSize, hudScale);
+					Vector2 titleBGScale = new Vector2(titlebgSize.X / titleBGSubtex.Width, titlebgSize.Y / titleBGSubtex.Height);
+					// Draw the BG and title
+					ListTitleBG.DrawJustified(titleBgPos, new Vector2(0, 1), Color.White * opacity, titleBGScale);
+					ActiveFont.Draw(title, new Vector2(CanvasSize.X, 0) + cornerMargin,
+						Vector2.UnitX, listTitleScale * hudScale, listTitleColor * opacity);
+				}
+				else {
+					// initial title bg position
+					Vector2 titleBgPos = new Vector2(CanvasSize.X - titleSize.X, titleSize.Y) + cornerMargin;
 
-				ListBG.DrawJustified(bgPos, new Vector2(0, 1), Color.White * opacity, bgscale);
+					// figure out the list bg position / scale
+					Vector2 bgPos = new Vector2(CanvasSize.X, 0);
+					bgPos.X -= listWidth + listMargin * hudScale;
+					bgPos.Y += (players.Count * lineHeight + listMargin) * hudScale + titleBgPos.Y;
+					bgPos += cornerMargin;
 
-				ActiveFont.Draw(title, new Vector2(CanvasSize.X, 0) + cornerMargin,
-					Vector2.UnitX, listTitleScale * hudScale, listTitleColor * opacity);
+					Vector2 bgSize = new Vector2(CanvasSize.X - bgPos.X, bgPos.Y - titleBgPos.Y);
+					MTexture listBGSubtex = GetSubtexLowerLeft(ListBG, bgSize, hudScale);
+					Vector2 listBGScale = new Vector2(bgSize.X / listBGSubtex.Width, bgSize.Y / listBGSubtex.Height);
 
-				// Sort DNF to the bottom and finished to the top, sorting by finish time
-				players.Sort((Tuple<string, ResultCategory, long> t1, Tuple<string, ResultCategory, long> t2) => {
-					if (t1.Item2 == ResultCategory.DNF) return t2.Item2 == ResultCategory.DNF ? 0 : 1;
-					if (t2.Item2 == ResultCategory.DNF) return -1;
-					if (t1.Item2 != ResultCategory.Completed) return t2.Item2 == ResultCategory.Completed ? -1 : 0;
-					if (t2.Item2 != ResultCategory.Completed) return 1;
-					return t1.Item3 > t2.Item3 ? 1 : t1.Item3 < t2.Item3 ? -1 : 0;
-				});
+					// draw title bg, ensuring it's at least a little wider than the list
+					titleBgPos.X = Calc.Min(titleBgPos.X, bgPos.X - (8 * hudScale));
+					Vector2 titlebgSize = new Vector2(CanvasSize.X - titleBgPos.X, titleBgPos.Y);
+					MTexture titleBGSubtex = GetSubtexLowerLeft(ListTitleBG, titlebgSize, hudScale);
+					Vector2 titleBGScale = new Vector2(titlebgSize.X / titleBGSubtex.Width, titlebgSize.Y / titleBGSubtex.Height);
 
-				float ypos = 42 * hudScale;
-				foreach (Tuple<string, ResultCategory, long> t in players) {
-					Color color = t.Item2 == ResultCategory.Completed ? Color.DarkGreen
-						: t.Item2 == ResultCategory.DNF ? Color.DarkRed : Color.DarkCyan;
-					ActiveFont.Draw(t.Item1, new Vector2(CanvasSize.X, ypos) + cornerMargin,
-						Vector2.UnitX, listPlayerScale * hudScale, color * opacity);
-					ypos += lineHeight * hudScale;
+					// draw bgs and title
+					ListTitleBG.DrawJustified(titleBgPos, new Vector2(0, 1), Color.White * opacity, titleBGScale);
+					ActiveFont.Draw(title, new Vector2(CanvasSize.X, 0) + cornerMargin,
+						Vector2.UnitX, listTitleScale * hudScale, listTitleColor * opacity);
+					listBGSubtex.DrawJustified(bgPos, new Vector2(0, 1), Color.White * opacity, listBGScale);
+
+					// Sort DNF to the bottom and finished to the top, sorting by finish time
+					players.Sort((Tuple<string, ResultCategory, long> t1, Tuple<string, ResultCategory, long> t2) => {
+						if (t1.Item2 == ResultCategory.DNF) return t2.Item2 == ResultCategory.DNF ? 0 : 1;
+						if (t2.Item2 == ResultCategory.DNF) return -1;
+						if (t1.Item2 != ResultCategory.Completed) return t2.Item2 == ResultCategory.Completed ? -1 : 0;
+						if (t2.Item2 != ResultCategory.Completed) return 1;
+						return t1.Item3 > t2.Item3 ? 1 : t1.Item3 < t2.Item3 ? -1 : 0;
+					});
+
+					// Draw the list text
+					float ypos = titleBgPos.Y;
+					foreach (Tuple<string, ResultCategory, long> t in players) {
+						Color color = t.Item2 == ResultCategory.Completed ? Color.DarkGreen
+							: t.Item2 == ResultCategory.DNF ? Color.DarkRed : Color.DarkCyan;
+						ActiveFont.Draw(t.Item1, new Vector2(CanvasSize.X, ypos) + cornerMargin,
+							Vector2.UnitX, listPlayerScale * hudScale, color * opacity);
+						ypos += lineHeight * hudScale;
+					}
 				}
 			}
+		}
+
+		private MTexture GetSubtexLowerLeft(MTexture source, Vector2 targetSize, float scale) {
+			int actualWidth = (int)Calc.Min(source.Width, targetSize.X / scale);
+			int actualHeight = (int)Calc.Min(source.Height, targetSize.Y / scale);
+			return ListBG.GetSubtexture(0, source.Height - actualHeight, actualWidth, actualHeight);
 		}
 
 		private string GetPlayerDetail(PlayerID id, ResultCategory cat, MatchDefinition def) {
@@ -254,13 +287,10 @@ namespace Celeste.Mod.Head2Head.UI {
 			DateTime now = DateTime.Now;
 			if (def.BeginInstant < now) return;
 			TimeSpan remain = def.BeginInstant - now;
-			int cdIdx = (int)Math.Ceiling(remain.TotalSeconds);
-			if (cdIdx <= 0 || cdIdx > 5) return;
+			int displaynum = (int)Math.Ceiling(remain.TotalSeconds);
+			if (displaynum <= 0 || displaynum > 15) return;
 
-			MTexture cdBG = GFX.Gui["Head2Head/Countdown/" + cdIdx.ToString()];
-			Vector2 cdPos = CanvasSize / 2f;
-			Color cdColor = Color.White;
-			cdBG.DrawJustified(cdPos, justify, cdColor * _bannerOpacity, hudScale);
+			ActiveFont.DrawOutline(displaynum.ToString(), CanvasSize / 2f, new Vector2(.5f, .5f), Vector2.One * 5f, Color.White, 5f, Color.Black);
 		}
 
 		private bool ShouldShowMatchPass(Scene scene, MatchDefinition def) {
