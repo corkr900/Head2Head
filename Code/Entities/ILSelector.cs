@@ -87,6 +87,7 @@ namespace Celeste.Mod.Head2Head.Entities {
 			overworldWrapper.OnBegin += (overworld) => {
 				overworld.RendererList.Remove(overworld.RendererList.Renderers.Find(r => r is MountainRenderer));
 				overworld.RendererList.Remove(overworld.RendererList.Renderers.Find(r => r is ScreenWipe));
+				overworld.RendererList.Remove(overworld.RendererList.Renderers.Find(r => r is H2HHudRenderer));
 				overworld.RendererList.UpdateLists();
 			};
 			overworldWrapper.OnEnd += (overworld) => {
