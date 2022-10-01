@@ -619,7 +619,7 @@ namespace Celeste.Mod.Head2Head {
 			if (def.State == MatchState.Staged && (isNew || oldState != MatchState.Staged)) {
 				MatchStaged(def, data.playerID.Equals(PlayerID.MyIDSafe));
 			}
-			else if (def.State == MatchState.InProgress && (isNew || oldState != MatchState.InProgress)) {
+			else if (def.State == MatchState.InProgress && (isNew || oldState < MatchState.InProgress)) {
 				if (MatchStarted(def)) {
 					ClearAutoLaunchInfo();
 				}
@@ -1033,7 +1033,12 @@ namespace Celeste.Mod.Head2Head {
 		// #######################################################
 
 		private bool MatchStarted(MatchDefinition def) {
+			if (def == null) return false;
 			foreach (MatchPhase ph in def.Phases) {
+				if (ph == null) {
+					Engine.Commands.Log("Cannot start match: match contains a null phase");
+					return false;
+				}
 				if (!ph.Area.ExistsLocal || !ph.Area.VersionMatchesLocal) {
 					return false;
 				}
@@ -1049,7 +1054,7 @@ namespace Celeste.Mod.Head2Head {
 				if (def.Result == null) {
 					def.RegisterSaveFile();
 				}
-				if (def.Result[PlayerID.MyIDSafe]?.SaveFile != global::Celeste.SaveData.Instance.FileSlot) return false;
+				if (def.Result[PlayerID.MyIDSafe]?.SaveFile != global::Celeste.SaveData.Instance?.FileSlot) return false;
 				PlayerStatus.Current.CurrentMatch = def;
 			}
 			else if (PlayerStatus.Current.CurrentMatch.MatchID != def.MatchID) {  // Not a match we care about
