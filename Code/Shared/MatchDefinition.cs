@@ -357,13 +357,16 @@ namespace Celeste.Mod.Head2Head.Shared {
     }
 
     public enum MatchObjectiveType {
+        // Standard
         ChapterComplete,
         HeartCollect,
         CassetteCollect,
         Strawberries,
         MoonBerry,
-
+        // Nonstandard
         TimeLimit,
+        // Custom
+        CustomCollectable,
     }
 
     /// <summary>

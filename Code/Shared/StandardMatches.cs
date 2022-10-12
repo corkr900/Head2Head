@@ -20,6 +20,9 @@ namespace Celeste.Mod.Head2Head.Shared {
 		OneFifthBerries,
 		OneThirdBerries,
 		TimeLimit,
+
+		// Custom
+		Custom,
 	}
 
 	public static class StandardMatches {

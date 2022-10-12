@@ -3,6 +3,9 @@ HEAD2HEAD_OVERWORLD= Overworld
 Head2Head= Head 2 Head
 Head2Head_00_Head2HeadLobby= Head 2 Head Lobby
 
+Head2Head_CrystalHeart= Crystal Heart
+Head2Head_Cassette= Cassette
+
 Head2Head_Setting= Head 2 Head Settings
 Head2Head_Setting_ReturnToLobby= Return to Lobby
 Head2Head_Setting_ReturnToLobby_Subtext= If turned on, you will automatically return to the Head2Head lobby after completing a match.

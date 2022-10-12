@@ -108,23 +108,26 @@ namespace Celeste.Mod.Head2Head.Shared {
 			}
 			if (entity.Name == "birdForsakenCityGem") return true;
 			if (entity.Name == "reflectionHeartStatue") return true;
-			// TODO Custom heart code entities are not handled yet; some way to do it generically?
-			// collabutils2 mini hearts NOT included because they always end the chapter regardless of map metadata
 
-			// should flag these entities...
-			//		If it's possible to check whether the associated type extends HeartGem that should handle most of these...
-			//		Also there should be a way for new mods to add this compatibility themselves that we check with Reflection
-			// AdventureHelper Custom Crystal Heart
-			// Arphimigon's D-Sides Heart?
-			// Arphimigon's D-Sides Recolourable Heart?
-			// communalhelper Crystal Heart
-			// communalhelper Custom Crystal Heart
-			// FactoryHelper machine heart?
-			// Frozen Waterfall Boss Heart?
-			// max480hand Reskinnable Crystal Heart
-			// Memorial Helper Flag Crystal Heart
-			// P sides heart gem??
-			// Vivhelper Dash Code Heart Controller
+			// TODO Bug mod owners to update their entities to use the API to register their heart types
+
+			// Known custom heart types:
+			//	AdventureHelper Custom Crystal Heart
+			//	Arphimigon's D-Sides Heart?
+			//	Arphimigon's D-Sides Recolourable Heart?
+			//	communalhelper Crystal Heart
+			//	communalhelper Custom Crystal Heart
+			//	FactoryHelper machine heart?
+			//	Frozen Waterfall Boss Heart?
+			//	max480hand Reskinnable Crystal Heart
+			//	Memorial Helper Flag Crystal Heart
+			//	P sides heart gem??
+			//	Vivhelper Dash Code Heart Controller
+			if (Head2HeadModule.CustomHeartTypes.ContainsKey(entity.Name)) {
+				Head2HeadModule.CustomHeartTypeInfo info = Head2HeadModule.CustomHeartTypes[entity.Name];
+				return info.Condition?.Invoke(entity) ?? true;
+			}
+
 			return false;
 		}
 
