@@ -94,7 +94,10 @@
     <Compile Include="Integration\CollabUtils2Integration.cs" />
     <Compile Include="IO\ActionLogger.cs" />
     <Compile Include="IO\CNetComm.cs" />
+    <Compile Include="IO\Head2HeadAPI.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Shared\CustomCollectables.cs" />
+    <Compile Include="Shared\CustomMatchDefinition.cs" />
     <Compile Include="Shared\MatchResult.cs" />
     <Compile Include="Shared\Role.cs" />
     <Compile Include="UI\Menus.cs" />
