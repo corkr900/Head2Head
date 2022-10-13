@@ -62,6 +62,7 @@ Head2Head_CategoryName_FullClearMoonBerry= Full Clear with Moon Berry
 Head2Head_CategoryName_OneThirdBerries= One Third Berries
 Head2Head_CategoryName_OneFifthBerries= One Fifth Berries
 Head2Head_CategoryName_TimeLimit= Time Limited
+Head2Head_CategoryName_Custom= Unnamed Custom Category
 
 Head2Head_MatchStatus_None= Unknown
 Head2Head_MatchStatus_Building= Building

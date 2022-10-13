@@ -123,8 +123,8 @@ namespace Celeste.Mod.Head2Head.Shared {
 			//	Memorial Helper Flag Crystal Heart
 			//	P sides heart gem??
 			//	Vivhelper Dash Code Heart Controller
-			if (Head2HeadModule.CustomHeartTypes.ContainsKey(entity.Name)) {
-				Head2HeadModule.CustomHeartTypeInfo info = Head2HeadModule.CustomHeartTypes[entity.Name];
+			if (CustomCollectables.CustomHeartTypes.ContainsKey(entity.Name)) {
+				CustomCollectableInfo info = CustomCollectables.CustomHeartTypes[entity.Name];
 				return info.Condition?.Invoke(entity) ?? true;
 			}
 
@@ -165,6 +165,10 @@ namespace Celeste.Mod.Head2Head.Shared {
 				}
 			}
 			return false;
+		}
+
+		public static string CategoryToIcon(StandardCategory cat) {
+			return string.Format("Head2Head/Categories/{0}", cat.ToString());
 		}
 	}
 }

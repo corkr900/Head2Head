@@ -275,7 +275,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 		// More Stuff
 
-		public static bool IsCategoryValid(StandardCategory cat, GlobalAreaKey area)
+		public static bool IsCategoryValid(StandardCategory cat, GlobalAreaKey area, CustomMatchTemplate template = null)
 		{
 			if (area.IsOverworld) return false;
 			if (!area.ExistsLocal) return false;
@@ -300,13 +300,15 @@ namespace Celeste.Mod.Head2Head.Shared {
 							|| cat == StandardCategory.OneThirdBerries
 							|| cat == StandardCategory.HeartCassette
 							|| cat == StandardCategory.FullClear
-							|| cat == StandardCategory.CassetteGrab;
+							|| cat == StandardCategory.CassetteGrab
+							|| cat == StandardCategory.Custom;
 					case 0:  // Prologue
 						return cat == StandardCategory.Clear;
 					case 6:  // Reflection
 						return cat == StandardCategory.Clear
 							|| cat == StandardCategory.FullClear
-							|| cat == StandardCategory.CassetteGrab;
+							|| cat == StandardCategory.CassetteGrab
+							|| cat == StandardCategory.Custom;
 					case 8:  // epilogue
 						return cat == StandardCategory.Clear;
 					case 9:  // Core
@@ -314,11 +316,13 @@ namespace Celeste.Mod.Head2Head.Shared {
 							|| cat == StandardCategory.OneFifthBerries
 							|| cat == StandardCategory.OneThirdBerries
 							|| cat == StandardCategory.FullClear
-							|| cat == StandardCategory.CassetteGrab;
+							|| cat == StandardCategory.CassetteGrab
+							|| cat == StandardCategory.Custom;
 					case 10:  // Farewell
 						return cat == StandardCategory.Clear
 							|| cat == StandardCategory.MoonBerry
-							|| cat == StandardCategory.TimeLimit;
+							|| cat == StandardCategory.TimeLimit
+							|| cat == StandardCategory.Custom;
 				}
 			}
 			else {
@@ -347,6 +351,9 @@ namespace Celeste.Mod.Head2Head.Shared {
 						return hasMoonBerry;
 					case StandardCategory.FullClearMoonBerry:
 						return hasMoonBerry && (berries || hasCassette || hasOptionalHeart);
+					case StandardCategory.Custom:
+						// TODO check custom categories for validity
+						return true;
 				}
 			}
 		}

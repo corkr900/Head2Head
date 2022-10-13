@@ -835,6 +835,13 @@ namespace Celeste.Mod.Head2Head {
 			buildingMatch.Phases.Add(mp);
 		}
 
+		public void NameBuildingMatch(string name) {
+			if (buildingMatch == null) {
+				return;
+			}
+			buildingMatch.DisplayNameOverride = name;
+		}
+
 		public void StageMatch() {
 			if (Util.IsUpdateAvailable()) {
 				Engine.Commands.Log("Cannot stage match: you are using an outdated version of Head 2 Head");

@@ -335,7 +335,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		}
 
 		private bool TryMarkPhaseComplete(MatchObjective lastOB) {
-			// TODO enforce phase order
+			// TODO (!!!) enforce phase order
 			bool anychanges = false;
 			MatchPhase lastPhase = null;
 			foreach (MatchPhase ph in CurrentMatch.Phases) {

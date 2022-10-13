@@ -29,6 +29,7 @@ namespace Celeste.Mod.Head2Head.Entities {
 		public static ILSelector ActiveSelector { get; private set; } = null;
 		public GlobalAreaKey Area;
 		public StandardCategory Category;
+		public CustomMatchTemplate CustomTemplate;
 
 		private Sprite sprite;
 		private TalkComponent talkComponent;
@@ -153,9 +154,18 @@ namespace Celeste.Mod.Head2Head.Entities {
 			}
 
 			if (!Area.IsOverworld) {
-				Head2HeadModule.Instance.AddMatchPhase(Category, Area);
+				if (Category == StandardCategory.Custom) {
+					foreach (MatchPhase ph in CustomTemplate.Build()) {
+						Head2HeadModule.Instance.AddMatchPhase(ph);
+					}
+					Head2HeadModule.Instance.NameBuildingMatch(CustomTemplate.DisplayName);
+				}
+				else {
+					Head2HeadModule.Instance.AddMatchPhase(Category, Area);
+				}
 				Area = GlobalAreaKey.Overworld;
 				Category = StandardCategory.Clear;
+				CustomTemplate = null;
 				Head2HeadModule.Instance.StageMatch();
 			}
 		}

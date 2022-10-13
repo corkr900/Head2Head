@@ -33,5 +33,7 @@ namespace Celeste.Mod.Head2Head.IO {
 
 		public static void RegisterConditionalGenericCollectableType(string entityTypeID, string displayName, Func<BinaryPacker.Element, bool> condition)
 			=> CustomCollectables.AddOtherCollectable(entityTypeID, displayName, condition);
+
+		// TODO (!!!) Add API to remove standard categories from modded maps
 	}
 }

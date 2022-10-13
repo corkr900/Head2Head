@@ -74,7 +74,6 @@ namespace Celeste.Mod.Head2Head.Shared {
             }
         }
 
-
 		private static string GetTranslatedSide(AreaMode? mode) {
 			switch (mode) {
                 case null:
@@ -85,7 +84,7 @@ namespace Celeste.Mod.Head2Head.Shared {
                 case AreaMode.CSide:
                     return " (" + Dialog.Get("OVERWORLD_REMIX2") + ")";
                 default:
-                    return " (" + mode.ToString() + ")";  // TODO AltSidesHelper support
+                    return " (" + mode.ToString() + ")";
             }
 		}
 
