@@ -1,10 +1,15 @@
-﻿using Celeste.Mod.Head2Head.IO;
+﻿using Celeste.Mod.Head2Head.Integration;
+using Celeste.Mod.Head2Head.IO;
 using Celeste.Mod.Head2Head.Shared;
 using Celeste.Mod.Head2Head.UI;
+using Celeste.Mod.Meta;
 using Monocle;
+using MonoMod.Utils;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -109,6 +114,11 @@ namespace Celeste.Mod.Head2Head.Control {
 					Engine.Commands.Log(setVarHelpText);
 					return;
 			}
+		}
+
+		[Command("h2hh", "uhhhhhhhhhhhhh")]
+		public static void Misc() {
+			Head2HeadModule.Instance.ScanModsForIntegrationMeta();
 		}
 	}
 }

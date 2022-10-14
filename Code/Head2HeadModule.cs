@@ -164,6 +164,7 @@ namespace Celeste.Mod.Head2Head {
 			// Misc other setup
 			Celeste.Instance.Components.Add(Comm = new CNetComm(Celeste.Instance));
 
+			ScanModsForIntegrationMeta();
 			CollabUtils2Integration.Load();
 		}
 
@@ -719,6 +720,17 @@ namespace Celeste.Mod.Head2Head {
 		}
 
 		// #######################################################
+
+		public void ScanModsForIntegrationMeta() {
+			foreach (ModContent mod in Everest.Content.Mods) {
+				if (mod.Map.ContainsKey("Head2Head")) {
+					ModAsset asset = mod.Map["Head2Head"];
+					if (asset.TryDeserialize(out ModIntegrationMeta meta)) {
+						// TODO (!!!) cache off integration information
+					}
+				}
+			}
+		}
 
 		public bool CanBuildMatch() {
 			if (!CNetComm.Instance.IsConnected) return false;
