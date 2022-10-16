@@ -45,16 +45,11 @@ namespace Celeste.Mod.Head2Head.Shared {
 			return area.Data.Mode[(int)area.Mode].TotalStrawberries;
 		}
 
-		internal static bool HasCassette(GlobalAreaKey area) {
-			if (!area.ExistsLocal) return false;
-			return area.Data.Mode[(int)area.Mode].MapData.DetectedCassette;
-		}
-
 		internal static int CountMoonBerries(GlobalAreaKey area) {
 			if (!area.ExistsLocal) return -1;
 			var strawbs = area.Data.Mode[(int)area.Mode].MapData.Strawberries;
 			int count = 0;
-			foreach(var strawb in strawbs) {
+			foreach (var strawb in strawbs) {
 				if (strawb.Values == null || !strawb.Values.ContainsKey("moon")) continue;
 				object val = strawb.Values["moon"];
 				if (val is bool && (bool)val) count += 1;
@@ -62,12 +57,28 @@ namespace Celeste.Mod.Head2Head.Shared {
 			return count;
 		}
 
+		internal static bool HasCassette(GlobalAreaKey area) {
+			if (!area.ExistsLocal) return false;
+			if (area.Data.Mode[(int)area.Mode].MapData.DetectedCassette) return true;
+			MapData md = GetMapDataForMode(area);
+			if (md == null) return false;
+			DynamicData dd = new DynamicData(md);
+			if (!dd.Data.ContainsKey("HasCassette")) return false;
+			return dd.Get<bool>("HasCassette");
+		}
+
 		internal static bool HasOptionalRealHeart(GlobalAreaKey area) {
 			if (!area.ExistsLocal) return false;
 			MapMetaModeProperties props = area.ModeMetaProperties;
 			if (props?.HeartIsEnd == true) return false;
-			DynamicData dd = new DynamicData(area.Data.Mode[(int)area.Mode].MapData);
+			DynamicData dd = new DynamicData(GetMapDataForMode(area));
+			if (!dd.Data.ContainsKey("DetectedRealHeartGem")) return false;
 			return dd.Get<bool>("DetectedRealHeartGem");
+		}
+
+		internal static MapData GetMapDataForMode(GlobalAreaKey area) {
+			if (!area.ExistsLocal) return null;
+			return area.Data.Mode[(int)area.Mode].MapData;
 		}
 
 		internal static bool HasTrackedBerries(GlobalAreaKey area) {
@@ -128,6 +139,15 @@ namespace Celeste.Mod.Head2Head.Shared {
 				return info.Condition?.Invoke(entity) ?? true;
 			}
 
+			return false;
+		}
+
+		internal static bool EntityIsCassette(BinaryPacker.Element entity) {
+			if (entity.Name == "cassette") return true;
+			if (CustomCollectables.CustomCassetteTypes.ContainsKey(entity.Name)) {
+				CustomCollectableInfo info = CustomCollectables.CustomCassetteTypes[entity.Name];
+				return info.Condition?.Invoke(entity) ?? true;
+			}
 			return false;
 		}
 

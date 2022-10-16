@@ -12,6 +12,7 @@ using static Celeste.TextMenuExt;
 
 namespace Celeste.Mod.Head2Head.UI
 {
+	// TODO (!!!) known matches menu shows only the category and not the area
 	// TODO (!!!) Make a UI that describes custom categories
 	public static class Menus
 	{

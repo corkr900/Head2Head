@@ -17,6 +17,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			templates[Area].Add(this);
 		}
 
+		public string Key;
 		public GlobalAreaKey Area;
 		public string IconPath;
 		public string DisplayName;
@@ -36,6 +37,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 						ObjectiveType = tObj.ObjectiveType,
 						TimeLimit = tObj.TimeLimit,
 						BerryGoal = tObj.CollectableCount,
+						CustomTypeKey = tObj.CustomTypeKey,
 					});
 				}
 				list.Add(ph);
@@ -47,6 +49,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			// Process Match data
 			CustomMatchTemplate tem = new CustomMatchTemplate();
 			tem.Area = area;
+			tem.Key = meta.ID;
 			tem.DisplayName = TranslatedIfAvailable(meta.Name);
 			if (GFX.Gui.Has(meta.Icon)) {
 				tem.IconPath = meta.Icon;
@@ -67,6 +70,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 					obtem.ObjectiveType = t ?? MatchObjectiveType.ChapterComplete;
 					obtem.CollectableCount = ob.Count > 0 ? ob.Count : -1;
 					obtem.TimeLimit = ob.TimeLimit;
+					obtem.CustomTypeKey = ob.ID;
 					phtem.Objectives.Add(obtem);
 				}
 				tem.Phases.Add(phtem);
@@ -74,6 +78,8 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 			// Add to the library
 			if (!templates.ContainsKey(area)) templates.Add(area, new List<CustomMatchTemplate>());
+			CustomMatchTemplate existing = templates[area].Find((CustomMatchTemplate cmt) => { return cmt.Key == tem.Key; });
+			if (existing != null) templates[area].Remove(existing);  // TODO reload stuff more smartly (it won't change very often)
 			templates[area].Add(tem);
 		}
 
@@ -114,5 +120,6 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public MatchObjectiveType ObjectiveType;
 		public int CollectableCount = -1;
 		public long TimeLimit = 0;
+		public string CustomTypeKey;
 	}
 }

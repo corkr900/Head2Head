@@ -433,11 +433,19 @@ namespace Celeste.Mod.Head2Head {
 		private EntityData OnLevelDataCreateEntityData(On.Celeste.LevelData.orig_CreateEntityData orig, LevelData self, BinaryPacker.Element entity) {
 			EntityData data = orig(self, entity);
 			DynamicData dd = new DynamicData(self);
+			// heart
 			if (!dd.Data.ContainsKey("HasRealHeartGem")) {
 				dd.Set("HasRealHeartGem", Util.EntityIsRealHeartGem(entity));
 			}
 			else if(!dd.Get<bool>("HasRealHeartGem") && Util.EntityIsRealHeartGem(entity)) {
 				dd.Set("HasRealHeartGem", true);
+			}
+			// cassette
+			if (!dd.Data.ContainsKey("HasCassette")) {
+				dd.Set("HasCassette", Util.EntityIsCassette(entity));
+			}
+			else if (!dd.Get<bool>("HasCassette") && Util.EntityIsCassette(entity)) {
+				dd.Set("HasCassette", true);
 			}
 			return data;
 		}

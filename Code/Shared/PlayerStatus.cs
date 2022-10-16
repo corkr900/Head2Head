@@ -272,14 +272,14 @@ namespace Celeste.Mod.Head2Head.Shared {
 		internal int CurrentPhase(PlayerID? id = null) {
 			if (CurrentMatch == null) return -1;
 			if (!IsInMatch(false, id)) return -1;
-			int max = 0;
+			int max = -1;
 			foreach (H2HMatchPhaseState s in phases) {
 				int order = CurrentMatch.GetPhase(s.PhaseID)?.Order ?? -1;
 				if (s.Completed && order > max) {
 					max = order;
 				}
 			}
-			return max;
+			return max + 1;
 		}
 
 		private MatchObjective FindObjective(MatchObjectiveType type, GlobalAreaKey area, bool includeFinished = false) {
@@ -380,6 +380,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 							Completed = true,
 						});
 					}
+
 				}
 			}
 			if (anychanges) {

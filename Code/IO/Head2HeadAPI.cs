@@ -24,7 +24,6 @@ namespace Celeste.Mod.Head2Head.IO {
 		public static void RegisterConditionalHeartType(string entityTypeID, Func<BinaryPacker.Element, bool> condition)
 			=> CustomCollectables.AddHeart(entityTypeID, condition);
 
-		// TODO (!!!) respect custom cassette types
 		public static void RegisterCassetteType(string entityTypeID)
 			=> CustomCollectables.AddCassette(entityTypeID, null);
 
@@ -43,6 +42,7 @@ namespace Celeste.Mod.Head2Head.IO {
 		public static void CustomCollectableCollected(string entityTypeID, AreaKey area, EntityID id)
 			=> PlayerStatus.Current.CustomCollectableCollected(entityTypeID, area, id);
 
+		// TODO (!!!) Custom Objectives
 		public static void CustomObjectiveCompleted(string objectiveTypeID, AreaKey area)
 			=> PlayerStatus.Current.CustomObjectiveCompleted(objectiveTypeID, area);
 	}

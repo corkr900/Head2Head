@@ -320,11 +320,13 @@ namespace Celeste.Mod.Head2Head.Shared {
         }
 	}
 
+    // TODO collectables objectives that span multiple chapters?
     public class MatchObjective {
         public uint ID;
         public MatchObjectiveType ObjectiveType;
         public int BerryGoal = -1;
         public long TimeLimit = 0;
+        public string CustomTypeKey;
         public List<Tuple<PlayerID, long>> TimeLimitAdjustments = new List<Tuple<PlayerID, long>>();
 
         public long AdjustedTimeLimit(PlayerID id) {
@@ -486,6 +488,7 @@ namespace Celeste.Mod.Head2Head.Shared {
             mo.ObjectiveType = (MatchObjectiveType)Enum.Parse(typeof(MatchObjectiveType), reader.ReadString());
             mo.BerryGoal = reader.ReadInt32();
             mo.TimeLimit = reader.ReadInt64();
+            mo.CustomTypeKey = reader.ReadString();
 
             int count = reader.ReadInt32();
             List<Tuple<PlayerID, long>> list = new List<Tuple<PlayerID, long>>(count);
@@ -504,6 +507,7 @@ namespace Celeste.Mod.Head2Head.Shared {
             writer.Write(mo.ObjectiveType.ToString() ?? "");
             writer.Write(mo.BerryGoal);
             writer.Write(mo.TimeLimit);
+            writer.Write(mo.CustomTypeKey ?? "");
             writer.Write(mo.TimeLimitAdjustments?.Count ?? 0);
             if (mo.TimeLimitAdjustments != null) {
                 foreach (Tuple<PlayerID, long> t in mo.TimeLimitAdjustments) {
