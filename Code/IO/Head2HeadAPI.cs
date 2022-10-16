@@ -16,24 +16,34 @@ namespace Celeste.Mod.Head2Head.IO {
 		public static bool CurrentlyInMatch(bool includeUnstarted)
 			=> PlayerStatus.Current.IsInMatch(includeUnstarted);
 
+		// Custom collectable types
+
 		public static void RegisterHeartType(string entityTypeID)
 			=> CustomCollectables.AddHeart(entityTypeID, null);
 
 		public static void RegisterConditionalHeartType(string entityTypeID, Func<BinaryPacker.Element, bool> condition)
 			=> CustomCollectables.AddHeart(entityTypeID, condition);
 
+		// TODO (!!!) respect custom cassette types
 		public static void RegisterCassetteType(string entityTypeID)
 			=> CustomCollectables.AddCassette(entityTypeID, null);
 
 		public static void RegisterConditionalCassette(string entityTypeID, Func<BinaryPacker.Element, bool> condition)
 			=> CustomCollectables.AddCassette(entityTypeID, condition);
 
+		// TODO (!!!) respect custom collectables
 		public static void RegisterGenericCollectableType(string entityTypeID, string displayName)
 			=> CustomCollectables.AddOtherCollectable(entityTypeID, displayName, null);
 
 		public static void RegisterConditionalGenericCollectableType(string entityTypeID, string displayName, Func<BinaryPacker.Element, bool> condition)
 			=> CustomCollectables.AddOtherCollectable(entityTypeID, displayName, condition);
 
-		// TODO (!!!) Add API to remove standard categories from modded maps
+		// Custom events / collectables
+
+		public static void CustomCollectableCollected(string entityTypeID, AreaKey area, EntityID id)
+			=> PlayerStatus.Current.CustomCollectableCollected(entityTypeID, area, id);
+
+		public static void CustomObjectiveCompleted(string objectiveTypeID, AreaKey area)
+			=> PlayerStatus.Current.CustomObjectiveCompleted(objectiveTypeID, area);
 	}
 }

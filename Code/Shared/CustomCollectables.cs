@@ -13,8 +13,8 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public static void AddHeart(string entityTypeID, Func<BinaryPacker.Element, bool> condition) {
 			CustomHeartTypes.Add(entityTypeID, new CustomCollectableInfo() {
 				Name = entityTypeID,
-				Condition = null,
-				DisplayName = Dialog.Clean("Head2Head_CrystalHeart"),
+				Condition = condition,
+				DisplayName = "Crystal Heart", // Can't use Dialog.Clean - languages not initialized yet
 			});
 		}
 
@@ -22,7 +22,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			CustomCassetteTypes.Add(entityTypeID, new CustomCollectableInfo() {
 				Name = entityTypeID,
 				Condition = condition,
-				DisplayName = Dialog.Clean("Head2Head_Cassette"),
+				DisplayName = "Cassette", // Can't use Dialog.Clean - languages not initialized yet
 			});
 		}
 

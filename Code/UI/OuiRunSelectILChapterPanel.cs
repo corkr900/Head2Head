@@ -311,8 +311,7 @@ namespace Celeste.Mod.Head2Head.UI {
 				foreach (Tuple<StandardCategory, CustomMatchTemplate> catInfo in cats) {
 					string iconPath = (catInfo.Item1 == StandardCategory.Custom && !string.IsNullOrEmpty(catInfo.Item2.IconPath)) ?
 							catInfo.Item2.IconPath : Shared.Util.CategoryToIcon(catInfo.Item1);
-					string label = (catInfo.Item1 == StandardCategory.Custom && !string.IsNullOrEmpty(catInfo.Item2.DisplayName)) ?
-							catInfo.Item2.DisplayName : Dialog.Get(string.Format("Head2Head_CategoryName_{0}", catInfo.Item1.ToString()));
+					string label = StandardMatches.GetCategoryTitle(catInfo.Item1, catInfo.Item2);
 					categories.Add(new Option {
 						Label = label,
 						BgColor = Calc.HexToColor("eabe26"),
@@ -345,14 +344,17 @@ namespace Celeste.Mod.Head2Head.UI {
 		private List<Tuple<StandardCategory, CustomMatchTemplate>> GetCategories() {
 			List<Tuple<StandardCategory, CustomMatchTemplate>> ret = new List<Tuple<StandardCategory, CustomMatchTemplate>>();
 			StandardCategory[] cats = Role.GetValidCategories();
+			GlobalAreaKey gArea = new GlobalAreaKey(Area);
+			// Standard Categories
 			foreach (StandardCategory cat in cats) {
 				if (cat == StandardCategory.Custom) continue;
-				if (!StandardMatches.IsCategoryValid(cat, new GlobalAreaKey(Area), null)) continue;
+				if (!StandardMatches.IsCategoryValid(cat, gArea, null)) continue;
 				ret.Add(new Tuple<StandardCategory, CustomMatchTemplate>(cat, null));
 			}
-			if (CustomMatchTemplate.templates.ContainsKey(Area.SID)) {
-				foreach (CustomMatchTemplate template in CustomMatchTemplate.templates[Area.SID]) {
-					if (!StandardMatches.IsCategoryValid(StandardCategory.Custom, new GlobalAreaKey(Area), template)) continue;
+			// Custom Categories
+			if (CustomMatchTemplate.templates.ContainsKey(gArea)) {
+				foreach (CustomMatchTemplate template in CustomMatchTemplate.templates[gArea]) {
+					if (!StandardMatches.IsCategoryValid(StandardCategory.Custom, gArea, template)) continue;
 					ret.Add(new Tuple<StandardCategory, CustomMatchTemplate>(StandardCategory.Custom, template));
 				}
 			}

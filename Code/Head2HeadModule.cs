@@ -24,9 +24,9 @@ using Mono.Cecil.Cil;
 using Celeste.Mod.UI;
 using Celeste.Mod.Head2Head.UI;
 using Celeste.Mod.Head2Head.Integration;
+using MonoMod.ModInterop;
 
 // TODO Force DNF if a player intentionally closes the game
-
 // TODO Support full-game runs... eventually
 
 namespace Celeste.Mod.Head2Head {
@@ -37,7 +37,7 @@ namespace Celeste.Mod.Head2Head {
 		internal int MatchTimeoutMinutes = 15;
 
 		// Constants that might change in the future
-		public static readonly string ProtocolVersion = "1_0_7";
+		public static readonly string ProtocolVersion = "1_0_8";
 
 		// Other static stuff
 		public static Head2HeadModule Instance { get; private set; }
@@ -164,7 +164,7 @@ namespace Celeste.Mod.Head2Head {
 			// Misc other setup
 			Celeste.Instance.Components.Add(Comm = new CNetComm(Celeste.Instance));
 
-			ScanModsForIntegrationMeta();
+			typeof(Head2HeadAPI).ModInterop();
 			CollabUtils2Integration.Load();
 		}
 
@@ -726,7 +726,34 @@ namespace Celeste.Mod.Head2Head {
 				if (mod.Map.ContainsKey("Head2Head")) {
 					ModAsset asset = mod.Map["Head2Head"];
 					if (asset.TryDeserialize(out ModIntegrationMeta meta)) {
-						// TODO (!!!) cache off integration information
+						ProcessIntegrationMeta(meta);
+					}
+				}
+			}
+		}
+
+		private void ProcessIntegrationMeta(ModIntegrationMeta meta) {
+			if (meta.IndividualLevels != null) {
+				foreach (ILMeta il in meta.IndividualLevels) {
+					// Ensure the area is valid
+					GlobalAreaKey area = new GlobalAreaKey(il.Map, CustomMatchTemplate.GetAreaMode(il.Side));
+					if (!area.ExistsLocal || area.IsOverworld) continue;
+
+					// Handle IL removals
+					if (il.RemoveCategories != null) {
+						foreach (string s in il.RemoveCategories) {
+							StandardCategory cat;
+							if (Enum.TryParse(s, out cat) && cat != StandardCategory.Custom) {
+								ILSelector.SuppressCategory(area, cat);
+							}
+						}
+					}
+
+					// Handle IL additions
+					if (il.AddCategories != null) {
+						foreach (CategoryMeta newcat in il.AddCategories) {
+							CustomMatchTemplate.AddTemplateFromMeta(newcat, area);
+						}
 					}
 				}
 			}

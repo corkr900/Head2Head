@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Celeste.Mod.Head2Head.Entities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -279,6 +280,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		{
 			if (area.IsOverworld) return false;
 			if (!area.ExistsLocal) return false;
+			if (ILSelector.IsSuppressed(area, cat)) return false;
 			if (area.IsVanilla) {
 				if (area.Mode != AreaMode.Normal) {
 					return cat == StandardCategory.Clear;
@@ -356,6 +358,12 @@ namespace Celeste.Mod.Head2Head.Shared {
 						return true;
 				}
 			}
+		}
+
+		public static string GetCategoryTitle(StandardCategory cat, CustomMatchTemplate tem) {
+			return (cat == StandardCategory.Custom && !string.IsNullOrEmpty(tem.DisplayName)) ?
+				tem.DisplayName :
+				Dialog.Get(string.Format("Head2Head_CategoryName_{0}", cat.ToString()));
 		}
 	}
 }

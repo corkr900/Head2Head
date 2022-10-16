@@ -12,6 +12,7 @@ using static Celeste.TextMenuExt;
 
 namespace Celeste.Mod.Head2Head.UI
 {
+	// TODO (!!!) Make a UI that describes custom categories
 	public static class Menus
 	{
 		public class HelpdeskMenuContext

@@ -307,14 +307,14 @@ namespace Celeste.Mod.Head2Head.Shared {
             get {
 				switch (category) {
                     default:
-                        return string.Format(Dialog.Get("Head2Head_MatchTitle"), Area.DisplayName, Util.TranslatedCategoryName(category));
+                        return Util.TranslatedCategoryName(category);
                     case StandardCategory.OneThirdBerries:
                     case StandardCategory.OneFifthBerries:
                         int berries = Objectives.Find((MatchObjective o) => o.ObjectiveType == MatchObjectiveType.Strawberries)?.BerryGoal ?? 0;
-                        return string.Format(Dialog.Get("Head2Head_MatchTitle_BerryCount"), Area.DisplayName, berries);
+                        return string.Format(Dialog.Get("Head2Head_MatchTitle_BerryCount"), berries);
                     case StandardCategory.TimeLimit:
                         return string.Format(Dialog.Get("Head2Head_MatchTitle_TimeLimit"),
-                            Area.DisplayName, Util.ReadableTimeSpanTitle(Objectives[0].AdjustedTimeLimit(PlayerID.MyIDSafe)));
+                            Util.ReadableTimeSpanTitle(Objectives[0].AdjustedTimeLimit(PlayerID.MyIDSafe)));
                 }
             }
         }
@@ -367,6 +367,7 @@ namespace Celeste.Mod.Head2Head.Shared {
         TimeLimit,
         // Custom
         CustomCollectable,
+        CustomObjective,
     }
 
     /// <summary>

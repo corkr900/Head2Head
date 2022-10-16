@@ -60,6 +60,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 				CurrentMatchID = value.MatchID;
 			}
 		}
+
 		public bool IsInMatch(bool includeJoined, PlayerID? id = null) {
 			if (string.IsNullOrEmpty(CurrentMatchID)) return false;
 			MatchDefinition def = CurrentMatch;
@@ -256,6 +257,14 @@ namespace Celeste.Mod.Head2Head.Shared {
 			if (SaveData.Instance?.Time >= endTime) {
 				if (MarkObjectiveComplete(ob, area)) Updated();
 			}
+		}
+
+		internal void CustomCollectableCollected(string entityTypeID, AreaKey areakey, EntityID id) {
+			// TODO (!!!)
+		}
+
+		internal void CustomObjectiveCompleted(string objectiveTypeID, AreaKey areakey) {
+			// TODO (!!!)
 		}
 
 		// objective help

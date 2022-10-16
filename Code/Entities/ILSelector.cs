@@ -24,6 +24,19 @@ namespace Celeste.Mod.Head2Head.Entities {
 
 		public static GlobalAreaKey LastArea = GlobalAreaKey.VanillaPrologue;
 
+		public static Dictionary<GlobalAreaKey, List<StandardCategory>> SuppressedCategories = new Dictionary<GlobalAreaKey, List<StandardCategory>>();
+		public static void SuppressCategory(GlobalAreaKey area, params StandardCategory[] cats) {
+			if (!SuppressedCategories.ContainsKey(area)) SuppressedCategories.Add(area, new List<StandardCategory>());
+			foreach (StandardCategory cat in cats) {
+				if (!SuppressedCategories[area].Contains(cat)) {
+					SuppressedCategories[area].Add(cat);
+				}
+			}
+		}
+		public static bool IsSuppressed(GlobalAreaKey area, StandardCategory cat) {
+			return SuppressedCategories.ContainsKey(area) && SuppressedCategories[area].Contains(cat);
+		}
+
 		private SceneWrappingEntity<Overworld> overworldWrapper;
 
 		public static ILSelector ActiveSelector { get; private set; } = null;
@@ -66,6 +79,7 @@ namespace Celeste.Mod.Head2Head.Entities {
 
 		private void OpenUI(Player player) {
 			if (ActiveSelector != null) return;
+			Head2HeadModule.Instance.ScanModsForIntegrationMeta();
 			Level l = player.Scene as Level;
 			if (l != null) l.PauseLock = true;
 			ActiveSelector = this;

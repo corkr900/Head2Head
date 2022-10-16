@@ -79,7 +79,8 @@ namespace Celeste.Mod.Head2Head.UI {
 			float hudScale = Head2HeadModule.Settings.HudScale;
 
 			if (_bannerOpacity > 0.001f) {
-				string matchCaption = def.Phases.Count == 0 ? "Unnamed Match" : def.Phases[0].Title;
+				string matchCaption = def.Phases.Count == 0 ? "Unnamed Match" :
+					string.Format(Dialog.Get("Head2Head_MatchTitle"), def.Phases[0].Area.DisplayName, def.DisplayName);
 				Vector2 captionPos = new Vector2(CanvasSize.X / 2, 0f);
 				Vector2 captionScale = Vector2.One * hudScale;
 				Color captionColor = Color.Black;

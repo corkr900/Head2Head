@@ -45,6 +45,8 @@ namespace Celeste.Mod.Head2Head.UI {
 
 			private float EnterEase = 0;
 			private float SelectEase = 0;
+			private Wiggler IconWiggler;
+			private float iconRotation = 0;
 
 			public Vector2 Size {
 				get {
@@ -58,6 +60,7 @@ namespace Celeste.Mod.Head2Head.UI {
 			public override void Update() {
 				base.Update();
 
+				IconWiggler?.Update();
 				EnterEase = Calc.Approach(EnterEase, Show ? 1 : 0, Engine.DeltaTime / EnterEaseTime);
 				SelectEase = Calc.Approach(SelectEase, Hovered ? 1 : 0, Engine.DeltaTime / SelectEaseTime);
 			}
@@ -73,10 +76,20 @@ namespace Celeste.Mod.Head2Head.UI {
 				xpos += Calc.LerpClamp(0, SelectedXOffset + Margin, Ease.CubeInOut(SelectEase));
 
 				if (Icon != null) {
-					Icon.DrawJustified(new Vector2(xpos, YPosition - Scroll), new Vector2(0, 0.5f), Color.White, 0.5f);
+					Icon.DrawJustified(new Vector2(xpos + IconSize/2f, YPosition - Scroll), new Vector2(0.5f, 0.5f), Color.White, 0.5f, iconRotation);
 					xpos += IconSize + Margin;
 				}
 				ActiveFont.DrawOutline(Title, new Vector2(xpos, YPosition - Scroll), new Vector2(0, 0.5f), Vector2.One, Color.White, 5f, Color.Black);
+			}
+
+			public void Wiggle() {
+				if (IconWiggler == null) {
+					IconWiggler = Wiggler.Create(0.4f, 4f, (float f) => {
+						iconRotation = f * 0.3f;
+					});
+				}
+				IconWiggler.StopAndClear();
+				IconWiggler.Start();
 			}
 		}
 
@@ -254,6 +267,7 @@ namespace Celeste.Mod.Head2Head.UI {
 			scrollBase = scrollCurrent;
 			scrollTarget = GetScrollTarget(list[hovered]);
 			scrollLerp = 0;
+			list[hovered].Wiggle();
 		}
 
 		private float GetScrollTarget(CollabMap map) {

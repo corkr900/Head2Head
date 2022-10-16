@@ -94,7 +94,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			_areaData = null;
             _modContent = null;
             _versionString = version;
-            if (SID != "Overworld") {
+            if (SID != "Overworld" && AreaData.Areas != null) {
                 foreach (AreaData d in AreaData.Areas) {
                     if (d.GetSID() == SID) {
                         _areaData = d;

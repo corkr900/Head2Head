@@ -115,10 +115,5 @@ namespace Celeste.Mod.Head2Head.Control {
 					return;
 			}
 		}
-
-		[Command("h2hh", "uhhhhhhhhhhhhh")]
-		public static void Misc() {
-			Head2HeadModule.Instance.ScanModsForIntegrationMeta();
-		}
 	}
 }
