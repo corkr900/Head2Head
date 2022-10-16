@@ -251,7 +251,7 @@ namespace Celeste.Mod.Head2Head.UI {
 									strawbsTotal += obj.BerryGoal;
 									int idx = stat.objectives.FindIndex((H2HMatchObjectiveState s) => s.ObjectiveID == obj.ID);
 									if (idx < 0) continue;
-									strawbsCollected += stat.objectives[idx].CollectedStrawbs?.Count ?? 0;
+									strawbsCollected += stat.objectives[idx].CollectedItems?.Count ?? 0;
 								}
 							}
 						}

@@ -99,7 +99,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			if (IsInMatch(false)) {
 				LastCheckpoint = session.LevelData.HasCheckpoint ? session.LevelData.Name : null;
 				FileTimerAtLastCheckpoint = SaveData.Instance?.Time ?? FileTimerAtLastCheckpoint;
-				ConfirmStrawberries();
+				ConfirmCollectables();
 			}
 			Updated();
 		}
@@ -110,7 +110,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 					LastCheckpoint = next.Name;
 					FileTimerAtLastCheckpoint = SaveData.Instance?.Time ?? FileTimerAtLastCheckpoint;
 					GlobalAreaKey area = new GlobalAreaKey(level.Session.Area);
-					ConfirmStrawberries();
+					ConfirmCollectables();
 					int index = reachedCheckpoints.FindIndex((Tuple<GlobalAreaKey, string> tpred) => {
 						return tpred.Item1.Equals(area) && tpred.Item2 == LastCheckpoint;
 					});
@@ -142,7 +142,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			if (IsInMatch(false)) {
 				LastCheckpoint = null;
 				FileTimerAtLastCheckpoint = SaveData.Instance?.Time ?? FileTimerAtLastCheckpoint;
-				ConfirmStrawberries();
+				ConfirmCollectables();
 			}
 			Updated();
 		}
@@ -205,45 +205,54 @@ namespace Celeste.Mod.Head2Head.Shared {
 			MatchObjective ob = FindObjective(MatchObjectiveType.CassetteCollect, area, false);
 			if (ob != null && MarkObjectiveComplete(ob, area)) Updated();
 		}
-		private void ConfirmStrawberries() {
+		private void ConfirmCollectables() {
 			MatchDefinition def = CurrentMatch;
 			for (int i = 0; i < objectives.Count; i++) {
 				MatchObjective obj = def.GetObjective(objectives[i].ObjectiveID);
 				if (obj.ObjectiveType != MatchObjectiveType.Strawberries
-					&& obj.ObjectiveType != MatchObjectiveType.MoonBerry) continue;
-				List<Tuple<EntityID, bool>> newList = new List<Tuple<EntityID, bool>>(objectives[i].CollectedStrawbs.Count);
-				for (int j = 0; j < objectives[i].CollectedStrawbs.Count; j++) {
-					objectives[i].CollectedStrawbs[j] =
-						new Tuple<EntityID, bool>(objectives[i].CollectedStrawbs[j].Item1, true);
+					&& obj.ObjectiveType != MatchObjectiveType.MoonBerry
+					&& obj.ObjectiveType != MatchObjectiveType.CustomCollectable) continue;
+				for (int j = 0; j < objectives[i].CollectedItems.Count; j++) {
+					objectives[i].CollectedItems[j] = new Tuple<GlobalAreaKey, EntityID, bool>(
+						objectives[i].CollectedItems[j].Item1,
+						objectives[i].CollectedItems[j].Item2,
+						true);
 				}
 			}
 		}
 		public void StrawberryCollected(GlobalAreaKey area, Strawberry strawb) {
+			CollectableCollected(area, strawb.ID, strawb.Moon ? MatchObjectiveType.MoonBerry : MatchObjectiveType.Strawberries);
+		}
+		internal void CustomCollectableCollected(string entityTypeID, GlobalAreaKey area, EntityID id) {
+			CollectableCollected(area, id, MatchObjectiveType.CustomCollectable, entityTypeID);
+		}
+		private void CollectableCollected(GlobalAreaKey area, EntityID id, MatchObjectiveType objtype, string entityTypeID = "") {
 			bool updated = false;
-			MatchObjectiveType objtype = strawb.Moon ? MatchObjectiveType.MoonBerry : MatchObjectiveType.Strawberries;
-			MatchObjective ob = FindObjective(objtype, area, false);
+			MatchObjective ob = FindObjective(objtype, area, false, entityTypeID);
 			if (ob == null) return;
 			int stateIndex = objectives.FindIndex((H2HMatchObjectiveState s) => s.ObjectiveID == ob.ID);
 			if (stateIndex < 0) {
 				objectives.Add(new H2HMatchObjectiveState() {
 					ObjectiveID = ob.ID,
-					CollectedStrawbs = new List<Tuple<EntityID, bool>>() {
-						new Tuple<EntityID, bool>(strawb.ID, false),
+					CollectedItems = new List<Tuple<GlobalAreaKey, EntityID, bool>>() {
+						new Tuple<GlobalAreaKey, EntityID, bool>(area, id, false),
 					},
 				});
 				stateIndex = objectives.Count - 1;
 				updated |= true;
 			}
 			else {
-				if (objectives[stateIndex].CollectedStrawbs == null) {
-					Engine.Commands.Log("This is weird... a strawberries objective doesn't have a list of strawberries?");
+				if (objectives[stateIndex].CollectedItems == null) {
+					// In theory, this is impossible but just in case...
+					Engine.Commands.Log("This is weird... a collectables objective state doesn't have a list of collectables?");
 					return;
 				}
-				if (objectives[stateIndex].CollectedStrawbs.FindIndex((Tuple<EntityID, bool> t) => t.Item1.Equals(strawb.ID)) > 0) return;  // already collected
-				objectives[stateIndex].CollectedStrawbs.Add(new Tuple<EntityID, bool>(strawb.ID, false));
+				if (objectives[stateIndex].CollectedItems.FindIndex(
+					(Tuple<GlobalAreaKey, EntityID, bool> t) => t.Item1.Equals(area) && t.Item2.Equals(id)) > 0) return;  // already collected
+				objectives[stateIndex].CollectedItems.Add(new Tuple<GlobalAreaKey, EntityID, bool>(area, id, false));
 				updated |= true;
 			}
-			if (objectives[stateIndex].CollectedStrawbs.Count >= ob.BerryGoal) {
+			if (objectives[stateIndex].CollectedItems.Count >= ob.BerryGoal) {
 				updated |= MarkObjectiveComplete(ob, area);
 			}
 			if (updated) Updated();
@@ -258,13 +267,9 @@ namespace Celeste.Mod.Head2Head.Shared {
 				if (MarkObjectiveComplete(ob, area)) Updated();
 			}
 		}
-
-		internal void CustomCollectableCollected(string entityTypeID, AreaKey areakey, EntityID id) {
-			// TODO (!!!)
-		}
-
-		internal void CustomObjectiveCompleted(string objectiveTypeID, AreaKey areakey) {
-			// TODO (!!!)
+		internal void CustomObjectiveCompleted(string objectiveTypeID, GlobalAreaKey area) {
+			MatchObjective ob = FindObjective(MatchObjectiveType.CustomObjective, area, false, objectiveTypeID);
+			if (ob != null && MarkObjectiveComplete(ob, area)) Updated();
 		}
 
 		// objective help
@@ -282,7 +287,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			return max + 1;
 		}
 
-		private MatchObjective FindObjective(MatchObjectiveType type, GlobalAreaKey area, bool includeFinished = false) {
+		private MatchObjective FindObjective(MatchObjectiveType type, GlobalAreaKey area, bool includeFinished = false, string entityTypeID = "") {
 			if (CurrentMatch == null) return null;
 			int currentp = CurrentPhase();
 			foreach (MatchPhase ph in CurrentMatch.Phases) {
@@ -290,7 +295,12 @@ namespace Celeste.Mod.Head2Head.Shared {
 					&& (ph.Area.Equals(area))) {
 					foreach (MatchObjective ob in ph.Objectives) {
 						if (ob.ObjectiveType == type) {
-							return ob;
+							if (type != MatchObjectiveType.CustomCollectable && type != MatchObjectiveType.CustomObjective) {
+								return ob;
+							}
+							if (ob.CustomTypeKey == entityTypeID) {
+								return ob;
+							}
 						}
 					}
 				}
@@ -344,7 +354,6 @@ namespace Celeste.Mod.Head2Head.Shared {
 		}
 
 		private bool TryMarkPhaseComplete(MatchObjective lastOB) {
-			// TODO (!!!) enforce phase order
 			bool anychanges = false;
 			MatchPhase lastPhase = null;
 			foreach (MatchPhase ph in CurrentMatch.Phases) {
@@ -394,7 +403,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 					}
 				}
 				if (matchFinished) {  // All phases are complete
-					ConfirmStrawberries();
+					ConfirmCollectables();
 					CurrentMatch.PlayerFinished(PlayerID.MyIDSafe, this);
 				}
 				OnMatchPhaseCompleted?.Invoke(new OnMatchPhaseCompletedArgs(
@@ -446,9 +455,9 @@ namespace Celeste.Mod.Head2Head.Shared {
 			if (def != null) {
 				for (int i1 = 0; i1 < objectives.Count; i1++) {
 					bool removed = false;
-					for (int i2 = 0; i2 < objectives[i1].CollectedStrawbs.Count; i2++) {
-						if (!objectives[i1].CollectedStrawbs[i2].Item2) {
-							objectives[i1].CollectedStrawbs.RemoveAt(i2);
+					for (int i2 = 0; i2 < objectives[i1].CollectedItems.Count; i2++) {
+						if (!objectives[i1].CollectedItems[i2].Item3) {
+							objectives[i1].CollectedItems.RemoveAt(i2);
 							i2--;
 							removed = true;
 						}
@@ -456,7 +465,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 					if (removed) {
 						objectives[i1] = new H2HMatchObjectiveState() {
 							ObjectiveID = objectives[i1].ObjectiveID,
-							CollectedStrawbs = objectives[i1].CollectedStrawbs,
+							CollectedItems = objectives[i1].CollectedItems,
 							Completed = false,
 						};
 					}
@@ -473,7 +482,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 	public struct H2HMatchObjectiveState {
 		public uint ObjectiveID;
 		public bool Completed;
-		public List<Tuple<EntityID, bool>> CollectedStrawbs;
+		public List<Tuple<GlobalAreaKey, EntityID, bool>> CollectedItems;
 		public string FinalRoom;
 	}
 
@@ -554,12 +563,13 @@ namespace Celeste.Mod.Head2Head.Shared {
 			s.FinalRoom = r.ReadString();
 			int berries = r.ReadInt32();
 			if (berries >= 0) {
-				s.CollectedStrawbs = new List<Tuple<EntityID, bool>> ();
+				s.CollectedItems = new List<Tuple<GlobalAreaKey, EntityID, bool>> ();
 				for (int i = 0; i < berries; i++) {
+					GlobalAreaKey gak = r.ReadAreaKey();
 					EntityID eid = new EntityID();
 					eid.Key = r.ReadString();
 					bool confirmed = r.ReadBoolean();
-					s.CollectedStrawbs.Add(new Tuple<EntityID, bool>(eid, confirmed));
+					s.CollectedItems.Add(new Tuple<GlobalAreaKey, EntityID, bool>(gak, eid, confirmed));
 				}
 			}
 			return s;
@@ -569,14 +579,15 @@ namespace Celeste.Mod.Head2Head.Shared {
 			w.Write(s.ObjectiveID);
 			w.Write(s.Completed);
 			w.Write(s.FinalRoom ?? "");
-			if (s.CollectedStrawbs == null) {
+			if (s.CollectedItems == null) {
 				w.Write(-1);
 			}
 			else {
-				w.Write(s.CollectedStrawbs.Count);
-				foreach (Tuple<EntityID, bool> id in s.CollectedStrawbs) {
-					w.Write(id.Item1.Key ?? "");
-					w.Write(id.Item2);
+				w.Write(s.CollectedItems.Count);
+				foreach (Tuple<GlobalAreaKey, EntityID, bool> id in s.CollectedItems) {
+					w.Write(id.Item1);
+					w.Write(id.Item2.Key ?? "");
+					w.Write(id.Item3);
 				}
 			}
 		}

@@ -25,14 +25,6 @@ namespace Celeste.Mod.Head2Head.Shared {
 				DisplayName = "Cassette", // Can't use Dialog.Clean - languages not initialized yet
 			});
 		}
-
-		public static void AddOtherCollectable(string entityTypeID, string displayName, Func<BinaryPacker.Element, bool> condition) {
-			CustomCassetteTypes.Add(entityTypeID, new CustomCollectableInfo() {
-				Name = entityTypeID,
-				Condition = condition,
-				DisplayName = displayName,
-			});
-		}
 	}
 
 	internal class CustomCollectableInfo {

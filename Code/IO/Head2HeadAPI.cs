@@ -30,20 +30,13 @@ namespace Celeste.Mod.Head2Head.IO {
 		public static void RegisterConditionalCassette(string entityTypeID, Func<BinaryPacker.Element, bool> condition)
 			=> CustomCollectables.AddCassette(entityTypeID, condition);
 
-		// TODO (!!!) respect custom collectables
-		public static void RegisterGenericCollectableType(string entityTypeID, string displayName)
-			=> CustomCollectables.AddOtherCollectable(entityTypeID, displayName, null);
-
-		public static void RegisterConditionalGenericCollectableType(string entityTypeID, string displayName, Func<BinaryPacker.Element, bool> condition)
-			=> CustomCollectables.AddOtherCollectable(entityTypeID, displayName, condition);
-
 		// Custom events / collectables
+		// TODO (!!!) test custom collectables / objectives
 
 		public static void CustomCollectableCollected(string entityTypeID, AreaKey area, EntityID id)
-			=> PlayerStatus.Current.CustomCollectableCollected(entityTypeID, area, id);
+			=> PlayerStatus.Current.CustomCollectableCollected(entityTypeID, new GlobalAreaKey(area), id);
 
-		// TODO (!!!) Custom Objectives
 		public static void CustomObjectiveCompleted(string objectiveTypeID, AreaKey area)
-			=> PlayerStatus.Current.CustomObjectiveCompleted(objectiveTypeID, area);
+			=> PlayerStatus.Current.CustomObjectiveCompleted(objectiveTypeID, new GlobalAreaKey(area));
 	}
 }

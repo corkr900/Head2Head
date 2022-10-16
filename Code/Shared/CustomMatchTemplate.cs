@@ -7,8 +7,6 @@ using System.Threading.Tasks;
 
 namespace Celeste.Mod.Head2Head.Shared {
 
-	// TODO (!!!) consider maybe making a UI for custom categories (then again, maybe not)
-
 	public class CustomMatchTemplate {
 		internal static Dictionary<GlobalAreaKey, List<CustomMatchTemplate>> templates = new Dictionary<GlobalAreaKey, List<CustomMatchTemplate>>();
 
