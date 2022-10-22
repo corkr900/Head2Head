@@ -12,8 +12,6 @@ using static Celeste.TextMenuExt;
 
 namespace Celeste.Mod.Head2Head.UI
 {
-	// TODO (!!!) known matches menu shows only the category and not the area
-	// TODO (!!!) Make a UI that describes custom categories
 	public static class Menus
 	{
 		public class HelpdeskMenuContext
@@ -127,6 +125,7 @@ namespace Celeste.Mod.Head2Head.UI
 
 		public static void Helpdesk(HelpdeskMenuContext cxt)
 		{
+			// TODO (!!!) reduce the noise
 			cxt.level.Paused = true;
 			TextMenu menu = new TextMenu();
 			menu.AutoScroll = false;
@@ -157,6 +156,13 @@ namespace Celeste.Mod.Head2Head.UI
 					btn.SoftDisable(menu, "Head2Head_menu_helpdesk_whynocreatematch_playerstatus");
 				else
 					btn.SoftDisable(menu, "Head2Head_menu_helpdesk_whynocreatematch_other");
+			}
+
+			if (def_menu != null) {
+				btn = menu.AddButton("Head2Head_menu_helpdesk_whatisthiscategory", () => {
+					cxt.matchID = def_menu.MatchID;
+					cxt.GoTo(DescribeCategory, menu);
+				});
 			}
 
 			// Browse
@@ -281,7 +287,7 @@ namespace Celeste.Mod.Head2Head.UI
 			Head2HeadModule.Instance.DiscardStaleData();
 			foreach (MatchDefinition def in Head2HeadModule.knownMatches.Values)
 			{
-				btn = menu.AddButton(def.DisplayName, () => {
+				btn = menu.AddButton(def.MatchDisplayName, () => {
 					cxt.matchID = def.MatchID;
 					cxt.GoTo(KnownMatchMenu, menu);
 				}, true);
@@ -321,7 +327,7 @@ namespace Celeste.Mod.Head2Head.UI
 				MatchDefinition curmatch = PlayerStatus.Current.CurrentMatch;
 
 				// Header
-				menu.Add(new TextMenu.SubHeader(cxtMatch.DisplayName));
+				menu.Add(new TextMenu.SubHeader(cxtMatch.MatchDisplayName));
 				string desc = string.Format(GetDialogWithLineBreaks("Head2Head_menu_browsematchdescription"),
 					cxtMatch.Owner.Name, cxtMatch.Players.Count, Util.TranslatedMatchState(cxtMatch.State));
 				menu.Add(new TextMenu.SubHeader(desc));
@@ -483,6 +489,41 @@ namespace Celeste.Mod.Head2Head.UI
 
 			// Cancel
 			btn = menu.AddButton("Head2Head_menu_cancel", () => {
+				menu.OnCancel();
+			});
+
+			// handle Cancel button
+			menu.OnCancel = () => {
+				cxt.Back(menu);
+			};
+			menu.Selection = menu.FirstPossibleSelection;
+			cxt.level.Add(menu);
+		}
+
+		public static void DescribeCategory(HelpdeskMenuContext cxt) {
+			cxt.level.Paused = true;
+			TextMenu menu = new TextMenu();
+			menu.AutoScroll = false;
+			menu.Position = new Vector2((float)Engine.Width / 2f, (float)Engine.Height / 2f - 100f);
+			ButtonExt btn;
+			MatchDefinition def = cxt.match;
+
+			if (def != null) {
+				menu.Add(new TextMenu.Header(def.MatchDisplayName));
+
+				foreach (MatchPhase ph in def.Phases) {
+					btn = menu.AddButton(string.Format(Dialog.Get("Head2Head_menu_AreaLabel"), ph.Area.DisplayName), () => { }, true);
+
+					foreach (MatchObjective ob in ph.Objectives) {
+						btn = menu.AddButton("- " + ob.Description, () => {}, true);
+						btn.Disabled = true;
+					}
+				}
+
+			}
+
+			// Cancel
+			btn = menu.AddButton("Head2Head_menu_back", () => {
 				menu.OnCancel();
 			});
 

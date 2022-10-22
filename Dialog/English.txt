@@ -3,6 +3,10 @@ HEAD2HEAD_OVERWORLD= Overworld
 Head2Head= Head 2 Head
 Head2Head_00_Head2HeadLobby= Head 2 Head Lobby
 
+Head2Head_CollectableNames_Heart= Crystal Heart
+Head2Head_CollectableNames_Cassette= Cassette
+Head2Head_CollectableNames_UnnamedCustom= Unnamed Custom Collectable
+
 Head2Head_Setting= Head 2 Head Settings
 Head2Head_Setting_ReturnToLobby= Return to Lobby
 Head2Head_Setting_ReturnToLobby_Subtext= If turned on, you will automatically return to the Head2Head lobby after completing a match.
@@ -61,6 +65,15 @@ Head2Head_CategoryName_OneFifthBerries= One Fifth Berries
 Head2Head_CategoryName_TimeLimit= Time Limited
 Head2Head_CategoryName_Custom= Unnamed Custom Category
 
+Head2Head_ObjectiveDescription_Strawberries= Collect Strawberry (x{0})
+Head2Head_ObjectiveDescription_MoonBerry= Collect Moon Berry (x{0})
+Head2Head_ObjectiveDescription_ChapterComplete= Complete the Chapter
+Head2Head_ObjectiveDescription_HeartCollect= Collect the Crystal Heart
+Head2Head_ObjectiveDescription_CassetteCollect= Collect the Cassette
+Head2Head_ObjectiveDescription_TimeLimit= Get as far as you can in {0}
+Head2Head_ObjectiveDescription_CustomCollectable= Collect {0} (x{1})
+Head2Head_ObjectiveDescription_CustomObjective= Unnamed custom objective
+
 Head2Head_MatchStatus_None= Unknown
 Head2Head_MatchStatus_Building= Building
 Head2Head_MatchStatus_Staged= Staged
@@ -107,6 +120,9 @@ Unless you know what you're doing or have specific instructions, you probably wa
 Head2Head_menu_helpdesk_whynocreatematch_playerstatus= Your current status prevents you from creating a match. Are you already in one?
 Head2Head_menu_helpdesk_whynocreatematch_other= Some unknown issue. Recommend purging local data and/or restarting Celeste.
 This message should never appear. If it does, let corkr900 know how you got here.
+
+Head2Head_menu_helpdesk_whatisthiscategory= What is this category?
+Head2Head_menu_AreaLabel= Chapter: {0}
 
 Head2Head_menu_helpdesk_browse= Browse Known Matches
 

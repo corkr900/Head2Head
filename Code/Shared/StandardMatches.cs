@@ -75,7 +75,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 				Objectives = new List<MatchObjective>() {
 					new MatchObjective() {
 						ObjectiveType = MatchObjectiveType.Strawberries,
-						BerryGoal = Util.CountBerries(area),
+						CollectableGoal = Util.CountBerries(area),
 					},
 					new MatchObjective() {
 						ObjectiveType = MatchObjectiveType.ChapterComplete,
@@ -95,7 +95,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 				Objectives = new List<MatchObjective>() {
 					new MatchObjective() {
 						ObjectiveType = MatchObjectiveType.Strawberries,
-						BerryGoal = Util.CountBerries(area),
+						CollectableGoal = Util.CountBerries(area),
 					},
 					new MatchObjective() {
 						ObjectiveType = MatchObjectiveType.HeartCollect,
@@ -150,7 +150,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			if (Util.HasTrackedBerries(area)) {
 				mp.Objectives.Add(new MatchObjective() {
 					ObjectiveType = MatchObjectiveType.Strawberries,
-					BerryGoal = Util.CountBerries(area)
+					CollectableGoal = Util.CountBerries(area)
 				});
 			}
 			return mp;
@@ -169,7 +169,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 					},
 					new MatchObjective() {
 						ObjectiveType = MatchObjectiveType.MoonBerry,
-						BerryGoal = Util.CountMoonBerries(area),
+						CollectableGoal = Util.CountMoonBerries(area),
 					},
 				}
 			};
@@ -202,14 +202,14 @@ namespace Celeste.Mod.Head2Head.Shared {
 			if (Util.HasTrackedBerries(area)) {
 				mp.Objectives.Add(new MatchObjective() {
 					ObjectiveType = MatchObjectiveType.Strawberries,
-					BerryGoal = Util.CountBerries(area)
+					CollectableGoal = Util.CountBerries(area)
 				});
 			}
 			int moonberries = Util.CountMoonBerries(area);
 			if (moonberries > 0) {
 				mp.Objectives.Add(new MatchObjective() {
 					ObjectiveType = MatchObjectiveType.MoonBerry,
-					BerryGoal = moonberries,
+					CollectableGoal = moonberries,
 				});
 			}
 			return mp;
@@ -227,7 +227,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 				Objectives = new List<MatchObjective>() {
 					new MatchObjective() {
 						ObjectiveType = MatchObjectiveType.Strawberries,
-						BerryGoal = (int)Math.Ceiling(Util.CountBerries(area) / 3.0),
+						CollectableGoal = (int)Math.Ceiling(Util.CountBerries(area) / 3.0),
 					},
 					new MatchObjective() {
 						ObjectiveType = MatchObjectiveType.ChapterComplete,
@@ -247,7 +247,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 				Objectives = new List<MatchObjective>() {
 					new MatchObjective() {
 						ObjectiveType = MatchObjectiveType.Strawberries,
-						BerryGoal = (int)Math.Ceiling(Util.CountBerries(area) / 5.0),
+						CollectableGoal = (int)Math.Ceiling(Util.CountBerries(area) / 5.0),
 					},
 					new MatchObjective() {
 						ObjectiveType = MatchObjectiveType.ChapterComplete,

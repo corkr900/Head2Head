@@ -22,6 +22,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public List<CustomMatchPhaseTemplate> Phases = new List<CustomMatchPhaseTemplate>();
 
 		public List<MatchPhase> Build() {
+			// TODO (!!!) defer translation until UI render
 			int count = 0;
 			List<MatchPhase> list = new List<MatchPhase>();
 			foreach (CustomMatchPhaseTemplate tPhase in Phases) {
@@ -34,8 +35,9 @@ namespace Celeste.Mod.Head2Head.Shared {
 					ph.Objectives.Add(new MatchObjective() {
 						ObjectiveType = tObj.ObjectiveType,
 						TimeLimit = tObj.TimeLimit,
-						BerryGoal = tObj.CollectableCount,
+						CollectableGoal = tObj.CollectableCount,
 						CustomTypeKey = tObj.CustomTypeKey,
+						CustomDescription = tObj.Description,
 					});
 				}
 				list.Add(ph);
@@ -53,22 +55,35 @@ namespace Celeste.Mod.Head2Head.Shared {
 				tem.IconPath = meta.Icon;
 			}
 			// Process Phase data
-			if (meta.Phases == null || meta.Phases.Length == 0) return;  // TODO write an error (phases not defined)
+			if (meta.Phases == null || meta.Phases.Length == 0) {
+				Logger.Log("Head2Head.Custom", "No phases defined for category: " + meta.ID);
+				return;
+			}
 			foreach (PhaseMeta ph in meta.Phases) {
 				CustomMatchPhaseTemplate phtem = new CustomMatchPhaseTemplate();
 				GlobalAreaKey phArea = new GlobalAreaKey(ph.Map, GetAreaMode(ph.Side));
-				if (!phArea.ExistsLocal || phArea.IsOverworld || phArea.Equals(GlobalAreaKey.Head2HeadLobby)) return;  // TODO write an error (phases has incorrect area)
+				if (!phArea.ExistsLocal || phArea.IsOverworld || phArea.Equals(GlobalAreaKey.Head2HeadLobby)) {
+					Logger.Log("Head2Head.Custom", "Phase has invalid area SID (" + ph.Map + ") for category: " + meta.ID);
+					return;
+				}
 				phtem.Area = phArea;
 				// Process Objective data
-				if (meta.Phases == null || meta.Phases.Length == 0) return;  // TODO write an error (objectives not defined)
+				if (ph.Objectives == null || ph.Objectives.Length == 0) {
+					Logger.Log("Head2Head.Custom", "No objectives defined in phase for category: " + meta.ID);
+					return;
+				}
 				foreach (ObjectiveMeta ob in ph.Objectives) {
 					CustomMatchObjectiveTemplate obtem = new CustomMatchObjectiveTemplate();
 					MatchObjectiveType? t = GetObjectiveType(ob.Type);
-					if (t == null) return;  // TODO write an error (invalid objective type)
+					if (t == null) {
+						Logger.Log("Head2Head.Custom", "Invalid objective type: " + ob.Type + " for category: " + meta.ID);
+						return;
+					}
 					obtem.ObjectiveType = t ?? MatchObjectiveType.ChapterComplete;
 					obtem.CollectableCount = ob.Count > 0 ? ob.Count : -1;
 					obtem.TimeLimit = ob.TimeLimit;
 					obtem.CustomTypeKey = ob.ID;
+					obtem.Description = TranslatedIfAvailable(ob.Description);
 					phtem.Objectives.Add(obtem);
 				}
 				tem.Phases.Add(phtem);
@@ -119,5 +134,6 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public int CollectableCount = -1;
 		public long TimeLimit = 0;
 		public string CustomTypeKey;
+		public string Description;
 	}
 }

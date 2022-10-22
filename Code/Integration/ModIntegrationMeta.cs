@@ -35,5 +35,6 @@ namespace Celeste.Mod.Head2Head.Integration {
 		public string ID;
 		public int Count;
 		public int TimeLimit;
+		public string Description;
 	}
 }

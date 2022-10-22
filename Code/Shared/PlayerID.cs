@@ -41,7 +41,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 				)?.FirstOrDefault()?.GetHashCode();
 			}
 			catch (Exception e) {
-				Engine.Commands.Log("ERROR: Could not get MAC address: " + e.Message);
+				Logger.Log("Head2Head.Error", "Could not get MAC address: " + e.Message);
 			}
 		}
 		public static PlayerID Default {

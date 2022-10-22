@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 
 namespace Celeste.Mod.Head2Head.Shared {
     public struct GlobalAreaKey {
+        // TODO include display name when sending over network
 
         private readonly string _sid;
         private readonly AreaKey? _localKey;

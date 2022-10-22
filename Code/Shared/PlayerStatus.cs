@@ -244,7 +244,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			else {
 				if (objectives[stateIndex].CollectedItems == null) {
 					// In theory, this is impossible but just in case...
-					Engine.Commands.Log("This is weird... a collectables objective state doesn't have a list of collectables?");
+					Logger.Log("Head2Head.Warn", "This is weird... a collectables objective state doesn't have a list of collectables?");
 					return;
 				}
 				if (objectives[stateIndex].CollectedItems.FindIndex(
@@ -252,7 +252,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 				objectives[stateIndex].CollectedItems.Add(new Tuple<GlobalAreaKey, EntityID, bool>(area, id, false));
 				updated |= true;
 			}
-			if (objectives[stateIndex].CollectedItems.Count >= ob.BerryGoal) {
+			if (objectives[stateIndex].CollectedItems.Count >= ob.CollectableGoal) {
 				updated |= MarkObjectiveComplete(ob, area);
 			}
 			if (updated) Updated();
