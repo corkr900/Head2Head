@@ -190,5 +190,9 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public static string CategoryToIcon(StandardCategory cat) {
 			return string.Format("Head2Head/Categories/{0}", cat.ToString());
 		}
+
+		public static string TranslatedIfAvailable(string name) {
+			return Dialog.Has(name) ? Dialog.Clean(name) : name;
+		}
 	}
 }

@@ -22,7 +22,6 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public List<CustomMatchPhaseTemplate> Phases = new List<CustomMatchPhaseTemplate>();
 
 		public List<MatchPhase> Build() {
-			// TODO (!!!) defer translation until UI render
 			int count = 0;
 			List<MatchPhase> list = new List<MatchPhase>();
 			foreach (CustomMatchPhaseTemplate tPhase in Phases) {
@@ -32,12 +31,13 @@ namespace Celeste.Mod.Head2Head.Shared {
 				ph.Area = tPhase.Area;
 				ph.Objectives = new List<MatchObjective>();
 				foreach (CustomMatchObjectiveTemplate tObj in tPhase.Objectives) {
+
 					ph.Objectives.Add(new MatchObjective() {
 						ObjectiveType = tObj.ObjectiveType,
 						TimeLimit = tObj.TimeLimit,
 						CollectableGoal = tObj.CollectableCount,
 						CustomTypeKey = tObj.CustomTypeKey,
-						CustomDescription = tObj.Description,
+						CustomDescription = Util.TranslatedIfAvailable(tObj.Description),
 					});
 				}
 				list.Add(ph);
@@ -50,7 +50,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			CustomMatchTemplate tem = new CustomMatchTemplate();
 			tem.Area = area;
 			tem.Key = meta.ID;
-			tem.DisplayName = TranslatedIfAvailable(meta.Name);
+			tem.DisplayName = meta.Name;
 			if (GFX.Gui.Has(meta.Icon)) {
 				tem.IconPath = meta.Icon;
 			}
@@ -80,10 +80,33 @@ namespace Celeste.Mod.Head2Head.Shared {
 						return;
 					}
 					obtem.ObjectiveType = t ?? MatchObjectiveType.ChapterComplete;
-					obtem.CollectableCount = ob.Count > 0 ? ob.Count : -1;
-					obtem.TimeLimit = ob.TimeLimit;
+					obtem.CollectableCount = ob.Count > 0 ? ob.Count :
+						(obtem.ObjectiveType == MatchObjectiveType.Strawberries
+						|| obtem.ObjectiveType == MatchObjectiveType.MoonBerry
+						|| obtem.ObjectiveType == MatchObjectiveType.CustomCollectable) ? 1 : -1;
+					if (!string.IsNullOrEmpty(ob.TimeLimit)) {
+						string[] split = ob.TimeLimit.Split(':');
+						if (split.Length > 1) {
+							int minutes, seconds;
+							if (!int.TryParse(split[0], out minutes) || !int.TryParse(split[1], out seconds)) {
+								Logger.Log("Head2Head.Warn", "Malformed time limit (" + ob.TimeLimit + ") in category: " + meta.ID);
+								return;
+							}
+							obtem.TimeLimit = Util.TimeValueInternal(minutes, seconds);
+						}
+						else {
+							int seconds;
+							if (!int.TryParse(split[0], out seconds)) {
+								Logger.Log("Head2Head.Warn", "Malformed time limit (" + ob.TimeLimit + ") in category: " + meta.ID);
+								return;
+							}
+							obtem.TimeLimit = Util.TimeValueInternal(0, seconds);
+						}
+						
+					}
+					else obtem.TimeLimit = 0;
 					obtem.CustomTypeKey = ob.ID;
-					obtem.Description = TranslatedIfAvailable(ob.Description);
+					obtem.Description = ob.Description;
 					phtem.Objectives.Add(obtem);
 				}
 				tem.Phases.Add(phtem);
@@ -94,10 +117,6 @@ namespace Celeste.Mod.Head2Head.Shared {
 			CustomMatchTemplate existing = templates[area].Find((CustomMatchTemplate cmt) => { return cmt.Key == tem.Key; });
 			if (existing != null) templates[area].Remove(existing);  // TODO reload stuff more smartly (it won't change very often)
 			templates[area].Add(tem);
-		}
-
-		private static string TranslatedIfAvailable(string name) {
-			return Dialog.Has(name) ? Dialog.Clean(name) : name;
 		}
 
 		internal static AreaMode GetAreaMode(string side) {

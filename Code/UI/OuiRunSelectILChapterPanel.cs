@@ -16,7 +16,6 @@ using System.Threading.Tasks;
 
 namespace Celeste.Mod.Head2Head.UI {
 	public class OuiRunSelectILChapterPanel : Oui {
-		// TODO (!!!) prevent crash if there are no valid categories
 		private class Option {
 			public string Label;
 
@@ -27,6 +26,8 @@ namespace Celeste.Mod.Head2Head.UI {
 			public MTexture Bg = GFX.Gui["areaselect/tab"];
 
 			public Color BgColor = Calc.HexToColor("3c6180");
+
+			public AreaMode Mode = AreaMode.Normal;
 
 			public StandardCategory Category = StandardCategory.Clear;
 
@@ -132,7 +133,9 @@ namespace Celeste.Mod.Head2Head.UI {
 
 		private Vector2 contentOffset;
 
-		private int checkpoint;
+		private int categoryOption;
+
+		private int modeOption;
 
 		private List<Option> modes = new List<Option>();
 
@@ -151,16 +154,17 @@ namespace Celeste.Mod.Head2Head.UI {
 		private int option {
 			get {
 				if (!selectingMode) {
-					return checkpoint;
+					return categoryOption;
 				}
-				return (int)Area.Mode;
+				return modeOption;
 			}
 			set {
 				if (selectingMode) {
-					Area.Mode = (AreaMode)value;
+					modeOption = value;
+					Area.Mode = options[value].Mode;
 				}
 				else {
-					checkpoint = value;
+					categoryOption = value;
 				}
 			}
 		}
@@ -216,23 +220,28 @@ namespace Celeste.Mod.Head2Head.UI {
 			height = GetModeHeight();
 			modes.Clear();
 			// TODO AltSideHelper support
-			modes.Add(new Option {
-				Label = Dialog.Clean(Data.Interlude ? "FILE_BEGIN" : "overworld_normal").ToUpper(),
-				Icon = GFX.Gui["menu/play"],
-				ID = "A"
-			});
-			if (Data.HasMode(AreaMode.BSide)) {
+			if (StandardMatches.HasAnyValidCategory(new GlobalAreaKey(Area.ID, AreaMode.Normal))) {
+				modes.Add(new Option {
+					Label = Dialog.Clean(Data.Interlude ? "FILE_BEGIN" : "overworld_normal").ToUpper(),
+					Icon = GFX.Gui["menu/play"],
+					ID = "A",
+					Mode = AreaMode.Normal,
+				});
+			}
+			if (StandardMatches.HasAnyValidCategory(new GlobalAreaKey(Area.ID, AreaMode.BSide))) {
 				modes.Add(new Option {
 					Label = Dialog.Clean("overworld_remix"),
 					Icon = GFX.Gui["menu/remix"],
-					ID = "B"
+					ID = "B",
+					Mode = AreaMode.BSide,
 				});
 			}
-			if (Data.HasMode(AreaMode.CSide)) {
+			if (StandardMatches.HasAnyValidCategory(new GlobalAreaKey(Area.ID, AreaMode.CSide))) {
 				modes.Add(new Option {
 					Label = Dialog.Clean("overworld_remix2"),
 					Icon = GFX.Gui["menu/rmx2"],
-					ID = "C"
+					ID = "C",
+					Mode = AreaMode.CSide,
 				});
 			}
 
@@ -286,13 +295,12 @@ namespace Celeste.Mod.Head2Head.UI {
 
 		private void Swap() {
 			Focused = false;
-			base.Overworld.ShowInputUI = !selectingMode;
+			Overworld.ShowInputUI = !selectingMode;
 			Add(new Coroutine(SwapRoutine()));
 		}
 
 		private IEnumerator SwapRoutine() {
 			float fromHeight = height;
-			//int toHeight = (selectingMode ? 730 : GetModeHeight());
 			int toHeight = 730;
 			resizing = true;
 			PlayExpandSfx(fromHeight, toHeight);
@@ -302,11 +310,14 @@ namespace Celeste.Mod.Head2Head.UI {
 				contentOffset.X = 440f + offset * Ease.CubeIn(p2);
 				height = MathHelper.Lerp(fromHeight, toHeight, Ease.CubeOut(p2 * 0.5f));
 			}
+			if (selectingMode) {
+				Area.Mode = options[option].Mode;
+			}
 			selectingMode = !selectingMode;
 			if (!selectingMode) {
 				categories.Clear();
 
-				List<Tuple<StandardCategory, CustomMatchTemplate>> cats = GetCategories();
+				List<Tuple<StandardCategory, CustomMatchTemplate>> cats = StandardMatches.GetCategories(new GlobalAreaKey(Area));
 				int siblings = cats.Count;
 				foreach (Tuple<StandardCategory, CustomMatchTemplate> catInfo in cats) {
 					string iconPath = (catInfo.Item1 == StandardCategory.Custom && !string.IsNullOrEmpty(catInfo.Item2.IconPath)) ?
@@ -316,12 +327,13 @@ namespace Celeste.Mod.Head2Head.UI {
 						Label = label,
 						BgColor = Calc.HexToColor("eabe26"),
 						Icon = GFX.Gui[iconPath],
+						Mode = Area.Mode,
 						Category = catInfo.Item1,
 						CustomTemplate = catInfo.Item2,
 						CheckpointRotation = (float)Calc.Random.Choose(-1, 1) * Calc.Random.Range(0.05f, 0.2f),
 						CheckpointOffset = new Vector2(Calc.Random.Range(-16, 16), Calc.Random.Range(-16, 16)),
 						Large = false,
-						Siblings = siblings
+						Siblings = siblings,
 					});
 				}
 				option = 0;
@@ -329,7 +341,9 @@ namespace Celeste.Mod.Head2Head.UI {
 					options[j].SlideTowards(j, options.Count, snap: true);
 				}
 			}
-			options[option].Pop = 1f;
+			if (option >= 0 && option < options.Count) {
+				options[option].Pop = 1f;
+			}
 			for (float p2 = 0f; p2 < 1f; p2 += Engine.DeltaTime * 4f) {
 				yield return null;
 				height = MathHelper.Lerp(fromHeight, toHeight, Ease.CubeOut(Math.Min(1f, 0.5f + p2 * 0.5f)));
@@ -339,26 +353,6 @@ namespace Celeste.Mod.Head2Head.UI {
 			height = toHeight;
 			Focused = true;
 			resizing = false;
-		}
-
-		private List<Tuple<StandardCategory, CustomMatchTemplate>> GetCategories() {
-			List<Tuple<StandardCategory, CustomMatchTemplate>> ret = new List<Tuple<StandardCategory, CustomMatchTemplate>>();
-			StandardCategory[] cats = Role.GetValidCategories();
-			GlobalAreaKey gArea = new GlobalAreaKey(Area);
-			// Standard Categories
-			foreach (StandardCategory cat in cats) {
-				if (cat == StandardCategory.Custom) continue;
-				if (!StandardMatches.IsCategoryValid(cat, gArea, null)) continue;
-				ret.Add(new Tuple<StandardCategory, CustomMatchTemplate>(cat, null));
-			}
-			// Custom Categories
-			if (CustomMatchTemplate.templates.ContainsKey(gArea)) {
-				foreach (CustomMatchTemplate template in CustomMatchTemplate.templates[gArea]) {
-					if (!StandardMatches.IsCategoryValid(StandardCategory.Custom, gArea, template)) continue;
-					ret.Add(new Tuple<StandardCategory, CustomMatchTemplate>(StandardCategory.Custom, template));
-				}
-			}
-			return ret;
 		}
 
 		public override void Update() {
@@ -409,7 +403,12 @@ namespace Celeste.Mod.Head2Head.UI {
 					options[j].Render(optionsRenderPosition, option == j, wiggler, modeAppearWiggler);
 				}
 			}
-			ActiveFont.Draw(options[option].Label, optionsRenderPosition + new Vector2(0f, -140f), Vector2.One * 0.5f, Vector2.One * (1f + wiggler.Value * 0.1f), Color.Black * 0.8f);
+			if (option < options.Count) {
+				ActiveFont.Draw(options[option].Label, optionsRenderPosition + new Vector2(0f, -140f), Vector2.One * 0.5f, Vector2.One * (1f + wiggler.Value * 0.1f), Color.Black * 0.8f);
+			}
+			else {
+				ActiveFont.Draw(Dialog.Clean("Head2Head_Selector_NoValidCategories"), optionsRenderPosition + new Vector2(0f, -140f), Vector2.One * 0.5f, Vector2.One * (1f + wiggler.Value * 0.1f), Color.Black * 0.8f);
+			}
 			if (selectingMode) {
 				base.Render();
 			}
@@ -474,7 +473,7 @@ namespace Celeste.Mod.Head2Head.UI {
 			if (Selected && Focused) {
 				if (Input.MenuLeft.Pressed && option > 0) {
 					Audio.Play("event:/ui/world_map/chapter/tab_roll_left");
-					this.option--;
+					option--;
 					wiggler.Start();
 					if (selectingMode) {
 						PlayExpandSfx(height, GetModeHeight());
@@ -494,7 +493,7 @@ namespace Celeste.Mod.Head2Head.UI {
 						Audio.Play("event:/ui/world_map/chapter/checkpoint_photo_remove");
 					}
 				}
-				else if (Input.MenuConfirm.Pressed) {
+				else if (Input.MenuConfirm.Pressed && options.Count > 0) {
 					if (selectingMode) {
 						Audio.Play("event:/ui/world_map/chapter/level_select");
 						Swap();

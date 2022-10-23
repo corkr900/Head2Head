@@ -28,6 +28,8 @@ using MonoMod.ModInterop;
 
 // TODO Force DNF if a player intentionally closes the game
 // TODO Support full-game runs... eventually
+// TODO "Enter Room" objective
+// TODO "golden berry" objective
 
 namespace Celeste.Mod.Head2Head {
 	public class Head2HeadModule : EverestModule {
@@ -490,6 +492,22 @@ namespace Celeste.Mod.Head2Head {
 
 		private void OnCreatePauseMenuButtons(Level level, TextMenu menu, bool minimal)
 		{
+			switch (Settings.ShowHelpdeskInPause) {
+				case Head2HeadModuleSettings.ShowHelpdeskInPauseMenu.Always:
+					break;
+				case Head2HeadModuleSettings.ShowHelpdeskInPauseMenu.Online:
+					if (!CNetComm.Instance.IsConnected) return;
+					break;
+				case Head2HeadModuleSettings.ShowHelpdeskInPauseMenu.InMatchOrLobby:
+					if (PlayerStatus.Current.CurrentMatch == null
+						&& !PlayerStatus.Current.CurrentArea.Equals(GlobalAreaKey.Head2HeadLobby)) return;
+					break;
+				case Head2HeadModuleSettings.ShowHelpdeskInPauseMenu.InMatch:
+					if (PlayerStatus.Current.CurrentMatch == null) return;
+					break;
+				default:
+					return;
+			}
 			if (!CNetComm.Instance.IsConnected) return;
 			// find the position just under "Mod Options"
 			int returnToMapIndex = menu.GetItems().FindIndex(item =>
@@ -502,13 +520,13 @@ namespace Celeste.Mod.Head2Head {
 			}
 
 			// add the "Head 2 Head Helpdesk" button
-			TextMenu.Button returnToLobbyButton = new TextMenu.Button(Dialog.Clean("Head2Head_menu_helpdesk"));
-			returnToLobbyButton.Pressed(() => {
+			TextMenu.Button h2hHelpdeskButton = new TextMenu.Button(Dialog.Clean("Head2Head_menu_helpdesk"));
+			h2hHelpdeskButton.Pressed(() => {
 				level.PauseMainMenuOpen = false;
 				new Menus.HelpdeskMenuContext(level, menu.Selection, true).GoTo(Menus.Helpdesk, menu);
 			});
-			returnToLobbyButton.ConfirmSfx = "event:/ui/main/message_confirm";
-			menu.Insert(returnToMapIndex + 1, returnToLobbyButton);
+			h2hHelpdeskButton.ConfirmSfx = "event:/ui/main/message_confirm";
+			menu.Insert(returnToMapIndex + 1, h2hHelpdeskButton);
 		}
 
 		private void OnSaveDataStart(On.Celeste.SaveData.orig_Start orig, SaveData data, int slot) {
@@ -896,7 +914,7 @@ namespace Celeste.Mod.Head2Head {
 			if (buildingMatch == null) {
 				return;
 			}
-			buildingMatch.CategoryDisplayNameOverride = name;
+			buildingMatch.CategoryDisplayNameOverride = Util.TranslatedIfAvailable(name);
 		}
 
 		public void StageMatch() {

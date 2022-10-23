@@ -360,9 +360,48 @@ namespace Celeste.Mod.Head2Head.Shared {
 			}
 		}
 
+		public static bool HasAnyValidCategoryAnySide(GlobalAreaKey area) {
+			if (!area.ExistsLocal) return false;
+			if (HasAnyValidCategory(new GlobalAreaKey(area.Local.Value.ID, AreaMode.Normal))) {
+				return true;
+			}
+			if (area.Data.HasMode(AreaMode.BSide) &&
+				HasAnyValidCategory(new GlobalAreaKey(area.Local.Value.ID, AreaMode.BSide))) {
+				return true;
+			}
+			if (area.Data.HasMode(AreaMode.CSide) &&
+				HasAnyValidCategory(new GlobalAreaKey(area.Local.Value.ID, AreaMode.CSide))) {
+				return true;
+			}
+			return false;
+		}
+
+		public static bool HasAnyValidCategory(GlobalAreaKey area) {
+			return area.ExistsLocal && area.Data.HasMode(area.Mode) && GetCategories(area).Count > 0;  // TODO reimplement so its more efficient
+		}
+
+		public static List<Tuple<StandardCategory, CustomMatchTemplate>> GetCategories(GlobalAreaKey gArea) {
+			List<Tuple<StandardCategory, CustomMatchTemplate>> ret = new List<Tuple<StandardCategory, CustomMatchTemplate>>();
+			StandardCategory[] cats = Role.GetValidCategories();
+			// Standard Categories
+			foreach (StandardCategory cat in cats) {
+				if (cat == StandardCategory.Custom) continue;
+				if (!IsCategoryValid(cat, gArea, null)) continue;
+				ret.Add(new Tuple<StandardCategory, CustomMatchTemplate>(cat, null));
+			}
+			// Custom Categories
+			if (CustomMatchTemplate.templates.ContainsKey(gArea)) {
+				foreach (CustomMatchTemplate template in CustomMatchTemplate.templates[gArea]) {
+					if (!IsCategoryValid(StandardCategory.Custom, gArea, template)) continue;
+					ret.Add(new Tuple<StandardCategory, CustomMatchTemplate>(StandardCategory.Custom, template));
+				}
+			}
+			return ret;
+		}
+
 		public static string GetCategoryTitle(StandardCategory cat, CustomMatchTemplate tem) {
 			return (cat == StandardCategory.Custom && !string.IsNullOrEmpty(tem.DisplayName)) ?
-				tem.DisplayName :
+				Util.TranslatedIfAvailable(tem.DisplayName) :
 				Dialog.Get(string.Format("Head2Head_CategoryName_{0}", cat.ToString()));
 		}
 	}

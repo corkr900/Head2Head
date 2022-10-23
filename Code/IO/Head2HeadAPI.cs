@@ -31,8 +31,6 @@ namespace Celeste.Mod.Head2Head.IO {
 			=> CustomCollectables.AddCassette(entityTypeID, condition);
 
 		// Custom events / collectables
-		// TODO (!!!) documentation of API
-		// TODO (!!!) documentation of how to use the Head2Head.yaml
 
 		public static void CustomCollectableCollected(string entityTypeID, AreaKey area, EntityID id)
 			=> PlayerStatus.Current.CustomCollectableCollected(entityTypeID, new GlobalAreaKey(area), id);
