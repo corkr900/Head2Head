@@ -51,7 +51,25 @@ namespace Celeste.Mod.Head2Head.UI {
 		}
 
 		public override void Added(Scene scene) {
-			orig_Added(scene);
+			base.Added(scene);
+
+			int count = AreaData.Areas.Count;
+			for (int i = 0; i < count; i++) {
+				MTexture mTexture = GFX.Gui[AreaData.Areas[i].Icon];
+				MTexture back = (GFX.Gui.Has(AreaData.Areas[i].Icon + "_back") ? GFX.Gui[AreaData.Areas[i].Icon + "_back"] : mTexture);
+				OuiRunSelectILChapterIcon icon = new OuiRunSelectILChapterIcon(i, mTexture, back);
+				icons.Add(icon);
+				Scene.Add(icon);
+			}
+			scarfSegments = new MTexture[scarf.Height / scarfSegmentSize];
+			for (int j = 0; j < scarfSegments.Length; j++) {
+				scarfSegments[j] = scarf.GetSubtexture(0, j * scarfSegmentSize, scarf.Width, scarfSegmentSize);
+			}
+			if (indexToSnap >= 0) {
+				area = indexToSnap;
+				icons[indexToSnap].SnapToSelected();
+			}
+			Depth = -20;
 			for (int num = icons.Count - 1; num > -1; num--) {
 				if (!string.IsNullOrEmpty(AreaData.Get(icons[num].Area)?.GetMeta()?.Parent)) {
 					icons[num].Area = -1;
@@ -81,8 +99,8 @@ namespace Celeste.Mod.Head2Head.UI {
 				AreaData areaData = AreaData.Get(current.Area);
 				if (areaData != null && areaData.GetLevelSet() == currentLevelSet) {
 					stats = stats ?? Util.GetSetStats(areaData.LevelSet);
-					int iD = areaData.ToKey().ID;
-					if ((string.IsNullOrEmpty(currentLevelSet) || iD <= Math.Max(1, stats.AreaOffset + stats.MaxArea)) && current != unselected) {
+					int id = areaData.ToKey().ID;
+					if ((string.IsNullOrEmpty(currentLevelSet) || id <= Math.Max(1, stats.AreaOffset + stats.MaxArea)) && current != unselected) {
 						current.Position = current.HiddenPosition;
 						current.Show();
 						current.AssistModeUnlockable = false;
@@ -119,17 +137,17 @@ namespace Celeste.Mod.Head2Head.UI {
 		public override void Update() {
 			if (Focused && display) {
 				if (Input.Pause.Pressed || Input.ESC.Pressed) {
-					base.Overworld.Maddy.Hide();
+					Overworld.Maddy.Hide();
 					Audio.Play("event:/ui/main/button_select");
 					Audio.Play("event:/ui/main/whoosh_large_in");
-					base.Overworld.Goto<OuiMapList>().OuiIcons = icons;
+					Overworld.Goto<OuiMapList>().OuiIcons = icons;
 					return;
 				}
 				if (Input.QuickRestart.Pressed) {
-					base.Overworld.Maddy.Hide();
+					Overworld.Maddy.Hide();
 					Audio.Play("event:/ui/main/button_select");
 					Audio.Play("event:/ui/main/whoosh_large_in");
-					base.Overworld.Goto<OuiMapSearch>().OuiIcons = icons;
+					Overworld.Goto<OuiMapSearch>().OuiIcons = icons;
 					return;
 				}
 			}
@@ -137,13 +155,13 @@ namespace Celeste.Mod.Head2Head.UI {
 				if (Input.MenuUp.Pressed) {
 					Audio.Play("event:/ui/world_map/chapter/pane_contract");
 					Audio.Play("event:/ui/world_map/icon/roll_left");
-					base.Overworld.Goto<OuiRunSelectILLevelSet>().Direction = -1;
+					Overworld.Goto<OuiRunSelectILLevelSet>().Direction = -1;
 					return;
 				}
 				if (Input.MenuDown.Pressed) {
 					Audio.Play("event:/ui/world_map/chapter/pane_expand");
 					Audio.Play("event:/ui/world_map/icon/roll_right");
-					base.Overworld.Goto<OuiRunSelectILLevelSet>().Direction = 1;
+					Overworld.Goto<OuiRunSelectILLevelSet>().Direction = 1;
 					return;
 				}
 				GetMinMaxArea(out int areaOffs, out int areaMax);
@@ -200,26 +218,6 @@ namespace Celeste.Mod.Head2Head.UI {
 			base.Overworld.Mountain.Model.EaseState(areaData.MountainState);
 		}
 
-		public void orig_Added(Scene scene) {
-			base.Added(scene);
-			int count = AreaData.Areas.Count;
-			for (int i = 0; i < count; i++) {
-				MTexture mTexture = GFX.Gui[AreaData.Areas[i].Icon];
-				MTexture back = (GFX.Gui.Has(AreaData.Areas[i].Icon + "_back") ? GFX.Gui[AreaData.Areas[i].Icon + "_back"] : mTexture);
-				icons.Add(new OuiRunSelectILChapterIcon(i, mTexture, back));
-				base.Scene.Add(icons[i]);
-			}
-			scarfSegments = new MTexture[scarf.Height / scarfSegmentSize];
-			for (int j = 0; j < scarfSegments.Length; j++) {
-				scarfSegments[j] = scarf.GetSubtexture(0, j * scarfSegmentSize, scarf.Width, scarfSegmentSize);
-			}
-			if (indexToSnap >= 0) {
-				area = indexToSnap;
-				icons[indexToSnap].SnapToSelected();
-			}
-			base.Depth = -20;
-		}
-
 		private void GetMinMaxArea(out int areaOffs, out int areaMax) {
 			LevelSetStats stats = Util.GetSetStats(ILSelector.LastArea.Local_Safe.LevelSet);
 			areaOffs = stats.AreaOffset;
@@ -239,8 +237,8 @@ namespace Celeste.Mod.Head2Head.UI {
 						ILSelector.ActiveSelector.Area = GlobalAreaKey.Overworld;
 						ILSelector.ActiveSelector.Category = StandardCategory.Clear;
 					}
-					base.Overworld.Goto<OuiRunSelectILExit>();
-					base.Overworld.Maddy.Hide();
+					Overworld.Goto<OuiRunSelectILExit>();
+					Overworld.Maddy.Hide();
 				}
 				else if (inputDelay <= 0f) {
 					if (area > stats.AreaOffset && Input.MenuLeft.Pressed) {
@@ -249,7 +247,7 @@ namespace Celeste.Mod.Head2Head.UI {
 						area--;
 						icons[area].Hovered(-1);
 						EaseCamera();
-						base.Overworld.Maddy.Hide();
+						Overworld.Maddy.Hide();
 					}
 					else if (Input.MenuRight.Pressed) {
 						if (area < stats.AreaOffset + stats.MaxArea) {
@@ -260,7 +258,7 @@ namespace Celeste.Mod.Head2Head.UI {
 							if (area <= stats.AreaOffset + stats.MaxArea) {
 								EaseCamera();
 							}
-							base.Overworld.Maddy.Hide();
+							Overworld.Maddy.Hide();
 						}
 					}
 					else if (Input.MenuConfirm.Pressed) {

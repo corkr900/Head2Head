@@ -21,7 +21,7 @@ namespace Celeste.Mod.Head2Head.Shared {
         public List<PlayerID> Players = new List<PlayerID>();
         public List<MatchPhase> Phases = new List<MatchPhase>();
 
-        public string DisplayNameOverride = "";
+        public string CategoryDisplayNameOverride = "";
         public string RequiredRole = "";
         public DateTime CreationInstant;
 
@@ -57,9 +57,17 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 		#endregion
 
-        public string DisplayName {
+        public string MatchDisplayName {
 			get {
-                if (!string.IsNullOrEmpty(DisplayNameOverride)) return DisplayNameOverride;
+                return Phases.Count == 0 ? CategoryDisplayName :
+                    string.Format(Dialog.Get("Head2Head_MatchTitle"), Phases[0].Area.DisplayName, CategoryDisplayName);
+
+            }
+		}
+
+        public string CategoryDisplayName {
+			get {
+                if (!string.IsNullOrEmpty(CategoryDisplayNameOverride)) return CategoryDisplayNameOverride;
                 if (Phases.Count > 0) return Phases[0].Title;
                 return Dialog.Get("Head2Head_UntitledMatch");
 			}
@@ -240,7 +248,7 @@ namespace Celeste.Mod.Head2Head.Shared {
                     if (ob.ObjectiveType != MatchObjectiveType.TimeLimit) continue;
                     MatchObjective local = GetObjective(ob.ID);
                     if (local == null) {  // This shouldn't be possible but, just in case...
-                        Engine.Commands.Log("ERROR: match definition does not match: " + DisplayName);
+                        Logger.Log("Head2Head.Error", "match definition does not match: " + CategoryDisplayName);
                         continue;
                     }
                     MergeObjective(local, ob);
@@ -307,25 +315,49 @@ namespace Celeste.Mod.Head2Head.Shared {
             get {
 				switch (category) {
                     default:
-                        return string.Format(Dialog.Get("Head2Head_MatchTitle"), Area.DisplayName, Util.TranslatedCategoryName(category));
+                        return Util.TranslatedCategoryName(category);
                     case StandardCategory.OneThirdBerries:
                     case StandardCategory.OneFifthBerries:
-                        int berries = Objectives.Find((MatchObjective o) => o.ObjectiveType == MatchObjectiveType.Strawberries)?.BerryGoal ?? 0;
-                        return string.Format(Dialog.Get("Head2Head_MatchTitle_BerryCount"), Area.DisplayName, berries);
+                        int berries = Objectives.Find((MatchObjective o) => o.ObjectiveType == MatchObjectiveType.Strawberries)?.CollectableGoal ?? 0;
+                        return string.Format(Dialog.Get("Head2Head_MatchTitle_BerryCount"), berries);
                     case StandardCategory.TimeLimit:
                         return string.Format(Dialog.Get("Head2Head_MatchTitle_TimeLimit"),
-                            Area.DisplayName, Util.ReadableTimeSpanTitle(Objectives[0].AdjustedTimeLimit(PlayerID.MyIDSafe)));
+                            Util.ReadableTimeSpanTitle(Objectives[0].AdjustedTimeLimit(PlayerID.MyIDSafe)));
                 }
             }
         }
 	}
 
+    // TODO collectables objectives that span multiple chapters?
     public class MatchObjective {
         public uint ID;
         public MatchObjectiveType ObjectiveType;
-        public int BerryGoal = -1;
+        public int CollectableGoal = -1;
         public long TimeLimit = 0;
+        public string CustomTypeKey;
+        public string CustomDescription;
         public List<Tuple<PlayerID, long>> TimeLimitAdjustments = new List<Tuple<PlayerID, long>>();
+
+        public string Description {
+			get {
+                if (!string.IsNullOrEmpty(CustomDescription)) return CustomDescription;
+                switch (ObjectiveType) {
+                    default:
+                        return Dialog.Get("Head2Head_ObjectiveDescription_" + ObjectiveType.ToString());
+                    case MatchObjectiveType.CustomObjective:
+                        return Dialog.Get("Head2Head_ObjectiveDescription_CustomObjective");
+                    case MatchObjectiveType.CustomCollectable:
+                        return string.Format(Dialog.Get("Head2Head_ObjectiveDescription_CustomCollectable"),
+                            CustomCollectables.GetDisplayName(CustomTypeKey), CollectableGoal);
+                    case MatchObjectiveType.Strawberries:
+                    case MatchObjectiveType.MoonBerry:
+                        return string.Format(Dialog.Get("Head2Head_ObjectiveDescription_" + ObjectiveType.ToString()), CollectableGoal);
+                    case MatchObjectiveType.TimeLimit:
+                        return string.Format(Dialog.Get("Head2Head_ObjectiveDescription_TimeLimit"),
+                            Dialog.FileTime(AdjustedTimeLimit(PlayerID.MyIDSafe)));
+                }
+			}
+		}
 
         public long AdjustedTimeLimit(PlayerID id) {
             return TimeLimit + GetAdjustment(id);
@@ -357,13 +389,17 @@ namespace Celeste.Mod.Head2Head.Shared {
     }
 
     public enum MatchObjectiveType {
+        // Standard
         ChapterComplete,
         HeartCollect,
         CassetteCollect,
         Strawberries,
         MoonBerry,
-
+        // Nonstandard
         TimeLimit,
+        // Custom
+        CustomCollectable,
+        CustomObjective,
     }
 
     /// <summary>
@@ -386,7 +422,7 @@ namespace Celeste.Mod.Head2Head.Shared {
             d.Owner = reader.ReadPlayerID();
             d.CreationInstant = reader.ReadDateTime();
             d.SetState_NoUpdate((MatchState)Enum.Parse(typeof(MatchState), reader.ReadString()));
-            d.DisplayNameOverride = reader.ReadString();
+            d.CategoryDisplayNameOverride = reader.ReadString();
             d.RequiredRole = reader.ReadString();
             d.CanParticipantsStart = reader.ReadBoolean();
             d.OpenEntry = reader.ReadBoolean();
@@ -422,7 +458,7 @@ namespace Celeste.Mod.Head2Head.Shared {
             writer.Write(m.Owner);
             writer.Write(m.CreationInstant);
             writer.Write(m.State.ToString() ?? "");
-            writer.Write(m.DisplayNameOverride ?? "");
+            writer.Write(m.CategoryDisplayNameOverride ?? "");
             writer.Write(m.RequiredRole ?? "");
             writer.Write(m.CanParticipantsStart);
             writer.Write(m.OpenEntry);
@@ -480,8 +516,10 @@ namespace Celeste.Mod.Head2Head.Shared {
             MatchObjective mo = new MatchObjective();
             mo.ID = reader.ReadUInt32();
             mo.ObjectiveType = (MatchObjectiveType)Enum.Parse(typeof(MatchObjectiveType), reader.ReadString());
-            mo.BerryGoal = reader.ReadInt32();
+            mo.CollectableGoal = reader.ReadInt32();
             mo.TimeLimit = reader.ReadInt64();
+            mo.CustomTypeKey = reader.ReadString();
+            mo.CustomDescription = reader.ReadString();
 
             int count = reader.ReadInt32();
             List<Tuple<PlayerID, long>> list = new List<Tuple<PlayerID, long>>(count);
@@ -498,8 +536,10 @@ namespace Celeste.Mod.Head2Head.Shared {
         public static void Write(this CelesteNetBinaryWriter writer, MatchObjective mo) {
             writer.Write(mo.ID);
             writer.Write(mo.ObjectiveType.ToString() ?? "");
-            writer.Write(mo.BerryGoal);
+            writer.Write(mo.CollectableGoal);
             writer.Write(mo.TimeLimit);
+            writer.Write(mo.CustomTypeKey ?? "");
+            writer.Write(mo.CustomDescription ?? "");
             writer.Write(mo.TimeLimitAdjustments?.Count ?? 0);
             if (mo.TimeLimitAdjustments != null) {
                 foreach (Tuple<PlayerID, long> t in mo.TimeLimitAdjustments) {

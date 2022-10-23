@@ -45,16 +45,11 @@ namespace Celeste.Mod.Head2Head.Shared {
 			return area.Data.Mode[(int)area.Mode].TotalStrawberries;
 		}
 
-		internal static bool HasCassette(GlobalAreaKey area) {
-			if (!area.ExistsLocal) return false;
-			return area.Data.Mode[(int)area.Mode].MapData.DetectedCassette;
-		}
-
 		internal static int CountMoonBerries(GlobalAreaKey area) {
 			if (!area.ExistsLocal) return -1;
 			var strawbs = area.Data.Mode[(int)area.Mode].MapData.Strawberries;
 			int count = 0;
-			foreach(var strawb in strawbs) {
+			foreach (var strawb in strawbs) {
 				if (strawb.Values == null || !strawb.Values.ContainsKey("moon")) continue;
 				object val = strawb.Values["moon"];
 				if (val is bool && (bool)val) count += 1;
@@ -62,12 +57,28 @@ namespace Celeste.Mod.Head2Head.Shared {
 			return count;
 		}
 
+		internal static bool HasCassette(GlobalAreaKey area) {
+			if (!area.ExistsLocal) return false;
+			if (area.Data.Mode[(int)area.Mode].MapData.DetectedCassette) return true;
+			MapData md = GetMapDataForMode(area);
+			if (md == null) return false;
+			DynamicData dd = new DynamicData(md);
+			if (!dd.Data.ContainsKey("HasCassette")) return false;
+			return dd.Get<bool>("HasCassette");
+		}
+
 		internal static bool HasOptionalRealHeart(GlobalAreaKey area) {
 			if (!area.ExistsLocal) return false;
 			MapMetaModeProperties props = area.ModeMetaProperties;
 			if (props?.HeartIsEnd == true) return false;
-			DynamicData dd = new DynamicData(area.Data.Mode[(int)area.Mode].MapData);
+			DynamicData dd = new DynamicData(GetMapDataForMode(area));
+			if (!dd.Data.ContainsKey("DetectedRealHeartGem")) return false;
 			return dd.Get<bool>("DetectedRealHeartGem");
+		}
+
+		internal static MapData GetMapDataForMode(GlobalAreaKey area) {
+			if (!area.ExistsLocal) return null;
+			return area.Data.Mode[(int)area.Mode].MapData;
 		}
 
 		internal static bool HasTrackedBerries(GlobalAreaKey area) {
@@ -108,23 +119,35 @@ namespace Celeste.Mod.Head2Head.Shared {
 			}
 			if (entity.Name == "birdForsakenCityGem") return true;
 			if (entity.Name == "reflectionHeartStatue") return true;
-			// TODO Custom heart code entities are not handled yet; some way to do it generically?
-			// collabutils2 mini hearts NOT included because they always end the chapter regardless of map metadata
 
-			// should flag these entities...
-			//		If it's possible to check whether the associated type extends HeartGem that should handle most of these...
-			//		Also there should be a way for new mods to add this compatibility themselves that we check with Reflection
-			// AdventureHelper Custom Crystal Heart
-			// Arphimigon's D-Sides Heart?
-			// Arphimigon's D-Sides Recolourable Heart?
-			// communalhelper Crystal Heart
-			// communalhelper Custom Crystal Heart
-			// FactoryHelper machine heart?
-			// Frozen Waterfall Boss Heart?
-			// max480hand Reskinnable Crystal Heart
-			// Memorial Helper Flag Crystal Heart
-			// P sides heart gem??
-			// Vivhelper Dash Code Heart Controller
+			// TODO Bug mod owners to update their entities to use the API to register their heart types
+
+			// Known custom heart types:
+			//	AdventureHelper Custom Crystal Heart
+			//	Arphimigon's D-Sides Heart?
+			//	Arphimigon's D-Sides Recolourable Heart?
+			//	communalhelper Crystal Heart
+			//	communalhelper Custom Crystal Heart
+			//	FactoryHelper machine heart?
+			//	Frozen Waterfall Boss Heart?
+			//	max480hand Reskinnable Crystal Heart
+			//	Memorial Helper Flag Crystal Heart
+			//	P sides heart gem??
+			//	Vivhelper Dash Code Heart Controller
+			if (CustomCollectables.CustomHeartTypes.ContainsKey(entity.Name)) {
+				CustomCollectableInfo info = CustomCollectables.CustomHeartTypes[entity.Name];
+				return info.Condition?.Invoke(entity) ?? true;
+			}
+
+			return false;
+		}
+
+		internal static bool EntityIsCassette(BinaryPacker.Element entity) {
+			if (entity.Name == "cassette") return true;
+			if (CustomCollectables.CustomCassetteTypes.ContainsKey(entity.Name)) {
+				CustomCollectableInfo info = CustomCollectables.CustomCassetteTypes[entity.Name];
+				return info.Condition?.Invoke(entity) ?? true;
+			}
 			return false;
 		}
 
@@ -162,6 +185,14 @@ namespace Celeste.Mod.Head2Head.Shared {
 				}
 			}
 			return false;
+		}
+
+		public static string CategoryToIcon(StandardCategory cat) {
+			return string.Format("Head2Head/Categories/{0}", cat.ToString());
+		}
+
+		public static string TranslatedIfAvailable(string name) {
+			return Dialog.Has(name) ? Dialog.Clean(name) : name;
 		}
 	}
 }

@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 
 namespace Celeste.Mod.Head2Head.Shared {
     public struct GlobalAreaKey {
+        // TODO include display name when sending over network
 
         private readonly string _sid;
         private readonly AreaKey? _localKey;
@@ -74,7 +75,6 @@ namespace Celeste.Mod.Head2Head.Shared {
             }
         }
 
-
 		private static string GetTranslatedSide(AreaMode? mode) {
 			switch (mode) {
                 case null:
@@ -85,7 +85,7 @@ namespace Celeste.Mod.Head2Head.Shared {
                 case AreaMode.CSide:
                     return " (" + Dialog.Get("OVERWORLD_REMIX2") + ")";
                 default:
-                    return " (" + mode.ToString() + ")";  // TODO AltSidesHelper support
+                    return " (" + mode.ToString() + ")";
             }
 		}
 
@@ -95,7 +95,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			_areaData = null;
             _modContent = null;
             _versionString = version;
-            if (SID != "Overworld") {
+            if (SID != "Overworld" && AreaData.Areas != null) {
                 foreach (AreaData d in AreaData.Areas) {
                     if (d.GetSID() == SID) {
                         _areaData = d;
