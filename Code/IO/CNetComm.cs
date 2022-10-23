@@ -136,7 +136,6 @@ namespace Celeste.Mod.Head2Head.IO {
 
 		internal void SendPlayerStatus(PlayerStatus stat) {
 			if (!CanSendMessages) {
-				Engine.Commands.Log("Cannot send player status message: not connected to CelesteNet.");
 				return;
 			}
 			CnetClient.SendAndHandle(new DataH2HPlayerStatus() {
@@ -147,7 +146,6 @@ namespace Celeste.Mod.Head2Head.IO {
 
 		internal void SendMatchReset(string matchID) {
 			if (!CanSendMessages) {
-				Engine.Commands.Log("Cannot send match reset message: not connected to CelesteNet.");
 				return;
 			}
 			CnetClient.SendAndHandle(new DataH2HMatchReset() {
@@ -158,7 +156,6 @@ namespace Celeste.Mod.Head2Head.IO {
 
 		internal void SendMatchUpdate(MatchDefinition def) {
 			if (!CanSendMessages) {
-				Engine.Commands.Log("Cannot send match update message: not connected to CelesteNet.");
 				return;
 			}
 			CnetClient.SendAndHandle(new DataH2HMatchUpdate() {
@@ -244,6 +241,11 @@ namespace Celeste.Mod.Head2Head.IO {
 			Engine.Commands.Log("Name: " + data.player.Name);
 			Engine.Commands.Log("Full Name: " + data.player.FullName);
 			Engine.Commands.Log("Display Name: " + data.player.DisplayName);
+			Logger.Log("Head2Head", "Received test message: " + data.Message);
+			Logger.Log("Head2Head", "ID: " + data.player.ID);
+			Logger.Log("Head2Head", "Name: " + data.player.Name);
+			Logger.Log("Head2Head", "Full Name: " + data.player.FullName);
+			Logger.Log("Head2Head", "Display Name: " + data.player.DisplayName);
 		}
 	}
 }

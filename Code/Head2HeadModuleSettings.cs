@@ -18,6 +18,13 @@ namespace Celeste.Mod.Head2Head {
 			Always,
 		}
 
+		public enum ShowHelpdeskInPauseMenu {
+			Online = 0,
+			InMatch = 1,
+			InMatchOrLobby = 2,
+			Always = 3,
+		}
+
 		#region Settings
 
 		[SettingName("Head2Head_Setting_ReturnToLobby")]
@@ -28,10 +35,13 @@ namespace Celeste.Mod.Head2Head {
 		[SettingSubText("Head2Head_Setting_AutoLaunchPhase_Subtext")]
 		public bool AutoLaunchNextPhase { get; set; } = true;
 
-
 		[SettingName("Head2Head_Setting_AutoStage")]
 		[SettingSubText("Head2Head_Setting_AutoStage_Subtext")]
 		public AutoStageSetting AutoStageNewMatches { get; set; } = AutoStageSetting.OnlyInLobby;
+
+		[SettingName("Head2Head_Setting_ShowHDInPause")]
+		[SettingSubText("Head2Head_Setting_ShowHDInPause_Subtext")]
+		public ShowHelpdeskInPauseMenu ShowHelpdeskInPause { get; set; } = ShowHelpdeskInPauseMenu.Online;
 
 		[SettingName("Head2Head_Setting_Role")]
 		[SettingSubText("Head2Head_Setting_Role_Subtext")]

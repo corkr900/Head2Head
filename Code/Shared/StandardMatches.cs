@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Celeste.Mod.Head2Head.Entities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -20,6 +21,9 @@ namespace Celeste.Mod.Head2Head.Shared {
 		OneFifthBerries,
 		OneThirdBerries,
 		TimeLimit,
+
+		// Custom
+		Custom,
 	}
 
 	public static class StandardMatches {
@@ -71,7 +75,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 				Objectives = new List<MatchObjective>() {
 					new MatchObjective() {
 						ObjectiveType = MatchObjectiveType.Strawberries,
-						BerryGoal = Util.CountBerries(area),
+						CollectableGoal = Util.CountBerries(area),
 					},
 					new MatchObjective() {
 						ObjectiveType = MatchObjectiveType.ChapterComplete,
@@ -91,7 +95,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 				Objectives = new List<MatchObjective>() {
 					new MatchObjective() {
 						ObjectiveType = MatchObjectiveType.Strawberries,
-						BerryGoal = Util.CountBerries(area),
+						CollectableGoal = Util.CountBerries(area),
 					},
 					new MatchObjective() {
 						ObjectiveType = MatchObjectiveType.HeartCollect,
@@ -146,7 +150,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			if (Util.HasTrackedBerries(area)) {
 				mp.Objectives.Add(new MatchObjective() {
 					ObjectiveType = MatchObjectiveType.Strawberries,
-					BerryGoal = Util.CountBerries(area)
+					CollectableGoal = Util.CountBerries(area)
 				});
 			}
 			return mp;
@@ -165,7 +169,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 					},
 					new MatchObjective() {
 						ObjectiveType = MatchObjectiveType.MoonBerry,
-						BerryGoal = Util.CountMoonBerries(area),
+						CollectableGoal = Util.CountMoonBerries(area),
 					},
 				}
 			};
@@ -198,14 +202,14 @@ namespace Celeste.Mod.Head2Head.Shared {
 			if (Util.HasTrackedBerries(area)) {
 				mp.Objectives.Add(new MatchObjective() {
 					ObjectiveType = MatchObjectiveType.Strawberries,
-					BerryGoal = Util.CountBerries(area)
+					CollectableGoal = Util.CountBerries(area)
 				});
 			}
 			int moonberries = Util.CountMoonBerries(area);
 			if (moonberries > 0) {
 				mp.Objectives.Add(new MatchObjective() {
 					ObjectiveType = MatchObjectiveType.MoonBerry,
-					BerryGoal = moonberries,
+					CollectableGoal = moonberries,
 				});
 			}
 			return mp;
@@ -223,7 +227,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 				Objectives = new List<MatchObjective>() {
 					new MatchObjective() {
 						ObjectiveType = MatchObjectiveType.Strawberries,
-						BerryGoal = (int)Math.Ceiling(Util.CountBerries(area) / 3.0),
+						CollectableGoal = (int)Math.Ceiling(Util.CountBerries(area) / 3.0),
 					},
 					new MatchObjective() {
 						ObjectiveType = MatchObjectiveType.ChapterComplete,
@@ -243,7 +247,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 				Objectives = new List<MatchObjective>() {
 					new MatchObjective() {
 						ObjectiveType = MatchObjectiveType.Strawberries,
-						BerryGoal = (int)Math.Ceiling(Util.CountBerries(area) / 5.0),
+						CollectableGoal = (int)Math.Ceiling(Util.CountBerries(area) / 5.0),
 					},
 					new MatchObjective() {
 						ObjectiveType = MatchObjectiveType.ChapterComplete,
@@ -272,10 +276,11 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 		// More Stuff
 
-		public static bool IsCategoryValid(StandardCategory cat, GlobalAreaKey area)
+		public static bool IsCategoryValid(StandardCategory cat, GlobalAreaKey area, CustomMatchTemplate template = null)
 		{
 			if (area.IsOverworld) return false;
 			if (!area.ExistsLocal) return false;
+			if (ILSelector.IsSuppressed(area, cat)) return false;
 			if (area.IsVanilla) {
 				if (area.Mode != AreaMode.Normal) {
 					return cat == StandardCategory.Clear;
@@ -297,13 +302,15 @@ namespace Celeste.Mod.Head2Head.Shared {
 							|| cat == StandardCategory.OneThirdBerries
 							|| cat == StandardCategory.HeartCassette
 							|| cat == StandardCategory.FullClear
-							|| cat == StandardCategory.CassetteGrab;
+							|| cat == StandardCategory.CassetteGrab
+							|| cat == StandardCategory.Custom;
 					case 0:  // Prologue
 						return cat == StandardCategory.Clear;
 					case 6:  // Reflection
 						return cat == StandardCategory.Clear
 							|| cat == StandardCategory.FullClear
-							|| cat == StandardCategory.CassetteGrab;
+							|| cat == StandardCategory.CassetteGrab
+							|| cat == StandardCategory.Custom;
 					case 8:  // epilogue
 						return cat == StandardCategory.Clear;
 					case 9:  // Core
@@ -311,11 +318,13 @@ namespace Celeste.Mod.Head2Head.Shared {
 							|| cat == StandardCategory.OneFifthBerries
 							|| cat == StandardCategory.OneThirdBerries
 							|| cat == StandardCategory.FullClear
-							|| cat == StandardCategory.CassetteGrab;
+							|| cat == StandardCategory.CassetteGrab
+							|| cat == StandardCategory.Custom;
 					case 10:  // Farewell
 						return cat == StandardCategory.Clear
 							|| cat == StandardCategory.MoonBerry
-							|| cat == StandardCategory.TimeLimit;
+							|| cat == StandardCategory.TimeLimit
+							|| cat == StandardCategory.Custom;
 				}
 			}
 			else {
@@ -344,8 +353,56 @@ namespace Celeste.Mod.Head2Head.Shared {
 						return hasMoonBerry;
 					case StandardCategory.FullClearMoonBerry:
 						return hasMoonBerry && (berries || hasCassette || hasOptionalHeart);
+					case StandardCategory.Custom:
+						// TODO check custom categories for validity
+						return true;
 				}
 			}
+		}
+
+		public static bool HasAnyValidCategoryAnySide(GlobalAreaKey area) {
+			if (!area.ExistsLocal) return false;
+			if (HasAnyValidCategory(new GlobalAreaKey(area.Local.Value.ID, AreaMode.Normal))) {
+				return true;
+			}
+			if (area.Data.HasMode(AreaMode.BSide) &&
+				HasAnyValidCategory(new GlobalAreaKey(area.Local.Value.ID, AreaMode.BSide))) {
+				return true;
+			}
+			if (area.Data.HasMode(AreaMode.CSide) &&
+				HasAnyValidCategory(new GlobalAreaKey(area.Local.Value.ID, AreaMode.CSide))) {
+				return true;
+			}
+			return false;
+		}
+
+		public static bool HasAnyValidCategory(GlobalAreaKey area) {
+			return area.ExistsLocal && area.Data.HasMode(area.Mode) && GetCategories(area).Count > 0;  // TODO reimplement so its more efficient
+		}
+
+		public static List<Tuple<StandardCategory, CustomMatchTemplate>> GetCategories(GlobalAreaKey gArea) {
+			List<Tuple<StandardCategory, CustomMatchTemplate>> ret = new List<Tuple<StandardCategory, CustomMatchTemplate>>();
+			StandardCategory[] cats = Role.GetValidCategories();
+			// Standard Categories
+			foreach (StandardCategory cat in cats) {
+				if (cat == StandardCategory.Custom) continue;
+				if (!IsCategoryValid(cat, gArea, null)) continue;
+				ret.Add(new Tuple<StandardCategory, CustomMatchTemplate>(cat, null));
+			}
+			// Custom Categories
+			if (CustomMatchTemplate.templates.ContainsKey(gArea)) {
+				foreach (CustomMatchTemplate template in CustomMatchTemplate.templates[gArea]) {
+					if (!IsCategoryValid(StandardCategory.Custom, gArea, template)) continue;
+					ret.Add(new Tuple<StandardCategory, CustomMatchTemplate>(StandardCategory.Custom, template));
+				}
+			}
+			return ret;
+		}
+
+		public static string GetCategoryTitle(StandardCategory cat, CustomMatchTemplate tem) {
+			return (cat == StandardCategory.Custom && !string.IsNullOrEmpty(tem.DisplayName)) ?
+				Util.TranslatedIfAvailable(tem.DisplayName) :
+				Dialog.Get(string.Format("Head2Head_CategoryName_{0}", cat.ToString()));
 		}
 	}
 }

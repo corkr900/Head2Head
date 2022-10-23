@@ -3,6 +3,12 @@ HEAD2HEAD_OVERWORLD= Overworld
 Head2Head= Head 2 Head
 Head2Head_00_Head2HeadLobby= Head 2 Head Lobby
 
+Head2Head_CollectableNames_Heart= Crystal Heart
+Head2Head_CollectableNames_Cassette= Cassette
+Head2Head_CollectableNames_UnnamedCustom= Unnamed Custom Collectable
+
+Head2Head_Selector_NoValidCategories= No Valid Categories
+
 Head2Head_Setting= Head 2 Head Settings
 Head2Head_Setting_ReturnToLobby= Return to Lobby
 Head2Head_Setting_ReturnToLobby_Subtext= If turned on, you will automatically return to the Head2Head lobby after completing a match.
@@ -39,14 +45,23 @@ Head2Head_Setting_AutoStage= Auto-Stage New Matches
 Head2Head_Setting_AutoStage_Subtext= When other players create a Head2Head match, this setting controls whether
 it will be automatically set as your current match.
 Default: Only in Lobby
+Head2Head_Setting_ShowHDInPause= Show Helpdesk in Pause Menu
+Head2Head_Setting_ShowHDInPause_Subtext= Determines when the Head 2 Head Helpdesk should
+be accessible from the pause menu.
+Default: Online
 
 Head2Head_MatchTitle= {0} ({1})
-Head2Head_MatchTitle_BerryCount= {0} ({1} Berries)
-Head2Head_MatchTitle_TimeLimit= {0} ({1} Limit)
+Head2Head_MatchTitle_BerryCount= {0} Berries
+Head2Head_MatchTitle_TimeLimit= {0} Limit
 
 modoptions_Head2HeadModule_autostagenewmatches_Never= Never
 modoptions_Head2HeadModule_autostagenewmatches_OnlyInLobby= Only in Lobby
 modoptions_Head2HeadModule_autostagenewmatches_Always= Always
+
+modoptions_Head2HeadModule_showhelpdeskinpause_InMatch= In Match
+modoptions_Head2HeadModule_showhelpdeskinpause_InMatchOrLobby= Match or Lobby
+modoptions_Head2HeadModule_showhelpdeskinpause_Online= Online
+modoptions_Head2HeadModule_showhelpdeskinpause_Always= Always
 
 Head2Head_CategoryName_Clear= Chapter Clear
 Head2Head_CategoryName_HeartCassette= Heart + Cassette
@@ -59,6 +74,16 @@ Head2Head_CategoryName_FullClearMoonBerry= Full Clear with Moon Berry
 Head2Head_CategoryName_OneThirdBerries= One Third Berries
 Head2Head_CategoryName_OneFifthBerries= One Fifth Berries
 Head2Head_CategoryName_TimeLimit= Time Limited
+Head2Head_CategoryName_Custom= Unnamed Custom Category
+
+Head2Head_ObjectiveDescription_Strawberries= Collect Strawberry (x{0})
+Head2Head_ObjectiveDescription_MoonBerry= Collect Moon Berry (x{0})
+Head2Head_ObjectiveDescription_ChapterComplete= Complete the Chapter
+Head2Head_ObjectiveDescription_HeartCollect= Collect the Crystal Heart
+Head2Head_ObjectiveDescription_CassetteCollect= Collect the Cassette
+Head2Head_ObjectiveDescription_TimeLimit= Get as far as you can in {0}
+Head2Head_ObjectiveDescription_CustomCollectable= Collect {0} (x{1})
+Head2Head_ObjectiveDescription_CustomObjective= Unnamed custom objective
 
 Head2Head_MatchStatus_None= Unknown
 Head2Head_MatchStatus_Building= Building
@@ -107,7 +132,13 @@ Head2Head_menu_helpdesk_whynocreatematch_playerstatus= Your current status preve
 Head2Head_menu_helpdesk_whynocreatematch_other= Some unknown issue. Recommend purging local data and/or restarting Celeste.
 This message should never appear. If it does, let corkr900 know how you got here.
 
+Head2Head_menu_helpdesk_whatisthiscategory= What is this category?
+Head2Head_menu_AreaLabel= Chapter: {0}
+
 Head2Head_menu_helpdesk_browse= Browse Known Matches
+
+Head2Head_menu_helpdesk_removeOverlay= Remove Overlay
+Head2Head_menu_helpdesk_removeOverlay_subtext= Unstage the current match and remove the overlay.
 
 Head2Head_menu_helpdesk_dropout= Drop Out of Current Match
 Head2Head_menu_helpdesk_dropout_subtext= Abandon the current match.

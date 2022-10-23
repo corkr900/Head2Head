@@ -11,6 +11,8 @@ namespace Celeste.Mod.Head2Head.Shared {
 		internal static string role { get { return Head2HeadModule.Settings.Role; } }
 		public static bool hasBTAMatchPass { get; private set; } = false;
 
+		public static bool IsDebug { get { return role.ToLower() == "debug"; } }
+
 		internal static void GiveBTAMatchPass() {
 			hasBTAMatchPass = true;
 		}

@@ -79,7 +79,7 @@ namespace Celeste.Mod.Head2Head.UI {
 			float hudScale = Head2HeadModule.Settings.HudScale;
 
 			if (_bannerOpacity > 0.001f) {
-				string matchCaption = def.Phases.Count == 0 ? "Unnamed Match" : def.Phases[0].Title;
+				string matchCaption = def.MatchDisplayName;
 				Vector2 captionPos = new Vector2(CanvasSize.X / 2, 0f);
 				Vector2 captionScale = Vector2.One * hudScale;
 				Color captionColor = Color.Black;
@@ -246,11 +246,11 @@ namespace Celeste.Mod.Head2Head.UI {
 						foreach (MatchPhase ph in def.Phases) {
 							if (ph.Order != curPhase) continue;
 							foreach (MatchObjective obj in ph.Objectives) {
-								if (obj.BerryGoal > 0) {
-									strawbsTotal += obj.BerryGoal;
+								if (obj.CollectableGoal > 0) {
+									strawbsTotal += obj.CollectableGoal;
 									int idx = stat.objectives.FindIndex((H2HMatchObjectiveState s) => s.ObjectiveID == obj.ID);
 									if (idx < 0) continue;
-									strawbsCollected += stat.objectives[idx].CollectedStrawbs?.Count ?? 0;
+									strawbsCollected += stat.objectives[idx].CollectedItems?.Count ?? 0;
 								}
 							}
 						}

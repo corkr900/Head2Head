@@ -1,18 +1,21 @@
-﻿using Celeste.Mod.Head2Head.IO;
+﻿using Celeste.Mod.Head2Head.Integration;
+using Celeste.Mod.Head2Head.IO;
 using Celeste.Mod.Head2Head.Shared;
 using Celeste.Mod.Head2Head.UI;
+using Celeste.Mod.Meta;
 using Monocle;
+using MonoMod.Utils;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Celeste.Mod.Head2Head.Control {
 	public static class Head2HeadCommands {
         private static Head2HeadModule module { get { return Head2HeadModule.Instance; } }
-		private static string setVarHelpText =
-			"hudscale: float | hudline: float | opacity1: float | opacity2: float";
 
 		[Command("corkr_test", "this is a test command to do random stuff")]
 		internal static void SendTestMsg(string arg) {
@@ -106,7 +109,7 @@ namespace Celeste.Mod.Head2Head.Control {
 				case "help":
 				case "-h":
 				default:
-					Engine.Commands.Log(setVarHelpText);
+					Engine.Commands.Log("unknown argument");
 					return;
 			}
 		}
