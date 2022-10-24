@@ -180,7 +180,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		internal static bool IsUpdateAvailable() {
 			SortedDictionary<ModUpdateInfo, EverestModuleMetadata> updates = ModUpdaterHelper.GetAsyncLoadedModUpdates();
 			foreach(EverestModuleMetadata meta in updates.Values) {
-				if (CleanDLL(meta) == DLL) {
+				if (CleanDLL(meta) == DLL && meta.Version > Head2HeadModule.Instance.Metadata.Version) {
 					return true;
 				}
 			}

@@ -356,8 +356,11 @@ namespace Celeste.Mod.Head2Head.UI
 					cxt.Close(menu);
 				});
 				GlobalAreaKey? vchk = cxtMatch.VersionCheck();
-				if (cxtMatch.MatchID == curmatch?.MatchID)
+				if (Util.IsUpdateAvailable())
 					btn.SoftDisable(menu, "Head2Head_menu_match_stage_update");
+				else if (!cxtMatch.AllPhasesExistLocal()) {
+					btn.SoftDisable(menu, "Head2Head_menu_match_join_notinstalled");
+				}
 				else if (cxtMatch.MatchID == curmatch?.MatchID)
 					btn.SoftDisable(menu, "Head2Head_menu_match_stage_alreadycurrent");
 				else if (vchk != null)
@@ -377,10 +380,13 @@ namespace Celeste.Mod.Head2Head.UI
 					cxt.Close(menu);
 				});
 				GlobalAreaKey? k = curmatch?.VersionCheck();
-				if (cxtMatch.MatchID == curmatch?.MatchID)
+				if (Util.IsUpdateAvailable())
 					btn.SoftDisable(menu, "Head2Head_menu_match_stage_update");
 				else if (!Role.AllowMatchJoin(cxtMatch))
 					btn.SoftDisable(menu, "Head2Head_menu_match_join_role");
+				else if (!cxtMatch.AllPhasesExistLocal()) {
+					btn.SoftDisable(menu, "Head2Head_menu_match_join_notinstalled");
+				}
 				else if (k != null)
 					btn.SoftDisable(menu, "Head2Head_menu_match_join_versionmismatch", k.Value.LocalVersion.ToString(), k.Value.Version.ToString());
 				else if (cxtMatch.State != MatchState.Staged)

@@ -302,7 +302,14 @@ namespace Celeste.Mod.Head2Head.Shared {
                 }
             }
         }
-    }
+
+        public bool AllPhasesExistLocal() {
+            foreach(MatchPhase p in Phases) {
+                if (!p.Area.ExistsLocal) return false;
+			}
+            return true;
+        }
+	}
 
     public class MatchPhase {
         public StandardCategory category;
