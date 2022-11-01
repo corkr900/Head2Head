@@ -126,6 +126,7 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.Level.CompleteArea_bool_bool_bool += OnLevelAreaComplete;
 			On.Celeste.Player.Update += OnPlayerUpdate;
 			On.Celeste.MapData.ctor += OnMapDataCtor;
+			On.Celeste.Session.SetFlag += OnSessionSetFlag;
 			On.Celeste.Celeste.CriticalFailureHandler += OnCelesteCriticalFailure;
 			On.Celeste.Postcard.DisplayRoutine += OnPostcardDisplayRoutine;
 			On.Celeste.SaveData.RegisterCassette += OnCassetteCollected;
@@ -199,7 +200,8 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.Level.CompleteArea_bool_bool_bool -= OnLevelAreaComplete;
 			On.Celeste.Player.Update -= OnPlayerUpdate;
 			On.Celeste.MapData.ctor -= OnMapDataCtor;
-			On.Celeste.Celeste.CriticalFailureHandler += OnCelesteCriticalFailure;
+			On.Celeste.Session.SetFlag -= OnSessionSetFlag;
+			On.Celeste.Celeste.CriticalFailureHandler -= OnCelesteCriticalFailure;
 			On.Celeste.Postcard.DisplayRoutine -= OnPostcardDisplayRoutine;
 			On.Celeste.SaveData.RegisterCassette -= OnCassetteCollected;
 			On.Celeste.SaveData.RegisterHeartGem -= OnHeartCollected;
@@ -249,6 +251,11 @@ namespace Celeste.Mod.Head2Head {
 		}
 
 		// ###############################################
+
+		private void OnSessionSetFlag(On.Celeste.Session.orig_SetFlag orig, Session self, string flag, bool setTo) {
+			orig(self, flag, setTo);
+			PlayerStatus.Current.CheckFlagObjective(flag, new GlobalAreaKey(self.Area));
+		}
 
 		private void OnCelesteCriticalFailure(On.Celeste.Celeste.orig_CriticalFailureHandler orig, Exception e) {
 			orig(e);
