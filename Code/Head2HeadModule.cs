@@ -29,7 +29,7 @@ using MonoMod.ModInterop;
 // TODO Force DNF if a player intentionally closes the game
 // TODO Support full-game runs... eventually
 // TODO "Enter Room" objective
-// TODO "golden berry" objective
+// TODO "Flag" objective
 
 namespace Celeste.Mod.Head2Head {
 	public class Head2HeadModule : EverestModule {
@@ -361,14 +361,8 @@ namespace Celeste.Mod.Head2Head {
 			orig(self);
 			Level level = self.Scene as Level;
 			GlobalAreaKey gak = new GlobalAreaKey(level.Session.Area);
-			if (self.Golden) {
-				// TODO handle golden strawberries
-			}
-			else {
-				// Moon berries work this way too
-				PlayerStatus.Current.StrawberryCollected(gak, self);
-				Instance.DoPostPhaseAutoLaunch(true, self.Moon ? MatchObjectiveType.MoonBerry : MatchObjectiveType.Strawberries);
-			}
+			PlayerStatus.Current.StrawberryCollected(gak, self);
+			Instance.DoPostPhaseAutoLaunch(true, self.Moon ? MatchObjectiveType.MoonBerry : MatchObjectiveType.Strawberries);
 		}
 
 		public static Vector2 OnOuiChapterSelectIconGetIdlePosition(Func<OuiChapterSelectIcon, Vector2> orig, OuiChapterSelectIcon self) {

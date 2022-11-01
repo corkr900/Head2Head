@@ -283,7 +283,8 @@ namespace Celeste.Mod.Head2Head.Shared {
 			if (ILSelector.IsSuppressed(area, cat)) return false;
 			if (area.IsVanilla) {
 				if (area.Mode != AreaMode.Normal) {
-					return cat == StandardCategory.Clear;
+					return cat == StandardCategory.Clear
+						|| cat == StandardCategory.Custom;
 				}
 				switch (area.Local?.ID) {
 					case null:

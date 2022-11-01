@@ -402,7 +402,9 @@ namespace Celeste.Mod.Head2Head.Shared {
         CassetteCollect,
         Strawberries,
         MoonBerry,
-        // Nonstandard
+        GoldenStrawberry,
+        Flag,
+        EnterRoom,
         TimeLimit,
         // Custom
         CustomCollectable,
