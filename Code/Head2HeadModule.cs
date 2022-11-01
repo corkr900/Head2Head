@@ -252,11 +252,6 @@ namespace Celeste.Mod.Head2Head {
 
 		// ###############################################
 
-		private void OnSessionSetFlag(On.Celeste.Session.orig_SetFlag orig, Session self, string flag, bool setTo) {
-			orig(self, flag, setTo);
-			PlayerStatus.Current.CheckFlagObjective(flag, new GlobalAreaKey(self.Area));
-		}
-
 		private void OnCelesteCriticalFailure(On.Celeste.Celeste.orig_CriticalFailureHandler orig, Exception e) {
 			orig(e);
 			// TODO Cache off recovery data locally instead of relying on peers' info
@@ -624,6 +619,13 @@ namespace Celeste.Mod.Head2Head {
 				PlayerStatus.Current.CheckForTimeLimit(new GlobalAreaKey(level.Session.Area));
 			}
 			orig(self);
+		}
+
+		private void OnSessionSetFlag(On.Celeste.Session.orig_SetFlag orig, Session self, string flag, bool setTo) {
+			orig(self, flag, setTo);
+			if (setTo) {
+				PlayerStatus.Current.CheckFlagObjective(flag, new GlobalAreaKey(self.Area));
+			}
 		}
 
 		// ########################################
