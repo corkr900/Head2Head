@@ -28,8 +28,7 @@ using MonoMod.ModInterop;
 
 // TODO Force DNF if a player intentionally closes the game
 // TODO Support full-game runs... eventually
-// TODO "Enter Room" objective
-// TODO "Flag" objective
+// TODO Make the start-match and return-to-lobby sequences more robust
 
 namespace Celeste.Mod.Head2Head {
 	public class Head2HeadModule : EverestModule {
@@ -136,6 +135,7 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.SaveData.BeforeSave += OnSaveDataBeforeSave;
 			On.Celeste.SaveData.FoundAnyCheckpoints += OnSaveDataFoundAnyCheckpoints;
 			On.Celeste.LevelData.CreateEntityData += OnLevelDataCreateEntityData;
+			On.Celeste.Strawberry.ctor += OnStrawberryCtor;
 			On.Celeste.LevelLoader.StartLevel += OnLevelLoaderStart;
 			On.Celeste.AreaComplete.Update += OnAreaCompleteUpdate;
 			On.Celeste.OverworldLoader.Begin += OnOverworldLoaderBegin;
@@ -210,6 +210,7 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.SaveData.TryDelete -= OnSaveDataTryDelete;
 			On.Celeste.SaveData.BeforeSave -= OnSaveDataBeforeSave;
 			On.Celeste.LevelData.CreateEntityData -= OnLevelDataCreateEntityData;
+			On.Celeste.Strawberry.ctor -= OnStrawberryCtor;
 			On.Celeste.LevelLoader.StartLevel -= OnLevelLoaderStart;
 			On.Celeste.AreaComplete.Update -= OnAreaCompleteUpdate;
 			On.Celeste.OverworldLoader.Begin -= OnOverworldLoaderBegin;
@@ -364,7 +365,7 @@ namespace Celeste.Mod.Head2Head {
 			Level level = self.Scene as Level;
 			GlobalAreaKey gak = new GlobalAreaKey(level.Session.Area);
 			PlayerStatus.Current.StrawberryCollected(gak, self);
-			Instance.DoPostPhaseAutoLaunch(true, self.Moon ? MatchObjectiveType.MoonBerry : MatchObjectiveType.Strawberries);
+			Instance.DoPostPhaseAutoLaunch(true, MatchObjective.GetTypeForStrawberry(self));
 		}
 
 		public static Vector2 OnOuiChapterSelectIconGetIdlePosition(Func<OuiChapterSelectIcon, Vector2> orig, OuiChapterSelectIcon self) {
@@ -625,6 +626,14 @@ namespace Celeste.Mod.Head2Head {
 			orig(self, flag, setTo);
 			if (setTo) {
 				PlayerStatus.Current.CheckFlagObjective(flag, new GlobalAreaKey(self.Area));
+			}
+		}
+
+		private void OnStrawberryCtor(On.Celeste.Strawberry.orig_ctor orig, Strawberry self, EntityData data, Vector2 offset, EntityID gid) {
+			orig(self, data, offset, gid);
+			if (self.Golden && self.Winged) {
+				DynamicData dd = new DynamicData(self);
+				dd.Set("IsWingedGolden", true);
 			}
 		}
 

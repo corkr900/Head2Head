@@ -229,7 +229,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			}
 		}
 		internal void StrawberryCollected(GlobalAreaKey area, Strawberry strawb) {
-			CollectableCollected(area, strawb.ID, strawb.Golden ? MatchObjectiveType.GoldenStrawberry : strawb.Moon ? MatchObjectiveType.MoonBerry : MatchObjectiveType.Strawberries);
+			CollectableCollected(area, strawb.ID, MatchObjective.GetTypeForStrawberry(strawb));
 		}
 		internal void CustomCollectableCollected(string entityTypeID, GlobalAreaKey area, EntityID id) {
 			CollectableCollected(area, id, MatchObjectiveType.CustomCollectable, entityTypeID);

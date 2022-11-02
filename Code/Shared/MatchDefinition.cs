@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Monocle;
+using MonoMod.Utils;
 
 namespace Celeste.Mod.Head2Head.Shared {
 
@@ -393,6 +394,14 @@ namespace Celeste.Mod.Head2Head.Shared {
                 TimeLimitAdjustments.Add(new Tuple<PlayerID, long>(id, adj));
             }
         }
+
+        public static MatchObjectiveType GetTypeForStrawberry(Strawberry s) {
+            if (s.Golden) {
+                DynamicData dd = new DynamicData(s);
+                return dd.Data.ContainsKey("IsWingedGolden") ? MatchObjectiveType.WingedGoldenStrawberry : MatchObjectiveType.GoldenStrawberry;
+			}
+            return s.Moon ? MatchObjectiveType.MoonBerry : MatchObjectiveType.Strawberries;
+		}
     }
 
     public enum MatchObjectiveType {
@@ -403,6 +412,7 @@ namespace Celeste.Mod.Head2Head.Shared {
         Strawberries,
         MoonBerry,
         GoldenStrawberry,
+        WingedGoldenStrawberry,
         Flag,
         EnterRoom,
         TimeLimit,

@@ -89,7 +89,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 						if (split.Length > 1) {
 							int minutes, seconds;
 							if (!int.TryParse(split[0], out minutes) || !int.TryParse(split[1], out seconds)) {
-								Logger.Log("Head2Head.Warn", "Malformed time limit (" + ob.TimeLimit + ") in category: " + meta.ID);
+								Logger.Log("Head2Head.Custom", "Malformed time limit (" + ob.TimeLimit + ") in category: " + meta.ID);
 								return;
 							}
 							obtem.TimeLimit = Util.TimeValueInternal(minutes, seconds);
@@ -97,7 +97,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 						else {
 							int seconds;
 							if (!int.TryParse(split[0], out seconds)) {
-								Logger.Log("Head2Head.Warn", "Malformed time limit (" + ob.TimeLimit + ") in category: " + meta.ID);
+								Logger.Log("Head2Head.Custom", "Malformed time limit (" + ob.TimeLimit + ") in category: " + meta.ID);
 								return;
 							}
 							obtem.TimeLimit = Util.TimeValueInternal(0, seconds);
