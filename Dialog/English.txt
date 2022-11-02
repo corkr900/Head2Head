@@ -14,9 +14,13 @@ Head2Head_Setting_ReturnToLobby= Return to Lobby
 Head2Head_Setting_ReturnToLobby_Subtext= If turned on, you will automatically return to the Head2Head lobby after completing a match.
 Default: On
 Head2Head_Setting_AutoLaunchPhase= Auto-Launch Next Phase
-Head2Head_Setting_AutoLaunchPhase_Subtext= (CURRENTLY UNUSED - multi-phase matches cannot be created... yet)
-If turned on, you will automatically be launched into the next phase of a match
+Head2Head_Setting_AutoLaunchPhase_Subtext= If turned on, you will automatically be launched into the next phase of a match
 after completing the previous phase.
+Default: On
+Head2Head_Setting_UseSRCARBRules= Use SRC ARB Categories
+Head2Head_Setting_UseSRCARBRules_Subtext= If turned on, either ARB or ARB + Heart will be hidden for base-game chapters
+according to the rules on SRC for the "All Red Berries" category, and ARB + Heart will be hidden
+for all mod maps. If turned off, both categories will be shown for all chapters.
 Default: On
 Head2Head_Setting_Role= Role
 Head2Head_Setting_Role_Subtext= Your role changes the available functionality and the matches you are able to join.
@@ -84,6 +88,10 @@ Head2Head_ObjectiveDescription_CassetteCollect= Collect the Cassette
 Head2Head_ObjectiveDescription_TimeLimit= Get as far as you can in {0}
 Head2Head_ObjectiveDescription_CustomCollectable= Collect {0} (x{1})
 Head2Head_ObjectiveDescription_CustomObjective= Unnamed custom objective
+Head2Head_ObjectiveDescription_GoldenStrawberry= Collect the golden strawberry
+Head2Head_ObjectiveDescription_WingedGoldenStrawberry= Collect the winged golden strawberry
+Head2Head_ObjectiveDescription_Flag= Flag objective description unavailable
+Head2Head_ObjectiveDescription_EnterRoom= Enter Room {0}
 
 Head2Head_MatchStatus_None= Unknown
 Head2Head_MatchStatus_Building= Building

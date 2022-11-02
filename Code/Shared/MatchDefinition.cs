@@ -363,6 +363,8 @@ namespace Celeste.Mod.Head2Head.Shared {
                     case MatchObjectiveType.TimeLimit:
                         return string.Format(Dialog.Get("Head2Head_ObjectiveDescription_TimeLimit"),
                             Dialog.FileTime(AdjustedTimeLimit(PlayerID.MyIDSafe)));
+                    case MatchObjectiveType.EnterRoom:
+                        return string.Format(Dialog.Get("Head2Head_ObjectiveDescription_EnterRoom"), CustomTypeKey);
                 }
 			}
 		}

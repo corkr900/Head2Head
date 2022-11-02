@@ -35,6 +35,10 @@ namespace Celeste.Mod.Head2Head {
 		[SettingSubText("Head2Head_Setting_AutoLaunchPhase_Subtext")]
 		public bool AutoLaunchNextPhase { get; set; } = true;
 
+		[SettingName("Head2Head_Setting_UseSRCARBRules")]
+		[SettingSubText("Head2Head_Setting_UseSRCARBRules_Subtext")]
+		public bool UseSRCRulesForARB { get; set; } = true;
+
 		[SettingName("Head2Head_Setting_AutoStage")]
 		[SettingSubText("Head2Head_Setting_AutoStage_Subtext")]
 		public AutoStageSetting AutoStageNewMatches { get; set; } = AutoStageSetting.OnlyInLobby;
