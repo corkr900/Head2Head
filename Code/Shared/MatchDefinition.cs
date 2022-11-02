@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Monocle;
+using MonoMod.Utils;
 
 namespace Celeste.Mod.Head2Head.Shared {
 
@@ -302,7 +303,14 @@ namespace Celeste.Mod.Head2Head.Shared {
                 }
             }
         }
-    }
+
+        public bool AllPhasesExistLocal() {
+            foreach(MatchPhase p in Phases) {
+                if (!p.Area.ExistsLocal) return false;
+			}
+            return true;
+        }
+	}
 
     public class MatchPhase {
         public StandardCategory category;
@@ -355,6 +363,8 @@ namespace Celeste.Mod.Head2Head.Shared {
                     case MatchObjectiveType.TimeLimit:
                         return string.Format(Dialog.Get("Head2Head_ObjectiveDescription_TimeLimit"),
                             Dialog.FileTime(AdjustedTimeLimit(PlayerID.MyIDSafe)));
+                    case MatchObjectiveType.EnterRoom:
+                        return string.Format(Dialog.Get("Head2Head_ObjectiveDescription_EnterRoom"), CustomTypeKey);
                 }
 			}
 		}
@@ -386,6 +396,14 @@ namespace Celeste.Mod.Head2Head.Shared {
                 TimeLimitAdjustments.Add(new Tuple<PlayerID, long>(id, adj));
             }
         }
+
+        public static MatchObjectiveType GetTypeForStrawberry(Strawberry s) {
+            if (s.Golden) {
+                DynamicData dd = new DynamicData(s);
+                return dd.Data.ContainsKey("IsWingedGolden") ? MatchObjectiveType.WingedGoldenStrawberry : MatchObjectiveType.GoldenStrawberry;
+			}
+            return s.Moon ? MatchObjectiveType.MoonBerry : MatchObjectiveType.Strawberries;
+		}
     }
 
     public enum MatchObjectiveType {
@@ -395,7 +413,10 @@ namespace Celeste.Mod.Head2Head.Shared {
         CassetteCollect,
         Strawberries,
         MoonBerry,
-        // Nonstandard
+        GoldenStrawberry,
+        WingedGoldenStrawberry,
+        Flag,
+        EnterRoom,
         TimeLimit,
         // Custom
         CustomCollectable,

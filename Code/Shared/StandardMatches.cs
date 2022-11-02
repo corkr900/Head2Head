@@ -283,7 +283,8 @@ namespace Celeste.Mod.Head2Head.Shared {
 			if (ILSelector.IsSuppressed(area, cat)) return false;
 			if (area.IsVanilla) {
 				if (area.Mode != AreaMode.Normal) {
-					return cat == StandardCategory.Clear;
+					return cat == StandardCategory.Clear
+						|| cat == StandardCategory.Custom;
 				}
 				switch (area.Local?.ID) {
 					case null:
@@ -387,6 +388,33 @@ namespace Celeste.Mod.Head2Head.Shared {
 			foreach (StandardCategory cat in cats) {
 				if (cat == StandardCategory.Custom) continue;
 				if (!IsCategoryValid(cat, gArea, null)) continue;
+				// enforce SRC Rules setting
+				if (Head2HeadModule.Settings.UseSRCRulesForARB && (cat == StandardCategory.ARB || cat == StandardCategory.ARBHeart)) {
+					switch (gArea.Local?.ID) {
+						default:  // custom
+							if (cat == StandardCategory.ARBHeart) continue;
+							else break;  
+						case 0:  // Prologue
+						case 6:  // Reflection
+						case 8:  // Epilogue
+						case 10: // Farewell
+							// disallow both ARB and ARB+Heart
+							continue;
+						case 1:  // Forsaken City
+						case 3:  // Celestial Resort
+						case 4:  // Golden Ridge
+							// allow only ARB+Heart
+							if (cat == StandardCategory.ARB) continue;
+							else break;
+						case 2:  // Old Site
+						case 5:  // Mirror Temple
+						case 7:  // Summit
+						case 9:  // Core
+							// allow only ARB
+							if (cat == StandardCategory.ARBHeart) continue;
+							else break;
+					}
+				}
 				ret.Add(new Tuple<StandardCategory, CustomMatchTemplate>(cat, null));
 			}
 			// Custom Categories

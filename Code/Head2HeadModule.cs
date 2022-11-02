@@ -28,8 +28,7 @@ using MonoMod.ModInterop;
 
 // TODO Force DNF if a player intentionally closes the game
 // TODO Support full-game runs... eventually
-// TODO "Enter Room" objective
-// TODO "golden berry" objective
+// TODO Make the start-match and return-to-lobby sequences more robust
 
 namespace Celeste.Mod.Head2Head {
 	public class Head2HeadModule : EverestModule {
@@ -39,7 +38,7 @@ namespace Celeste.Mod.Head2Head {
 		internal int MatchTimeoutMinutes = 15;
 
 		// Constants that might change in the future
-		public static readonly string ProtocolVersion = "1_0_8";
+		public static readonly string ProtocolVersion = "1_0_9";
 
 		// Other static stuff
 		public static Head2HeadModule Instance { get; private set; }
@@ -97,7 +96,7 @@ namespace Celeste.Mod.Head2Head {
 		}
 
 		public override void Load() {
-			// Annoying manual/IL hooks
+			// Manual Hooks
 			hook_Strawberry_orig_OnCollect = new Hook(
 				typeof(Strawberry).GetMethod("orig_OnCollect", BindingFlags.Public | BindingFlags.Instance),
 				typeof(Head2HeadModule).GetMethod("OnStrawberryCollect"));
@@ -113,8 +112,11 @@ namespace Celeste.Mod.Head2Head {
 			hook_HeartGemDoor_Get_HeartGems = new Hook(
 				typeof(HeartGemDoor).GetProperty("HeartGems").GetGetMethod(),
 				typeof(Head2HeadModule).GetMethod("OnHeartGemDoorGetHeartGems"));
+
+			// IL Hooks
 			IL.Celeste.LevelLoader.LoadingThread += Level_LoadingThread;
 			IL.Celeste.Level.CompleteArea_bool_bool_bool += Level_CompleteArea;
+
 			// Monocle + Celeste Hooks
 			On.Monocle.Scene.Begin += OnSceneBegin;
 			On.Monocle.Scene.End += OnSceneEnd;
@@ -126,6 +128,7 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.Level.CompleteArea_bool_bool_bool += OnLevelAreaComplete;
 			On.Celeste.Player.Update += OnPlayerUpdate;
 			On.Celeste.MapData.ctor += OnMapDataCtor;
+			On.Celeste.Session.SetFlag += OnSessionSetFlag;
 			On.Celeste.Celeste.CriticalFailureHandler += OnCelesteCriticalFailure;
 			On.Celeste.Postcard.DisplayRoutine += OnPostcardDisplayRoutine;
 			On.Celeste.SaveData.RegisterCassette += OnCassetteCollected;
@@ -135,6 +138,7 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.SaveData.BeforeSave += OnSaveDataBeforeSave;
 			On.Celeste.SaveData.FoundAnyCheckpoints += OnSaveDataFoundAnyCheckpoints;
 			On.Celeste.LevelData.CreateEntityData += OnLevelDataCreateEntityData;
+			On.Celeste.Strawberry.ctor += OnStrawberryCtor;
 			On.Celeste.LevelLoader.StartLevel += OnLevelLoaderStart;
 			On.Celeste.AreaComplete.Update += OnAreaCompleteUpdate;
 			On.Celeste.OverworldLoader.Begin += OnOverworldLoaderBegin;
@@ -147,6 +151,7 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.Mod.UI.OuiMapSearch.Inspect += OnMapSearchInspect;
 			On.Celeste.Mod.UI.OuiMapSearch.cleanExit += OnMapSearchCleanExit;
 			// Everest Events
+			Everest.Events.Level.OnLoadEntity += OnLevelLoadEntity;
 			Everest.Events.Level.OnEnter += onLevelEnter;
 			Everest.Events.Level.OnExit += onLevelExit;
 			Everest.Events.Level.OnTransitionTo += onRoomTransition;
@@ -167,7 +172,7 @@ namespace Celeste.Mod.Head2Head {
 			// Misc other setup
 			Celeste.Instance.Components.Add(Comm = new CNetComm(Celeste.Instance));
 			Logger.SetLogLevel("Head2Head", LogLevel.Info);
-			Logger.SetLogLevel("Head2Head.Error", LogLevel.Warn);
+			Logger.SetLogLevel("Head2Head.Error", LogLevel.Error);
 			Logger.SetLogLevel("Head2Head.Warn", LogLevel.Warn);
 			Logger.SetLogLevel("Head2Head.Custom", LogLevel.Warn);
 			typeof(Head2HeadAPI).ModInterop();
@@ -175,7 +180,7 @@ namespace Celeste.Mod.Head2Head {
 		}
 
 		public override void Unload() {
-			// Manual/IL hooks
+			// Manual Hooks
 			hook_Strawberry_orig_OnCollect?.Dispose();
 			hook_Strawberry_orig_OnCollect = null;
 			hook_OuiChapterSelectIcon_Get_IdlePosition?.Dispose();
@@ -186,8 +191,11 @@ namespace Celeste.Mod.Head2Head {
 			hook_SaveData_Set_UnlockedAreas_Safe = null;
 			hook_HeartGemDoor_Get_HeartGems?.Dispose();
 			hook_HeartGemDoor_Get_HeartGems = null;
+
+			// IL Hooks
 			IL.Celeste.LevelLoader.LoadingThread -= Level_LoadingThread;
 			IL.Celeste.Level.CompleteArea_bool_bool_bool -= Level_CompleteArea;
+
 			// Monocle + Celeste Hooks
 			On.Monocle.Scene.Begin -= OnSceneBegin;
 			On.Monocle.Scene.End -= OnSceneEnd;
@@ -199,7 +207,8 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.Level.CompleteArea_bool_bool_bool -= OnLevelAreaComplete;
 			On.Celeste.Player.Update -= OnPlayerUpdate;
 			On.Celeste.MapData.ctor -= OnMapDataCtor;
-			On.Celeste.Celeste.CriticalFailureHandler += OnCelesteCriticalFailure;
+			On.Celeste.Session.SetFlag -= OnSessionSetFlag;
+			On.Celeste.Celeste.CriticalFailureHandler -= OnCelesteCriticalFailure;
 			On.Celeste.Postcard.DisplayRoutine -= OnPostcardDisplayRoutine;
 			On.Celeste.SaveData.RegisterCassette -= OnCassetteCollected;
 			On.Celeste.SaveData.RegisterHeartGem -= OnHeartCollected;
@@ -208,6 +217,7 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.SaveData.TryDelete -= OnSaveDataTryDelete;
 			On.Celeste.SaveData.BeforeSave -= OnSaveDataBeforeSave;
 			On.Celeste.LevelData.CreateEntityData -= OnLevelDataCreateEntityData;
+			On.Celeste.Strawberry.ctor -= OnStrawberryCtor;
 			On.Celeste.LevelLoader.StartLevel -= OnLevelLoaderStart;
 			On.Celeste.AreaComplete.Update -= OnAreaCompleteUpdate;
 			On.Celeste.OverworldLoader.Begin -= OnOverworldLoaderBegin;
@@ -220,6 +230,7 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.Mod.UI.OuiMapSearch.cleanExit -= OnMapSearchCleanExit;
 			On.Celeste.Mod.UI.OuiMapSearch.Inspect -= OnMapSearchInspect;
 			// Everest Events
+			Everest.Events.Level.OnLoadEntity -= OnLevelLoadEntity;
 			Everest.Events.Level.OnEnter -= onLevelEnter;
 			Everest.Events.Level.OnExit -= onLevelExit;
 			Everest.Events.Level.OnTransitionTo -= onRoomTransition;
@@ -249,6 +260,20 @@ namespace Celeste.Mod.Head2Head {
 		}
 
 		// ###############################################
+
+		/// <summary>
+		/// Manipulates entity loading to hide golden berries when not in a head 2 head match
+		/// (or to force them to appear if the match requires it)
+		/// </summary>
+		/// <returns>false to let entity loading continue as normal, true to intercept the other loading logic</returns>
+		private bool OnLevelLoadEntity(Level level, LevelData levelData, Vector2 offset, EntityData entityData) {
+			if (entityData.Name != "goldenBerry") return false;  // We only care about golden berries
+			if (!PlayerStatus.Current.IsInMatch(false)) return false;  // Don't mess with anything if we're not in a match
+			MatchObjective ob = PlayerStatus.Current.FindObjective(MatchObjectiveType.GoldenStrawberry, new GlobalAreaKey(level.Session.Area));
+			if (ob == null) return true;  // If we don't need the golden, do nothing but say it's handled; prevents the berry from loading in.
+			level.Add(new Strawberry(entityData, offset, new EntityID(levelData.Name, entityData.ID)));  // Force it to appear if we need it
+			return true;
+		}
 
 		private void OnCelesteCriticalFailure(On.Celeste.Celeste.orig_CriticalFailureHandler orig, Exception e) {
 			orig(e);
@@ -361,14 +386,8 @@ namespace Celeste.Mod.Head2Head {
 			orig(self);
 			Level level = self.Scene as Level;
 			GlobalAreaKey gak = new GlobalAreaKey(level.Session.Area);
-			if (self.Golden) {
-				// TODO handle golden strawberries
-			}
-			else {
-				// Moon berries work this way too
-				PlayerStatus.Current.StrawberryCollected(gak, self);
-				Instance.DoPostPhaseAutoLaunch(true, self.Moon ? MatchObjectiveType.MoonBerry : MatchObjectiveType.Strawberries);
-			}
+			PlayerStatus.Current.StrawberryCollected(gak, self);
+			Instance.DoPostPhaseAutoLaunch(true, MatchObjective.GetTypeForStrawberry(self));
 		}
 
 		public static Vector2 OnOuiChapterSelectIconGetIdlePosition(Func<OuiChapterSelectIcon, Vector2> orig, OuiChapterSelectIcon self) {
@@ -623,6 +642,21 @@ namespace Celeste.Mod.Head2Head {
 				PlayerStatus.Current.CheckForTimeLimit(new GlobalAreaKey(level.Session.Area));
 			}
 			orig(self);
+		}
+
+		private void OnSessionSetFlag(On.Celeste.Session.orig_SetFlag orig, Session self, string flag, bool setTo) {
+			orig(self, flag, setTo);
+			if (setTo) {
+				PlayerStatus.Current.CheckFlagObjective(flag, new GlobalAreaKey(self.Area));
+			}
+		}
+
+		private void OnStrawberryCtor(On.Celeste.Strawberry.orig_ctor orig, Strawberry self, EntityData data, Vector2 offset, EntityID gid) {
+			orig(self, data, offset, gid);
+			if (self.Golden && self.Winged) {
+				DynamicData dd = new DynamicData(self);
+				dd.Set("IsWingedGolden", true);
+			}
 		}
 
 		// ########################################

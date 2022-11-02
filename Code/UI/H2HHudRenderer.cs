@@ -270,6 +270,7 @@ namespace Celeste.Mod.Head2Head.UI {
 		private bool ShouldShowCountdown(Scene scene, MatchDefinition def) {
 			if (def == null) return false;
 			if (def.State != MatchState.InProgress) return false;
+			if (def.GetPlayerResultCat(PlayerID.MyIDSafe) == ResultCategory.NotJoined) return false;
 			DateTime now = DateTime.Now;
 			if (def.BeginInstant < now) return false;
 			TimeSpan remain = def.BeginInstant - now;
