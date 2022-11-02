@@ -308,7 +308,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			return max + 1;
 		}
 
-		private MatchObjective FindObjective(MatchObjectiveType type, GlobalAreaKey area, bool includeFinished = false, string entityTypeID = "") {
+		internal MatchObjective FindObjective(MatchObjectiveType type, GlobalAreaKey area, bool includeFinished = false, string entityTypeID = "") {
 			if (CurrentMatch == null) return null;
 			int currentp = CurrentPhase();
 			foreach (MatchPhase ph in CurrentMatch.Phases) {
