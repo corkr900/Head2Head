@@ -216,7 +216,12 @@ namespace Celeste.Mod.Head2Head.Entities {
 			else {
 				self.Focused = false;
 				Audio.Play("event:/ui/world_map/icon/select");
-				LastArea = new GlobalAreaKey(area.ToKey(mode));
+				GlobalAreaKey areaKey = new GlobalAreaKey(area.ToKey(mode));
+				if (areaKey.Equals(GlobalAreaKey.Head2HeadLobby)) {
+					Audio.Play("event:/ui/main/button_invalid");
+					return;
+				}
+				LastArea = areaKey;
 				if (self.OuiIcons != null && area.ID < self.OuiIcons.Count) {
 					self.OuiIcons[area.ID].Select();
 				}
@@ -251,15 +256,27 @@ namespace Celeste.Mod.Head2Head.Entities {
 				orig(self, area, mode);
 				return;
 			}
+			GlobalAreaKey areaKey = new GlobalAreaKey(area.ToKey(mode));
+			if (areaKey.Equals(GlobalAreaKey.Head2HeadLobby)) {
+				Audio.Play("event:/ui/main/button_invalid");
+				return;
+			}
 			DynamicData dd = new DynamicData(self);
 			self.Focused = false;
 			Audio.Play("event:/ui/world_map/icon/select");
-			LastArea = new GlobalAreaKey(area.ToKey(mode));
+			LastArea = areaKey;
 			if (self.OuiIcons != null && area.ID < self.OuiIcons.Count) {
 				self.OuiIcons[area.ID].Select();
 			}
 			self.Overworld.Mountain.Model.EaseState(area.MountainState);
-			self.Overworld.Goto<OuiRunSelectILChapterPanel>();
+			if (string.IsNullOrEmpty(CollabUtils2Integration.GetLobbyLevelSet(LastArea.SID))) {
+				// not a collab lobby
+				self.Overworld.Goto<OuiRunSelectILChapterPanel>();
+			}
+			else {
+				// is a collab lobby
+				self.Overworld.Goto<OuiRunSelectILCollabMapSelect>();
+			}
 		}
 	}
 }
