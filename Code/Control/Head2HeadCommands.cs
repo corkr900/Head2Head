@@ -113,5 +113,15 @@ namespace Celeste.Mod.Head2Head.Control {
 					return;
 			}
 		}
+
+		[Command("h2h_junk", "random testing junk")]
+		public static void Junk(string arg) {
+			if (string.IsNullOrEmpty(arg)) {
+				Engine.Commands.Log(Head2HeadModule.Instance.FindNextUnusedSlot());
+			}
+			else if (int.TryParse(arg, out int val)) {
+				Head2HeadModule.Instance.CreateNewSaveAndSwitch(val);
+			}
+		}
 	}
 }
