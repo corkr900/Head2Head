@@ -246,8 +246,11 @@ namespace Celeste.Mod.Head2Head.UI {
 			}
 
 			selectingMode = true;
-			for (int i = 0; i < options.Count; i++) {
-				options[i].SlideTowards(i, options.Count, snap: true);
+			if (options.Count > 0) {
+				option = Calc.Clamp(option, 0, options.Count - 1);
+				for (int i = 0; i < options.Count; i++) {
+					options[i].SlideTowards(i, options.Count, snap: true);
+				}
 			}
 			chapter = Dialog.Get("area_chapter").Replace("{x}", Area.ChapterIndex.ToString().PadLeft(2));
 			contentOffset = new Vector2(440f, 120f);
