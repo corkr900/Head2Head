@@ -1324,6 +1324,40 @@ namespace Celeste.Mod.Head2Head {
 			doAutoLaunch = false;
 			autoLaunchArea = GlobalAreaKey.Overworld;
 		}
+
+		// #######################################################
+
+		// TODO (!!!) find an unused slot
+		// TODO (!!!) make a new save and switch to it
+		// TODO (!!!) delete the save after the match and switch back
+
+		/// <summary>
+		/// Searches for a save slot with no data (max slot number 99)
+		/// </summary>
+		/// <returns>index of open slot or -2 if none was found or UserIO could not be opened</returns>
+		internal int FindNextUnusedSlot() {
+			if (UserIO.Open(UserIO.Mode.Read)) {
+				for (int i = 3; i < 100; i++) {
+					if (!UserIO.Exists(global::Celeste.SaveData.GetFilename(i))) {
+						UserIO.Close();
+						return i;
+					}
+				}
+				UserIO.Close();
+			}
+			return -2;
+		}
+
+		internal void CreateNewSaveAndSwitch(int slot) {
+			global::Celeste.SaveData.Start(new SaveData {
+				Name = "H2H Generated",
+				AssistMode = false,
+				VariantMode = false,
+			}, slot);
+			new FadeWipe(GetLevelForCoroutine(), false, () => {
+				LevelEnter.Go(new Session(GlobalAreaKey.VanillaPrologue.Local.Value), false);
+			});
+		}
 	}
 
 	public class Head2HeadModuleSaveData : EverestModuleSaveData {
