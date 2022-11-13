@@ -300,6 +300,10 @@ namespace Celeste.Mod.Head2Head.UI {
 		}
 
 		private IEnumerator SwapRoutine() {
+			// Safeguards against a crash i can't reliably reproduce
+			if (options.Count == 0) yield break;
+			option = Calc.Clamp(option, 0, options.Count - 1);
+			// Now to the normal stuff
 			float fromHeight = height;
 			int toHeight = 730;
 			resizing = true;
