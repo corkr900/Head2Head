@@ -22,6 +22,19 @@ namespace Celeste.Mod.Head2Head.Shared {
 		OneThirdBerries,
 		TimeLimit,
 
+		// Fullgame
+		AnyPercent,  // TODO
+		AllRedBerries,  // TODO
+		TrueEnding,  // TODO
+		AllCassettes,  // TODO
+		BnyPercent,  // TODO
+		AllHearts,  // TODO
+		OneHundredPercent,  // TODO
+		AllChapters,  // TODO
+		AllASides,  // TODO
+		AllBSides,  // TODO
+		AllCSides,  // TODO
+
 		// Custom
 		Custom,
 	}
@@ -273,6 +286,40 @@ namespace Celeste.Mod.Head2Head.Shared {
 			};
 			return mp;
 		}
+
+		// Fullgame Categories
+
+		public static MatchDefinition FullGameAnyPct() {
+			MatchDefinition def = new MatchDefinition() {
+				Owner = PlayerID.MyID ?? PlayerID.Default,
+				CreationInstant = DateTime.Now,
+				UseFreshSavefile = true,
+				AllowCheatMode = false,
+			};
+			def.Phases.Add(new MatchPhase() {
+				category = StandardCategory.AnyPercent,
+				Area = GlobalAreaKey.VanillaPrologue,
+				Fullgame = true,
+				Objectives = new List<MatchObjective>() {
+					new MatchObjective() {
+						ObjectiveType = MatchObjectiveType.Fullgame_UnlockChapter,
+						CustomTypeKey = "Celeste/8-Epilogue",
+					}
+				}
+			});
+			return def;
+		}
+
+		//FullGameAllRedBerries,
+		//FullGameTrueEnding,
+		//FullGameAllCassettes,
+		//FullGameBnyPercent,
+		//FullGameAllHearts,
+		//FullGameOneHundredPercent,
+		//FullGameAllChapters,
+		//FullGameAllASides,
+		//FullGameAllBSides,
+		//FullGameAllCSides,
 
 		// More Stuff
 

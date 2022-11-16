@@ -219,7 +219,6 @@ namespace Celeste.Mod.Head2Head.UI {
 			}
 			height = GetModeHeight();
 			modes.Clear();
-			// TODO AltSideHelper support
 			if (StandardMatches.HasAnyValidCategory(new GlobalAreaKey(Area.ID, AreaMode.Normal))) {
 				modes.Add(new Option {
 					Label = Dialog.Clean(Data.Interlude ? "FILE_BEGIN" : "overworld_normal").ToUpper(),

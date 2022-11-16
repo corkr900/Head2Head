@@ -79,6 +79,17 @@ Head2Head_CategoryName_OneThirdBerries= One Third Berries
 Head2Head_CategoryName_OneFifthBerries= One Fifth Berries
 Head2Head_CategoryName_TimeLimit= Time Limited
 Head2Head_CategoryName_Custom= Unnamed Custom Category
+Head2Head_CategoryName_AnyPercent= Any%
+Head2Head_CategoryName_AllRedBerries= All Red Berries
+Head2Head_CategoryName_TrueEnding= True Ending
+Head2Head_CategoryName_AllCassettes= All Cassettes
+Head2Head_CategoryName_BnyPercent= Bny%
+Head2Head_CategoryName_AllHearts= All Hearts
+Head2Head_CategoryName_OneHundredPercent= 100%
+Head2Head_CategoryName_AllChapters= All Chapters
+Head2Head_CategoryName_AllASides= All A Sides
+Head2Head_CategoryName_AllBSides= All B Sides
+Head2Head_CategoryName_AllCSides= All C Sides
 
 Head2Head_ObjectiveDescription_Strawberries= Collect Strawberry (x{0})
 Head2Head_ObjectiveDescription_MoonBerry= Collect Moon Berry (x{0})

@@ -38,7 +38,7 @@ namespace Celeste.Mod.Head2Head {
 		internal int MatchTimeoutMinutes = 15;
 
 		// Constants that might change in the future
-		public static readonly string ProtocolVersion = "1_0_9";
+		public static readonly string ProtocolVersion = "2_0_0";
 
 		// Other static stuff
 		public static Head2HeadModule Instance { get; private set; }
@@ -594,19 +594,27 @@ namespace Celeste.Mod.Head2Head {
 		}
 
 		public static int OnSaveDataGetUnlockedAreas_Safe(Func<SaveData, int> orig, SaveData self) {
-			// Show all chapters in file select when in match so that RTM doesnt cause issues in a fresh savefile
+			// Show all chapters in file select when in IL match so that RTM doesnt cause issues in a fresh savefile
 			MatchDefinition def = PlayerStatus.Current.CurrentMatch;
-			if (def != null && def.GetPlayerResultCat(PlayerID.MyIDSafe) == ResultCategory.InMatch) {
+			if (def != null && !def.UseFreshSavefile && def.GetPlayerResultCat(PlayerID.MyIDSafe) == ResultCategory.InMatch) {
 				return self.LevelSetStats.AreaOffset + self.LevelSetStats.MaxArea;
 			}
 			else return orig(self);
 		}
 
 		public static void OnSaveDataSetUnlockedAreas_Safe(Action<SaveData, int> orig, SaveData self, int val) {
-			// Don't update the unlocked areas while in a match because we're exposing all of them anyway
 			MatchDefinition def = PlayerStatus.Current.CurrentMatch;
 			if (def != null && def.GetPlayerResultCat(PlayerID.MyIDSafe) == ResultCategory.InMatch) {
-				return;
+				// Don't update the unlocked areas while in IL match because we're exposing all of them anyway
+				if (!def.UseFreshSavefile) return;
+				// Figure out what was unlocked and send it to PlayerStatus
+				int minCheck = self.UnlockedAreas_Safe + 1 + self.LevelSetStats.AreaOffset;
+				int maxCheck = Calc.Clamp(val, 0, self.LevelSetStats.MaxArea - 1) + self.LevelSetStats.AreaOffset;
+				orig(self, val);  // Write the update before processing match progress
+				for (int id = minCheck; id <= maxCheck; id++) {
+					string SID = AreaData.Areas[id].SID;
+					PlayerStatus.Current.ChapterUnlocked(SID);
+				}
 			}
 			else orig(self, val);
 		}

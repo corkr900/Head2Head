@@ -12,7 +12,6 @@ namespace Celeste.Mod.Head2Head.UI {
 		public static readonly int lineOffset = 52;
 		public static readonly int titleMarginX = 80;
 		public static readonly int listMargin = 32;
-		//public static readonly float listBgScale = 0.5f;
 
 		MTexture Banner;
 		MTexture BannerLeft;
