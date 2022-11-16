@@ -121,7 +121,19 @@ namespace Celeste.Mod.Head2Head.Control {
 			}
 			else if (int.TryParse(arg, out int val)) {
 				Head2HeadModule.Instance.CreateNewSaveAndSwitch(val);
+				Engine.Commands.Log("Switched to slot " + arg);
 			}
+			else {
+				Engine.Commands.Log("Invalid argument");
+			}
+		}
+
+		[Command("h2h_build", "test function to build and stage a full-game match")]
+		public static void BuildFullGame() {
+			MatchDefinition def = StandardMatches.FullGameAnyPct();
+			Head2HeadModule.Instance.buildingMatch = def;
+			Head2HeadModule.Instance.StageMatch();
+			Engine.Commands.Log("Done");
 		}
 	}
 }

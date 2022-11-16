@@ -28,14 +28,10 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 		#endregion
 
-		#region Currently Unused
+		#region Fullgame Category Flags
 
-		public bool CanParticipantsStart = true;
-        public bool OpenEntry = true;
-        public bool RequireNewSaveFile = false;
+		public bool UseFreshSavefile = true;
         public bool AllowCheatMode = true;
-        public bool AllowDebugView = true;
-        public bool AllowDebugTeleport = false;
 
         #endregion
 
@@ -61,10 +57,16 @@ namespace Celeste.Mod.Head2Head.Shared {
         public string MatchDisplayName {
 			get {
                 return Phases.Count == 0 ? CategoryDisplayName :
+                    Phases[0].Fullgame ? FullGameDisplayName() :
                     string.Format(Dialog.Get("Head2Head_MatchTitle"), Phases[0].Area.DisplayName, CategoryDisplayName);
 
             }
 		}
+
+        private string FullGameDisplayName() {
+            string levelSet = Phases[0].Area.IsVanilla ? "Celeste" : Dialog.Clean(Phases[0].Area.Data.LevelSet);
+            return string.Format(Dialog.Get("Head2Head_MatchTitle"), levelSet, CategoryDisplayName);
+        }
 
         public string CategoryDisplayName {
 			get {
@@ -315,6 +317,7 @@ namespace Celeste.Mod.Head2Head.Shared {
     public class MatchPhase {
         public StandardCategory category;
         public uint ID;
+        public bool Fullgame = false;
         public int Order = 0;
         public GlobalAreaKey Area;
         public List<MatchObjective> Objectives = new List<MatchObjective>();
@@ -421,6 +424,12 @@ namespace Celeste.Mod.Head2Head.Shared {
         // Custom
         CustomCollectable,
         CustomObjective,
+        // Fullgame
+        Fullgame_UnlockChapter,    // TODO
+        Fullgame_CompleteChapter,  // TODO
+        Fullgame_Collectable,      // TODO
+        Fullgame_Cassettes,        // TODO
+        Fullgame_Hearts,           // TODO
     }
 
     /// <summary>
@@ -445,12 +454,8 @@ namespace Celeste.Mod.Head2Head.Shared {
             d.SetState_NoUpdate((MatchState)Enum.Parse(typeof(MatchState), reader.ReadString()));
             d.CategoryDisplayNameOverride = reader.ReadString();
             d.RequiredRole = reader.ReadString();
-            d.CanParticipantsStart = reader.ReadBoolean();
-            d.OpenEntry = reader.ReadBoolean();
-            d.RequireNewSaveFile = reader.ReadBoolean();
+            d.UseFreshSavefile = reader.ReadBoolean();
             d.AllowCheatMode = reader.ReadBoolean();
-            d.AllowDebugView = reader.ReadBoolean();
-            d.AllowDebugTeleport = reader.ReadBoolean();
             d.BeginInstant = reader.ReadDateTime();
             int numPlayers = reader.ReadInt32();
             d.Players.Capacity = numPlayers;
@@ -481,12 +486,8 @@ namespace Celeste.Mod.Head2Head.Shared {
             writer.Write(m.State.ToString() ?? "");
             writer.Write(m.CategoryDisplayNameOverride ?? "");
             writer.Write(m.RequiredRole ?? "");
-            writer.Write(m.CanParticipantsStart);
-            writer.Write(m.OpenEntry);
-            writer.Write(m.RequireNewSaveFile);
+            writer.Write(m.UseFreshSavefile);
             writer.Write(m.AllowCheatMode);
-            writer.Write(m.AllowDebugView);
-            writer.Write(m.AllowDebugTeleport);
             writer.Write(m.BeginInstant);
 
             writer.Write(m.Players.Count);
@@ -512,6 +513,7 @@ namespace Celeste.Mod.Head2Head.Shared {
             MatchPhase p = new MatchPhase();
             p.category = (StandardCategory)Enum.Parse(typeof(StandardCategory), reader.ReadString());
             p.ID = reader.ReadUInt32();
+            p.Fullgame = reader.ReadBoolean();
             p.Order = reader.ReadInt32();
             p.Area = reader.ReadAreaKey();
             int numObjectives = reader.ReadInt32();
@@ -525,6 +527,7 @@ namespace Celeste.Mod.Head2Head.Shared {
         public static void Write(this CelesteNetBinaryWriter writer, MatchPhase mp) {
             writer.Write(mp.category.ToString() ?? "");
             writer.Write(mp.ID);
+            writer.Write(mp.Fullgame);
             writer.Write(mp.Order);
             writer.Write(mp.Area);
             writer.Write(mp.Objectives.Count);

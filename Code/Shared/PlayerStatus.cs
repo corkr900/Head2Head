@@ -192,12 +192,12 @@ namespace Celeste.Mod.Head2Head.Shared {
 			if (!IsInMatch(false)) return;
 			bool changes = false;
 			MatchObjective ob = FindObjective(MatchObjectiveType.ChapterComplete, area, false);
-			if (ob != null && MarkObjectiveComplete(ob, area)) changes = true;
+			if (ob != null && MarkObjectiveComplete(ob)) changes = true;
 			ob = FindObjective(MatchObjectiveType.TimeLimit, area, false);
 			if (ob != null) {
 				string tmp = CurrentRoom;
 				CurrentRoom = "h2h_chapter_completed";  // Signals to the overlay to show time instead of final room
-				if (MarkObjectiveComplete(ob, area)) changes = true;
+				if (MarkObjectiveComplete(ob)) changes = true;
 				CurrentRoom = tmp;  // restore to the actual real value
 			}
 			if (changes) Updated();
@@ -205,12 +205,12 @@ namespace Celeste.Mod.Head2Head.Shared {
 		internal void HeartCollected(GlobalAreaKey area) {
 			if (!IsInMatch(false)) return;
 			MatchObjective ob = FindObjective(MatchObjectiveType.HeartCollect, area, false);
-			if (ob != null && MarkObjectiveComplete(ob, area)) Updated();
+			if (ob != null && MarkObjectiveComplete(ob)) Updated();
 		}
 		internal void CassetteCollected(GlobalAreaKey area) {
 			if (!IsInMatch(false)) return;
 			MatchObjective ob = FindObjective(MatchObjectiveType.CassetteCollect, area, false);
-			if (ob != null && MarkObjectiveComplete(ob, area)) Updated();
+			if (ob != null && MarkObjectiveComplete(ob)) Updated();
 		}
 		private void ConfirmCollectables() {
 			if (!IsInMatch(false)) return;
@@ -262,7 +262,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 				updated |= true;
 			}
 			if (objectives[stateIndex].CollectedItems.Count >= ob.CollectableGoal) {
-				updated |= MarkObjectiveComplete(ob, area);
+				updated |= MarkObjectiveComplete(ob);
 			}
 			if (updated) Updated();
 		}
@@ -274,23 +274,29 @@ namespace Celeste.Mod.Head2Head.Shared {
 			if (res == null) return;
 			long endTime = res.FileTimeStart + ob.AdjustedTimeLimit(PlayerID.MyIDSafe);
 			if (SaveData.Instance?.Time >= endTime) {
-				if (MarkObjectiveComplete(ob, area)) Updated();
+				if (MarkObjectiveComplete(ob)) Updated();
 			}
 		}
 		internal void CustomObjectiveCompleted(string objectiveTypeID, GlobalAreaKey area) {
 			if (!IsInMatch(false)) return;
 			MatchObjective ob = FindObjective(MatchObjectiveType.CustomObjective, area, false, objectiveTypeID);
-			if (ob != null && MarkObjectiveComplete(ob, area)) Updated();
+			if (ob != null && MarkObjectiveComplete(ob)) Updated();
 		}
 		internal void CheckRoomEnterObjective(string room, GlobalAreaKey area) {
 			if (!IsInMatch(false)) return;
 			MatchObjective ob = FindObjective(MatchObjectiveType.EnterRoom, area, false, room);
-			if (ob != null && MarkObjectiveComplete(ob, area)) Updated();
+			if (ob != null && MarkObjectiveComplete(ob)) Updated();
 		}
 		internal void CheckFlagObjective(string flag, GlobalAreaKey area) {
 			if (!IsInMatch(false)) return;
 			MatchObjective ob = FindObjective(MatchObjectiveType.Flag, area, false, flag);
-			if (ob != null && MarkObjectiveComplete(ob, area)) Updated();
+			if (ob != null && MarkObjectiveComplete(ob)) Updated();
+		}
+
+		internal void ChapterUnlocked(string SID) {
+			if (!IsInMatch(false)) return;
+			MatchObjective ob = FindObjective(MatchObjectiveType.Fullgame_UnlockChapter, entityTypeID: SID);
+			if (ob != null && MarkObjectiveComplete(ob)) Updated();
 		}
 
 		// objective help
@@ -308,11 +314,20 @@ namespace Celeste.Mod.Head2Head.Shared {
 			return max + 1;
 		}
 
-		internal MatchObjective FindObjective(MatchObjectiveType type, GlobalAreaKey area, bool includeFinished = false, string entityTypeID = "") {
+		/// <summary>
+		/// Searches the current match for an objective meeting the given criteria.
+		/// Does not search phases that have not been reached yet (for multi-phase matches)
+		/// </summary>
+		/// <param name="type">The objective type to search for</param>
+		/// <param name="area">The area associated with the objective. Pass null to skip the area check (fullgame objectives)</param>
+		/// <param name="includeFinished">If true, okay to return objectives that have already been finished</param>
+		/// <param name="entityTypeID">Additional parameter for objective types that need it. Null, empty, or not providing this parameter will skip the check.</param>
+		/// <returns>Returns the first-found objective fitting the provided criteria, or null if there is none.</returns>
+		internal MatchObjective FindObjective(MatchObjectiveType type, GlobalAreaKey? area = null, bool includeFinished = false, string entityTypeID = "") {
 			if (CurrentMatch == null) return null;
 			int currentp = CurrentPhase();
 			foreach (MatchPhase ph in CurrentMatch.Phases) {
-				if ((ph.Order == currentp || (includeFinished && ph.Order <= currentp)) && (ph.Area.Equals(area))) {
+				if ((ph.Order == currentp || (includeFinished && ph.Order <= currentp)) && (area == null || ph.Area.Equals(area))) {
 					foreach (MatchObjective ob in ph.Objectives) {
 						if (ob.ObjectiveType == type) {
 							if (string.IsNullOrEmpty(entityTypeID) || ob.CustomTypeKey == entityTypeID) {
@@ -339,7 +354,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			return false;
 		}
 
-		private bool MarkObjectiveComplete(MatchObjective ob, GlobalAreaKey area) {
+		private bool MarkObjectiveComplete(MatchObjective ob) {
 			if (!IsInMatch(false)) return false;
 			bool found = false;
 			for (int i = 0; i < objectives.Count; i++) {
@@ -467,7 +482,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			reachedCheckpoints = other.reachedCheckpoints;
 
 			// Remove unconfirmed strawbs
-			// TODO un-complete onjective types besides strawbs
+			// TODO un-complete objective types besides strawbs
 			MatchDefinition def = CurrentMatch;
 			if (def != null) {
 				for (int i1 = 0; i1 < objectives.Count; i1++) {
