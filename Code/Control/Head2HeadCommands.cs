@@ -114,20 +114,6 @@ namespace Celeste.Mod.Head2Head.Control {
 			}
 		}
 
-		[Command("h2h_junk", "random testing junk")]
-		public static void Junk(string arg) {
-			if (string.IsNullOrEmpty(arg)) {
-				Engine.Commands.Log(Head2HeadModule.Instance.FindNextUnusedSlot());
-			}
-			else if (int.TryParse(arg, out int val)) {
-				Head2HeadModule.Instance.CreateNewSaveAndSwitch(val);
-				Engine.Commands.Log("Switched to slot " + arg);
-			}
-			else {
-				Engine.Commands.Log("Invalid argument");
-			}
-		}
-
 		[Command("h2h_build", "test function to build and stage a full-game match")]
 		public static void BuildFullGame() {
 			MatchDefinition def = StandardMatches.FullGameAnyPct();
