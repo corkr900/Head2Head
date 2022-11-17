@@ -72,6 +72,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public string CurrentMatchID { get; internal set; }
 		public GlobalAreaKey CurrentArea { get; internal set; }
 		public string CurrentRoom { get; internal set; }
+		public int FileSlotBeforeMatchStart { get; internal set; }
 		public string LastCheckpoint { get; internal set; } = null;
 		public bool IsInDebug { get; internal set; }
 		public long CurrentFileTimer { get; internal set; }
@@ -480,6 +481,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			FileTimerAtMatchBegin = other.FileTimerAtMatchBegin;
 			FileTimerAtLastObjectiveComplete = other.FileTimerAtLastObjectiveComplete;
 			reachedCheckpoints = other.reachedCheckpoints;
+			FileSlotBeforeMatchStart = other.FileSlotBeforeMatchStart;
 
 			// Remove unconfirmed strawbs
 			// TODO un-complete objective types besides strawbs
@@ -532,6 +534,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			PlayerStatus pms = new PlayerStatus();
 			pms.IsInDebug = r.ReadBoolean();
 			pms.CurrentMatchID = r.ReadString();
+			pms.FileSlotBeforeMatchStart = r.ReadInt32();
 			pms.CurrentArea = r.ReadAreaKey();
 			pms.CurrentRoom = r.ReadString();
 			pms.LastCheckpoint = r.ReadString();
@@ -559,6 +562,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			w.Write(true);
 			w.Write(s.IsInDebug);
 			w.Write(s.CurrentMatchID ?? "");
+			w.Write(s.FileSlotBeforeMatchStart);
 			w.Write(s.CurrentArea);
 			w.Write(s.CurrentRoom ?? "");
 			w.Write(s.LastCheckpoint ?? "");

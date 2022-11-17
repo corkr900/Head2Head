@@ -80,6 +80,7 @@ namespace Celeste.Mod.Head2Head {
 		private GlobalAreaKey autoLaunchArea;
 		private MatchObjectiveType lastObjectiveType;
 		private bool doAutoLaunch;
+		private int returnToSlot = -2;
 		public bool PlayerEnteredAMap { get; private set; } = false;
 		public bool PlayerCompletedARoom { get; private set; } = false;
 
@@ -1273,10 +1274,27 @@ namespace Celeste.Mod.Head2Head {
 			MatchDefinition def = PlayerStatus.Current.CurrentMatch;
 			if (def == null) yield break;
 			if (def.State != MatchState.InProgress) yield break;
-			if (!isRejoin) PlayerStatus.Current.MatchStarted();
+			if (!isRejoin) {
+				PlayerStatus.Current.FileSlotBeforeMatchStart = global::Celeste.SaveData.Instance.FileSlot;
+				PlayerStatus.Current.MatchStarted();
+				if (def.UseFreshSavefile) {
+					int slot = FindNextUnusedSlot();
+					if (slot >= 0) {
+						// Create new savefile
+						global::Celeste.SaveData.Start(new SaveData {
+							Name = "[H2H] " + PlayerID.MyIDSafe.Name,
+							AssistMode = false,
+							VariantMode = false,
+						}, slot);
+					}
+					else {
+						Logger.Log("Head2Head.Warn", "Could not find a valid savefile slot for fullgame head 2 head match");
+						yield break;
+					}
+				}
+			}
 			def.RegisterSaveFile();
 			ActionLogger.StartingMatch(def);
-			if (gak.IsOverworld) yield break;
 			new FadeWipe(GetLevelForCoroutine(), false, () => {
 				LevelEnter.Go(new Session(gak.Local.Value, startRoom), false);
 			});
@@ -1293,6 +1311,9 @@ namespace Celeste.Mod.Head2Head {
 			if (args.MatchCompleted)
 			{
 				ActionLogger.CompletedMatch();
+				if (args.MatchDef.UseFreshSavefile) {
+					returnToSlot = PlayerStatus.Current.FileSlotBeforeMatchStart;
+				}
 				if (!Settings.ReturnToLobby) return;
 				autoLaunchArea = GlobalAreaKey.Head2HeadLobby;
 			}
@@ -1314,7 +1335,17 @@ namespace Celeste.Mod.Head2Head {
 			if (!doAutoLaunch) return false;
 			if (ifType != null && lastObjectiveType != ifType.Value) return false;
 			GlobalAreaKey area = autoLaunchArea;
+			int oldSlot = global::Celeste.SaveData.Instance.FileSlot;
+			int newSlot = returnToSlot;
 			ClearAutoLaunchInfo();
+			if (newSlot > -2) {  // This will only be set to a valid slot when finishing a full-game run
+				SaveData saveData = UserIO.Load<SaveData>(global::Celeste.SaveData.GetFilename(newSlot), backup: false);
+				if (saveData != null) {
+					saveData.AfterInitialize();
+					global::Celeste.SaveData.Start(saveData, newSlot);
+					global::Celeste.SaveData.TryDelete(oldSlot);
+				}
+			}
 			if (doFadeWipe)
 			{
 				new FadeWipe(currentScenes.Last(), false, () => {
@@ -1331,13 +1362,10 @@ namespace Celeste.Mod.Head2Head {
 			lastObjectiveType = MatchObjectiveType.ChapterComplete;
 			doAutoLaunch = false;
 			autoLaunchArea = GlobalAreaKey.Overworld;
+			returnToSlot = -2;
 		}
 
 		// #######################################################
-
-		// TODO (!!!) find an unused slot
-		// TODO (!!!) make a new save and switch to it
-		// TODO (!!!) delete the save after the match and switch back
 
 		/// <summary>
 		/// Searches for a save slot with no data (max slot number 99)
@@ -1354,17 +1382,6 @@ namespace Celeste.Mod.Head2Head {
 				UserIO.Close();
 			}
 			return -2;
-		}
-
-		internal void CreateNewSaveAndSwitch(int slot) {
-			global::Celeste.SaveData.Start(new SaveData {
-				Name = "H2H Generated",
-				AssistMode = false,
-				VariantMode = false,
-			}, slot);
-			new FadeWipe(GetLevelForCoroutine(), false, () => {
-				LevelEnter.Go(new Session(GlobalAreaKey.VanillaPrologue.Local.Value), false);
-			});
 		}
 	}
 
