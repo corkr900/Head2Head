@@ -347,6 +347,7 @@ namespace Celeste.Mod.Head2Head.Shared {
         public long TimeLimit = 0;
         public string CustomTypeKey;
         public string CustomDescription;
+        public AreaMode Side = AreaMode.Normal;
         public List<Tuple<PlayerID, long>> TimeLimitAdjustments = new List<Tuple<PlayerID, long>>();
 
         public string Description {
@@ -403,10 +404,16 @@ namespace Celeste.Mod.Head2Head.Shared {
         public static MatchObjectiveType GetTypeForStrawberry(Strawberry s) {
             if (s.Golden) {
                 DynamicData dd = new DynamicData(s);
-                return dd.Data.ContainsKey("IsWingedGolden") ? MatchObjectiveType.WingedGoldenStrawberry : MatchObjectiveType.GoldenStrawberry;
-			}
-            return s.Moon ? MatchObjectiveType.MoonBerry : MatchObjectiveType.Strawberries;
-		}
+                if (dd.Data.ContainsKey("IsWingedGolden")) {
+                    return MatchObjectiveType.WingedGoldenStrawberry;
+                }
+                else return MatchObjectiveType.GoldenStrawberry;
+            }
+            else if (s.Moon) {
+                return MatchObjectiveType.MoonBerry;
+            }
+            else return MatchObjectiveType.Strawberries;
+        }
     }
 
     public enum MatchObjectiveType {
@@ -425,11 +432,7 @@ namespace Celeste.Mod.Head2Head.Shared {
         CustomCollectable,
         CustomObjective,
         // Fullgame
-        Fullgame_UnlockChapter,    // TODO
-        Fullgame_CompleteChapter,  // TODO
-        Fullgame_Collectable,      // TODO
-        Fullgame_Cassettes,        // TODO
-        Fullgame_Hearts,           // TODO
+        UnlockChapter,
     }
 
     /// <summary>

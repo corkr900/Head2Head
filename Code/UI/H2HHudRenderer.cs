@@ -62,6 +62,7 @@ namespace Celeste.Mod.Head2Head.UI {
 			if (ShouldShowPlayerList(scene, def)) RenderPlayerList(scene, def);
 			if (ShouldShowCountdown(scene, def)) RenderCountdown(scene, def);
 			if (ShouldShowMatchPass(scene, def)) RenderMatchPass(scene, def);
+			if (ShouldShowDebugInfo(scene, def)) RenderDebugInfo(scene, def);
 			HiresRenderer.EndRender();
 		}
 
@@ -304,6 +305,57 @@ namespace Celeste.Mod.Head2Head.UI {
 			Vector2 pos = new Vector2(0, CanvasSize.Y);
 			Color color = Color.White;
 			img.DrawJustified(pos, justify, color, hudScale);
+		}
+
+		#endregion
+
+		#region Debug Info
+
+		private bool ShouldShowDebugInfo(Scene scene, MatchDefinition def) {
+			return def != null && Role.IsDebug;
+		}
+
+		private void RenderDebugInfo(Scene scene, MatchDefinition def) {
+			const float scale = 0.5f;
+
+			List<string> deftext = new List<string>();
+			List<string> ststext = new List<string>();
+			deftext.Add(string.Format("{0} ({1})", def.MatchDisplayName, def.MatchID));
+			ststext.Add(string.Format("{0}", def.GetPlayerResultCat(PlayerID.MyIDSafe)));
+			foreach (MatchPhase ph in def.Phases) {
+				deftext.Add(string.Format("> {0}; cat={1}; area={2}; fg={3}, ord={4}", ph.Title, ph.category, ph.Area.SID, ph.Fullgame, ph.Order));
+				List<H2HMatchPhaseState> statelist = PlayerStatus.Current.phases.FindAll(
+					(H2HMatchPhaseState s) => s.PhaseID == ph.ID);
+				if (statelist.Count > 0) {
+					H2HMatchPhaseState state = statelist[0];
+					ststext.Add(string.Format("complete: {0}", state.Completed));
+				}
+				else ststext.Add("-");
+				foreach (MatchObjective obj in ph.Objectives) {
+					deftext.Add(string.Format(">> {0}; ct={1}; key={2}; side={3}; tl={4}", obj.ObjectiveType, obj.CollectableGoal, obj.CustomTypeKey, obj.Side, obj.TimeLimit));
+					List<H2HMatchObjectiveState> oblist = PlayerStatus.Current.objectives.FindAll(
+						(H2HMatchObjectiveState s) => s.ObjectiveID == obj.ID);
+					if (oblist.Count > 0) {
+						H2HMatchObjectiveState state = oblist[0];
+						ststext.Add(string.Format("done={0}; ct={1}; frm={2}", state.Completed, state.CollectedItems?.Count, state.FinalRoom));
+					}
+					else ststext.Add("-");
+				}
+			}
+
+			Vector2 defSize = Vector2.Zero;
+			deftext.ForEach((string s) => {
+				Vector2 size = ActiveFont.Measure(s);
+				if (defSize.X < size.X) defSize.X = size.X;
+				defSize.Y += size.Y;
+			});
+			Vector2 anchor = new Vector2(1920 - (defSize.X * scale), 1080 - (defSize.Y  * scale));
+			float yPos = anchor.Y;
+			for (int i = 0; i < deftext.Count; i++) {
+				ActiveFont.DrawOutline(deftext[i], new Vector2(anchor.X, yPos), Vector2.Zero, Vector2.One * scale, Color.White, 1f, Color.Black);
+				ActiveFont.DrawOutline(ststext[i], new Vector2(anchor.X - 15, yPos), Vector2.UnitX, Vector2.One * scale, Color.Cyan, 1f, Color.Black);
+				yPos += ActiveFont.Measure(deftext[i]).Y * scale;
+			}
 		}
 
 		#endregion

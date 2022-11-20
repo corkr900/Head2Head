@@ -192,13 +192,13 @@ namespace Celeste.Mod.Head2Head.Shared {
 		internal void ChapterCompleted(GlobalAreaKey area) {
 			if (!IsInMatch(false)) return;
 			bool changes = false;
-			MatchObjective ob = FindObjective(MatchObjectiveType.ChapterComplete, area, false);
-			if (ob != null && MarkObjectiveComplete(ob)) changes = true;
+			MatchObjective ob = FindObjective(MatchObjectiveType.ChapterComplete, area, false, area.SID);
+			if (ob != null && MarkObjective(ob, area)) changes = true;
 			ob = FindObjective(MatchObjectiveType.TimeLimit, area, false);
 			if (ob != null) {
 				string tmp = CurrentRoom;
 				CurrentRoom = "h2h_chapter_completed";  // Signals to the overlay to show time instead of final room
-				if (MarkObjectiveComplete(ob)) changes = true;
+				if (MarkObjective(ob, area)) changes = true;
 				CurrentRoom = tmp;  // restore to the actual real value
 			}
 			if (changes) Updated();
@@ -206,21 +206,19 @@ namespace Celeste.Mod.Head2Head.Shared {
 		internal void HeartCollected(GlobalAreaKey area) {
 			if (!IsInMatch(false)) return;
 			MatchObjective ob = FindObjective(MatchObjectiveType.HeartCollect, area, false);
-			if (ob != null && MarkObjectiveComplete(ob)) Updated();
+			if (ob != null && MarkObjective(ob, area)) Updated();
 		}
 		internal void CassetteCollected(GlobalAreaKey area) {
 			if (!IsInMatch(false)) return;
 			MatchObjective ob = FindObjective(MatchObjectiveType.CassetteCollect, area, false);
-			if (ob != null && MarkObjectiveComplete(ob)) Updated();
+			if (ob != null && MarkObjective(ob, area)) Updated();
 		}
 		private void ConfirmCollectables() {
 			if (!IsInMatch(false)) return;
 			MatchDefinition def = CurrentMatch;
 			for (int i = 0; i < objectives.Count; i++) {
 				MatchObjective obj = def.GetObjective(objectives[i].ObjectiveID);
-				if (obj.ObjectiveType != MatchObjectiveType.Strawberries
-					&& obj.ObjectiveType != MatchObjectiveType.MoonBerry
-					&& obj.ObjectiveType != MatchObjectiveType.CustomCollectable) continue;
+				if (objectives[i].CollectedItems == null) continue;
 				for (int j = 0; j < objectives[i].CollectedItems.Count; j++) {
 					objectives[i].CollectedItems[j] = new Tuple<GlobalAreaKey, EntityID, bool>(
 						objectives[i].CollectedItems[j].Item1,
@@ -237,35 +235,8 @@ namespace Celeste.Mod.Head2Head.Shared {
 		}
 		internal void CollectableCollected(GlobalAreaKey area, EntityID id, MatchObjectiveType objtype, string entityTypeID = "") {
 			if (!IsInMatch(false)) return;
-			bool updated = false;
 			MatchObjective ob = FindObjective(objtype, area, false, entityTypeID);
-			if (ob == null) return;
-			int stateIndex = objectives.FindIndex((H2HMatchObjectiveState s) => s.ObjectiveID == ob.ID);
-			if (stateIndex < 0) {
-				objectives.Add(new H2HMatchObjectiveState() {
-					ObjectiveID = ob.ID,
-					CollectedItems = new List<Tuple<GlobalAreaKey, EntityID, bool>>() {
-						new Tuple<GlobalAreaKey, EntityID, bool>(area, id, false),
-					},
-				});
-				stateIndex = objectives.Count - 1;
-				updated |= true;
-			}
-			else {
-				if (objectives[stateIndex].CollectedItems == null) {
-					// In theory, this is impossible but just in case...
-					Logger.Log("Head2Head.Warn", "This is weird... a collectables objective state doesn't have a list of collectables?");
-					return;
-				}
-				if (objectives[stateIndex].CollectedItems.FindIndex(
-					(Tuple<GlobalAreaKey, EntityID, bool> t) => t.Item1.Equals(area) && t.Item2.Equals(id)) > 0) return;  // already collected
-				objectives[stateIndex].CollectedItems.Add(new Tuple<GlobalAreaKey, EntityID, bool>(area, id, false));
-				updated |= true;
-			}
-			if (objectives[stateIndex].CollectedItems.Count >= ob.CollectableGoal) {
-				updated |= MarkObjectiveComplete(ob);
-			}
-			if (updated) Updated();
+			if (ob != null && MarkObjective(ob, area, id)) Updated();
 		}
 		internal void CheckForTimeLimit(GlobalAreaKey area) {
 			if (!IsInMatch(false)) return;
@@ -275,29 +246,29 @@ namespace Celeste.Mod.Head2Head.Shared {
 			if (res == null) return;
 			long endTime = res.FileTimeStart + ob.AdjustedTimeLimit(PlayerID.MyIDSafe);
 			if (SaveData.Instance?.Time >= endTime) {
-				if (MarkObjectiveComplete(ob)) Updated();
+				if (MarkObjective(ob, area)) Updated();
 			}
 		}
 		internal void CustomObjectiveCompleted(string objectiveTypeID, GlobalAreaKey area) {
 			if (!IsInMatch(false)) return;
 			MatchObjective ob = FindObjective(MatchObjectiveType.CustomObjective, area, false, objectiveTypeID);
-			if (ob != null && MarkObjectiveComplete(ob)) Updated();
+			if (ob != null && MarkObjective(ob, area)) Updated();
 		}
 		internal void CheckRoomEnterObjective(string room, GlobalAreaKey area) {
 			if (!IsInMatch(false)) return;
 			MatchObjective ob = FindObjective(MatchObjectiveType.EnterRoom, area, false, room);
-			if (ob != null && MarkObjectiveComplete(ob)) Updated();
+			if (ob != null && MarkObjective(ob, area)) Updated();
 		}
 		internal void CheckFlagObjective(string flag, GlobalAreaKey area) {
 			if (!IsInMatch(false)) return;
 			MatchObjective ob = FindObjective(MatchObjectiveType.Flag, area, false, flag);
-			if (ob != null && MarkObjectiveComplete(ob)) Updated();
+			if (ob != null && MarkObjective(ob, area)) Updated();
 		}
 
-		internal void ChapterUnlocked(string SID) {
+		internal void ChapterUnlocked(GlobalAreaKey area) {
 			if (!IsInMatch(false)) return;
-			MatchObjective ob = FindObjective(MatchObjectiveType.Fullgame_UnlockChapter, entityTypeID: SID);
-			if (ob != null && MarkObjectiveComplete(ob)) Updated();
+			MatchObjective ob = FindObjective(MatchObjectiveType.UnlockChapter, area, false, area.SID);
+			if (ob != null && MarkObjective(ob, area)) Updated();
 		}
 
 		// objective help
@@ -307,9 +278,10 @@ namespace Celeste.Mod.Head2Head.Shared {
 			if (!IsInMatch(false, id)) return -1;
 			int max = -1;
 			foreach (H2HMatchPhaseState s in phases) {
-				int order = CurrentMatch.GetPhase(s.PhaseID)?.Order ?? -1;
-				if (s.Completed && order > max) {
-					max = order;
+				MatchPhase ph = CurrentMatch.GetPhase(s.PhaseID);
+				if (ph == null) continue;
+				if (s.Completed && ph.Order > max) {
+					max = ph.Order;
 				}
 			}
 			return max + 1;
@@ -324,21 +296,34 @@ namespace Celeste.Mod.Head2Head.Shared {
 		/// <param name="includeFinished">If true, okay to return objectives that have already been finished</param>
 		/// <param name="entityTypeID">Additional parameter for objective types that need it. Null, empty, or not providing this parameter will skip the check.</param>
 		/// <returns>Returns the first-found objective fitting the provided criteria, or null if there is none.</returns>
-		internal MatchObjective FindObjective(MatchObjectiveType type, GlobalAreaKey? area = null, bool includeFinished = false, string entityTypeID = "") {
+		internal MatchObjective FindObjective(MatchObjectiveType type, GlobalAreaKey area, bool includeFinished = false, string entityTypeID = "") {
 			if (CurrentMatch == null) return null;
 			int currentp = CurrentPhase();
 			foreach (MatchPhase ph in CurrentMatch.Phases) {
-				if ((ph.Order == currentp || (includeFinished && ph.Order <= currentp)) && (area == null || ph.Area.Equals(area))) {
+				if (IsPhaseEligible(ph, currentp, area, includeFinished)) {
 					foreach (MatchObjective ob in ph.Objectives) {
-						if (ob.ObjectiveType == type) {
-							if (string.IsNullOrEmpty(entityTypeID) || ob.CustomTypeKey == entityTypeID) {
-								return ob;
-							}
+						if (IsObjectiveEligible(ob, type, entityTypeID)) {
+							return ob;
 						}
 					}
 				}
 			}
 			return null;
+		}
+
+		private bool IsPhaseEligible(MatchPhase ph, int currentp, GlobalAreaKey area, bool includeFinished) {
+			if (ph.Fullgame) return true;
+			if (includeFinished) {
+				return ph.Order <= currentp && ph.Area.Equals(area);
+			}
+			return ph.Order == currentp && ph.Area.Equals(area);
+		}
+
+		private bool IsObjectiveEligible(MatchObjective ob, MatchObjectiveType type, string entityTypeID) {
+			if (ob.ObjectiveType != type) return false;
+			if (ob.CollectableGoal > 0) return true;
+			if (string.IsNullOrEmpty(ob.CustomTypeKey)) return true;
+			return ob.CustomTypeKey == entityTypeID;
 		}
 
 		public bool IsObjectiveComplete(uint objid) {
@@ -355,6 +340,42 @@ namespace Celeste.Mod.Head2Head.Shared {
 			return false;
 		}
 
+		internal bool MarkObjective(MatchObjective ob, GlobalAreaKey area, EntityID? id = null) {
+			id = id ?? EntityID.None;
+			if (ob.CollectableGoal > 0) return MarkCountableObjective(ob, area, id.Value);
+			else return MarkObjectiveComplete(ob);
+		}
+		internal bool MarkCountableObjective(MatchObjective ob, GlobalAreaKey area, EntityID id) {
+			if (!IsInMatch(false)) return false;
+			if (ob == null) return false;
+			bool updated = false;
+			int stateIndex = objectives.FindIndex((H2HMatchObjectiveState s) => s.ObjectiveID == ob.ID);
+			if (stateIndex < 0) {
+				objectives.Add(new H2HMatchObjectiveState() {
+					ObjectiveID = ob.ID,
+					CollectedItems = new List<Tuple<GlobalAreaKey, EntityID, bool>>() {
+						new Tuple<GlobalAreaKey, EntityID, bool>(area, id, false),
+					},
+				});
+				stateIndex = objectives.Count - 1;
+				updated |= true;
+			}
+			else {
+				if (objectives[stateIndex].CollectedItems == null) {
+					// In theory, this is impossible but just in case...
+					Logger.Log("Head2Head.Warn", "This is weird... a collectables objective state doesn't have a list of collectables?");
+					return false;
+				}
+				if (objectives[stateIndex].CollectedItems.FindIndex(
+					(Tuple<GlobalAreaKey, EntityID, bool> t) => t.Item1.Equals(area) && t.Item2.Equals(id)) > 0) return false;  // already collected
+				objectives[stateIndex].CollectedItems.Add(new Tuple<GlobalAreaKey, EntityID, bool>(area, id, false));
+				updated |= true;
+			}
+			if (objectives[stateIndex].CollectedItems.Count >= ob.CollectableGoal) {
+				updated |= MarkObjectiveComplete(ob);
+			}
+			return updated;
+		}
 		private bool MarkObjectiveComplete(MatchObjective ob) {
 			if (!IsInMatch(false)) return false;
 			bool found = false;
@@ -379,7 +400,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 					ObjectiveID = ob.ID,
 					Completed = true,
 					FinalRoom = CurrentRoom,
-			});
+				});
 				FileTimerAtLastObjectiveComplete = SaveData.Instance.Time;
 			}
 			TryMarkPhaseComplete(ob);

@@ -614,7 +614,7 @@ namespace Celeste.Mod.Head2Head {
 				orig(self, val);  // Write the update before processing match progress
 				for (int id = minCheck; id <= maxCheck; id++) {
 					string SID = AreaData.Areas[id].SID;
-					PlayerStatus.Current.ChapterUnlocked(SID);
+					PlayerStatus.Current.ChapterUnlocked(new GlobalAreaKey(id));
 				}
 			}
 			else orig(self, val);
@@ -843,7 +843,7 @@ namespace Celeste.Mod.Head2Head {
 			if (CNetComm.Instance.CurrentChannelIsMain) return false;
 			if (!Role.AllowMatchCreate()) return false;
 			if (Util.IsUpdateAvailable()) return false;
-			return PlayerStatus.Current.CanStageMatch(); ;
+			return PlayerStatus.Current.CanStageMatch();
 		}
 
 		public bool CanStageMatch() {
@@ -1276,7 +1276,6 @@ namespace Celeste.Mod.Head2Head {
 			if (def.State != MatchState.InProgress) yield break;
 			if (!isRejoin) {
 				PlayerStatus.Current.FileSlotBeforeMatchStart = global::Celeste.SaveData.Instance.FileSlot;
-				PlayerStatus.Current.MatchStarted();
 				if (def.UseFreshSavefile) {
 					int slot = FindNextUnusedSlot();
 					if (slot >= 0) {
@@ -1292,6 +1291,7 @@ namespace Celeste.Mod.Head2Head {
 						yield break;
 					}
 				}
+				PlayerStatus.Current.MatchStarted();
 			}
 			def.RegisterSaveFile();
 			ActionLogger.StartingMatch(def);
