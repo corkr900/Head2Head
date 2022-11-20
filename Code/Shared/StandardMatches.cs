@@ -10,6 +10,9 @@ namespace Celeste.Mod.Head2Head.Shared {
 		// Standard Categories
 		Clear,
 		HeartCassette,
+		/// <summary>
+		/// IL all red berries (NOT full game)
+		/// </summary>
 		ARB,
 		ARBHeart,
 		CassetteGrab,
@@ -24,6 +27,9 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 		// Fullgame
 		AnyPercent,  // TODO
+		/// <summary>
+		/// Fullgame all red berries (NOT IL)
+		/// </summary>
 		AllRedBerries,  // TODO
 		TrueEnding,  // TODO
 		AllCassettes,  // TODO
