@@ -45,16 +45,19 @@ namespace Celeste.Mod.Head2Head.Entities {
 		}
 
 		private void OpenUI(Player player) {
-			// TODO (!!!)
 			this.player = player;
 			player.StateMachine.State = Player.StDummy;
+			player.SceneAs<Level>().PauseLock = true;
+
 			FullgameSelectorUI ui = new FullgameSelectorUI();
+			ui.OnRemove += CloseUI;
 			Scene.Add(ui);
+			Audio.Play("event:/ui/world_map/icon/select");
 		}
 
 		public void CloseUI() {
-			// TODO (!!!)
 			player.StateMachine.State = Player.StNormal;
+			player.SceneAs<Level>().PauseLock = false;
 		}
 	}
 }
