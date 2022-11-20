@@ -339,7 +339,6 @@ namespace Celeste.Mod.Head2Head.Shared {
         }
 	}
 
-    // TODO collectables objectives that span multiple chapters?
     public class MatchObjective {
         public uint ID;
         public MatchObjectiveType ObjectiveType;

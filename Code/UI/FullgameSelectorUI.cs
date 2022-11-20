@@ -43,8 +43,7 @@ namespace Celeste.Mod.Head2Head.Entities {
 		}
 
 		private List<Option> GetCategories() {
-			// TODO Custom fullgame categories
-			// TODO Remaining standard fullgame categories
+			// TODO (!!!) Custom Fullgame Categories
 			List<Option> ret = new List<Option>();
 			StandardCategory[] standardCats = new StandardCategory[] {
 				StandardCategory.AnyPercent,
@@ -131,7 +130,6 @@ namespace Celeste.Mod.Head2Head.Entities {
 					Option o = categories[HoveredOption];
 					MatchDefinition def;
 					if (o.Cat == StandardCategory.Custom) {
-						// TODO (!!!)
 						throw new NotImplementedException("Custom Fullgame Categories have not been implemented yet");
 					}
 					else {

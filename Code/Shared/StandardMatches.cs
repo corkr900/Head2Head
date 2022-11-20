@@ -30,16 +30,16 @@ namespace Celeste.Mod.Head2Head.Shared {
 		/// <summary>
 		/// Fullgame all red berries (NOT IL)
 		/// </summary>
-		AllRedBerries,  // TODO
-		TrueEnding,  // TODO
-		AllCassettes,  // TODO
-		BnyPercent,  // TODO
-		AllHearts,  // TODO
-		OneHundredPercent,  // TODO
-		AllChapters,  // TODO
-		AllASides,  // TODO
-		AllBSides,  // TODO
-		AllCSides,  // TODO
+		AllRedBerries,
+		TrueEnding,
+		AllCassettes,
+		BnyPercent,
+		AllHearts,
+		OneHundredPercent,
+		AllChapters,
+		AllASides,
+		AllBSides,
+		AllCSides,
 
 		// Custom
 		Custom,
