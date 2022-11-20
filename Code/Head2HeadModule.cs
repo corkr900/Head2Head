@@ -27,7 +27,6 @@ using Celeste.Mod.Head2Head.Integration;
 using MonoMod.ModInterop;
 
 // TODO Force DNF if a player intentionally closes the game
-// TODO Support full-game runs... eventually
 // TODO Make the start-match and return-to-lobby sequences more robust
 
 namespace Celeste.Mod.Head2Head {
