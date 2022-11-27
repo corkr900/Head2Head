@@ -1,8 +1,12 @@
 <Sprites>
 
 	<Head2Head_ILSelector path="Head2Head/ILSelector/" start="idle">
-		<Loop id="idle" path="Idle" delay=".1" frames="0" />
+		<Loop id="idle" path="Idle" delay=".22" frames="0,0,0,1,2,3,3,3,2,1" />
 	</Head2Head_ILSelector>
+
+	<Head2Head_FullgameSelector path="Head2Head/FullgameSelector/" start="idle">
+		<Loop id="idle" path="Idle" delay=".25" frames="0,0,0,1,2,2,2,1" />
+	</Head2Head_FullgameSelector>
 
   <Head2Head_Helpdesk path="Head2Head/Helpdesk/" start="idle">
     <Loop id="idle" path="Idle" delay=".1" frames="0" />

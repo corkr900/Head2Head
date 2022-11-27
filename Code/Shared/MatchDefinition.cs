@@ -28,14 +28,10 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 		#endregion
 
-		#region Currently Unused
+		#region Fullgame Category Flags
 
-		public bool CanParticipantsStart = true;
-        public bool OpenEntry = true;
-        public bool RequireNewSaveFile = false;
+		public bool UseFreshSavefile = true;
         public bool AllowCheatMode = true;
-        public bool AllowDebugView = true;
-        public bool AllowDebugTeleport = false;
 
         #endregion
 
@@ -61,10 +57,16 @@ namespace Celeste.Mod.Head2Head.Shared {
         public string MatchDisplayName {
 			get {
                 return Phases.Count == 0 ? CategoryDisplayName :
+                    Phases[0].Fullgame ? FullGameDisplayName() :
                     string.Format(Dialog.Get("Head2Head_MatchTitle"), Phases[0].Area.DisplayName, CategoryDisplayName);
 
             }
 		}
+
+        private string FullGameDisplayName() {
+            string levelSet = Phases[0].Area.IsVanilla ? "Celeste" : Dialog.Clean(Phases[0].Area.Data.LevelSet);
+            return string.Format(Dialog.Get("Head2Head_MatchTitle"), levelSet, CategoryDisplayName);
+        }
 
         public string CategoryDisplayName {
 			get {
@@ -172,7 +174,7 @@ namespace Celeste.Mod.Head2Head.Shared {
                 && Phases[0].category == StandardCategory.TimeLimit;
         }
 
-        public void PlayerDNF() {
+        public void PlayerDNF(DNFReason reason) {
             PlayerID id = PlayerID.MyIDSafe;
             PlayerStatus stat = PlayerStatus.Current;
             ResultCategory cat = GetPlayerResultCat(id);
@@ -180,6 +182,7 @@ namespace Celeste.Mod.Head2Head.Shared {
                 if (Result == null) Result = new MatchResult();
                 if (Result.players.ContainsKey(id)) {
                     Result[id].Result = ResultCategory.DNF;
+                    Result[id].DNFreason = reason;
                     Result[id].FileTimeEnd = stat.FileTimerAtLastObjectiveComplete;
                     Result[id].FinalRoom = stat.CurrentRoom;
                 }
@@ -187,6 +190,7 @@ namespace Celeste.Mod.Head2Head.Shared {
                     Result[id] = new MatchResultPlayer() {
                         ID = id,
                         Result = ResultCategory.DNF,
+                        DNFreason = reason,
                         FileTimeStart = stat.FileTimerAtMatchBegin,
                         FileTimeEnd = stat.FileTimerAtLastObjectiveComplete,
                         FinalRoom = stat.CurrentRoom,
@@ -268,6 +272,11 @@ namespace Celeste.Mod.Head2Head.Shared {
                         if (res.Value.Result > Result[res.Key].Result) {
                             Result[res.Key] = res.Value;
                         }
+                        else if (res.Value.Result == Result[res.Key].Result && res.Value.Result == ResultCategory.DNF) {
+                            if (res.Value.DNFreason > Result[res.Key].DNFreason) {
+                                Result[res.Key].DNFreason = res.Value.DNFreason;
+                            }
+						}
                     }
                 }
                 // Sanity check - clean up illogical results
@@ -315,6 +324,7 @@ namespace Celeste.Mod.Head2Head.Shared {
     public class MatchPhase {
         public StandardCategory category;
         public uint ID;
+        public bool Fullgame = false;
         public int Order = 0;
         public GlobalAreaKey Area;
         public List<MatchObjective> Objectives = new List<MatchObjective>();
@@ -336,7 +346,6 @@ namespace Celeste.Mod.Head2Head.Shared {
         }
 	}
 
-    // TODO collectables objectives that span multiple chapters?
     public class MatchObjective {
         public uint ID;
         public MatchObjectiveType ObjectiveType;
@@ -344,6 +353,7 @@ namespace Celeste.Mod.Head2Head.Shared {
         public long TimeLimit = 0;
         public string CustomTypeKey;
         public string CustomDescription;
+        public AreaMode Side = AreaMode.Normal;
         public List<Tuple<PlayerID, long>> TimeLimitAdjustments = new List<Tuple<PlayerID, long>>();
 
         public string Description {
@@ -400,10 +410,16 @@ namespace Celeste.Mod.Head2Head.Shared {
         public static MatchObjectiveType GetTypeForStrawberry(Strawberry s) {
             if (s.Golden) {
                 DynamicData dd = new DynamicData(s);
-                return dd.Data.ContainsKey("IsWingedGolden") ? MatchObjectiveType.WingedGoldenStrawberry : MatchObjectiveType.GoldenStrawberry;
-			}
-            return s.Moon ? MatchObjectiveType.MoonBerry : MatchObjectiveType.Strawberries;
-		}
+                if (dd.Data.ContainsKey("IsWingedGolden")) {
+                    return MatchObjectiveType.WingedGoldenStrawberry;
+                }
+                else return MatchObjectiveType.GoldenStrawberry;
+            }
+            else if (s.Moon) {
+                return MatchObjectiveType.MoonBerry;
+            }
+            else return MatchObjectiveType.Strawberries;
+        }
     }
 
     public enum MatchObjectiveType {
@@ -421,6 +437,8 @@ namespace Celeste.Mod.Head2Head.Shared {
         // Custom
         CustomCollectable,
         CustomObjective,
+        // Fullgame
+        UnlockChapter,
     }
 
     /// <summary>
@@ -445,12 +463,8 @@ namespace Celeste.Mod.Head2Head.Shared {
             d.SetState_NoUpdate((MatchState)Enum.Parse(typeof(MatchState), reader.ReadString()));
             d.CategoryDisplayNameOverride = reader.ReadString();
             d.RequiredRole = reader.ReadString();
-            d.CanParticipantsStart = reader.ReadBoolean();
-            d.OpenEntry = reader.ReadBoolean();
-            d.RequireNewSaveFile = reader.ReadBoolean();
+            d.UseFreshSavefile = reader.ReadBoolean();
             d.AllowCheatMode = reader.ReadBoolean();
-            d.AllowDebugView = reader.ReadBoolean();
-            d.AllowDebugTeleport = reader.ReadBoolean();
             d.BeginInstant = reader.ReadDateTime();
             int numPlayers = reader.ReadInt32();
             d.Players.Capacity = numPlayers;
@@ -481,12 +495,8 @@ namespace Celeste.Mod.Head2Head.Shared {
             writer.Write(m.State.ToString() ?? "");
             writer.Write(m.CategoryDisplayNameOverride ?? "");
             writer.Write(m.RequiredRole ?? "");
-            writer.Write(m.CanParticipantsStart);
-            writer.Write(m.OpenEntry);
-            writer.Write(m.RequireNewSaveFile);
+            writer.Write(m.UseFreshSavefile);
             writer.Write(m.AllowCheatMode);
-            writer.Write(m.AllowDebugView);
-            writer.Write(m.AllowDebugTeleport);
             writer.Write(m.BeginInstant);
 
             writer.Write(m.Players.Count);
@@ -512,6 +522,7 @@ namespace Celeste.Mod.Head2Head.Shared {
             MatchPhase p = new MatchPhase();
             p.category = (StandardCategory)Enum.Parse(typeof(StandardCategory), reader.ReadString());
             p.ID = reader.ReadUInt32();
+            p.Fullgame = reader.ReadBoolean();
             p.Order = reader.ReadInt32();
             p.Area = reader.ReadAreaKey();
             int numObjectives = reader.ReadInt32();
@@ -525,6 +536,7 @@ namespace Celeste.Mod.Head2Head.Shared {
         public static void Write(this CelesteNetBinaryWriter writer, MatchPhase mp) {
             writer.Write(mp.category.ToString() ?? "");
             writer.Write(mp.ID);
+            writer.Write(mp.Fullgame);
             writer.Write(mp.Order);
             writer.Write(mp.Area);
             writer.Write(mp.Objectives.Count);

@@ -10,6 +10,9 @@ namespace Celeste.Mod.Head2Head.Shared {
 		// Standard Categories
 		Clear,
 		HeartCassette,
+		/// <summary>
+		/// IL all red berries (NOT full game)
+		/// </summary>
 		ARB,
 		ARBHeart,
 		CassetteGrab,
@@ -21,6 +24,22 @@ namespace Celeste.Mod.Head2Head.Shared {
 		OneFifthBerries,
 		OneThirdBerries,
 		TimeLimit,
+
+		// Fullgame
+		AnyPercent,
+		/// <summary>
+		/// Fullgame all red berries (NOT IL)
+		/// </summary>
+		AllRedBerries,
+		TrueEnding,
+		AllCassettes,
+		BnyPercent,
+		AllHearts,
+		OneHundredPercent,
+		AllChapters,
+		AllASides,
+		AllBSides,
+		AllCSides,
 
 		// Custom
 		Custom,
@@ -274,6 +293,383 @@ namespace Celeste.Mod.Head2Head.Shared {
 			return mp;
 		}
 
+		// Fullgame Categories
+
+		public static MatchDefinition GetFullgameCategoryDefinition(StandardCategory cat) {
+			switch (cat) {
+				default:
+					return null;
+				case StandardCategory.AnyPercent:
+					return FullGameAnyPct();
+				case StandardCategory.AllRedBerries:
+					return FullGameAllRedBerries();
+				case StandardCategory.TrueEnding:
+					return FullGameTrueEnding();
+				case StandardCategory.AllCassettes:
+					return FullGameAllCassettes();
+				case StandardCategory.BnyPercent:
+					return FullGameBnyPercent();
+				case StandardCategory.AllHearts:
+					return FullGameAllHearts();
+				case StandardCategory.OneHundredPercent:
+					return FullGameOneHundredPercent();
+				case StandardCategory.AllChapters:
+					return FullGameAllChapters();
+				case StandardCategory.AllASides:
+					return FullGameAllASides();
+				case StandardCategory.AllBSides:
+					return FullGameAllBSides();
+				case StandardCategory.AllCSides:
+					return FullGameAllCSides();
+			}
+		}
+
+		public static MatchDefinition FullGameAnyPct() {
+			MatchDefinition def = new MatchDefinition() {
+				Owner = PlayerID.MyID ?? PlayerID.Default,
+				CreationInstant = DateTime.Now,
+				UseFreshSavefile = true,
+				AllowCheatMode = false,
+			};
+			def.Phases.Add(new MatchPhase() {
+				category = StandardCategory.AnyPercent,
+				Area = GlobalAreaKey.VanillaPrologue,
+				Fullgame = true,
+				Objectives = new List<MatchObjective>() {
+					new MatchObjective() {
+						ObjectiveType = MatchObjectiveType.UnlockChapter,
+						CustomTypeKey = "Celeste/8-Epilogue",
+					}
+				}
+			});
+			return def;
+		}
+		public static MatchDefinition FullGameAllRedBerries() {
+			MatchDefinition def = new MatchDefinition() {
+				Owner = PlayerID.MyID ?? PlayerID.Default,
+				CreationInstant = DateTime.Now,
+				UseFreshSavefile = true,
+				AllowCheatMode = false,
+			};
+			def.Phases.Add(new MatchPhase() {
+				category = StandardCategory.AllRedBerries,
+				Area = GlobalAreaKey.VanillaPrologue,
+				Fullgame = true,
+				Objectives = new List<MatchObjective>() {
+					new MatchObjective() {
+						ObjectiveType = MatchObjectiveType.Strawberries,
+						CollectableGoal = 175,
+					},
+					new MatchObjective() {
+						ObjectiveType = MatchObjectiveType.ChapterComplete,
+						CustomTypeKey = "Celeste/9-Core",
+					},
+				}
+			});
+			return def;
+		}
+		public static MatchDefinition FullGameTrueEnding() {
+			MatchDefinition def = new MatchDefinition() {
+				Owner = PlayerID.MyID ?? PlayerID.Default,
+				CreationInstant = DateTime.Now,
+				UseFreshSavefile = true,
+				AllowCheatMode = false,
+			};
+			def.Phases.Add(new MatchPhase() {
+				category = StandardCategory.TrueEnding,
+				Area = GlobalAreaKey.VanillaPrologue,
+				Fullgame = true,
+				Objectives = new List<MatchObjective>() {
+					new MatchObjective() {
+						ObjectiveType = MatchObjectiveType.ChapterComplete,
+						CustomTypeKey = "Celeste/LostLevels",
+					},
+				}
+			});
+			return def;
+		}
+		public static MatchDefinition FullGameAllCassettes() {
+			MatchDefinition def = new MatchDefinition() {
+				Owner = PlayerID.MyID ?? PlayerID.Default,
+				CreationInstant = DateTime.Now,
+				UseFreshSavefile = true,
+				AllowCheatMode = false,
+			};
+			def.Phases.Add(new MatchPhase() {
+				category = StandardCategory.AllCassettes,
+				Area = GlobalAreaKey.VanillaPrologue,
+				Fullgame = true,
+				Objectives = new List<MatchObjective>() {
+					new MatchObjective() {
+						ObjectiveType = MatchObjectiveType.CassetteCollect,
+						CollectableGoal = 8,
+					},
+					new MatchObjective() {
+						ObjectiveType = MatchObjectiveType.ChapterComplete,
+						CustomTypeKey = "Celeste/9-Core",
+					},
+				}
+			});
+			return def;
+		}
+		public static MatchDefinition FullGameBnyPercent() {
+			// TODO (!!!) Bny% CANNOT finish any A sides
+			MatchDefinition def = new MatchDefinition() {
+				Owner = PlayerID.MyID ?? PlayerID.Default,
+				CreationInstant = DateTime.Now,
+				UseFreshSavefile = true,
+				AllowCheatMode = false,
+			};
+			def.Phases.Add(new MatchPhase() {
+				category = StandardCategory.BnyPercent,
+				Area = GlobalAreaKey.VanillaPrologue,
+				Fullgame = true,
+				Objectives = new List<MatchObjective>() {
+					new MatchObjective() {
+						ObjectiveType = MatchObjectiveType.UnlockChapter,
+						CustomTypeKey = "Celeste/8-Epilogue",
+					}
+				}
+			});
+			return def;
+		}
+		public static MatchDefinition FullGameAllHearts() {
+			MatchDefinition def = new MatchDefinition() {
+				Owner = PlayerID.MyID ?? PlayerID.Default,
+				CreationInstant = DateTime.Now,
+				UseFreshSavefile = true,
+				AllowCheatMode = false,
+			};
+			def.Phases.Add(new MatchPhase() {
+				category = StandardCategory.AllHearts,
+				Area = GlobalAreaKey.VanillaPrologue,
+				Fullgame = true,
+				Objectives = new List<MatchObjective>() {
+					new MatchObjective() {
+						ObjectiveType = MatchObjectiveType.HeartCollect,
+						CollectableGoal = 24,
+					}
+				}
+			});
+			return def;
+		}
+		public static MatchDefinition FullGameOneHundredPercent() {
+			MatchDefinition def = new MatchDefinition() {
+				Owner = PlayerID.MyID ?? PlayerID.Default,
+				CreationInstant = DateTime.Now,
+				UseFreshSavefile = true,
+				AllowCheatMode = false,
+			};
+			def.Phases.Add(new MatchPhase() {
+				category = StandardCategory.OneHundredPercent,
+				Area = GlobalAreaKey.VanillaPrologue,
+				Fullgame = true,
+				Objectives = new List<MatchObjective>() {
+					new MatchObjective() {
+						ObjectiveType = MatchObjectiveType.ChapterComplete,
+						CollectableGoal = 27,
+					},
+					new MatchObjective() {
+						ObjectiveType = MatchObjectiveType.Strawberries,
+						CollectableGoal = 175,
+					},
+					new MatchObjective() {
+						ObjectiveType = MatchObjectiveType.MoonBerry,
+						CollectableGoal = 1,
+					},
+				}
+			});
+			return def;
+		}
+		public static MatchDefinition FullGameAllChapters() {
+			MatchDefinition def = new MatchDefinition() {
+				Owner = PlayerID.MyID ?? PlayerID.Default,
+				CreationInstant = DateTime.Now,
+				UseFreshSavefile = true,
+				AllowCheatMode = false,
+			};
+			def.Phases.Add(new MatchPhase() {
+				category = StandardCategory.AllChapters,
+				Area = GlobalAreaKey.VanillaPrologue,
+				Fullgame = true,
+				Objectives = new List<MatchObjective>() {
+					new MatchObjective() {
+						ObjectiveType = MatchObjectiveType.ChapterComplete,
+						CollectableGoal = 27,
+					},
+				}
+			});
+			return def;
+		}
+		public static MatchDefinition FullGameAllASides() {
+			MatchDefinition def = new MatchDefinition() {
+				Owner = PlayerID.MyID ?? PlayerID.Default,
+				CreationInstant = DateTime.Now,
+				UseFreshSavefile = true,
+				AllowCheatMode = true,
+			};
+			def.Phases.Add(new MatchPhase() {
+				category = StandardCategory.AllASides,
+				Area = GlobalAreaKey.VanillaPrologue,
+				Fullgame = true,
+				Objectives = new List<MatchObjective>() {
+					new MatchObjective() {
+						ObjectiveType = MatchObjectiveType.ChapterComplete,
+						CustomTypeKey = "Celeste/1-ForsakenCity",
+						Side = AreaMode.Normal,
+					},
+					new MatchObjective() {
+						ObjectiveType = MatchObjectiveType.ChapterComplete,
+						CustomTypeKey = "Celeste/2-OldSite",
+						Side = AreaMode.Normal,
+					},
+					new MatchObjective() {
+						ObjectiveType = MatchObjectiveType.ChapterComplete,
+						CustomTypeKey = "Celeste/3-CelestialResort",
+						Side = AreaMode.Normal,
+					},
+					new MatchObjective() {
+						ObjectiveType = MatchObjectiveType.ChapterComplete,
+						CustomTypeKey = "Celeste/4-GoldenRidge",
+						Side = AreaMode.Normal,
+					},
+					new MatchObjective() {
+						ObjectiveType = MatchObjectiveType.ChapterComplete,
+						CustomTypeKey = "Celeste/5-MirrorTemple",
+						Side = AreaMode.Normal,
+					},
+					new MatchObjective() {
+						ObjectiveType = MatchObjectiveType.ChapterComplete,
+						CustomTypeKey = "Celeste/6-Reflection",
+						Side = AreaMode.Normal,
+					},
+					new MatchObjective() {
+						ObjectiveType = MatchObjectiveType.ChapterComplete,
+						CustomTypeKey = "Celeste/7-Summit",
+						Side = AreaMode.Normal,
+					},
+					new MatchObjective() {
+						ObjectiveType = MatchObjectiveType.ChapterComplete,
+						CustomTypeKey = "Celeste/9-Core",
+						Side = AreaMode.Normal,
+					},
+				}
+			});
+			return def;
+		}
+		public static MatchDefinition FullGameAllBSides() {
+			MatchDefinition def = new MatchDefinition() {
+				Owner = PlayerID.MyID ?? PlayerID.Default,
+				CreationInstant = DateTime.Now,
+				UseFreshSavefile = true,
+				AllowCheatMode = true,
+			};
+			def.Phases.Add(new MatchPhase() {
+				category = StandardCategory.AllBSides,
+				Area = GlobalAreaKey.VanillaPrologue,
+				Fullgame = true,
+				Objectives = new List<MatchObjective>() {
+					new MatchObjective() {
+						ObjectiveType = MatchObjectiveType.ChapterComplete,
+						CustomTypeKey = "Celeste/1-ForsakenCity",
+						Side = AreaMode.BSide,
+					},
+					new MatchObjective() {
+						ObjectiveType = MatchObjectiveType.ChapterComplete,
+						CustomTypeKey = "Celeste/2-OldSite",
+						Side = AreaMode.BSide,
+					},
+					new MatchObjective() {
+						ObjectiveType = MatchObjectiveType.ChapterComplete,
+						CustomTypeKey = "Celeste/3-CelestialResort",
+						Side = AreaMode.BSide,
+					},
+					new MatchObjective() {
+						ObjectiveType = MatchObjectiveType.ChapterComplete,
+						CustomTypeKey = "Celeste/4-GoldenRidge",
+						Side = AreaMode.BSide,
+					},
+					new MatchObjective() {
+						ObjectiveType = MatchObjectiveType.ChapterComplete,
+						CustomTypeKey = "Celeste/5-MirrorTemple",
+						Side = AreaMode.BSide,
+					},
+					new MatchObjective() {
+						ObjectiveType = MatchObjectiveType.ChapterComplete,
+						CustomTypeKey = "Celeste/6-Reflection",
+						Side = AreaMode.BSide,
+					},
+					new MatchObjective() {
+						ObjectiveType = MatchObjectiveType.ChapterComplete,
+						CustomTypeKey = "Celeste/7-Summit",
+						Side = AreaMode.BSide,
+					},
+					new MatchObjective() {
+						ObjectiveType = MatchObjectiveType.ChapterComplete,
+						CustomTypeKey = "Celeste/9-Core",
+						Side = AreaMode.BSide,
+					},
+				}
+			});
+			return def;
+		}
+		public static MatchDefinition FullGameAllCSides() {
+			MatchDefinition def = new MatchDefinition() {
+				Owner = PlayerID.MyID ?? PlayerID.Default,
+				CreationInstant = DateTime.Now,
+				UseFreshSavefile = true,
+				AllowCheatMode = true,
+			};
+			def.Phases.Add(new MatchPhase() {
+				category = StandardCategory.AllCSides,
+				Area = GlobalAreaKey.VanillaPrologue,
+				Fullgame = true,
+				Objectives = new List<MatchObjective>() {
+					new MatchObjective() {
+						ObjectiveType = MatchObjectiveType.ChapterComplete,
+						CustomTypeKey = "Celeste/1-ForsakenCity",
+						Side = AreaMode.CSide,
+					},
+					new MatchObjective() {
+						ObjectiveType = MatchObjectiveType.ChapterComplete,
+						CustomTypeKey = "Celeste/2-OldSite",
+						Side = AreaMode.CSide,
+					},
+					new MatchObjective() {
+						ObjectiveType = MatchObjectiveType.ChapterComplete,
+						CustomTypeKey = "Celeste/3-CelestialResort",
+						Side = AreaMode.CSide,
+					},
+					new MatchObjective() {
+						ObjectiveType = MatchObjectiveType.ChapterComplete,
+						CustomTypeKey = "Celeste/4-GoldenRidge",
+						Side = AreaMode.CSide,
+					},
+					new MatchObjective() {
+						ObjectiveType = MatchObjectiveType.ChapterComplete,
+						CustomTypeKey = "Celeste/5-MirrorTemple",
+						Side = AreaMode.CSide,
+					},
+					new MatchObjective() {
+						ObjectiveType = MatchObjectiveType.ChapterComplete,
+						CustomTypeKey = "Celeste/6-Reflection",
+						Side = AreaMode.CSide,
+					},
+					new MatchObjective() {
+						ObjectiveType = MatchObjectiveType.ChapterComplete,
+						CustomTypeKey = "Celeste/7-Summit",
+						Side = AreaMode.CSide,
+					},
+					new MatchObjective() {
+						ObjectiveType = MatchObjectiveType.ChapterComplete,
+						CustomTypeKey = "Celeste/9-Core",
+						Side = AreaMode.CSide,
+					},
+				}
+			});
+			return def;
+		}
+
 		// More Stuff
 
 		public static bool IsCategoryValid(StandardCategory cat, GlobalAreaKey area, CustomMatchTemplate template = null)
@@ -335,8 +731,9 @@ namespace Celeste.Mod.Head2Head.Shared {
 				bool canFC = area.Data?.CanFullClear ?? false;
 				bool hasMoonBerry = Util.CountMoonBerries(area) > 0;
 				switch (cat) {
-					case StandardCategory.Clear:
 					default:
+						return false;
+					case StandardCategory.Clear:
 						return true;
 					case StandardCategory.ARB:
 					case StandardCategory.OneThirdBerries:

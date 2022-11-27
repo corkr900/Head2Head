@@ -170,6 +170,7 @@ namespace Celeste.Mod.Head2Head.UI
 			});
 
 			// Drop Out
+			bool menuHasDropOutButton = false;
 			if (def_menu != null) {
 				if (def_menu.PlayerCanLeaveFreely(PlayerID.MyIDSafe)) {
 					btn = menu.AddButton("Head2Head_menu_helpdesk_removeOverlay", () => {
@@ -187,8 +188,9 @@ namespace Celeste.Mod.Head2Head.UI
 						if (cat == ResultCategory.NotJoined
 							|| cat == ResultCategory.Completed
 							|| cat == ResultCategory.DNF) return;
-						def.PlayerDNF();
-						cxt.Refresh(menu);
+						def.PlayerDNF(DNFReason.DropOut);
+						Head2HeadModule.Instance.DoAutolaunchImmediate(GlobalAreaKey.Head2HeadLobby, PlayerStatus.Current.FileSlotBeforeMatchStart); 
+						cxt.Close(menu);
 					});
 					ResultCategory? rescatdrop = def_menu?.GetPlayerResultCat(PlayerID.MyIDSafe);
 					if (def_menu == null)
@@ -197,8 +199,10 @@ namespace Celeste.Mod.Head2Head.UI
 						btn.SoftDisable(menu, "Head2Head_menu_helpdesk_dropout_notjoined");
 					else if (rescatdrop == ResultCategory.Completed || rescatdrop == ResultCategory.DNF)
 						btn.SoftDisable(menu, "Head2Head_menu_helpdesk_dropout_completed");
-					else
+					else {
+						menuHasDropOutButton = true;
 						btn.AddDescription(menu, Dialog.Clean("Head2Head_menu_helpdesk_dropout_subtext"));
+					}
 				}
 
 				// Force End
@@ -262,8 +266,8 @@ namespace Celeste.Mod.Head2Head.UI
 			}
 
 			// Return to Lobby
-			if (!PlayerStatus.Current.CurrentArea.Equals(GlobalAreaKey.Head2HeadLobby)) {
-				btn = menu.AddButton("Head2Head_menu_helpdesk_returntolobby", () => {
+			if (!menuHasDropOutButton && !PlayerStatus.Current.CurrentArea.Equals(GlobalAreaKey.Head2HeadLobby)) {
+				btn = menu.AddButton("Head2Head_menu_helpdesk_gotolobby", () => {
 					new FadeWipe(menu.Scene, false, () => {
 						LevelEnter.Go(new Session(GlobalAreaKey.Head2HeadLobby.Local.Value), false);
 					});

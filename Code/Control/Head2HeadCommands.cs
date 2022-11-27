@@ -113,5 +113,13 @@ namespace Celeste.Mod.Head2Head.Control {
 					return;
 			}
 		}
+
+		[Command("h2h_build", "test function to build and stage a full-game match")]
+		public static void BuildFullGame() {
+			MatchDefinition def = StandardMatches.FullGameAnyPct();
+			Head2HeadModule.Instance.buildingMatch = def;
+			Head2HeadModule.Instance.StageMatch();
+			Engine.Commands.Log("Done");
+		}
 	}
 }

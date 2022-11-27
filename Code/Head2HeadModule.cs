@@ -27,7 +27,6 @@ using Celeste.Mod.Head2Head.Integration;
 using MonoMod.ModInterop;
 
 // TODO Force DNF if a player intentionally closes the game
-// TODO Support full-game runs... eventually
 // TODO Make the start-match and return-to-lobby sequences more robust
 
 namespace Celeste.Mod.Head2Head {
@@ -38,7 +37,7 @@ namespace Celeste.Mod.Head2Head {
 		internal int MatchTimeoutMinutes = 15;
 
 		// Constants that might change in the future
-		public static readonly string ProtocolVersion = "1_0_9";
+		public static readonly string ProtocolVersion = "1_1_0";
 
 		// Other static stuff
 		public static Head2HeadModule Instance { get; private set; }
@@ -80,6 +79,7 @@ namespace Celeste.Mod.Head2Head {
 		private GlobalAreaKey autoLaunchArea;
 		private MatchObjectiveType lastObjectiveType;
 		private bool doAutoLaunch;
+		private int returnToSlot = -2;
 		public bool PlayerEnteredAMap { get; private set; } = false;
 		public bool PlayerCompletedARoom { get; private set; } = false;
 
@@ -144,6 +144,7 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.OverworldLoader.Begin += OnOverworldLoaderBegin;
 			On.Celeste.OuiChapterPanel._GetCheckpoints += OnOUIChapterPanel_GetCheckpoints;
 			On.Celeste.OuiChapterSelectIcon.Show += OnOuiChapterSelectIconShow;
+			On.Celeste.UnlockEverythingThingy.EnteredCheat += OnUnlockEverythingThingyEnteredCheat;
 			On.Celeste.Editor.MapEditor.ctor += onDebugScreenOpened;
 			On.Celeste.Editor.MapEditor.LoadLevel += onDebugTeleport;
 			On.Celeste.Mod.UI.OuiMapList.Update += OnMapListUpdate;
@@ -223,6 +224,7 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.OverworldLoader.Begin -= OnOverworldLoaderBegin;
 			On.Celeste.OuiChapterPanel._GetCheckpoints -= OnOUIChapterPanel_GetCheckpoints;
 			On.Celeste.OuiChapterSelectIcon.Show -= OnOuiChapterSelectIconShow;
+			On.Celeste.UnlockEverythingThingy.EnteredCheat -= OnUnlockEverythingThingyEnteredCheat;
 			On.Celeste.Editor.MapEditor.ctor -= onDebugScreenOpened;
 			On.Celeste.Editor.MapEditor.LoadLevel -= onDebugTeleport;
 			On.Celeste.Mod.UI.OuiMapList.Update -= OnMapListUpdate;
@@ -273,6 +275,16 @@ namespace Celeste.Mod.Head2Head {
 			if (ob == null) return true;  // If we don't need the golden, do nothing but say it's handled; prevents the berry from loading in.
 			level.Add(new Strawberry(entityData, offset, new EntityID(levelData.Name, entityData.ID)));  // Force it to appear if we need it
 			return true;
+		}
+
+		private void OnUnlockEverythingThingyEnteredCheat(On.Celeste.UnlockEverythingThingy.orig_EnteredCheat orig, UnlockEverythingThingy self) {
+			if (PlayerStatus.Current.IsInMatch(true)) {
+				MatchDefinition def = PlayerStatus.Current.CurrentMatch;
+				if (def?.AllowCheatMode == false) {
+					def.PlayerDNF(DNFReason.CheatMode);
+				}
+			}
+			orig(self);
 		}
 
 		private void OnCelesteCriticalFailure(On.Celeste.Celeste.orig_CriticalFailureHandler orig, Exception e) {
@@ -361,7 +373,7 @@ namespace Celeste.Mod.Head2Head {
 			if (def != null) {
 				ResultCategory cat = def.GetPlayerResultCat(PlayerID.MyIDSafe);
 				if (cat == ResultCategory.InMatch) {
-					def.PlayerDNF();
+					def.PlayerDNF(DNFReason.DebugTeleport);
 				}
 			}
 			ActionLogger.DebugTeleport();
@@ -552,7 +564,7 @@ namespace Celeste.Mod.Head2Head {
 			if (PlayerStatus.Current.IsInMatch(false)) {
 				int matchslot = PlayerStatus.Current.GetMatchSaveFile();
 				if (matchslot != int.MinValue && matchslot != slot) {
-					PlayerStatus.Current.CurrentMatch?.PlayerDNF();
+					PlayerStatus.Current.CurrentMatch?.PlayerDNF(DNFReason.ChangeFile);
 				}
 			}
 			orig(data, slot);
@@ -561,7 +573,7 @@ namespace Celeste.Mod.Head2Head {
 
 		private bool OnSaveDataTryDelete(On.Celeste.SaveData.orig_TryDelete orig, int slot) {
 			if (PlayerStatus.Current.IsInMatch(false)) {
-				PlayerStatus.Current.CurrentMatch?.PlayerDNF();
+				PlayerStatus.Current.CurrentMatch?.PlayerDNF(DNFReason.DeleteFile);
 			}
 			if (orig(slot)) {
 				ActionLogger.DeletedSavefile();
@@ -594,19 +606,27 @@ namespace Celeste.Mod.Head2Head {
 		}
 
 		public static int OnSaveDataGetUnlockedAreas_Safe(Func<SaveData, int> orig, SaveData self) {
-			// Show all chapters in file select when in match so that RTM doesnt cause issues in a fresh savefile
+			// Show all chapters in file select when in IL match so that RTM doesnt cause issues in a fresh savefile
 			MatchDefinition def = PlayerStatus.Current.CurrentMatch;
-			if (def != null && def.GetPlayerResultCat(PlayerID.MyIDSafe) == ResultCategory.InMatch) {
+			if (def != null && !def.UseFreshSavefile && def.GetPlayerResultCat(PlayerID.MyIDSafe) == ResultCategory.InMatch) {
 				return self.LevelSetStats.AreaOffset + self.LevelSetStats.MaxArea;
 			}
 			else return orig(self);
 		}
 
 		public static void OnSaveDataSetUnlockedAreas_Safe(Action<SaveData, int> orig, SaveData self, int val) {
-			// Don't update the unlocked areas while in a match because we're exposing all of them anyway
 			MatchDefinition def = PlayerStatus.Current.CurrentMatch;
 			if (def != null && def.GetPlayerResultCat(PlayerID.MyIDSafe) == ResultCategory.InMatch) {
-				return;
+				// Don't update the unlocked areas while in IL match because we're exposing all of them anyway
+				if (!def.UseFreshSavefile) return;
+				// Figure out what was unlocked and send it to PlayerStatus
+				int minCheck = self.UnlockedAreas_Safe + 1 + self.LevelSetStats.AreaOffset;
+				int maxCheck = Calc.Clamp(val, 0, self.LevelSetStats.MaxArea - 1) + self.LevelSetStats.AreaOffset;
+				orig(self, val);  // Write the update before processing match progress
+				for (int id = minCheck; id <= maxCheck; id++) {
+					string SID = AreaData.Areas[id].SID;
+					PlayerStatus.Current.ChapterUnlocked(new GlobalAreaKey(id));
+				}
 			}
 			else orig(self, val);
 		}
@@ -769,7 +789,7 @@ namespace Celeste.Mod.Head2Head {
 			if (data.Player?.ID == CelesteNetClientModule.Instance?.Client?.PlayerInfo?.ID) {
 				MatchDefinition def = PlayerStatus.Current.CurrentMatch;
 				if (def != null && def.GetPlayerResultCat(PlayerID.MyIDSafe) == ResultCategory.InMatch) {
-					def.PlayerDNF();
+					def.PlayerDNF(DNFReason.ChangeChannel);
 				}
 				PurgeAllData();
 			}
@@ -834,7 +854,7 @@ namespace Celeste.Mod.Head2Head {
 			if (CNetComm.Instance.CurrentChannelIsMain) return false;
 			if (!Role.AllowMatchCreate()) return false;
 			if (Util.IsUpdateAvailable()) return false;
-			return PlayerStatus.Current.CanStageMatch(); ;
+			return PlayerStatus.Current.CanStageMatch();
 		}
 
 		public bool CanStageMatch() {
@@ -1265,10 +1285,27 @@ namespace Celeste.Mod.Head2Head {
 			MatchDefinition def = PlayerStatus.Current.CurrentMatch;
 			if (def == null) yield break;
 			if (def.State != MatchState.InProgress) yield break;
-			if (!isRejoin) PlayerStatus.Current.MatchStarted();
+			if (!isRejoin) {
+				PlayerStatus.Current.FileSlotBeforeMatchStart = global::Celeste.SaveData.Instance.FileSlot;
+				if (def.UseFreshSavefile) {
+					int slot = FindNextUnusedSlot();
+					if (slot >= 0) {
+						// Create new savefile
+						global::Celeste.SaveData.Start(new SaveData {
+							Name = "[H2H] " + PlayerID.MyIDSafe.Name,
+							AssistMode = false,
+							VariantMode = false,
+						}, slot);
+					}
+					else {
+						Logger.Log("Head2Head.Warn", "Could not find a valid savefile slot for fullgame head 2 head match");
+						yield break;
+					}
+				}
+				PlayerStatus.Current.MatchStarted();
+			}
 			def.RegisterSaveFile();
 			ActionLogger.StartingMatch(def);
-			if (gak.IsOverworld) yield break;
 			new FadeWipe(GetLevelForCoroutine(), false, () => {
 				LevelEnter.Go(new Session(gak.Local.Value, startRoom), false);
 			});
@@ -1285,6 +1322,9 @@ namespace Celeste.Mod.Head2Head {
 			if (args.MatchCompleted)
 			{
 				ActionLogger.CompletedMatch();
+				if (args.MatchDef.UseFreshSavefile) {
+					returnToSlot = PlayerStatus.Current.FileSlotBeforeMatchStart;
+				}
 				if (!Settings.ReturnToLobby) return;
 				autoLaunchArea = GlobalAreaKey.Head2HeadLobby;
 			}
@@ -1301,12 +1341,29 @@ namespace Celeste.Mod.Head2Head {
 			doAutoLaunch = true;
 		}
 
+		internal bool DoAutolaunchImmediate(GlobalAreaKey area, int fileSlot, bool doFadeWipe = true) {
+			doAutoLaunch = true;
+			autoLaunchArea = area;
+			returnToSlot = fileSlot;
+			return DoPostPhaseAutoLaunch(doFadeWipe);
+		}
+
 		internal bool DoPostPhaseAutoLaunch(bool doFadeWipe, MatchObjectiveType? ifType = null)
 		{
 			if (!doAutoLaunch) return false;
 			if (ifType != null && lastObjectiveType != ifType.Value) return false;
 			GlobalAreaKey area = autoLaunchArea;
+			int oldSlot = global::Celeste.SaveData.Instance.FileSlot;
+			int newSlot = returnToSlot;
 			ClearAutoLaunchInfo();
+			if (newSlot > -2) {  // This will only be set to a valid slot when finishing a full-game run
+				SaveData saveData = UserIO.Load<SaveData>(global::Celeste.SaveData.GetFilename(newSlot), backup: false);
+				if (saveData != null) {
+					saveData.AfterInitialize();
+					global::Celeste.SaveData.Start(saveData, newSlot);
+					global::Celeste.SaveData.TryDelete(oldSlot);
+				}
+			}
 			if (doFadeWipe)
 			{
 				new FadeWipe(currentScenes.Last(), false, () => {
@@ -1323,6 +1380,26 @@ namespace Celeste.Mod.Head2Head {
 			lastObjectiveType = MatchObjectiveType.ChapterComplete;
 			doAutoLaunch = false;
 			autoLaunchArea = GlobalAreaKey.Overworld;
+			returnToSlot = -2;
+		}
+
+		// #######################################################
+
+		/// <summary>
+		/// Searches for a save slot with no data (max slot number 99)
+		/// </summary>
+		/// <returns>index of open slot or -2 if none was found or UserIO could not be opened</returns>
+		internal int FindNextUnusedSlot() {
+			if (UserIO.Open(UserIO.Mode.Read)) {
+				for (int i = 3; i < 100; i++) {
+					if (!UserIO.Exists(global::Celeste.SaveData.GetFilename(i))) {
+						UserIO.Close();
+						return i;
+					}
+				}
+				UserIO.Close();
+			}
+			return -2;
 		}
 	}
 

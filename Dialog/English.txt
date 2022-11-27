@@ -79,6 +79,17 @@ Head2Head_CategoryName_OneThirdBerries= One Third Berries
 Head2Head_CategoryName_OneFifthBerries= One Fifth Berries
 Head2Head_CategoryName_TimeLimit= Time Limited
 Head2Head_CategoryName_Custom= Unnamed Custom Category
+Head2Head_CategoryName_AnyPercent= Any%
+Head2Head_CategoryName_AllRedBerries= All Red Berries
+Head2Head_CategoryName_TrueEnding= True Ending
+Head2Head_CategoryName_AllCassettes= All Cassettes
+Head2Head_CategoryName_BnyPercent= Bny%
+Head2Head_CategoryName_AllHearts= All Hearts
+Head2Head_CategoryName_OneHundredPercent= 100%
+Head2Head_CategoryName_AllChapters= All Chapters
+Head2Head_CategoryName_AllASides= All A Sides
+Head2Head_CategoryName_AllBSides= All B Sides
+Head2Head_CategoryName_AllCSides= All C Sides
 
 Head2Head_ObjectiveDescription_Strawberries= Collect Strawberry (x{0})
 Head2Head_ObjectiveDescription_MoonBerry= Collect Moon Berry (x{0})
@@ -110,6 +121,18 @@ Head2Head_MatchState_Building= Under Construction
 Head2Head_MatchState_Staged= Staged
 Head2Head_MatchState_InProgress= In Progress
 Head2Head_MatchState_Completed= Completed
+
+Head2Head_DNFReason_None= No Reason
+Head2Head_DNFReason_DropOut= Dropped Out
+Head2Head_DNFReason_DebugTeleport= Debugged
+Head2Head_DNFReason_ChangeFile= Changed File
+Head2Head_DNFReason_DeleteFile= Deleted File
+Head2Head_DNFReason_ChangeChannel= Changed Channel
+Head2Head_DNFReason_CheatMode= Cheat Mode
+Head2Head_DNFReason_MatchCancel= Match Cancelled
+Head2Head_DNFReason_TAS= TAS
+Head2Head_DNFReason_Savestate= Savestate
+Head2Head_DNFReason_SpeedrunTools= SpeedrunTools
 
 Head2Head_UntitledMatch= Untitled Match
 
@@ -148,11 +171,11 @@ Head2Head_menu_helpdesk_browse= Browse Known Matches
 Head2Head_menu_helpdesk_removeOverlay= Remove Overlay
 Head2Head_menu_helpdesk_removeOverlay_subtext= Unstage the current match and remove the overlay.
 
-Head2Head_menu_helpdesk_dropout= Drop Out of Current Match
-Head2Head_menu_helpdesk_dropout_subtext= Abandon the current match.
+Head2Head_menu_helpdesk_dropout= Drop Out and Return to Lobby
+Head2Head_menu_helpdesk_dropout_subtext= Abandon the current match and return to the Head 2 Head lobby.
 You cannot rejoin after dropping out.
 Head2Head_menu_helpdesk_dropout_notjoined= You have not joined the current match.
-Head2Head_menu_helpdesk_dropout_completed= You have already completed the current match.
+Head2Head_menu_helpdesk_dropout_completed= You have already completed the current match. 
 
 Head2Head_menu_helpdesk_forceend= End Current Match
 Head2Head_menu_helpdesk_forceend_subtext= Force the current match to end and mark all unfinished players as DNF.
@@ -174,7 +197,7 @@ This feature may only be used immediately after re-entering the same savefile an
 Head2Head_menu_helpdesk_giveMatchPass= Give Match Pass
 Head2Head_menu_helpdesk_giveMatchPass_subtext= Give a player permission to create one match
 
-Head2Head_menu_helpdesk_returntolobby= Return to Head 2 Head Lobby
+Head2Head_menu_helpdesk_gotolobby= Go to Head 2 Head Lobby
 
 #     MATCH MENU     #
 
