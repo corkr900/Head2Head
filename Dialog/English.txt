@@ -171,11 +171,11 @@ Head2Head_menu_helpdesk_browse= Browse Known Matches
 Head2Head_menu_helpdesk_removeOverlay= Remove Overlay
 Head2Head_menu_helpdesk_removeOverlay_subtext= Unstage the current match and remove the overlay.
 
-Head2Head_menu_helpdesk_dropout= Drop Out of Current Match
-Head2Head_menu_helpdesk_dropout_subtext= Abandon the current match.
+Head2Head_menu_helpdesk_dropout= Drop Out and Return to Lobby
+Head2Head_menu_helpdesk_dropout_subtext= Abandon the current match and return to the Head 2 Head lobby.
 You cannot rejoin after dropping out.
 Head2Head_menu_helpdesk_dropout_notjoined= You have not joined the current match.
-Head2Head_menu_helpdesk_dropout_completed= You have already completed the current match.
+Head2Head_menu_helpdesk_dropout_completed= You have already completed the current match. 
 
 Head2Head_menu_helpdesk_forceend= End Current Match
 Head2Head_menu_helpdesk_forceend_subtext= Force the current match to end and mark all unfinished players as DNF.
@@ -197,7 +197,7 @@ This feature may only be used immediately after re-entering the same savefile an
 Head2Head_menu_helpdesk_giveMatchPass= Give Match Pass
 Head2Head_menu_helpdesk_giveMatchPass_subtext= Give a player permission to create one match
 
-Head2Head_menu_helpdesk_returntolobby= Return to Head 2 Head Lobby
+Head2Head_menu_helpdesk_gotolobby= Go to Head 2 Head Lobby
 
 #     MATCH MENU     #
 
