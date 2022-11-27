@@ -187,7 +187,7 @@ namespace Celeste.Mod.Head2Head.UI
 						if (cat == ResultCategory.NotJoined
 							|| cat == ResultCategory.Completed
 							|| cat == ResultCategory.DNF) return;
-						def.PlayerDNF();
+						def.PlayerDNF(DNFReason.DropOut);
 						cxt.Refresh(menu);
 					});
 					ResultCategory? rescatdrop = def_menu?.GetPlayerResultCat(PlayerID.MyIDSafe);

@@ -174,7 +174,7 @@ namespace Celeste.Mod.Head2Head.Shared {
                 && Phases[0].category == StandardCategory.TimeLimit;
         }
 
-        public void PlayerDNF() {
+        public void PlayerDNF(DNFReason reason) {
             PlayerID id = PlayerID.MyIDSafe;
             PlayerStatus stat = PlayerStatus.Current;
             ResultCategory cat = GetPlayerResultCat(id);
@@ -182,6 +182,7 @@ namespace Celeste.Mod.Head2Head.Shared {
                 if (Result == null) Result = new MatchResult();
                 if (Result.players.ContainsKey(id)) {
                     Result[id].Result = ResultCategory.DNF;
+                    Result[id].DNFreason = reason;
                     Result[id].FileTimeEnd = stat.FileTimerAtLastObjectiveComplete;
                     Result[id].FinalRoom = stat.CurrentRoom;
                 }
@@ -189,6 +190,7 @@ namespace Celeste.Mod.Head2Head.Shared {
                     Result[id] = new MatchResultPlayer() {
                         ID = id,
                         Result = ResultCategory.DNF,
+                        DNFreason = reason,
                         FileTimeStart = stat.FileTimerAtMatchBegin,
                         FileTimeEnd = stat.FileTimerAtLastObjectiveComplete,
                         FinalRoom = stat.CurrentRoom,
@@ -270,6 +272,11 @@ namespace Celeste.Mod.Head2Head.Shared {
                         if (res.Value.Result > Result[res.Key].Result) {
                             Result[res.Key] = res.Value;
                         }
+                        else if (res.Value.Result == Result[res.Key].Result && res.Value.Result == ResultCategory.DNF) {
+                            if (res.Value.DNFreason > Result[res.Key].DNFreason) {
+                                Result[res.Key].DNFreason = res.Value.DNFreason;
+                            }
+						}
                     }
                 }
                 // Sanity check - clean up illogical results

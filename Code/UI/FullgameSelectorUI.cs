@@ -181,6 +181,24 @@ namespace Celeste.Mod.Head2Head.Entities {
 							return GFX.Gui[Util.CategoryToIcon(StandardCategory.Clear)];
 						case StandardCategory.AllRedBerries:
 							return GFX.Gui[Util.CategoryToIcon(StandardCategory.ARB)];
+						case StandardCategory.BnyPercent:
+							return GFX.Gui[Util.CategoryToIcon(StandardCategory.BnyPercent)];
+						case StandardCategory.OneHundredPercent:
+							return GFX.Gui[Util.CategoryToIcon(StandardCategory.OneHundredPercent)];
+						case StandardCategory.AllASides:
+							return GFX.Gui[Util.CategoryToIcon(StandardCategory.AllASides)];
+						case StandardCategory.AllBSides:
+							return GFX.Gui[Util.CategoryToIcon(StandardCategory.AllBSides)];
+						case StandardCategory.AllCSides:
+							return GFX.Gui[Util.CategoryToIcon(StandardCategory.AllCSides)];
+						case StandardCategory.TrueEnding:
+							return GFX.Gui[Util.CategoryToIcon(StandardCategory.TrueEnding)];
+						case StandardCategory.AllCassettes:
+							return GFX.Gui[Util.CategoryToIcon(StandardCategory.CassetteGrab)];
+						case StandardCategory.AllHearts:
+							return GFX.Gui[Util.CategoryToIcon(StandardCategory.AllHearts)];
+						case StandardCategory.AllChapters:
+							return GFX.Gui[Util.CategoryToIcon(StandardCategory.AllChapters)];
 					}
 				}
 			}

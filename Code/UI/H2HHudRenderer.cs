@@ -260,6 +260,13 @@ namespace Celeste.Mod.Head2Head.UI {
 					}
 				}
 			}
+			if (cat == ResultCategory.DNF) {
+				DNFReason reason = DNFReason.MatchCancel;
+				if (def.Result?.players?.ContainsKey(id) == true) {
+					reason = def.Result[id].DNFreason;
+				}
+				return string.Format("{0} ({1})", Util.TranslatedMatchResult(cat), Util.TranslatedDNFReason(reason));
+			}
 			return Util.TranslatedMatchResult(cat);
 		}
 
