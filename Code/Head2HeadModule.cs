@@ -1341,6 +1341,13 @@ namespace Celeste.Mod.Head2Head {
 			doAutoLaunch = true;
 		}
 
+		internal bool DoAutolaunchImmediate(GlobalAreaKey area, int fileSlot, bool doFadeWipe = true) {
+			doAutoLaunch = true;
+			autoLaunchArea = area;
+			returnToSlot = fileSlot;
+			return DoPostPhaseAutoLaunch(doFadeWipe);
+		}
+
 		internal bool DoPostPhaseAutoLaunch(bool doFadeWipe, MatchObjectiveType? ifType = null)
 		{
 			if (!doAutoLaunch) return false;
