@@ -27,6 +27,7 @@ namespace Celeste.Mod.Head2Head.Shared {
     public class MatchResultPlayer {
         public PlayerID ID;
         public ResultCategory Result = ResultCategory.NotJoined;
+        public DNFReason DNFreason = DNFReason.None;
         public long FileTimeStart;
         public long FileTimeEnd;
 		public int SaveFile;
@@ -45,6 +46,20 @@ namespace Celeste.Mod.Head2Head.Shared {
         InMatch = 20,
         Completed = 30,
         DNF = 999,
+    }
+
+    public enum DNFReason {
+        None = 0,
+        MatchCancel = 1,
+        DropOut = 2,
+        ChangeChannel = 3,
+        ChangeFile = 4,
+        DeleteFile = 5,
+        DebugTeleport = 6,
+        Savestate = 7,
+        CheatMode = 8,
+        SpeedrunTools = 9,
+        TAS = 10,
     }
 
     public static class MatchResultExtensions {
@@ -71,6 +86,7 @@ namespace Celeste.Mod.Head2Head.Shared {
             MatchResultPlayer res = new MatchResultPlayer();
             res.ID = r.ReadPlayerID();
             res.Result = (ResultCategory)Enum.Parse(typeof(ResultCategory), r.ReadString());
+            res.DNFreason = (DNFReason)Enum.Parse(typeof(DNFReason), r.ReadString());
             res.FileTimeStart = r.ReadInt64();
             res.FileTimeEnd = r.ReadInt64();
             res.SaveFile = r.ReadInt32();
@@ -81,6 +97,7 @@ namespace Celeste.Mod.Head2Head.Shared {
         public static void Write(this CelesteNetBinaryWriter w, MatchResultPlayer m) {
             w.Write(m.ID);
             w.Write(m.Result.ToString());
+            w.Write(m.DNFreason.ToString());
             w.Write(m.FileTimeStart);
             w.Write(m.FileTimeEnd);
             w.Write(m.SaveFile);

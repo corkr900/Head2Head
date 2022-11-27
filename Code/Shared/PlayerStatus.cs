@@ -302,7 +302,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			foreach (MatchPhase ph in CurrentMatch.Phases) {
 				if (IsPhaseEligible(ph, currentp, area, includeFinished)) {
 					foreach (MatchObjective ob in ph.Objectives) {
-						if (IsObjectiveEligible(ob, type, entityTypeID)) {
+						if (IsObjectiveEligible(ob, type, entityTypeID, area)) {
 							return ob;
 						}
 					}
@@ -319,10 +319,13 @@ namespace Celeste.Mod.Head2Head.Shared {
 			return ph.Order == currentp && ph.Area.Equals(area);
 		}
 
-		private bool IsObjectiveEligible(MatchObjective ob, MatchObjectiveType type, string entityTypeID) {
+		private bool IsObjectiveEligible(MatchObjective ob, MatchObjectiveType type, string entityTypeID, GlobalAreaKey area) {
 			if (ob.ObjectiveType != type) return false;
 			if (ob.CollectableGoal > 0) return true;
 			if (string.IsNullOrEmpty(ob.CustomTypeKey)) return true;
+			if (type == MatchObjectiveType.ChapterComplete) {
+				if (ob.Side != area.Mode) return false;
+			}
 			return ob.CustomTypeKey == entityTypeID;
 		}
 

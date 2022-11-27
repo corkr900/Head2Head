@@ -10,7 +10,7 @@ const placements = Ahorn.PlacementDict(
     )
 )
 
-sprite = "Head2Head/ILSelector/Idle00.png"
+sprite = "Head2Head/FullgameSelector/Idle00.png"
 
 function Ahorn.selection(entity::FullgameSelector)
     x, y = Ahorn.position(entity)

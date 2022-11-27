@@ -122,6 +122,18 @@ Head2Head_MatchState_Staged= Staged
 Head2Head_MatchState_InProgress= In Progress
 Head2Head_MatchState_Completed= Completed
 
+Head2Head_DNFReason_None= No Reason
+Head2Head_DNFReason_DropOut= Dropped Out
+Head2Head_DNFReason_DebugTeleport= Debugged
+Head2Head_DNFReason_ChangeFile= Changed File
+Head2Head_DNFReason_DeleteFile= Deleted File
+Head2Head_DNFReason_ChangeChannel= Changed Channel
+Head2Head_DNFReason_CheatMode= Cheat Mode
+Head2Head_DNFReason_MatchCancel= Match Cancelled
+Head2Head_DNFReason_TAS= TAS
+Head2Head_DNFReason_Savestate= Savestate
+Head2Head_DNFReason_SpeedrunTools= SpeedrunTools
+
 Head2Head_UntitledMatch= Untitled Match
 
 Head2Head_hud_createdby= Created By {0}

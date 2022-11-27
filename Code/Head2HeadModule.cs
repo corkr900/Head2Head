@@ -144,6 +144,7 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.OverworldLoader.Begin += OnOverworldLoaderBegin;
 			On.Celeste.OuiChapterPanel._GetCheckpoints += OnOUIChapterPanel_GetCheckpoints;
 			On.Celeste.OuiChapterSelectIcon.Show += OnOuiChapterSelectIconShow;
+			On.Celeste.UnlockEverythingThingy.EnteredCheat += OnUnlockEverythingThingyEnteredCheat;
 			On.Celeste.Editor.MapEditor.ctor += onDebugScreenOpened;
 			On.Celeste.Editor.MapEditor.LoadLevel += onDebugTeleport;
 			On.Celeste.Mod.UI.OuiMapList.Update += OnMapListUpdate;
@@ -223,6 +224,7 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.OverworldLoader.Begin -= OnOverworldLoaderBegin;
 			On.Celeste.OuiChapterPanel._GetCheckpoints -= OnOUIChapterPanel_GetCheckpoints;
 			On.Celeste.OuiChapterSelectIcon.Show -= OnOuiChapterSelectIconShow;
+			On.Celeste.UnlockEverythingThingy.EnteredCheat -= OnUnlockEverythingThingyEnteredCheat;
 			On.Celeste.Editor.MapEditor.ctor -= onDebugScreenOpened;
 			On.Celeste.Editor.MapEditor.LoadLevel -= onDebugTeleport;
 			On.Celeste.Mod.UI.OuiMapList.Update -= OnMapListUpdate;
@@ -273,6 +275,16 @@ namespace Celeste.Mod.Head2Head {
 			if (ob == null) return true;  // If we don't need the golden, do nothing but say it's handled; prevents the berry from loading in.
 			level.Add(new Strawberry(entityData, offset, new EntityID(levelData.Name, entityData.ID)));  // Force it to appear if we need it
 			return true;
+		}
+
+		private void OnUnlockEverythingThingyEnteredCheat(On.Celeste.UnlockEverythingThingy.orig_EnteredCheat orig, UnlockEverythingThingy self) {
+			if (PlayerStatus.Current.IsInMatch(true)) {
+				MatchDefinition def = PlayerStatus.Current.CurrentMatch;
+				if (def?.AllowCheatMode == false) {
+					def.PlayerDNF(DNFReason.CheatMode);
+				}
+			}
+			orig(self);
 		}
 
 		private void OnCelesteCriticalFailure(On.Celeste.Celeste.orig_CriticalFailureHandler orig, Exception e) {
@@ -361,7 +373,7 @@ namespace Celeste.Mod.Head2Head {
 			if (def != null) {
 				ResultCategory cat = def.GetPlayerResultCat(PlayerID.MyIDSafe);
 				if (cat == ResultCategory.InMatch) {
-					def.PlayerDNF();
+					def.PlayerDNF(DNFReason.DebugTeleport);
 				}
 			}
 			ActionLogger.DebugTeleport();
@@ -552,7 +564,7 @@ namespace Celeste.Mod.Head2Head {
 			if (PlayerStatus.Current.IsInMatch(false)) {
 				int matchslot = PlayerStatus.Current.GetMatchSaveFile();
 				if (matchslot != int.MinValue && matchslot != slot) {
-					PlayerStatus.Current.CurrentMatch?.PlayerDNF();
+					PlayerStatus.Current.CurrentMatch?.PlayerDNF(DNFReason.ChangeFile);
 				}
 			}
 			orig(data, slot);
@@ -561,7 +573,7 @@ namespace Celeste.Mod.Head2Head {
 
 		private bool OnSaveDataTryDelete(On.Celeste.SaveData.orig_TryDelete orig, int slot) {
 			if (PlayerStatus.Current.IsInMatch(false)) {
-				PlayerStatus.Current.CurrentMatch?.PlayerDNF();
+				PlayerStatus.Current.CurrentMatch?.PlayerDNF(DNFReason.DeleteFile);
 			}
 			if (orig(slot)) {
 				ActionLogger.DeletedSavefile();
@@ -777,7 +789,7 @@ namespace Celeste.Mod.Head2Head {
 			if (data.Player?.ID == CelesteNetClientModule.Instance?.Client?.PlayerInfo?.ID) {
 				MatchDefinition def = PlayerStatus.Current.CurrentMatch;
 				if (def != null && def.GetPlayerResultCat(PlayerID.MyIDSafe) == ResultCategory.InMatch) {
-					def.PlayerDNF();
+					def.PlayerDNF(DNFReason.ChangeChannel);
 				}
 				PurgeAllData();
 			}

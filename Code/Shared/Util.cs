@@ -112,6 +112,10 @@ namespace Celeste.Mod.Head2Head.Shared {
 			return Dialog.Get(string.Format("Head2Head_MatchState_{0}", cat.ToString()));
 		}
 
+		internal static object TranslatedDNFReason(DNFReason reason) {
+			return Dialog.Get(string.Format("Head2Head_DNFReason_{0}", reason.ToString()));
+		}
+
 		internal static bool EntityIsRealHeartGem(BinaryPacker.Element entity) {
 			if (entity.Name == "blackGem") {
 				bool isFake = entity.AttrBool("fake", false);
