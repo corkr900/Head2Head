@@ -30,8 +30,8 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 		#region Fullgame Category Flags
 
-		public bool UseFreshSavefile = true;
-        public bool AllowCheatMode = true;
+		public bool UseFreshSavefile = false;
+        public bool AllowCheatMode = false;
 
         #endregion
 

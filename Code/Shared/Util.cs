@@ -34,6 +34,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 	public static class Util {
 
 		internal static string DLL { get { return CleanDLL(Head2HeadModule.Instance.Metadata); } }
+		internal static string H2HFilenamePrefix { get { return "[H2H]"; } }
 
 		/// <summary>
 		/// Counts the number of berries in a chapter. Returns -1 if the area could not be localized or data could not be found.
@@ -196,6 +197,65 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 		public static string TranslatedIfAvailable(string name) {
 			return Dialog.Has(name) ? Dialog.Clean(name) : name;
+		}
+
+		internal static bool SafeCreateAndSwitchFile(int slot, bool assist, bool variant) {
+			if (UserIO.Open(UserIO.Mode.Read)) {
+				string filepath = SaveData.GetFilename(slot);
+				if (UserIO.Exists(filepath)) {
+					UserIO.Close();
+					return false;
+				}
+				SaveData data = new SaveData {
+					Name = H2HFilenamePrefix + " " + PlayerID.MyIDSafe.Name,
+					AssistMode = assist,
+					VariantMode = variant,
+				};
+				SaveData.Start(data, slot);
+				data.AfterInitialize();
+				UserIO.Close();
+				return true;
+			}
+			return false;
+		}
+
+		internal static bool SafeSwitchFile(int slot) {
+			if (SaveData.Instance.FileSlot == slot) return false;
+			string filepath = SaveData.GetFilename(slot);
+			if (UserIO.Open(UserIO.Mode.Read)) {
+				if (!UserIO.Exists(filepath)) {
+					UserIO.Close();
+					return false;
+				}
+			}
+			else return false;
+
+			SaveData saveData = UserIO.Load<SaveData>(filepath, backup: false);
+			if (saveData != null) {
+				saveData.AfterInitialize();
+				SaveData.Start(saveData, slot);
+				return true;
+			}
+			return false;
+		}
+
+		internal static bool SafeDeleteFile(int slot) {
+			if (SaveData.Instance.FileSlot == slot) return false;
+			if (UserIO.Open(UserIO.Mode.Read)) {
+				string filepath = SaveData.GetFilename(slot);
+				if (!UserIO.Exists(filepath)) {
+					UserIO.Close();
+					return false;
+				}
+				SaveData saveData = UserIO.Load<SaveData>(filepath, backup: false);
+				if (!saveData.Name.StartsWith(H2HFilenamePrefix)) {
+					UserIO.Close();
+					return false;
+				}
+				UserIO.Close();
+				return SaveData.TryDelete(slot);
+			}
+			return false;
 		}
 	}
 }

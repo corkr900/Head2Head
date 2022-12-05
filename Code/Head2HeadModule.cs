@@ -1290,12 +1290,7 @@ namespace Celeste.Mod.Head2Head {
 				if (def.UseFreshSavefile) {
 					int slot = FindNextUnusedSlot();
 					if (slot >= 0) {
-						// Create new savefile
-						global::Celeste.SaveData.Start(new SaveData {
-							Name = "[H2H] " + PlayerID.MyIDSafe.Name,
-							AssistMode = false,
-							VariantMode = false,
-						}, slot);
+						Util.SafeCreateAndSwitchFile(slot, false, false);
 					}
 					else {
 						Logger.Log("Head2Head.Warn", "Could not find a valid savefile slot for fullgame head 2 head match");
@@ -1356,12 +1351,9 @@ namespace Celeste.Mod.Head2Head {
 			int oldSlot = global::Celeste.SaveData.Instance.FileSlot;
 			int newSlot = returnToSlot;
 			ClearAutoLaunchInfo();
-			if (newSlot > -2) {  // This will only be set to a valid slot when finishing a full-game run
-				SaveData saveData = UserIO.Load<SaveData>(global::Celeste.SaveData.GetFilename(newSlot), backup: false);
-				if (saveData != null) {
-					saveData.AfterInitialize();
-					global::Celeste.SaveData.Start(saveData, newSlot);
-					global::Celeste.SaveData.TryDelete(oldSlot);
+			if (newSlot > -2 && oldSlot != newSlot) {
+				if (Util.SafeSwitchFile(newSlot)) {
+					Util.SafeDeleteFile(oldSlot);
 				}
 			}
 			if (doFadeWipe)
