@@ -37,7 +37,7 @@ namespace Celeste.Mod.Head2Head {
 		internal int MatchTimeoutMinutes = 15;
 
 		// Constants that might change in the future
-		public static readonly string ProtocolVersion = "1_1_0";
+		public static readonly string ProtocolVersion = "1_1_2";
 
 		// Other static stuff
 		public static Head2HeadModule Instance { get; private set; }
@@ -178,6 +178,10 @@ namespace Celeste.Mod.Head2Head {
 			Logger.SetLogLevel("Head2Head.Custom", LogLevel.Warn);
 			typeof(Head2HeadAPI).ModInterop();
 			CollabUtils2Integration.Load();
+			SpeedrunToolIntegration.Load();
+			CelesteTASIntegration.Load();
+
+			SyncedClock.DoClockSync();
 		}
 
 		public override void Unload() {
@@ -253,6 +257,9 @@ namespace Celeste.Mod.Head2Head {
 			// Misc other cleanup
 			if (Celeste.Instance.Components.Contains(Comm))
 				Celeste.Instance.Components.Remove(Comm);
+			CollabUtils2Integration.Unload();
+			SpeedrunToolIntegration.Unload();
+			CelesteTASIntegration.Unload();
 		}
 
 		public override void CreateModMenuSection(TextMenu menu, bool inGame, FMOD.Studio.EventInstance snapshot)
@@ -899,7 +906,7 @@ namespace Celeste.Mod.Head2Head {
 			}
 			buildingMatch = new MatchDefinition() {
 				Owner = PlayerID.MyID ?? PlayerID.Default,
-				CreationInstant = DateTime.Now,
+				CreationInstant = SyncedClock.Now,
 			};
 		}
 
@@ -1100,7 +1107,7 @@ namespace Celeste.Mod.Head2Head {
 				Logger.Log("Head2Head", "Your role prevents starting this match");
 				return;
 			}
-			def.BeginInstant = DateTime.Now + new TimeSpan(0, 0, 0, 0, START_TIMER_LEAD_MS);
+			def.BeginInstant = SyncedClock.Now + new TimeSpan(0, 0, 0, 0, START_TIMER_LEAD_MS);
 			def.State = MatchState.InProgress;
 			MatchStarted(def);  // OnMatchUpdated doesn't detect a status change locally
 		}
@@ -1164,7 +1171,7 @@ namespace Celeste.Mod.Head2Head {
 			if (def.State == MatchState.None) return true;
 			if (def.State == MatchState.Completed) return true;
 			if (def.State == MatchState.Building && buildingMatch.MatchID != def.MatchID) return true;
-			if (def.State == MatchState.Staged && (DateTime.Now - def.CreationInstant).TotalMinutes > 20) return true;
+			if (def.State == MatchState.Staged && (SyncedClock.Now - def.CreationInstant).TotalMinutes > 20) return true;
 			return false;
 		}
 
@@ -1267,7 +1274,7 @@ namespace Celeste.Mod.Head2Head {
 			if (PlayerStatus.Current.CurrentMatch == null) yield break;
 			string idCheck = PlayerStatus.Current.CurrentMatchID;
 			DateTime startInstant = PlayerStatus.Current.CurrentMatch.BeginInstant;
-			DateTime now = DateTime.Now;
+			DateTime now = SyncedClock.Now;
 			if (startInstant > now + new TimeSpan(0, 0, 15)) {
 				Logger.Log("Head2Head", "Match begins more than 15 seconds in the future; skipping countdown (try syncing your system's clock)");
 			}
@@ -1320,12 +1327,10 @@ namespace Celeste.Mod.Head2Head {
 				if (args.MatchDef.UseFreshSavefile) {
 					returnToSlot = PlayerStatus.Current.FileSlotBeforeMatchStart;
 				}
-				if (!Settings.ReturnToLobby) return;
 				autoLaunchArea = GlobalAreaKey.Head2HeadLobby;
 			}
 			else
 			{
-				if (!Settings.AutoLaunchNextPhase) return;
 				if (args.NextPhase == null) return;
 				if (!args.NextPhase.Area.ExistsLocal) return;
 				if (!args.NextPhase.Area.VersionMatchesLocal) return;

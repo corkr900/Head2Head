@@ -30,6 +30,10 @@ namespace Celeste.Mod.Head2Head.Integration {
 			try {
 				// Get type info and functions
 				LobbyHelper = Type.GetType("Celeste.Mod.CollabUtils2.LobbyHelper,CollabUtils2");
+				if (LobbyHelper == null) {
+					IsCollabUtils2Installed = false;
+					return;
+				}
 				LobbyHelper_GetLobbyLevelSet = LobbyHelper.GetMethod("GetLobbyLevelSet", BindingFlags.Public | BindingFlags.Static);
 				LobbyHelper_IsCollabLevelSet = LobbyHelper.GetMethod("IsCollabLevelSet", BindingFlags.Public | BindingFlags.Static);
 				LobbyHelper_GetLobbyForLevelSet = LobbyHelper.GetMethod("GetLobbyForLevelSet", BindingFlags.Public | BindingFlags.Static);
@@ -54,6 +58,13 @@ namespace Celeste.Mod.Head2Head.Integration {
 			catch(Exception e) {
 				IsCollabUtils2Installed = false;
 			}
+		}
+
+		internal static void Unload() {
+			hook_MiniHeart_SmashRoutine?.Dispose();
+			hook_MiniHeart_SmashRoutine = null;
+			hook_ReturnToLobbyHelper_onLevelEnterGo?.Dispose();
+			hook_ReturnToLobbyHelper_onLevelEnterGo = null;
 		}
 
 		#region Mod Interface

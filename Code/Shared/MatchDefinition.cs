@@ -86,7 +86,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		}
 
         private static string GenerateMatchID() {
-            return string.Format("h2hmid_{0}_{1}_{2}", PlayerID.MyIDSafe.GetHashCode(), ++localIDCounter, DateTime.Now.GetHashCode());
+            return string.Format("h2hmid_{0}_{1}_{2}", PlayerID.MyIDSafe.GetHashCode(), ++localIDCounter, SyncedClock.Now.GetHashCode());
 		}
 
         public void SetState_NoUpdate(MatchState newState) {
@@ -176,6 +176,10 @@ namespace Celeste.Mod.Head2Head.Shared {
 
         public void PlayerDNF(DNFReason reason) {
             PlayerID id = PlayerID.MyIDSafe;
+#if DEBUG
+            // I need SOME way to test stuff...
+            if (Role.IsDebug && id.Name == "corkr900") return;
+#endif
             PlayerStatus stat = PlayerStatus.Current;
             ResultCategory cat = GetPlayerResultCat(id);
             if (cat == ResultCategory.Joined || cat == ResultCategory.InMatch) {

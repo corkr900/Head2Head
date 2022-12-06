@@ -1,4 +1,5 @@
 ﻿using Celeste.Mod.Head2Head.Entities;
+using Celeste.Mod.Head2Head.IO;
 using Celeste.Mod.Head2Head.Shared;
 using Microsoft.Xna.Framework;
 using Monocle;
@@ -278,7 +279,7 @@ namespace Celeste.Mod.Head2Head.UI {
 			if (def == null) return false;
 			if (def.State != MatchState.InProgress) return false;
 			if (def.GetPlayerResultCat(PlayerID.MyIDSafe) == ResultCategory.NotJoined) return false;
-			DateTime now = DateTime.Now;
+			DateTime now = SyncedClock.Now;
 			if (def.BeginInstant < now) return false;
 			TimeSpan remain = def.BeginInstant - now;
 			int cdIdx = (int)Math.Ceiling(remain.TotalSeconds);
@@ -292,7 +293,7 @@ namespace Celeste.Mod.Head2Head.UI {
 			float _bannerOpacity = Opacity(scene, PlayerStatus.Current.CurrentMatch);
 			Vector2 justify = new Vector2(0.5f, 0.5f);
 			float hudScale = Head2HeadModule.Settings.HudScale;
-			DateTime now = DateTime.Now;
+			DateTime now = SyncedClock.Now;
 			if (def.BeginInstant < now) return;
 			TimeSpan remain = def.BeginInstant - now;
 			int displaynum = (int)Math.Ceiling(remain.TotalSeconds);

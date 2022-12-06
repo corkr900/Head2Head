@@ -86,7 +86,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		/// <summary>
 		/// This is not sent over the network. It is to be set on receipt of an update.
 		/// </summary>
-		public DateTime ReceivedAt = DateTime.Now;
+		public DateTime ReceivedAt = SyncedClock.Now;
 		public MatchState MatchState {
 			get {
 				return CurrentMatch?.State ?? MatchState.None;

@@ -294,7 +294,7 @@ namespace Celeste.Mod.Head2Head.IO {
 		public LoggableAction(ActionType _type) {
 			GlobalAreaKey area = PlayerStatus.Current.CurrentArea;
 			type = _type;
-			instant = DateTime.Now.ToString();
+			instant = SyncedClock.Now.ToString();
 			fileTimer = Dialog.FileTime(SaveData.Instance.Time);
 			areaSID = PlayerStatus.Current.CurrentArea.SID;
 			room = PlayerStatus.Current.CurrentRoom;

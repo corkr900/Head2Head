@@ -82,6 +82,9 @@
     <Compile Include="Data\DataH2HScanRequest.cs" />
     <Compile Include="Data\DataH2HScanResponse.cs" />
     <Compile Include="Entities\FullgameSelector.cs" />
+    <Compile Include="Integration\CelesteTASIntegration.cs" />
+    <Compile Include="Integration\SpeedrunToolIntegration.cs" />
+    <Compile Include="IO\SyncedClock.cs" />
     <Compile Include="UI\FullgameSelectorUI.cs" />
     <Compile Include="Entities\Helpdesk.cs" />
     <Compile Include="Entities\ILSelector.cs" />

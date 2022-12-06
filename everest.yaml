@@ -1,5 +1,5 @@
 - Name: Head2Head
-  Version: 1.1.1
+  Version: 1.1.2
   DLL: Code/Head2Head.dll
   Dependencies:
     - Name: Everest
@@ -9,3 +9,7 @@
   OptionalDependencies:
     - Name: CollabUtils2
       Version: 1.6.15
+    - Name: SpeedrunTool
+      Version: 3.16.5
+    - Name: CelesteTAS
+      Version: 3.17.2

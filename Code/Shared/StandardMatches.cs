@@ -1,4 +1,5 @@
 ﻿using Celeste.Mod.Head2Head.Entities;
+using Celeste.Mod.Head2Head.IO;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -327,7 +328,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public static MatchDefinition FullGameAnyPct() {
 			MatchDefinition def = new MatchDefinition() {
 				Owner = PlayerID.MyID ?? PlayerID.Default,
-				CreationInstant = DateTime.Now,
+				CreationInstant = SyncedClock.Now,
 				UseFreshSavefile = true,
 				AllowCheatMode = false,
 			};
@@ -347,7 +348,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public static MatchDefinition FullGameAllRedBerries() {
 			MatchDefinition def = new MatchDefinition() {
 				Owner = PlayerID.MyID ?? PlayerID.Default,
-				CreationInstant = DateTime.Now,
+				CreationInstant = SyncedClock.Now,
 				UseFreshSavefile = true,
 				AllowCheatMode = false,
 			};
@@ -371,7 +372,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public static MatchDefinition FullGameTrueEnding() {
 			MatchDefinition def = new MatchDefinition() {
 				Owner = PlayerID.MyID ?? PlayerID.Default,
-				CreationInstant = DateTime.Now,
+				CreationInstant = SyncedClock.Now,
 				UseFreshSavefile = true,
 				AllowCheatMode = false,
 			};
@@ -391,7 +392,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public static MatchDefinition FullGameAllCassettes() {
 			MatchDefinition def = new MatchDefinition() {
 				Owner = PlayerID.MyID ?? PlayerID.Default,
-				CreationInstant = DateTime.Now,
+				CreationInstant = SyncedClock.Now,
 				UseFreshSavefile = true,
 				AllowCheatMode = false,
 			};
@@ -416,7 +417,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			// TODO (!!!) Bny% CANNOT finish any A sides
 			MatchDefinition def = new MatchDefinition() {
 				Owner = PlayerID.MyID ?? PlayerID.Default,
-				CreationInstant = DateTime.Now,
+				CreationInstant = SyncedClock.Now,
 				UseFreshSavefile = true,
 				AllowCheatMode = false,
 			};
@@ -436,7 +437,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public static MatchDefinition FullGameAllHearts() {
 			MatchDefinition def = new MatchDefinition() {
 				Owner = PlayerID.MyID ?? PlayerID.Default,
-				CreationInstant = DateTime.Now,
+				CreationInstant = SyncedClock.Now,
 				UseFreshSavefile = true,
 				AllowCheatMode = false,
 			};
@@ -456,7 +457,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public static MatchDefinition FullGameOneHundredPercent() {
 			MatchDefinition def = new MatchDefinition() {
 				Owner = PlayerID.MyID ?? PlayerID.Default,
-				CreationInstant = DateTime.Now,
+				CreationInstant = SyncedClock.Now,
 				UseFreshSavefile = true,
 				AllowCheatMode = false,
 			};
@@ -484,7 +485,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public static MatchDefinition FullGameAllChapters() {
 			MatchDefinition def = new MatchDefinition() {
 				Owner = PlayerID.MyID ?? PlayerID.Default,
-				CreationInstant = DateTime.Now,
+				CreationInstant = SyncedClock.Now,
 				UseFreshSavefile = true,
 				AllowCheatMode = false,
 			};
@@ -504,7 +505,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public static MatchDefinition FullGameAllASides() {
 			MatchDefinition def = new MatchDefinition() {
 				Owner = PlayerID.MyID ?? PlayerID.Default,
-				CreationInstant = DateTime.Now,
+				CreationInstant = SyncedClock.Now,
 				UseFreshSavefile = true,
 				AllowCheatMode = true,
 			};
@@ -560,7 +561,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public static MatchDefinition FullGameAllBSides() {
 			MatchDefinition def = new MatchDefinition() {
 				Owner = PlayerID.MyID ?? PlayerID.Default,
-				CreationInstant = DateTime.Now,
+				CreationInstant = SyncedClock.Now,
 				UseFreshSavefile = true,
 				AllowCheatMode = true,
 			};
@@ -616,7 +617,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public static MatchDefinition FullGameAllCSides() {
 			MatchDefinition def = new MatchDefinition() {
 				Owner = PlayerID.MyID ?? PlayerID.Default,
-				CreationInstant = DateTime.Now,
+				CreationInstant = SyncedClock.Now,
 				UseFreshSavefile = true,
 				AllowCheatMode = true,
 			};
