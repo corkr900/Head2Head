@@ -864,10 +864,15 @@ namespace Celeste.Mod.Head2Head {
 			return PlayerStatus.Current.CanStageMatch();
 		}
 
+		public bool CanBuildFullgameMatch() {
+			return CanBuildMatch() && Role.AllowFullgame();
+		}
+
 		public bool CanStageMatch() {
 			if (!CanBuildMatch()) return false;
 			if (buildingMatch == null) return false;
 			if (buildingMatch.Phases.Count == 0) return false;
+			if (buildingMatch.UseFreshSavefile && !Role.AllowFullgame()) return false;
 			return true;
 		}
 
@@ -896,7 +901,7 @@ namespace Celeste.Mod.Head2Head {
 				Logger.Log("Head2Head.Warn", "Cannot build match: you are using an outdated version of Head 2 Head");
 				return;
 			}
-			if (!Role.AllowMatchCreate()) {
+			if (!Role.AllowMatchCreate()) {  // This is okay because this is for ILs only
 				Logger.Log("Head2Head", "Your role prevents building a match");
 				return;
 			}
@@ -989,6 +994,10 @@ namespace Celeste.Mod.Head2Head {
 			}
 			if (buildingMatch == null) {
 				Logger.Log("Head2Head", "You need to build a match first");
+				return;
+			}
+			if (buildingMatch.UseFreshSavefile && !Role.AllowFullgame()) {
+				Logger.Log("Head2Head", "Your role prevents creating full-game a match");
 				return;
 			}
 			if (buildingMatch.Phases.Count == 0) {

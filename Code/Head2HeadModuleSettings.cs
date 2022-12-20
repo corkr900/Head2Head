@@ -56,14 +56,6 @@ namespace Celeste.Mod.Head2Head {
 		[SettingSubText("Head2Head_Setting_TimeServer_Subtext")]
 		public TimeServer NSTPTimeServer { get; set; } = TimeServer.Windows;
 
-		// Stuff not in menu
-
-		public bool UseActionLog {
-			get {
-				return Role == "bta";
-			}
-		}
-
 		public string RealExportLocation {
 			get {
 				return /*string.IsNullOrEmpty(ExportDirectory) ?*/

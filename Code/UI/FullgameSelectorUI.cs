@@ -124,7 +124,7 @@ namespace Celeste.Mod.Head2Head.Entities {
 		}
 
 		private void Confirm() {
-			if (Head2HeadModule.Instance.CanBuildMatch()) {
+			if (Head2HeadModule.Instance.CanBuildFullgameMatch()) {
 				Audio.Play("event:/ui/world_map/chapter/checkpoint_start");
 				if (categories?.Count > 0) {
 					Option o = categories[HoveredOption];

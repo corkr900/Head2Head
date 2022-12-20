@@ -41,7 +41,7 @@ namespace Celeste.Mod.Head2Head.Entities {
 		}
 
 		private void UpdateEnabledState() {
-			talkComponent.Enabled = Head2HeadModule.Instance.CanBuildMatch();
+			talkComponent.Enabled = Head2HeadModule.Instance.CanBuildFullgameMatch();
 		}
 
 		private void OpenUI(Player player) {

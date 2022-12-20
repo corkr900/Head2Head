@@ -17,7 +17,7 @@ namespace Celeste.Mod.Head2Head.IO {
 		private static MatchLog Current;
 
 		private static bool TrackActions(bool skipCurrentCheck = false) {
-			return (skipCurrentCheck || (Current != null && !Current.completedMatchWritten)) && Head2HeadModule.Settings.UseActionLog;
+			return (skipCurrentCheck || (Current != null && !Current.completedMatchWritten)) && Role.LogMatchActions();
 		}
 
 		public static bool WriteLog() {
