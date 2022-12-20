@@ -32,8 +32,6 @@ namespace Celeste.Mod.Head2Head.Shared {
 	}
 
 	public static class Util {
-
-		internal static string DLL { get { return CleanDLL(Head2HeadModule.Instance.Metadata); } }
 		internal static string H2HFilenamePrefix { get { return "[H2H]"; } }
 
 		/// <summary>
@@ -172,19 +170,11 @@ namespace Celeste.Mod.Head2Head.Shared {
 			return timeSpan.TotalSeconds;
 		}
 
-		internal static string CleanDLL(EverestModuleMetadata meta) {
-			string ret;
-			if (string.IsNullOrEmpty(meta.DLL)) ret = meta.DLL;
-			else if (string.IsNullOrEmpty(meta.PathDirectory)) ret = meta.DLL;
-			else if (meta.PathDirectory.Length + 1 >= meta.DLL.Length) ret = meta.DLL;  // Probably impossible. But probably is not a promise.
-			else ret = meta.DLL.Substring(meta.PathDirectory.Length + 1);
-			return ret?.Replace('\\', '/');
-		}
-
 		internal static bool IsUpdateAvailable() {
 			SortedDictionary<ModUpdateInfo, EverestModuleMetadata> updates = ModUpdaterHelper.GetAsyncLoadedModUpdates();
 			foreach(EverestModuleMetadata meta in updates.Values) {
-				if (CleanDLL(meta) == DLL && meta.Version > Head2HeadModule.Instance.Metadata.Version) {
+				if (meta.Name == Head2HeadModule.Instance.Metadata.Name
+					&& meta.Version > Head2HeadModule.Instance.Metadata.Version) {
 					return true;
 				}
 			}
