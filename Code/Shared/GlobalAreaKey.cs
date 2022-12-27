@@ -23,7 +23,7 @@ namespace Celeste.Mod.Head2Head.Shared {
         public Version LocalVersion {
 			get {
                 if (IsOverworld || !ExistsLocal || IsVanilla) return Celeste.Instance.Version;
-                else return ModContent.Mod.Version;
+                else return ModContent?.Mod?.Version ?? Celeste.Instance.Version;
             }
 		}
         public string VersionString { 
