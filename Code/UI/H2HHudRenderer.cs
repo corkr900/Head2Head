@@ -303,7 +303,7 @@ namespace Celeste.Mod.Head2Head.UI {
 		}
 
 		private bool ShouldShowMatchPass(Scene scene, MatchDefinition def) {
-			return PlayerStatus.Current.CurrentArea.Equals(GlobalAreaKey.Head2HeadLobby) && Role.hasBTAMatchPass;
+			return Role.hasBTAMatchPass && PlayerStatus.Current.CurrentArea.Equals(GlobalAreaKey.Head2HeadLobby);
 		}
 
 		private void RenderMatchPass(Scene scene, MatchDefinition def) {
