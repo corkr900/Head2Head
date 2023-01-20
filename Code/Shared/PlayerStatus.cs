@@ -93,6 +93,33 @@ namespace Celeste.Mod.Head2Head.Shared {
 			}
 		}
 
+		// Lobby Race Stuff
+
+		public bool StartedLobbyRace { get { return InTimeTrial; } }
+		public bool RunningLobbyRace { get { return lobbyCP >= 0; } }
+		internal int lobbyCP = -1;
+		internal long lobbyTimer = 0;
+		public long RecordLobbyTime = -1;
+		private bool InTimeTrial = false;
+
+		internal void StartLobbyRace() {
+			InTimeTrial = true;
+			lobbyCP = -1;
+			lobbyTimer = 0;
+		}
+
+		internal void StartLobbyRaceTimer() {
+			lobbyCP = 0;
+		}
+
+		internal void FinishLobbyRace() {
+			InTimeTrial = false;
+			lobbyCP = -1;
+			if (RecordLobbyTime < 0 || lobbyTimer < RecordLobbyTime) {
+				RecordLobbyTime = lobbyTimer;
+			}
+		}
+
 		// Lifecycle events
 		public void ChapterEntered(GlobalAreaKey area, Session session) {
 			CurrentArea = area;
@@ -567,6 +594,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			pms.FileTimerAtMatchBegin = r.ReadInt64();
 			pms.FileTimerAtLastCheckpoint = r.ReadInt64();
 			pms.FileTimerAtLastObjectiveComplete = r.ReadInt64();
+			pms.RecordLobbyTime = r.ReadInt64();
 			int numPhases = r.ReadInt32();
 			for (int i = 0; i < numPhases; i++) {
 				pms.phases.Add(r.ReadMatchPhaseState());
@@ -594,6 +622,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			w.Write(s.FileTimerAtMatchBegin);
 			w.Write(s.FileTimerAtLastCheckpoint);
 			w.Write(s.FileTimerAtLastObjectiveComplete);
+			w.Write(s.RecordLobbyTime);
 			w.Write(s.phases.Count);
 			foreach (H2HMatchPhaseState st in s.phases) {
 				w.Write(st);

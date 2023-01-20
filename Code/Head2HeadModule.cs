@@ -144,6 +144,7 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.OverworldLoader.Begin += OnOverworldLoaderBegin;
 			On.Celeste.OuiChapterPanel._GetCheckpoints += OnOUIChapterPanel_GetCheckpoints;
 			On.Celeste.OuiChapterSelectIcon.Show += OnOuiChapterSelectIconShow;
+			On.Celeste.SpeedrunTimerDisplay.Render += OnSpeedrunTimerDisplayRender;
 			On.Celeste.UnlockEverythingThingy.EnteredCheat += OnUnlockEverythingThingyEnteredCheat;
 			On.Celeste.Editor.MapEditor.ctor += onDebugScreenOpened;
 			On.Celeste.Editor.MapEditor.LoadLevel += onDebugTeleport;
@@ -228,6 +229,7 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.OverworldLoader.Begin -= OnOverworldLoaderBegin;
 			On.Celeste.OuiChapterPanel._GetCheckpoints -= OnOUIChapterPanel_GetCheckpoints;
 			On.Celeste.OuiChapterSelectIcon.Show -= OnOuiChapterSelectIconShow;
+			On.Celeste.SpeedrunTimerDisplay.Render -= OnSpeedrunTimerDisplayRender;
 			On.Celeste.UnlockEverythingThingy.EnteredCheat -= OnUnlockEverythingThingyEnteredCheat;
 			On.Celeste.Editor.MapEditor.ctor -= onDebugScreenOpened;
 			On.Celeste.Editor.MapEditor.LoadLevel -= onDebugTeleport;
@@ -476,8 +478,24 @@ namespace Celeste.Mod.Head2Head {
 
 		public static void OnLevelUpdateTime(On.Celeste.Level.orig_UpdateTime orig, Level self) {
 			// Freeze the timer in the lobby
-			if (self.Session.Area.SID == GlobalAreaKey.Head2HeadLobby.SID) return;
+			if (self.Session.Area.SID == GlobalAreaKey.Head2HeadLobby.SID) {
+				if (PlayerStatus.Current.RunningLobbyRace) {
+					PlayerStatus.Current.lobbyTimer += TimeSpan.FromSeconds(Engine.RawDeltaTime).Ticks;
+				}
+				return;
+			}
 			orig(self);
+		}
+
+		private void OnSpeedrunTimerDisplayRender(On.Celeste.SpeedrunTimerDisplay.orig_Render orig, SpeedrunTimerDisplay self) {
+			if (PlayerStatus.Current.CurrentArea.Equals(GlobalAreaKey.Head2HeadLobby)) {
+				string timeString = TimeSpan.FromTicks(PlayerStatus.Current.lobbyTimer).ShortGameplayFormat();
+				new DynamicData(self).Get<MTexture>("bg")?.Draw(new Vector2(0, self.Y));
+				SpeedrunTimerDisplay.DrawTime(new Vector2(32f, self.Y + 44f), timeString);
+			}
+			else {
+				orig(self);
+			}
 		}
 
 		private EntityData OnLevelDataCreateEntityData(On.Celeste.LevelData.orig_CreateEntityData orig, LevelData self, BinaryPacker.Element entity) {
