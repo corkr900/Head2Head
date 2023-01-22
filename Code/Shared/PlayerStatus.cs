@@ -100,7 +100,14 @@ namespace Celeste.Mod.Head2Head.Shared {
 		internal int lobbyCP = -1;
 		internal long lobbyTimer = 0;
 		public long RecordLobbyTime = -1;
-		private bool InTimeTrial = false;
+		internal bool InTimeTrial = false;
+
+		internal void ResetLobbyRace() {
+			InTimeTrial = false;
+			lobbyCP = -1;
+			lobbyTimer = 0;
+			RecordLobbyTime = -1;
+		}
 
 		internal void StartLobbyRace() {
 			InTimeTrial = true;
@@ -122,6 +129,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 		// Lifecycle events
 		public void ChapterEntered(GlobalAreaKey area, Session session) {
+			ResetLobbyRace();
 			CurrentArea = area;
 			CurrentRoom = session.Level;
 			if (IsInMatch(false)) {
@@ -169,6 +177,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			Updated();
 		}
 		public void ChapterExited(LevelExit.Mode mode, Session session) {
+			ResetLobbyRace();
 			CurrentArea = GlobalAreaKey.Overworld;
 			CurrentRoom = "";
 			if (IsInMatch(false)) {
@@ -178,7 +187,6 @@ namespace Celeste.Mod.Head2Head.Shared {
 			}
 			Updated();
 		}
-
 		public void MatchStaged(MatchDefinition def) {
 			if (CurrentMatch?.MatchID != def.MatchID) {
 				CurrentMatch = def;
@@ -206,7 +214,6 @@ namespace Celeste.Mod.Head2Head.Shared {
 			CurrentMatch = null;
 			Updated();
 		}
-
 		public void Cleanup() {
 			phases.Clear();
 			objectives.Clear();
