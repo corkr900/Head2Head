@@ -429,7 +429,7 @@ namespace Celeste.Mod.Head2Head.UI {
 			ActiveFont.Draw(title, titlePosition - Vector2.One * listMargin / 4f, Vector2.One, Vector2.One * hudScale, Color.Black);
 
 			rows.Sort((Tuple<string, long, Vector2> left, Tuple<string, long, Vector2> right) => {
-				return left.Item2.CompareTo(right.Item2);
+				return right.Item2.CompareTo(left.Item2);
 			});
 			Vector2 pos = new Vector2(1920 - listMargin / 2f, 1080 - titleSize.Y - listMargin / 2f);
 			for (int i = 0; i < rows.Count; i++) {
