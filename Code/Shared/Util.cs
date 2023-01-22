@@ -1,4 +1,5 @@
-﻿using Celeste.Mod.Helpers;
+﻿using Celeste.Mod.Head2Head.IO;
+using Celeste.Mod.Helpers;
 using Celeste.Mod.Meta;
 using MonoMod.Utils;
 using System;
@@ -246,6 +247,14 @@ namespace Celeste.Mod.Head2Head.Shared {
 				return SaveData.TryDelete(slot);
 			}
 			return false;
+		}
+
+		internal static string MyDisplayName() {
+			string name = CNetComm.Instance?.CnetClient?.PlayerInfo?.DisplayName;
+			if (!string.IsNullOrEmpty(name)) return name;
+			name = PlayerID.LastKnownName;
+			if (!string.IsNullOrEmpty(name)) return name;
+			return Dialog.Clean("Head2Head_me");
 		}
 	}
 }

@@ -1,5 +1,5 @@
 - Name: Head2Head
-  Version: 1.1.4
+  Version: 1.1.5
   DLL: Code/Head2Head.dll
   Dependencies:
     - Name: Everest

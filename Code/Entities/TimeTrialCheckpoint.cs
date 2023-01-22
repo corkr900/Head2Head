@@ -28,13 +28,16 @@ namespace Celeste.Mod.Head2Head.Entities {
 			isFinish = data.Bool("isFinish", false);
 			checkpointNumber = data.Int("checkpointNumber", 1);
 			if (data.Nodes.Length > 0) {
-				SpritePosition = data.Nodes[0] + offset;
+				SpritePosition = data.Nodes[0];
 			}
 			else {
-				SpritePosition = Position + new Vector2(width / 2f, height);
+				SpritePosition = new Vector2(width / 2f, height);
 			}
 			Collider = new Hitbox(width, height);
-			Add(sprite = GFX.SpriteBank.Create("litTorch"));
+			string spriteStr = isStart ? "Head2Head_TimeTrial_Start"
+				: isFinish ? "Head2Head_TimeTrial_Finish"
+				: "Head2Head_TimeTrial_Checkpoint";
+			Add(sprite = GFX.SpriteBank.Create(spriteStr));
 			sprite.Position = SpritePosition;
 		}
 

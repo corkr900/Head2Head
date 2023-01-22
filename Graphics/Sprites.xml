@@ -33,5 +33,26 @@
 		<Anim id="push" path="" delay="0.07" frames="21-27" goto="pushed"/>
 	</Head2Head_MatchSwitch_Start>
 
+	<Head2Head_TimeTrial_Start path="Head2Head/TimeTrial/start" start="idle">
+		<Justify x="0.5" y="1"/>
+		<Loop id="idle" path="" delay="0.2" frames="0"/>
+		<Anim id="raise" path="" delay="0.2" frames="1" goto="raised"/>
+		<Loop id="raised" path="" delay="0.2" frames="1"/>
+	</Head2Head_TimeTrial_Start>
+
+	<Head2Head_TimeTrial_Finish path="Head2Head/TimeTrial/finish" start="idle">
+		<Justify x="0.5" y="1"/>
+		<Loop id="idle" path="" delay="0.2" frames="0"/>
+		<Anim id="raise" path="" delay="0.2" frames="1" goto="raised"/>
+		<Loop id="raised" path="" delay="0.2" frames="1"/>
+	</Head2Head_TimeTrial_Finish>
+
+	<Head2Head_TimeTrial_Checkpoint path="Head2Head/TimeTrial/checkpoint" start="idle">
+		<Justify x="0.5" y="1"/>
+		<Loop id="idle" path="" delay="0.2" frames="0"/>
+		<Anim id="raise" path="" delay="0.07" frames="1" goto="raised"/>
+		<Loop id="raised" path="" delay="0.2" frames="1"/>
+	</Head2Head_TimeTrial_Checkpoint>
+
 
 </Sprites>

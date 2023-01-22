@@ -9,6 +9,10 @@ Head2Head_CollectableNames_UnnamedCustom= Unnamed Custom Collectable
 
 Head2Head_Selector_NoValidCategories= No Valid Categories
 
+Head2Head_me= Me
+Head2Head_LobbyRecords= Lobby Records
+Head2Head_CountMore= {0} More...
+
 Head2Head_Setting_UseSRCARBRules= Use SRC ARB Categories
 Head2Head_Setting_UseSRCARBRules_Subtext= If turned on, either ARB or ARB + Heart will be hidden
 for base-game chapters according to the rules on SRC for the

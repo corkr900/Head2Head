@@ -64,6 +64,7 @@ namespace Celeste.Mod.Head2Head.UI {
 			if (ShouldShowCountdown(scene, def)) RenderCountdown(scene, def);
 			if (ShouldShowMatchPass(scene, def)) RenderMatchPass(scene, def);
 			if (ShouldShowDebugInfo(scene, def)) RenderDebugInfo(scene, def);
+			if (ShouldShowLobbyRaceInfo(scene, def)) RenderLobbyRaceInfo(scene, def);
 			HiresRenderer.EndRender();
 		}
 
@@ -216,7 +217,7 @@ namespace Celeste.Mod.Head2Head.UI {
 		private MTexture GetSubtexLowerLeft(MTexture source, Vector2 targetSize, float scale) {
 			int actualWidth = (int)Calc.Min(source.Width, targetSize.X / scale);
 			int actualHeight = (int)Calc.Min(source.Height, targetSize.Y / scale);
-			return ListBG.GetSubtexture(0, source.Height - actualHeight, actualWidth, actualHeight);
+			return source.GetSubtexture(0, source.Height - actualHeight, actualWidth, actualHeight);
 		}
 
 		private string GetPlayerDetail(PlayerID id, ResultCategory cat, MatchDefinition def) {
@@ -363,6 +364,77 @@ namespace Celeste.Mod.Head2Head.UI {
 				ActiveFont.DrawOutline(deftext[i], new Vector2(anchor.X, yPos), Vector2.Zero, Vector2.One * scale, Color.White, 1f, Color.Black);
 				ActiveFont.DrawOutline(ststext[i], new Vector2(anchor.X - 15, yPos), Vector2.UnitX, Vector2.One * scale, Color.Cyan, 1f, Color.Black);
 				yPos += ActiveFont.Measure(deftext[i]).Y * scale;
+			}
+		}
+
+		#endregion
+
+		#region Lobby Race
+
+		private bool ShouldShowLobbyRaceInfo(Scene scene, MatchDefinition def) {
+			PlayerStatus st = PlayerStatus.Current;
+			if (!st.CurrentArea.Equals(GlobalAreaKey.Head2HeadLobby)) return false;
+			if (PlayerStatus.Current.RecordLobbyTime > 0) return true;
+			foreach (PlayerStatus stat in Head2HeadModule.knownPlayers.Values) {
+				if (stat.RecordLobbyTime > 0) return true;
+			}
+			return false;
+		}
+
+		private void RenderLobbyRaceInfo(Scene scene, MatchDefinition def) {
+			List<Tuple<string, long, Vector2>> rows = new List<Tuple<string, long, Vector2>>();
+			float hudScale = Head2HeadModule.Settings.HudScale * 0.5f;
+
+			string row = Util.MyDisplayName() + " - " + Dialog.FileTime(PlayerStatus.Current.RecordLobbyTime);
+			Vector2 sum = ActiveFont.Measure(row);
+			rows.Add(new Tuple<string, long, Vector2>(row, PlayerStatus.Current.RecordLobbyTime, sum));
+			foreach (KeyValuePair<PlayerID, PlayerStatus> kvp in Head2HeadModule.knownPlayers) {
+				if (kvp.Value.RecordLobbyTime > 0) {
+					bool isLast = false;
+					if (rows.Count >= 10) {
+						row = string.Format(Dialog.Get("Head2Head_CountMore"), Head2HeadModule.knownPlayers.Count - rows.Count);
+						isLast = true;
+					}
+					else {
+						row = kvp.Key.Name + " - " + Dialog.FileTime(kvp.Value.RecordLobbyTime);
+					}
+					Vector2 size = ActiveFont.Measure(row);
+					sum.X = Calc.Max(sum.X, size.X);
+					sum.Y += size.Y;
+					rows.Add(new Tuple<string, long, Vector2>(row, kvp.Value.RecordLobbyTime, size));
+					if (isLast) {
+						break;
+					}
+				}
+			}
+
+			string title = Dialog.Clean("Head2Head_LobbyRecords");
+			Vector2 titleSize = ActiveFont.Measure(title) * hudScale + Vector2.One * listMargin / 2f;
+
+			Vector2 listSize = sum * hudScale + Vector2.One * listMargin;
+			MTexture bgTex = GetSubtexLowerLeft(ListBG, listSize, hudScale);
+			Vector2 bGScale = new Vector2(listSize.X / bgTex.Width, listSize.Y / bgTex.Height);
+			bGScale.Y *= -1;
+			Vector2 position = new Vector2(1920, 1080 - titleSize.Y);
+			bgTex.DrawJustified(position, Vector2.UnitX, Color.White, bGScale);
+
+			if (titleSize.X < listSize.X + 8 * hudScale) {
+				titleSize.X = listSize.X + 8 * hudScale;
+			}
+			MTexture titleTex = GetSubtexLowerLeft(ListTitleBG, titleSize, hudScale);
+			Vector2 titleScale = new Vector2(titleSize.X / titleTex.Width, titleSize.Y / titleTex.Height);
+			titleScale.Y *= -1;
+			Vector2 titlePosition = new Vector2(1920, 1080);
+			titleTex.DrawJustified(titlePosition, Vector2.UnitX, Color.White, titleScale);
+			ActiveFont.Draw(title, titlePosition - Vector2.One * listMargin / 4f, Vector2.One, Vector2.One * hudScale, Color.Black);
+
+			rows.Sort((Tuple<string, long, Vector2> left, Tuple<string, long, Vector2> right) => {
+				return left.Item2.CompareTo(right.Item2);
+			});
+			Vector2 pos = new Vector2(1920 - listMargin / 2f, 1080 - titleSize.Y - listMargin / 2f);
+			for (int i = 0; i < rows.Count; i++) {
+				ActiveFont.Draw(rows[i].Item1, pos, Vector2.One, Vector2.One * hudScale, Color.Black);
+				pos.Y -= rows[i].Item3.Y * hudScale;
 			}
 		}
 
