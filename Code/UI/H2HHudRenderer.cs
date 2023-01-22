@@ -385,9 +385,13 @@ namespace Celeste.Mod.Head2Head.UI {
 			List<Tuple<string, long, Vector2>> rows = new List<Tuple<string, long, Vector2>>();
 			float hudScale = Head2HeadModule.Settings.HudScale * 0.5f;
 
-			string row = Util.MyDisplayName() + " - " + Dialog.FileTime(PlayerStatus.Current.RecordLobbyTime);
-			Vector2 sum = ActiveFont.Measure(row);
-			rows.Add(new Tuple<string, long, Vector2>(row, PlayerStatus.Current.RecordLobbyTime, sum));
+			string row = "";
+			Vector2 sum = Vector2.Zero;
+			if (PlayerStatus.Current.RecordLobbyTime > 0) {
+				row = Util.MyDisplayName() + " - " + Dialog.FileTime(PlayerStatus.Current.RecordLobbyTime);
+				sum = ActiveFont.Measure(row);
+				rows.Add(new Tuple<string, long, Vector2>(row, PlayerStatus.Current.RecordLobbyTime, sum));
+			}
 			foreach (KeyValuePair<PlayerID, PlayerStatus> kvp in Head2HeadModule.knownPlayers) {
 				if (kvp.Value.RecordLobbyTime > 0) {
 					bool isLast = false;

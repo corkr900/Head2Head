@@ -124,6 +124,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			lobbyCP = -1;
 			if (RecordLobbyTime < 0 || lobbyTimer < RecordLobbyTime) {
 				RecordLobbyTime = lobbyTimer;
+				Updated();
 			}
 		}
 
