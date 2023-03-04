@@ -12,6 +12,7 @@ Head2Head_Selector_NoValidCategories= No Valid Categories
 Head2Head_me= Me
 Head2Head_LobbyRecords= Best Lobby Runs
 Head2Head_CountMore= {0} More...
+Head2Head_MapNotInstalled= {0} (Not Installed)
 
 Head2Head_Setting_UseSRCARBRules= Use SRC ARB Categories
 Head2Head_Setting_UseSRCARBRules_Subtext= If turned on, either ARB or ARB + Heart will be hidden

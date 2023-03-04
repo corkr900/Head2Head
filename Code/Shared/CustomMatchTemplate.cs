@@ -56,27 +56,27 @@ namespace Celeste.Mod.Head2Head.Shared {
 			}
 			// Process Phase data
 			if (meta.Phases == null || meta.Phases.Length == 0) {
-				Logger.Log("Head2Head.Custom", "No phases defined for category: " + meta.ID);
+				Logger.Log(LogLevel.Warn, "Head2Head", "No phases defined for category: " + meta.ID);
 				return;
 			}
 			foreach (PhaseMeta ph in meta.Phases) {
 				CustomMatchPhaseTemplate phtem = new CustomMatchPhaseTemplate();
 				GlobalAreaKey phArea = new GlobalAreaKey(ph.Map, GetAreaMode(ph.Side));
 				if (!phArea.ExistsLocal || phArea.IsOverworld || phArea.Equals(GlobalAreaKey.Head2HeadLobby)) {
-					Logger.Log("Head2Head.Custom", "Phase has invalid area SID (" + ph.Map + ") for category: " + meta.ID);
+					Logger.Log(LogLevel.Warn, "Head2Head", "Phase has invalid area SID (" + ph.Map + ") for category: " + meta.ID);
 					return;
 				}
 				phtem.Area = phArea;
 				// Process Objective data
 				if (ph.Objectives == null || ph.Objectives.Length == 0) {
-					Logger.Log("Head2Head.Custom", "No objectives defined in phase for category: " + meta.ID);
+					Logger.Log(LogLevel.Warn, "Head2Head", "No objectives defined in phase for category: " + meta.ID);
 					return;
 				}
 				foreach (ObjectiveMeta ob in ph.Objectives) {
 					CustomMatchObjectiveTemplate obtem = new CustomMatchObjectiveTemplate();
 					MatchObjectiveType? t = GetObjectiveType(ob.Type);
 					if (t == null) {
-						Logger.Log("Head2Head.Custom", "Invalid objective type: " + ob.Type + " for category: " + meta.ID);
+						Logger.Log(LogLevel.Warn, "Head2Head", "Invalid objective type: " + ob.Type + " for category: " + meta.ID);
 						return;
 					}
 					obtem.ObjectiveType = t ?? MatchObjectiveType.ChapterComplete;
@@ -89,7 +89,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 						if (split.Length > 1) {
 							int minutes, seconds;
 							if (!int.TryParse(split[0], out minutes) || !int.TryParse(split[1], out seconds)) {
-								Logger.Log("Head2Head.Custom", "Malformed time limit (" + ob.TimeLimit + ") in category: " + meta.ID);
+								Logger.Log(LogLevel.Warn, "Head2Head", "Malformed time limit (" + ob.TimeLimit + ") in category: " + meta.ID);
 								return;
 							}
 							obtem.TimeLimit = Util.TimeValueInternal(minutes, seconds);
@@ -97,7 +97,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 						else {
 							int seconds;
 							if (!int.TryParse(split[0], out seconds)) {
-								Logger.Log("Head2Head.Custom", "Malformed time limit (" + ob.TimeLimit + ") in category: " + meta.ID);
+								Logger.Log(LogLevel.Warn, "Head2Head", "Malformed time limit (" + ob.TimeLimit + ") in category: " + meta.ID);
 								return;
 							}
 							obtem.TimeLimit = Util.TimeValueInternal(0, seconds);

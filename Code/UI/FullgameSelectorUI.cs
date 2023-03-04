@@ -136,7 +136,7 @@ namespace Celeste.Mod.Head2Head.Entities {
 						def = StandardMatches.GetFullgameCategoryDefinition(o.Cat);
 					}
 					if (def == null) {
-						Logger.Log("Head2Head.Err", "Fullgame category definition is null: " + o.Cat.ToString());
+						Logger.Log(LogLevel.Error, "Head2Head", "Fullgame category definition is null: " + o.Cat.ToString());
 						return;
 					}
 					Head2HeadModule.Instance.buildingMatch = def;

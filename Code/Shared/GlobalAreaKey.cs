@@ -15,6 +15,19 @@ namespace Celeste.Mod.Head2Head.Shared {
         private readonly AreaData _areaData;
         private string _versionString;  // lazily populated
         private ModContent _modContent;  // lazily populated
+        private string _originalDisplayName;  // sent over network
+
+        private static string _lobbySID = null;
+        public static string Head2HeadLobbySID {
+			get {
+                if (_lobbySID == null) {
+                    foreach (AreaData data in AreaData.Areas) {
+                        if (data.Name == "Head2Head/00_Head2HeadLobby") _lobbySID = data.SID;
+                    }
+                }
+                return _lobbySID ?? "Celeste/Head2Head/00_Head2HeadLobby";
+            }
+		}
 
         public AreaKey? Local { get { return _localKey; } }
         public AreaKey Local_Safe { get { return _localKey ?? VanillaPrologue.Local.Value; } }
@@ -55,7 +68,10 @@ namespace Celeste.Mod.Head2Head.Shared {
                 else if (ExistsLocal) {
                     return Dialog.Get(Data.Name) + GetTranslatedSide(_localKey?.Mode);
                 }
-                else return "<Map Not Installed>";
+                else if (!string.IsNullOrEmpty(_originalDisplayName)) {
+                    return _originalDisplayName;
+                }
+                else return "<Unknown Map>";
             }
         }
 
@@ -71,7 +87,7 @@ namespace Celeste.Mod.Head2Head.Shared {
         }
         public static GlobalAreaKey Head2HeadLobby {
             get {
-                return new GlobalAreaKey("Head2Head/00_Head2HeadLobby");
+                return new GlobalAreaKey(Head2HeadLobbySID);
             }
         }
 
@@ -89,12 +105,13 @@ namespace Celeste.Mod.Head2Head.Shared {
             }
 		}
 
-        public GlobalAreaKey(string SID, AreaMode mode = AreaMode.Normal, string version = null) {
+        public GlobalAreaKey(string SID, AreaMode mode = AreaMode.Normal, string version = null, string origDisplayName = "") {
             _sid = SID;
             _localKey = null;
 			_areaData = null;
             _modContent = null;
             _versionString = version;
+            _originalDisplayName = origDisplayName;
             if (SID != "Overworld" && AreaData.Areas != null) {
                 foreach (AreaData d in AreaData.Areas) {
                     if (d.GetSID() == SID) {
@@ -110,6 +127,7 @@ namespace Celeste.Mod.Head2Head.Shared {
             _areaData = AreaData.Areas[localKey.ID];
             _modContent = null;
             _versionString = null;
+            _originalDisplayName = "";
         }
 		public GlobalAreaKey(int localID, AreaMode mode = AreaMode.Normal) : this() {
             _areaData = AreaData.Areas[localID];
@@ -117,6 +135,7 @@ namespace Celeste.Mod.Head2Head.Shared {
             _sid = _areaData.SID;
             _modContent = null;
             _versionString = null;
+            _originalDisplayName = "";
         }
 
 		public override bool Equals(object obj) {
@@ -137,13 +156,15 @@ namespace Celeste.Mod.Head2Head.Shared {
             string sid = reader.ReadString();
             AreaMode mode = (AreaMode)Enum.Parse(typeof(AreaMode), reader.ReadString());
             string version = reader.ReadString();
-            return new GlobalAreaKey(sid, mode, version);
+            string dispName = reader.ReadString();
+            return new GlobalAreaKey(sid, mode, version, dispName);
         }
 
         public static void Write(this CelesteNetBinaryWriter writer, GlobalAreaKey area) {
             writer.Write(area.SID);
             writer.Write(area.Mode.ToString());
             writer.Write(area.VersionString);
+            writer.Write(area.DisplayName);
         }
     }
 

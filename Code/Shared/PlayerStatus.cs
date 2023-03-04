@@ -16,6 +16,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public static PlayerStatus Current {
 			get {
 				if (_current == null) {
+					Logger.Log(LogLevel.Info, "Head2Head", "Entering overworld (default - new player status)");
 					_current = new PlayerStatus() {
 						CurrentArea = GlobalAreaKey.Overworld,
 						CurrentRoom = "",
@@ -131,6 +132,11 @@ namespace Celeste.Mod.Head2Head.Shared {
 		// Lifecycle events
 		public void ChapterEntered(GlobalAreaKey area, Session session) {
 			ResetLobbyRace();
+			if (IsInDebug) {
+				IsInDebug = false;
+				Updated();
+			}
+			Logger.Log(LogLevel.Info, "Head2Head", "Entering " + area.SID + " (chapter entered)");
 			CurrentArea = area;
 			CurrentRoom = session.Level;
 			if (IsInMatch(false)) {
@@ -141,6 +147,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			}
 			Updated();
 		}
+
 		public void RoomEntered(Level level, LevelData next, Vector2 direction) {
 			CurrentRoom = next.Name;
 			if (next.HasCheckpoint) {
@@ -163,22 +170,20 @@ namespace Celeste.Mod.Head2Head.Shared {
 			}
 			Updated();
 		}
+
 		internal void DebugOpened(MapEditor screen, GlobalAreaKey globalAreaKey, bool reloadMapData) {
 			IsInDebug = true;
 			Updated();
 		}
-		internal void OnLevelLoaderStart(LevelLoader loader) {
-			if (IsInDebug) {
-				IsInDebug = false;
-				Updated();
-			}
-		}
+
 		internal void DebugTeleport(MapEditor screen, LevelTemplate level, Vector2 at) {
 			IsInDebug = false;
 			Updated();
 		}
+
 		public void ChapterExited(LevelExit.Mode mode, Session session) {
 			ResetLobbyRace();
+			Logger.Log(LogLevel.Info, "Head2Head", "Entering Overworld (chapter exited)");
 			CurrentArea = GlobalAreaKey.Overworld;
 			CurrentRoom = "";
 			if (IsInMatch(false)) {
@@ -188,6 +193,11 @@ namespace Celeste.Mod.Head2Head.Shared {
 			}
 			Updated();
 		}
+
+		public void ChapterRestarted(Session session) {
+
+		}
+
 		public void MatchStaged(MatchDefinition def) {
 			if (CurrentMatch?.MatchID != def.MatchID) {
 				CurrentMatch = def;
@@ -196,11 +206,13 @@ namespace Celeste.Mod.Head2Head.Shared {
 				Updated();
 			}
 		}
+
 		public void MatchJoined() {
 			phases.Clear();
 			objectives.Clear();
 			Updated();
 		}
+
 		public void MatchStarted() {
 			phases.Clear();
 			objectives.Clear();
@@ -209,12 +221,14 @@ namespace Celeste.Mod.Head2Head.Shared {
 			FileTimerAtLastCheckpoint = SaveData.Instance.Time;
 			Updated();
 		}
+
 		public void MatchReset() {
 			phases.Clear();
 			objectives.Clear();
 			CurrentMatch = null;
 			Updated();
 		}
+
 		public void Cleanup() {
 			phases.Clear();
 			objectives.Clear();
@@ -401,7 +415,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			else {
 				if (objectives[stateIndex].CollectedItems == null) {
 					// In theory, this is impossible but just in case...
-					Logger.Log("Head2Head.Warn", "This is weird... a collectables objective state doesn't have a list of collectables?");
+					Logger.Log(LogLevel.Error, "Head2Head", "This is weird... a collectables objective state doesn't have a list of collectables?");
 					return false;
 				}
 				if (objectives[stateIndex].CollectedItems.FindIndex(

@@ -39,7 +39,7 @@ namespace Celeste.Mod.Head2Head.IO {
 				}
 			}
 			catch (Exception e) {
-				Logger.Log("Head2Head", "Failed to write action log: " + e.Message);
+				Logger.Log(LogLevel.Error, "Head2Head", "Failed to load action log: " + e.Message);
 			}
 			return null;
 		}
@@ -84,7 +84,7 @@ namespace Celeste.Mod.Head2Head.IO {
 							File.Delete(file);
 						}
 						catch(Exception e) {
-							Logger.Log("Head2Head", "Failed to delete old log: " + e.Message);
+							Logger.Log(LogLevel.Error, "Head2Head", "Failed to delete old log: " + e.Message);
 						}
 					}
 				}
@@ -95,23 +95,23 @@ namespace Celeste.Mod.Head2Head.IO {
 			try {
 				string source = GetLogFileName(matchID);
 				if (string.IsNullOrEmpty(source)) {
-					Logger.Log("Head2Head", "Export failed: could not get source file path for match ID " + matchID);
+					Logger.Log(LogLevel.Error, "Head2Head", "Export failed: could not get source file path for match ID " + matchID);
 					return;
 				}
 				if (!File.Exists(source)) {
-					Logger.Log("Head2Head", "Export failed: source does not exist: " + source);
+					Logger.Log(LogLevel.Error, "Head2Head", "Export failed: source does not exist: " + source);
 					return;
 				}
 				string dir = Head2HeadModule.Settings.RealExportLocation;
 				if (!Directory.Exists(dir)) {
-					Logger.Log("Head2Head", "Export failed: target directory does not exist: " + dir);
+					Logger.Log(LogLevel.Error, "Head2Head", "Export failed: target directory does not exist: " + dir);
 					return;
 				}
 				string target = Path.Combine(dir, Path.GetFileName(source));
 				File.Copy(source, target, true);
 			}
 			catch(Exception e) {
-				Logger.Log("Head2Head", "Export failed: " + e.Message);
+				Logger.Log(LogLevel.Error, "Head2Head", "Export failed: " + e.Message);
 			}
 		}
 
@@ -247,7 +247,7 @@ namespace Celeste.Mod.Head2Head.IO {
 				return true;
 			}
 			catch (Exception e) {
-				Logger.Log("Head2Head.Warn", "Failed to write action log: " + e.Message);
+				Logger.Log(LogLevel.Warn, "Head2Head", "Failed to write action log: " + e.Message);
 			}
 			return false;
 		}

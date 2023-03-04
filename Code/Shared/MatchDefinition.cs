@@ -58,6 +58,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			get {
                 return Phases.Count == 0 ? CategoryDisplayName :
                     Phases[0].Fullgame ? FullGameDisplayName() :
+                    !Phases[0].Area.ExistsLocal ? string.Format(Dialog.Get("Head2Head_MapNotInstalled"), Phases[0].Area.DisplayName) :
                     string.Format(Dialog.Get("Head2Head_MatchTitle"), Phases[0].Area.DisplayName, CategoryDisplayName);
 
             }
@@ -257,7 +258,7 @@ namespace Celeste.Mod.Head2Head.Shared {
                     if (ob.ObjectiveType != MatchObjectiveType.TimeLimit) continue;
                     MatchObjective local = GetObjective(ob.ID);
                     if (local == null) {  // This shouldn't be possible but, just in case...
-                        Logger.Log("Head2Head.Error", "match definition does not match: " + CategoryDisplayName);
+                        Logger.Log(LogLevel.Error, "Head2Head", "match definition does not match: " + CategoryDisplayName);
                         continue;
                     }
                     MergeObjective(local, ob);
