@@ -141,7 +141,7 @@ namespace Celeste.Mod.Head2Head.Entities {
 			ret.Key = "Autogen_CollabLobby_" + tup.Item2.SID;
 			ret.Area = area;
 			ret.IconPath = tup.Item2.Icon;
-			ret.DisplayName = tup.Item2.CompleteScreenName;
+			ret.DisplayName = tup.Item2.Name;
 			ret.AllowCheatMode = false;
 			CustomMatchPhaseTemplate ph = new CustomMatchPhaseTemplate() {
 				Area = area,
