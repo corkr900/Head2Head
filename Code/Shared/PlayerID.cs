@@ -12,16 +12,26 @@ namespace Celeste.Mod.Head2Head.Shared {
 	public struct PlayerID {
 		public static PlayerID? MyID {
 			get {
+				PlayerID? ret;
 				try {
 					CNetComm comm = CNetComm.Instance;
-					return !comm.IsConnected ? null
+					ret = !comm.IsConnected ? null
 						: (PlayerID?)new PlayerID(LocalMACAddressHash, comm.CnetID.Value, comm.CnetClient.PlayerInfo.Name);
 				}
 				catch (Exception e) {
 					// If we lose connection at exactly the wrong moment,
 					// comm.IsConnected returns true but comm.CnetID could be null 
-					return null;
+					ret =  null;
 				}
+				if (ret != null) {
+					if (!string.IsNullOrEmpty(ret?.Name)) LastKnownName = ret?.Name;
+					else if (!string.IsNullOrEmpty(LastKnownName)) {
+						PlayerID tmp = ret.Value;
+						tmp.Name = LastKnownName;
+						ret = tmp;
+					}
+				}
+				return ret;
 			}
 		}
 		public static PlayerID MyIDSafe { get { return MyID ?? Default; } }
@@ -41,7 +51,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 				)?.FirstOrDefault()?.GetHashCode();
 			}
 			catch (Exception e) {
-				Logger.Log("Head2Head.Error", "Could not get MAC address: " + e.Message);
+				Logger.Log(LogLevel.Error, "Head2Head", "Could not get MAC address: " + e.Message);
 			}
 		}
 		public static PlayerID Default {
@@ -63,6 +73,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public int? MacAddressHash { get; private set; }
 		public string Name { get; private set; }
 		public uint CNetID { get; private set; }
+		public static string LastKnownName { get; private set; }
 
 		public bool MatchAndUpdate(PlayerID id) {
 			if (this.Equals(id)) {

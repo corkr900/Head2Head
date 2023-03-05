@@ -7,7 +7,18 @@ using System.Threading.Tasks;
 
 namespace Celeste.Mod.Head2Head.Integration {
 	public class ModIntegrationMeta : IMeta {
+		public FullgameMeta[] Fullgame;
 		public ILMeta[] IndividualLevels;
+	}
+
+	public class FullgameMeta : IMeta {
+		public string ID;
+		public string Name;
+		public string Icon;
+		public string LevelSet;
+		public string StartingMap;
+		public bool? AllowCheatMode;
+		public ObjectiveMeta[] Objectives;
 	}
 
 	public class ILMeta : IMeta {
@@ -33,6 +44,7 @@ namespace Celeste.Mod.Head2Head.Integration {
 	public class ObjectiveMeta : IMeta {
 		public string Type;
 		public string ID;
+		public string Side;
 		public int Count;
 		public string TimeLimit;
 		public string Description;

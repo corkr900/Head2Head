@@ -1,0 +1,7 @@
+mods.Head2Head=Head 2 Head
+
+# Time Trial Checkpoint
+entities.Head2Head/TimeTrialCheckpoint.placements.name.default=Time Trial Checkpoint
+entities.Head2Head/TimeTrialCheckpoint.attributes.description.isStart=Is this checkpoint the start of the time trial?
+entities.Head2Head/TimeTrialCheckpoint.attributes.description.isFinish=Is this checkpoint the end of the time trial?
+entities.Head2Head/TimeTrialCheckpoint.attributes.description.checkpointNumber=Index of this checkpoint (0 is start, 1 is firstd)

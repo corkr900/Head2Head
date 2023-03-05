@@ -82,6 +82,10 @@
     <Compile Include="Data\DataH2HScanRequest.cs" />
     <Compile Include="Data\DataH2HScanResponse.cs" />
     <Compile Include="Entities\FullgameSelector.cs" />
+    <Compile Include="Entities\TimeTrialCheckpoint.cs" />
+    <Compile Include="Integration\CelesteTASIntegration.cs" />
+    <Compile Include="Integration\SpeedrunToolIntegration.cs" />
+    <Compile Include="IO\SyncedClock.cs" />
     <Compile Include="UI\FullgameSelectorUI.cs" />
     <Compile Include="Entities\Helpdesk.cs" />
     <Compile Include="Entities\ILSelector.cs" />
@@ -121,13 +125,13 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Ahorn\entities\Helpdesk.jl">
-      <Link>Entities\Helpdesk.jl</Link>
+      <Link>Editor Plugins\Helpdesk.jl</Link>
     </None>
     <None Include="..\Ahorn\entities\ILSelector.jl">
-      <Link>Entities\ILSelector.jl</Link>
+      <Link>Editor Plugins\ILSelector.jl</Link>
     </None>
     <None Include="..\Ahorn\entities\MatchButton.jl">
-      <Link>Entities\MatchButton.jl</Link>
+      <Link>Editor Plugins\MatchButton.jl</Link>
     </None>
     <None Include="..\everest.yaml">
       <Link>everest.yaml</Link>

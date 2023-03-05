@@ -9,6 +9,13 @@ using Celeste.Mod.Head2Head.UI;
 namespace Celeste.Mod.Head2Head.Shared {
 	public class Role {
 		internal static string role { get { return Head2HeadModule.Settings.Role; } }
+
+		// Roles that do stuff:
+		// debug
+		// bta
+		// wbta
+		// bta-host
+
 		public static bool hasBTAMatchPass { get; private set; } = false;
 
 		public static bool IsDebug { get { return role.ToLower() == "debug"; } }
@@ -23,6 +30,27 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 		#region Role-specific behavior
 
+		public static bool LogMatchActions() {
+			switch (role) {
+				case "bta":
+				case "wbta":
+					return true;
+				default:
+					return false;
+			}
+		}
+
+		public static bool AllowFullgame() {
+			switch (role) {
+				case "bta":
+				case "wbta":
+				case "bta-host":
+					return false;
+				default:
+					return true;
+			}
+		}
+
 		public static bool AllowMatchCreate() {
 			switch (role) {
 				default:
@@ -33,22 +61,26 @@ namespace Celeste.Mod.Head2Head.Shared {
 		}
 
 		public static bool AllowAutoStage(MatchDefinition def) {
+			if (def.UseFreshSavefile && !AllowFullgame()) return false;
 			bool hasReq = !string.IsNullOrEmpty(def.RequiredRole);
 			switch (role) {
 				default:
 					return !hasReq;
 				case "bta":
+				case "wbta":
 				case "bta-host":
 					return def.RequiredRole == "bta";
 			}
 		}
 
 		public static bool AllowMatchJoin(MatchDefinition def) {
+			if (def.UseFreshSavefile && !AllowFullgame()) return false;
 			bool hasReq = !string.IsNullOrEmpty(def.RequiredRole);
 			switch (role) {
 				default:
 					return !hasReq;
 				case "bta":
+				case "wbta":
 					return def.RequiredRole == "bta";
 				case "bta-host":
 					return false;
@@ -71,6 +103,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 				default:
 					return;
 				case "bta":
+				case "wbta":
 					hasBTAMatchPass = false;
 					def.RequiredRole = "bta";
 					return;
@@ -104,6 +137,10 @@ namespace Celeste.Mod.Head2Head.Shared {
 					};
 				case "debug":
 					return (StandardCategory[])Enum.GetValues(typeof(StandardCategory));
+				case "wbta":
+					return new StandardCategory[] {
+						StandardCategory.Clear,
+					};
 				case "bta":
 				case "bta-host":
 				case "bta-practice":

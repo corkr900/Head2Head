@@ -9,35 +9,37 @@ Head2Head_CollectableNames_UnnamedCustom= Unnamed Custom Collectable
 
 Head2Head_Selector_NoValidCategories= No Valid Categories
 
-Head2Head_Setting= Head 2 Head Settings
-Head2Head_Setting_ReturnToLobby= Return to Lobby
-Head2Head_Setting_ReturnToLobby_Subtext= If turned on, you will automatically return to the Head2Head lobby after completing a match.
-Default: On
-Head2Head_Setting_AutoLaunchPhase= Auto-Launch Next Phase
-Head2Head_Setting_AutoLaunchPhase_Subtext= If turned on, you will automatically be launched into the next phase of a match
-after completing the previous phase.
-Default: On
+Head2Head_me= Me
+Head2Head_LobbyRecords= Best Lobby Runs
+Head2Head_CountMore= {0} More...
+Head2Head_MapNotInstalled= {0} (Not Installed)
+
 Head2Head_Setting_UseSRCARBRules= Use SRC ARB Categories
-Head2Head_Setting_UseSRCARBRules_Subtext= If turned on, either ARB or ARB + Heart will be hidden for base-game chapters
-according to the rules on SRC for the "All Red Berries" category, and ARB + Heart will be hidden
-for all mod maps. If turned off, both categories will be shown for all chapters.
+Head2Head_Setting_UseSRCARBRules_Subtext= If turned on, either ARB or ARB + Heart will be hidden
+for base-game chapters according to the rules on SRC for the
+"All Red Berries" category, and ARB + Heart will be hidden
+for all mod maps. If turned off, both categories will be
+shown for all chapters.
 Default: On
 Head2Head_Setting_Role= Role
 Head2Head_Setting_Role_Subtext= Your role changes the available functionality and the matches you are able to join.
 Default: (blank)
 Head2Head_Setting_UseActionLog= Use Action Logging
-Head2Head_Setting_UseActionLog_Subtext= If enabled, the system will keep track of key actions taken during a match.
-The log can be exported from the Head 2 Head Helpdesk
-to be sent to an event organizer for additional run verification.
+Head2Head_Setting_UseActionLog_Subtext= If enabled, the system will keep track of key
+actions taken during a match. The log can be exported from
+the Head 2 Head Helpdesk to be sent to an event organizer
+for additional run verification.
 Default: Off
 Head2Head_Setting_LogExportDirectory= Action Log Export Location
-Head2Head_Setting_LogExportDirectory_Subtext= This is the directory action logs will be written to if you export them.
+Head2Head_Setting_LogExportDirectory_Subtext= This is the directory action logs will be written to
+if you export them.
 Default: My Documents
 Head2Head_Setting_HudScale= HUD Scale
 Head2Head_Setting_HudScale_subtext= Controls the size of the Head 2 Head HUD.
 Default: 1
 Head2Head_Setting_HudOpacityBeforeMatch= HUD Opacity (Before/After Match)
-Head2Head_Setting_HudOpacityBeforeMatch_subtext= Changes the opacity of the Head 2 Head HUD before & after the match.
+Head2Head_Setting_HudOpacityBeforeMatch_subtext= Changes the opacity of the Head 2 Head HUD
+before & after the match.
 Default: 1
 Head2Head_Setting_HudOpacityInMatch= HUD Opacity (During Match)
 Head2Head_Setting_HudOpacityInMatch_subtext= Changes the opacity of the Head 2 Head HUD during the match.
@@ -53,6 +55,13 @@ Head2Head_Setting_ShowHDInPause= Show Helpdesk in Pause Menu
 Head2Head_Setting_ShowHDInPause_Subtext= Determines when the Head 2 Head Helpdesk should
 be accessible from the pause menu.
 Default: Online
+Head2Head_Setting_TimeServer= Time Server
+Head2Head_Setting_TimeServer_Subtext= Choose the time server to use to synchronize
+match starts. "None" will disable time syncing;
+the game will start a little faster, but may cause
+you to start matches out of sync with other players.
+You will need to restart the game to apply changes.
+Default: time.windows.com
 
 Head2Head_MatchTitle= {0} ({1})
 Head2Head_MatchTitle_BerryCount= {0} Berries
@@ -66,6 +75,10 @@ modoptions_Head2HeadModule_showhelpdeskinpause_InMatch= In Match
 modoptions_Head2HeadModule_showhelpdeskinpause_InMatchOrLobby= Match or Lobby
 modoptions_Head2HeadModule_showhelpdeskinpause_Online= Online
 modoptions_Head2HeadModule_showhelpdeskinpause_Always= Always
+
+modoptions_Head2HeadModule_nstptimeserver_Windows= time.windows.com
+modoptions_Head2HeadModule_nstptimeserver_Pool= pool.ntp.org
+modoptions_Head2HeadModule_nstptimeserver_None= None
 
 Head2Head_CategoryName_Clear= Chapter Clear
 Head2Head_CategoryName_HeartCassette= Heart + Cassette

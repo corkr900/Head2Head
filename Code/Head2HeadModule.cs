@@ -37,7 +37,7 @@ namespace Celeste.Mod.Head2Head {
 		internal int MatchTimeoutMinutes = 15;
 
 		// Constants that might change in the future
-		public static readonly string ProtocolVersion = "1_1_0";
+		public static readonly string ProtocolVersion = "1_1_6";
 
 		// Other static stuff
 		public static Head2HeadModule Instance { get; private set; }
@@ -144,6 +144,7 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.OverworldLoader.Begin += OnOverworldLoaderBegin;
 			On.Celeste.OuiChapterPanel._GetCheckpoints += OnOUIChapterPanel_GetCheckpoints;
 			On.Celeste.OuiChapterSelectIcon.Show += OnOuiChapterSelectIconShow;
+			On.Celeste.SpeedrunTimerDisplay.Render += OnSpeedrunTimerDisplayRender;
 			On.Celeste.UnlockEverythingThingy.EnteredCheat += OnUnlockEverythingThingyEnteredCheat;
 			On.Celeste.Editor.MapEditor.ctor += onDebugScreenOpened;
 			On.Celeste.Editor.MapEditor.LoadLevel += onDebugTeleport;
@@ -153,7 +154,6 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.Mod.UI.OuiMapSearch.cleanExit += OnMapSearchCleanExit;
 			// Everest Events
 			Everest.Events.Level.OnLoadEntity += OnLevelLoadEntity;
-			Everest.Events.Level.OnEnter += onLevelEnter;
 			Everest.Events.Level.OnExit += onLevelExit;
 			Everest.Events.Level.OnTransitionTo += onRoomTransition;
 			Everest.Events.Level.OnCreatePauseMenuButtons += OnCreatePauseMenuButtons;
@@ -172,12 +172,12 @@ namespace Celeste.Mod.Head2Head {
 			PlayerStatus.OnMatchPhaseCompleted += OnCompletedMatchPhase;
 			// Misc other setup
 			Celeste.Instance.Components.Add(Comm = new CNetComm(Celeste.Instance));
-			Logger.SetLogLevel("Head2Head", LogLevel.Info);
-			Logger.SetLogLevel("Head2Head.Error", LogLevel.Error);
-			Logger.SetLogLevel("Head2Head.Warn", LogLevel.Warn);
-			Logger.SetLogLevel("Head2Head.Custom", LogLevel.Warn);
 			typeof(Head2HeadAPI).ModInterop();
 			CollabUtils2Integration.Load();
+			SpeedrunToolIntegration.Load();
+			CelesteTASIntegration.Load();
+
+			SyncedClock.DoClockSync();
 		}
 
 		public override void Unload() {
@@ -224,6 +224,7 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.OverworldLoader.Begin -= OnOverworldLoaderBegin;
 			On.Celeste.OuiChapterPanel._GetCheckpoints -= OnOUIChapterPanel_GetCheckpoints;
 			On.Celeste.OuiChapterSelectIcon.Show -= OnOuiChapterSelectIconShow;
+			On.Celeste.SpeedrunTimerDisplay.Render -= OnSpeedrunTimerDisplayRender;
 			On.Celeste.UnlockEverythingThingy.EnteredCheat -= OnUnlockEverythingThingyEnteredCheat;
 			On.Celeste.Editor.MapEditor.ctor -= onDebugScreenOpened;
 			On.Celeste.Editor.MapEditor.LoadLevel -= onDebugTeleport;
@@ -233,7 +234,6 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.Mod.UI.OuiMapSearch.Inspect -= OnMapSearchInspect;
 			// Everest Events
 			Everest.Events.Level.OnLoadEntity -= OnLevelLoadEntity;
-			Everest.Events.Level.OnEnter -= onLevelEnter;
 			Everest.Events.Level.OnExit -= onLevelExit;
 			Everest.Events.Level.OnTransitionTo -= onRoomTransition;
 			Everest.Events.Level.OnCreatePauseMenuButtons -= OnCreatePauseMenuButtons;
@@ -253,6 +253,9 @@ namespace Celeste.Mod.Head2Head {
 			// Misc other cleanup
 			if (Celeste.Instance.Components.Contains(Comm))
 				Celeste.Instance.Components.Remove(Comm);
+			CollabUtils2Integration.Unload();
+			SpeedrunToolIntegration.Unload();
+			CelesteTASIntegration.Unload();
 		}
 
 		public override void CreateModMenuSection(TextMenu menu, bool inGame, FMOD.Studio.EventInstance snapshot)
@@ -331,16 +334,6 @@ namespace Celeste.Mod.Head2Head {
 			return orig;
 		}
 
-		private void onLevelEnter(Session session, bool fromSaveData) {
-			currentSession = session;
-			GlobalAreaKey area = new GlobalAreaKey(session.Area);
-			PlayerStatus.Current.ChapterEntered(area, session);
-			if (!area.Equals(GlobalAreaKey.Head2HeadLobby) && !area.Equals(GlobalAreaKey.Overworld)) {
-				PlayerEnteredAMap = true;
-			}
-			ActionLogger.EnteringArea();
-		}
-
 		private void onLevelExit(Level level, LevelExit exit, LevelExit.Mode mode, Session session, HiresSnow snow) {
 			currentSession = null;
 			ActionLogger.ExitingArea(mode);
@@ -349,7 +342,17 @@ namespace Celeste.Mod.Head2Head {
 
 		private void OnLevelLoaderStart(On.Celeste.LevelLoader.orig_StartLevel orig, LevelLoader self) {
 			orig(self);
-			PlayerStatus.Current.OnLevelLoaderStart(self);
+			Session session = self.Level.Session;
+			currentSession = session;
+			GlobalAreaKey area = new GlobalAreaKey(session.Area);
+			PlayerStatus.Current.ChapterEntered(area, session);
+			if (area.Equals(GlobalAreaKey.Head2HeadLobby)) {
+				ScanModsForIntegrationMeta();
+			}
+			else if (!area.Equals(GlobalAreaKey.Overworld)) {
+				PlayerEnteredAMap = true;
+			}
+			ActionLogger.EnteringArea();
 		}
 
 		private void onRoomTransition(Level level, LevelData next, Vector2 direction) {
@@ -469,8 +472,24 @@ namespace Celeste.Mod.Head2Head {
 
 		public static void OnLevelUpdateTime(On.Celeste.Level.orig_UpdateTime orig, Level self) {
 			// Freeze the timer in the lobby
-			if (self.Session.Area.SID == GlobalAreaKey.Head2HeadLobby.SID) return;
+			if (self.Session.Area.SID == GlobalAreaKey.Head2HeadLobby.SID) {
+				if (PlayerStatus.Current.RunningLobbyRace) {
+					PlayerStatus.Current.lobbyTimer += TimeSpan.FromSeconds(Engine.RawDeltaTime).Ticks;
+				}
+				return;
+			}
 			orig(self);
+		}
+
+		private void OnSpeedrunTimerDisplayRender(On.Celeste.SpeedrunTimerDisplay.orig_Render orig, SpeedrunTimerDisplay self) {
+			if (PlayerStatus.Current.CurrentArea.Equals(GlobalAreaKey.Head2HeadLobby)) {
+				string timeString = TimeSpan.FromTicks(PlayerStatus.Current.lobbyTimer).ShortGameplayFormat();
+				new DynamicData(self).Get<MTexture>("bg")?.Draw(new Vector2(0, self.Y));
+				SpeedrunTimerDisplay.DrawTime(new Vector2(32f, self.Y + 44f), timeString);
+			}
+			else {
+				orig(self);
+			}
 		}
 
 		private EntityData OnLevelDataCreateEntityData(On.Celeste.LevelData.orig_CreateEntityData orig, LevelData self, BinaryPacker.Element entity) {
@@ -812,6 +831,7 @@ namespace Celeste.Mod.Head2Head {
 		// #######################################################
 
 		public void ScanModsForIntegrationMeta() {
+			CustomMatchTemplate.ClearCustomTemplates();
 			foreach (ModContent mod in Everest.Content.Mods) {
 				if (mod.Map.ContainsKey("Head2Head")) {
 					ModAsset asset = mod.Map["Head2Head"];
@@ -823,6 +843,11 @@ namespace Celeste.Mod.Head2Head {
 		}
 
 		private void ProcessIntegrationMeta(ModIntegrationMeta meta) {
+			if (meta.Fullgame != null) {
+				foreach (FullgameMeta cat in meta.Fullgame) {
+					CustomMatchTemplate.AddTemplateFromMeta(cat);
+				}
+			}
 			if (meta.IndividualLevels != null) {
 				foreach (ILMeta il in meta.IndividualLevels) {
 					// Ensure the area is valid
@@ -857,10 +882,15 @@ namespace Celeste.Mod.Head2Head {
 			return PlayerStatus.Current.CanStageMatch();
 		}
 
+		public bool CanBuildFullgameMatch() {
+			return CanBuildMatch() && Role.AllowFullgame();
+		}
+
 		public bool CanStageMatch() {
 			if (!CanBuildMatch()) return false;
 			if (buildingMatch == null) return false;
 			if (buildingMatch.Phases.Count == 0) return false;
+			if (buildingMatch.UseFreshSavefile && !Role.AllowFullgame()) return false;
 			return true;
 		}
 
@@ -886,20 +916,20 @@ namespace Celeste.Mod.Head2Head {
 
 		public void StartMatchBuild() {
 			if (Util.IsUpdateAvailable()) {
-				Logger.Log("Head2Head.Warn", "Cannot build match: you are using an outdated version of Head 2 Head");
+				Logger.Log(LogLevel.Warn, "Head2Head", "Cannot build match: you are using an outdated version of Head 2 Head");
 				return;
 			}
-			if (!Role.AllowMatchCreate()) {
-				Logger.Log("Head2Head", "Your role prevents building a match");
+			if (!Role.AllowMatchCreate()) {  // This is okay because this is for ILs only
+				Logger.Log(LogLevel.Verbose, "Head2Head", "Your role prevents building a match");
 				return;
 			}
 			if (!(CNetComm.Instance?.IsConnected ?? false)) {
-				//Logger.Log("Head2Head", "Connect to CelesteNet before building a match");
+				//Logger.Log(LogLevel.Verbose, "Head2Head", "Connect to CelesteNet before building a match");
 				return;
 			}
 			buildingMatch = new MatchDefinition() {
 				Owner = PlayerID.MyID ?? PlayerID.Default,
-				CreationInstant = DateTime.Now,
+				CreationInstant = SyncedClock.Now,
 			};
 		}
 
@@ -946,7 +976,7 @@ namespace Celeste.Mod.Head2Head {
 					break;
 			}
 			if (mp == null) {
-				Logger.Log("Head2Head", string.Format("Couldn't add {0} ({1}) - Category is not valid for this chapter", area.DisplayName, category));
+				Logger.Log(LogLevel.Verbose, "Head2Head", string.Format("Couldn't add {0} ({1}) - Category is not valid for this chapter", area.DisplayName, category));
 				return;
 			}
 			else {
@@ -973,24 +1003,28 @@ namespace Celeste.Mod.Head2Head {
 
 		public void StageMatch() {
 			if (Util.IsUpdateAvailable()) {
-				Logger.Log("Head2Head.Warn", "Cannot stage match: you are using an outdated version of Head 2 Head");
+				Logger.Log(LogLevel.Info, "Head2Head", "Cannot stage match: you are using an outdated version of Head 2 Head");
 				return;
 			}
 			if (!Role.AllowMatchCreate()) {
-				Logger.Log("Head2Head", "Your role prevents creating a match");
+				Logger.Log(LogLevel.Verbose, "Head2Head", "Your role prevents creating a match");
 				return;
 			}
 			if (buildingMatch == null) {
-				Logger.Log("Head2Head", "You need to build a match first");
+				Logger.Log(LogLevel.Verbose, "Head2Head", "You need to build a match before staging");
+				return;
+			}
+			if (buildingMatch.UseFreshSavefile && !Role.AllowFullgame()) {
+				Logger.Log(LogLevel.Verbose, "Head2Head", "Your role prevents creating full-game a match");
 				return;
 			}
 			if (buildingMatch.Phases.Count == 0) {
-				Logger.Log("Head2Head", "You need to add a phase first");
+				Logger.Log(LogLevel.Verbose, "Head2Head", "You need to add a phase before staging the match");
 				return;
 			}
 			MatchDefinition def = PlayerStatus.Current.CurrentMatch;
 			if (def != null && !def.PlayerCanLeaveFreely(PlayerID.MyIDSafe)) {
-				//Logger.Log("Head2Head", "Drop out of your current match before creating a new one");
+				//Logger.Log(LogLevel.Verbose, "Head2Head", "Drop out of your current match before creating a new one");
 				return;
 			}
 			buildingMatch.AssignIDs();
@@ -1002,22 +1036,22 @@ namespace Celeste.Mod.Head2Head {
 
 		public void StageMatch(MatchDefinition def) {
 			if (Util.IsUpdateAvailable()) {
-				Logger.Log("Head2Head.Warn", "Cannot stage match: you are using an outdated version of Head 2 Head");
+				Logger.Log(LogLevel.Warn, "Head2Head", "Cannot stage match: you are using an outdated version of Head 2 Head");
 				return;
 			}
 			if (def == null)
 			{
-				Logger.Log("Head2Head", "You need to build a match before staging a match");
+				Logger.Log(LogLevel.Verbose, "Head2Head", "You need to build a match before staging a match");
 				return;
 			}
 			if (def.Phases.Count == 0)
 			{
-				Logger.Log("Head2Head", "You need to add a phase before staging a match");
+				Logger.Log(LogLevel.Verbose, "Head2Head", "You need to add a phase before staging a match");
 				return;
 			}
 			if (!PlayerStatus.Current.CanStageMatch())
 			{
-				Logger.Log("Head2Head", "Player status prevents staging a match (are you already in one?)");
+				Logger.Log(LogLevel.Verbose, "Head2Head", "Player status prevents staging a match (are you already in one?)");
 				return;
 			}
 			MatchStaged(def, true);
@@ -1047,30 +1081,34 @@ namespace Celeste.Mod.Head2Head {
 
 		public void JoinStagedMatch() {
 			if (Util.IsUpdateAvailable()) {
-				Logger.Log("Head2Head.Warn", "Cannot join match: you are using an outdated version of Head 2 Head");
+				Logger.Log(LogLevel.Warn, "Head2Head", "Cannot join match: you are using an outdated version of Head 2 Head");
 				return;
 			}
 			MatchDefinition def = PlayerStatus.Current.CurrentMatch;
 			if (def == null) {
-				Logger.Log("Head2Head", "Couldn't join match - there is no staged match");
+				Logger.Log(LogLevel.Verbose, "Head2Head", "Couldn't join match - there is no staged match");
 				return;
 			}
 			if (PlayerStatus.Current.MatchState != MatchState.Staged) {
-				Logger.Log("Head2Head", "Couldn't join match - current match is not staged status");
+				Logger.Log(LogLevel.Verbose, "Head2Head", "Couldn't join match - current match is not staged status");
 				return;
 			}
 			foreach (MatchPhase ph in def.Phases) {
 				if (!ph.Area.ExistsLocal) {
+					Logger.Log(LogLevel.Info, "Head2Head", string.Format("Couldn't join match - map not installed: {0}", ph.Area.SID));
 					Engine.Commands.Log(string.Format("Couldn't join match - map not installed: {0}", ph.Area.SID));
 					return;
 				}
 				if (!ph.Area.VersionMatchesLocal) {
+					Logger.Log(LogLevel.Info, "Head2Head", string.Format("Couldn't join match - map version mismatch: {0} (match initator has {1}, but {2} is installed)",
+						ph.Area.DisplayName, ph.Area.Version, ph.Area.LocalVersion));
 					Engine.Commands.Log(string.Format("Couldn't join match - map version mismatch: {0} (match initator has {1}, but {2} is installed)",
 						ph.Area.DisplayName, ph.Area.Version, ph.Area.LocalVersion));
 					return;
 				}
 			}
 			if (!Role.AllowMatchJoin(def)) {
+				Logger.Log(LogLevel.Verbose, "Head2Head", "Your role prevents creating a match");
 				Engine.Commands.Log("Your role prevents joining this match");
 				return;
 			}
@@ -1083,24 +1121,24 @@ namespace Celeste.Mod.Head2Head {
 
 		public void BeginStagedMatch() {
 			if (Util.IsUpdateAvailable()) {
-				Logger.Log("Head2Head.Warn", "Cannot begin match: you are using an outdated version of Head 2 Head");
+				Logger.Log(LogLevel.Warn, "Head2Head", "Cannot begin match: you are using an outdated version of Head 2 Head");
 				return;
 			}
 			MatchDefinition def = PlayerStatus.Current.CurrentMatch;
 			if (def == null) {
-				Logger.Log("Head2Head", "There is no staged match!");
+				Logger.Log(LogLevel.Verbose, "Head2Head", "There is no staged match!");
 				return;
 			}
 			if (def.State != MatchState.Staged) {
-				Logger.Log("Head2Head", "Current match is not staged!");
+				Logger.Log(LogLevel.Verbose, "Head2Head", "Current match is not staged!");
 				return;
 			}
 			bool hasJoined = def.Players.Contains(PlayerID.MyIDSafe);
 			if (!Role.AllowMatchStart(hasJoined)) {
-				Logger.Log("Head2Head", "Your role prevents starting this match");
+				Logger.Log(LogLevel.Verbose, "Head2Head", "Your role prevents starting this match");
 				return;
 			}
-			def.BeginInstant = DateTime.Now + new TimeSpan(0, 0, 0, 0, START_TIMER_LEAD_MS);
+			def.BeginInstant = SyncedClock.Now + new TimeSpan(0, 0, 0, 0, START_TIMER_LEAD_MS);
 			def.State = MatchState.InProgress;
 			MatchStarted(def);  // OnMatchUpdated doesn't detect a status change locally
 		}
@@ -1164,7 +1202,7 @@ namespace Celeste.Mod.Head2Head {
 			if (def.State == MatchState.None) return true;
 			if (def.State == MatchState.Completed) return true;
 			if (def.State == MatchState.Building && buildingMatch.MatchID != def.MatchID) return true;
-			if (def.State == MatchState.Staged && (DateTime.Now - def.CreationInstant).TotalMinutes > 20) return true;
+			if (def.State == MatchState.Staged && (SyncedClock.Now - def.CreationInstant).TotalMinutes > 20) return true;
 			return false;
 		}
 
@@ -1174,7 +1212,7 @@ namespace Celeste.Mod.Head2Head {
 			if (def == null) return false;
 			foreach (MatchPhase ph in def.Phases) {
 				if (ph == null) {
-					Logger.Log("Head2Head", "Cannot start match: match contains a null phase");
+					Logger.Log(LogLevel.Verbose, "Head2Head", "Cannot start match: match contains a null phase");
 					return false;
 				}
 				if (!ph.Area.ExistsLocal || !ph.Area.VersionMatchesLocal) {
@@ -1182,7 +1220,7 @@ namespace Celeste.Mod.Head2Head {
 				}
 			}
 			if (currentScenes.Count == 0) {
-				Logger.Log("Head2Head", "Cannot start match: there is no scene");
+				Logger.Log(LogLevel.Info, "Head2Head", "Cannot start match: there is no scene");
 				return false;
 			}
 			if (PlayerStatus.Current.CurrentMatch == null) { 
@@ -1209,7 +1247,7 @@ namespace Celeste.Mod.Head2Head {
 			Level level = GetLevelForCoroutine();
 			ForceUnpause(level);
 			Entity wrapper = new Entity();
-			wrapper.AddTag(Tags.Persistent);
+			wrapper.AddTag(Tags.Persistent | Tags.Global);
 			level?.Add(wrapper);
 			wrapper.Add(new Coroutine(StartMatchCoroutine(def.Phases[0].Area, false)));
 			return true;
@@ -1229,7 +1267,7 @@ namespace Celeste.Mod.Head2Head {
 				Level level = GetLevelForCoroutine();
 				ForceUnpause(level);
 				Entity wrapper = new Entity();
-				wrapper.AddTag(Tags.Persistent);
+				wrapper.AddTag(Tags.Persistent | Tags.Global);
 				level?.Add(wrapper);
 				GlobalAreaKey key;
 				string cp;
@@ -1267,21 +1305,23 @@ namespace Celeste.Mod.Head2Head {
 			if (PlayerStatus.Current.CurrentMatch == null) yield break;
 			string idCheck = PlayerStatus.Current.CurrentMatchID;
 			DateTime startInstant = PlayerStatus.Current.CurrentMatch.BeginInstant;
-			DateTime now = DateTime.Now;
+			DateTime now = SyncedClock.Now;
 			if (startInstant > now + new TimeSpan(0, 0, 15)) {
-				Logger.Log("Head2Head", "Match begins more than 15 seconds in the future; skipping countdown (try syncing your system's clock)");
+				Logger.Log(LogLevel.Info, "Head2Head", "Match begins more than 15 seconds in the future; skipping countdown (try syncing your system's clock)");
 			}
 			else if (startInstant < now) {
-				Logger.Log("Head2Head", "Match begins in the past; skipping countdown (if this is not a rejoin, try syncing your system's clock)");
+				Logger.Log(LogLevel.Info, "Head2Head", "Match begins in the past; skipping countdown (if this is not a rejoin, try syncing your system's clock)");
 			}
 			else if (!Role.SkipCountdown()) {
 				Level level = GetLevelForCoroutine();
-				if (level != null) level.PauseLock = true;
+				//if (level != null) level.PauseLock = true;
 				yield return (float)((startInstant - now).TotalSeconds);
-				if (level != null) level.PauseLock = false;
+				//if (level != null) level.PauseLock = false;
 			}
 
-			if (PlayerStatus.Current.CurrentMatchID != idCheck) yield break;
+			if (PlayerStatus.Current.CurrentMatchID != idCheck) {
+				yield break;
+			}
 			MatchDefinition def = PlayerStatus.Current.CurrentMatch;
 			if (def == null) yield break;
 			if (def.State != MatchState.InProgress) yield break;
@@ -1290,15 +1330,10 @@ namespace Celeste.Mod.Head2Head {
 				if (def.UseFreshSavefile) {
 					int slot = FindNextUnusedSlot();
 					if (slot >= 0) {
-						// Create new savefile
-						global::Celeste.SaveData.Start(new SaveData {
-							Name = "[H2H] " + PlayerID.MyIDSafe.Name,
-							AssistMode = false,
-							VariantMode = false,
-						}, slot);
+						Util.SafeCreateAndSwitchFile(slot, false, false);
 					}
 					else {
-						Logger.Log("Head2Head.Warn", "Could not find a valid savefile slot for fullgame head 2 head match");
+						Logger.Log(LogLevel.Warn, "Head2Head", "Could not find a valid savefile slot for fullgame head 2 head match");
 						yield break;
 					}
 				}
@@ -1325,12 +1360,10 @@ namespace Celeste.Mod.Head2Head {
 				if (args.MatchDef.UseFreshSavefile) {
 					returnToSlot = PlayerStatus.Current.FileSlotBeforeMatchStart;
 				}
-				if (!Settings.ReturnToLobby) return;
 				autoLaunchArea = GlobalAreaKey.Head2HeadLobby;
 			}
 			else
 			{
-				if (!Settings.AutoLaunchNextPhase) return;
 				if (args.NextPhase == null) return;
 				if (!args.NextPhase.Area.ExistsLocal) return;
 				if (!args.NextPhase.Area.VersionMatchesLocal) return;
@@ -1356,12 +1389,9 @@ namespace Celeste.Mod.Head2Head {
 			int oldSlot = global::Celeste.SaveData.Instance.FileSlot;
 			int newSlot = returnToSlot;
 			ClearAutoLaunchInfo();
-			if (newSlot > -2) {  // This will only be set to a valid slot when finishing a full-game run
-				SaveData saveData = UserIO.Load<SaveData>(global::Celeste.SaveData.GetFilename(newSlot), backup: false);
-				if (saveData != null) {
-					saveData.AfterInitialize();
-					global::Celeste.SaveData.Start(saveData, newSlot);
-					global::Celeste.SaveData.TryDelete(oldSlot);
+			if (newSlot > -2 && oldSlot != newSlot) {
+				if (Util.SafeSwitchFile(newSlot)) {
+					Util.SafeDeleteFile(oldSlot);
 				}
 			}
 			if (doFadeWipe)

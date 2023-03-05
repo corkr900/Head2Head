@@ -30,8 +30,8 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 		#region Fullgame Category Flags
 
-		public bool UseFreshSavefile = true;
-        public bool AllowCheatMode = true;
+		public bool UseFreshSavefile = false;
+        public bool AllowCheatMode = false;
 
         #endregion
 
@@ -58,6 +58,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			get {
                 return Phases.Count == 0 ? CategoryDisplayName :
                     Phases[0].Fullgame ? FullGameDisplayName() :
+                    !Phases[0].Area.ExistsLocal ? string.Format(Dialog.Get("Head2Head_MapNotInstalled"), Phases[0].Area.DisplayName) :
                     string.Format(Dialog.Get("Head2Head_MatchTitle"), Phases[0].Area.DisplayName, CategoryDisplayName);
 
             }
@@ -86,7 +87,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		}
 
         private static string GenerateMatchID() {
-            return string.Format("h2hmid_{0}_{1}_{2}", PlayerID.MyIDSafe.GetHashCode(), ++localIDCounter, DateTime.Now.GetHashCode());
+            return string.Format("h2hmid_{0}_{1}_{2}", PlayerID.MyIDSafe.GetHashCode(), ++localIDCounter, SyncedClock.Now.GetHashCode());
 		}
 
         public void SetState_NoUpdate(MatchState newState) {
@@ -176,6 +177,10 @@ namespace Celeste.Mod.Head2Head.Shared {
 
         public void PlayerDNF(DNFReason reason) {
             PlayerID id = PlayerID.MyIDSafe;
+#if DEBUG
+            // I need SOME way to test stuff...
+            if (Role.IsDebug && id.Name == "corkr900") return;
+#endif
             PlayerStatus stat = PlayerStatus.Current;
             ResultCategory cat = GetPlayerResultCat(id);
             if (cat == ResultCategory.Joined || cat == ResultCategory.InMatch) {
@@ -253,7 +258,7 @@ namespace Celeste.Mod.Head2Head.Shared {
                     if (ob.ObjectiveType != MatchObjectiveType.TimeLimit) continue;
                     MatchObjective local = GetObjective(ob.ID);
                     if (local == null) {  // This shouldn't be possible but, just in case...
-                        Logger.Log("Head2Head.Error", "match definition does not match: " + CategoryDisplayName);
+                        Logger.Log(LogLevel.Error, "Head2Head", "match definition does not match: " + CategoryDisplayName);
                         continue;
                     }
                     MergeObjective(local, ob);
@@ -325,6 +330,7 @@ namespace Celeste.Mod.Head2Head.Shared {
         public StandardCategory category;
         public uint ID;
         public bool Fullgame = false;
+        public string LevelSet = "";
         public int Order = 0;
         public GlobalAreaKey Area;
         public List<MatchObjective> Objectives = new List<MatchObjective>();
@@ -523,6 +529,7 @@ namespace Celeste.Mod.Head2Head.Shared {
             p.category = (StandardCategory)Enum.Parse(typeof(StandardCategory), reader.ReadString());
             p.ID = reader.ReadUInt32();
             p.Fullgame = reader.ReadBoolean();
+            p.LevelSet = reader.ReadString();
             p.Order = reader.ReadInt32();
             p.Area = reader.ReadAreaKey();
             int numObjectives = reader.ReadInt32();
@@ -537,6 +544,7 @@ namespace Celeste.Mod.Head2Head.Shared {
             writer.Write(mp.category.ToString() ?? "");
             writer.Write(mp.ID);
             writer.Write(mp.Fullgame);
+            writer.Write(mp.LevelSet);
             writer.Write(mp.Order);
             writer.Write(mp.Area);
             writer.Write(mp.Objectives.Count);

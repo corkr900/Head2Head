@@ -25,15 +25,13 @@ namespace Celeste.Mod.Head2Head {
 			Always = 3,
 		}
 
+		public enum TimeServer {
+			Windows,
+			Pool,
+			None,
+		}
+
 		#region Settings
-
-		[SettingName("Head2Head_Setting_ReturnToLobby")]
-		[SettingSubText("Head2Head_Setting_ReturnToLobby_Subtext")]
-		public bool ReturnToLobby { get; set; } = true;
-
-		[SettingName("Head2Head_Setting_AutoLaunchPhase")]
-		[SettingSubText("Head2Head_Setting_AutoLaunchPhase_Subtext")]
-		public bool AutoLaunchNextPhase { get; set; } = true;
 
 		[SettingName("Head2Head_Setting_UseSRCARBRules")]
 		[SettingSubText("Head2Head_Setting_UseSRCARBRules_Subtext")]
@@ -54,13 +52,9 @@ namespace Celeste.Mod.Head2Head {
 		[SettingMaxLength(12)]
 		public string Role { get; set; } = "";
 
-		// Stuff not in menu
-
-		public bool UseActionLog {
-			get {
-				return Role == "bta";
-			}
-		}
+		[SettingName("Head2Head_Setting_TimeServer")]
+		[SettingSubText("Head2Head_Setting_TimeServer_Subtext")]
+		public TimeServer NSTPTimeServer { get; set; } = TimeServer.Windows;
 
 		public string RealExportLocation {
 			get {
