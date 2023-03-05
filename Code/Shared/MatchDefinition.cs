@@ -330,6 +330,7 @@ namespace Celeste.Mod.Head2Head.Shared {
         public StandardCategory category;
         public uint ID;
         public bool Fullgame = false;
+        public string LevelSet = "";
         public int Order = 0;
         public GlobalAreaKey Area;
         public List<MatchObjective> Objectives = new List<MatchObjective>();
@@ -528,6 +529,7 @@ namespace Celeste.Mod.Head2Head.Shared {
             p.category = (StandardCategory)Enum.Parse(typeof(StandardCategory), reader.ReadString());
             p.ID = reader.ReadUInt32();
             p.Fullgame = reader.ReadBoolean();
+            p.LevelSet = reader.ReadString();
             p.Order = reader.ReadInt32();
             p.Area = reader.ReadAreaKey();
             int numObjectives = reader.ReadInt32();
@@ -542,6 +544,7 @@ namespace Celeste.Mod.Head2Head.Shared {
             writer.Write(mp.category.ToString() ?? "");
             writer.Write(mp.ID);
             writer.Write(mp.Fullgame);
+            writer.Write(mp.LevelSet);
             writer.Write(mp.Order);
             writer.Write(mp.Area);
             writer.Write(mp.Objectives.Count);

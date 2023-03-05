@@ -258,6 +258,14 @@ namespace Celeste.Mod.Head2Head {
 			CelesteTASIntegration.Unload();
 		}
 
+		public override void LoadContent(bool firstLoad) {
+			base.LoadContent(firstLoad);
+			if (!firstLoad) {
+				CustomMatchTemplate.ClearCustomTemplates();
+			}
+			ScanModsForIntegrationMeta();
+		}
+
 		public override void CreateModMenuSection(TextMenu menu, bool inGame, FMOD.Studio.EventInstance snapshot)
 		{
 			base.CreateModMenuSection(menu, inGame, snapshot);
@@ -839,6 +847,11 @@ namespace Celeste.Mod.Head2Head {
 		}
 
 		private void ProcessIntegrationMeta(ModIntegrationMeta meta) {
+			if (meta.Fullgame != null) {
+				foreach (FullgameMeta cat in meta.Fullgame) {
+					CustomMatchTemplate.AddTemplateFromMeta(cat);
+				}
+			}
 			if (meta.IndividualLevels != null) {
 				foreach (ILMeta il in meta.IndividualLevels) {
 					// Ensure the area is valid

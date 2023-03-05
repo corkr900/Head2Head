@@ -336,6 +336,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 				category = StandardCategory.AnyPercent,
 				Area = GlobalAreaKey.VanillaPrologue,
 				Fullgame = true,
+				LevelSet = "Celeste",
 				Objectives = new List<MatchObjective>() {
 					new MatchObjective() {
 						ObjectiveType = MatchObjectiveType.UnlockChapter,
@@ -356,6 +357,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 				category = StandardCategory.AllRedBerries,
 				Area = GlobalAreaKey.VanillaPrologue,
 				Fullgame = true,
+				LevelSet = "Celeste",
 				Objectives = new List<MatchObjective>() {
 					new MatchObjective() {
 						ObjectiveType = MatchObjectiveType.Strawberries,
@@ -380,6 +382,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 				category = StandardCategory.TrueEnding,
 				Area = GlobalAreaKey.VanillaPrologue,
 				Fullgame = true,
+				LevelSet = "Celeste",
 				Objectives = new List<MatchObjective>() {
 					new MatchObjective() {
 						ObjectiveType = MatchObjectiveType.ChapterComplete,
@@ -400,6 +403,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 				category = StandardCategory.AllCassettes,
 				Area = GlobalAreaKey.VanillaPrologue,
 				Fullgame = true,
+				LevelSet = "Celeste",
 				Objectives = new List<MatchObjective>() {
 					new MatchObjective() {
 						ObjectiveType = MatchObjectiveType.CassetteCollect,
@@ -425,6 +429,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 				category = StandardCategory.BnyPercent,
 				Area = GlobalAreaKey.VanillaPrologue,
 				Fullgame = true,
+				LevelSet = "Celeste",
 				Objectives = new List<MatchObjective>() {
 					new MatchObjective() {
 						ObjectiveType = MatchObjectiveType.UnlockChapter,
@@ -445,6 +450,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 				category = StandardCategory.AllHearts,
 				Area = GlobalAreaKey.VanillaPrologue,
 				Fullgame = true,
+				LevelSet = "Celeste",
 				Objectives = new List<MatchObjective>() {
 					new MatchObjective() {
 						ObjectiveType = MatchObjectiveType.HeartCollect,
@@ -465,6 +471,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 				category = StandardCategory.OneHundredPercent,
 				Area = GlobalAreaKey.VanillaPrologue,
 				Fullgame = true,
+				LevelSet = "Celeste",
 				Objectives = new List<MatchObjective>() {
 					new MatchObjective() {
 						ObjectiveType = MatchObjectiveType.ChapterComplete,
@@ -493,6 +500,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 				category = StandardCategory.AllChapters,
 				Area = GlobalAreaKey.VanillaPrologue,
 				Fullgame = true,
+				LevelSet = "Celeste",
 				Objectives = new List<MatchObjective>() {
 					new MatchObjective() {
 						ObjectiveType = MatchObjectiveType.ChapterComplete,
@@ -513,6 +521,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 				category = StandardCategory.AllASides,
 				Area = GlobalAreaKey.VanillaPrologue,
 				Fullgame = true,
+				LevelSet = "Celeste",
 				Objectives = new List<MatchObjective>() {
 					new MatchObjective() {
 						ObjectiveType = MatchObjectiveType.ChapterComplete,
@@ -569,6 +578,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 				category = StandardCategory.AllBSides,
 				Area = GlobalAreaKey.VanillaPrologue,
 				Fullgame = true,
+				LevelSet = "Celeste",
 				Objectives = new List<MatchObjective>() {
 					new MatchObjective() {
 						ObjectiveType = MatchObjectiveType.ChapterComplete,
@@ -625,6 +635,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 				category = StandardCategory.AllCSides,
 				Area = GlobalAreaKey.VanillaPrologue,
 				Fullgame = true,
+				LevelSet = "Celeste",
 				Objectives = new List<MatchObjective>() {
 					new MatchObjective() {
 						ObjectiveType = MatchObjectiveType.ChapterComplete,
@@ -753,7 +764,6 @@ namespace Celeste.Mod.Head2Head.Shared {
 					case StandardCategory.FullClearMoonBerry:
 						return hasMoonBerry && (berries || hasCassette || hasOptionalHeart);
 					case StandardCategory.Custom:
-						// TODO check custom categories for validity
 						return true;
 				}
 			}
@@ -816,8 +826,8 @@ namespace Celeste.Mod.Head2Head.Shared {
 				ret.Add(new Tuple<StandardCategory, CustomMatchTemplate>(cat, null));
 			}
 			// Custom Categories
-			if (CustomMatchTemplate.templates.ContainsKey(gArea)) {
-				foreach (CustomMatchTemplate template in CustomMatchTemplate.templates[gArea]) {
+			if (CustomMatchTemplate.ILTemplates.ContainsKey(gArea)) {
+				foreach (CustomMatchTemplate template in CustomMatchTemplate.ILTemplates[gArea]) {
 					if (!IsCategoryValid(StandardCategory.Custom, gArea, template)) continue;
 					ret.Add(new Tuple<StandardCategory, CustomMatchTemplate>(StandardCategory.Custom, template));
 				}

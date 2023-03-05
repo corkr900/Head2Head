@@ -79,7 +79,6 @@ namespace Celeste.Mod.Head2Head.Entities {
 
 		private void OpenUI(Player player) {
 			if (ActiveSelector != null) return;
-			Head2HeadModule.Instance.ScanModsForIntegrationMeta();
 			Level l = player.Scene as Level;
 			if (l != null) l.PauseLock = true;
 			ActiveSelector = this;

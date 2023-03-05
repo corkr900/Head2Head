@@ -361,7 +361,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		}
 
 		private bool IsPhaseEligible(MatchPhase ph, int currentp, GlobalAreaKey area, bool includeFinished) {
-			if (ph.Fullgame) return true;
+			if (ph.Fullgame) return string.IsNullOrEmpty(ph.LevelSet) || ph.LevelSet == area.Local_Safe.LevelSet;
 			if (includeFinished) {
 				return ph.Order <= currentp && ph.Area.Equals(area);
 			}

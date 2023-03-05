@@ -15,7 +15,6 @@ namespace Celeste.Mod.Head2Head.Entities {
 		private TalkComponent talkComponent;
 
 		public FullgameSelector(EntityData data, Vector2 offset) {
-			//map = data.Attr("map");
 			Position = data.Position + offset;
 			Add(sprite = GFX.SpriteBank.Create("Head2Head_FullgameSelector"));
 			sprite.Play("idle");
