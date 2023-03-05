@@ -1,4 +1,5 @@
 ﻿using Celeste.Mod.Head2Head.Integration;
+using Celeste.Mod.Head2Head.IO;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -45,6 +46,37 @@ namespace Celeste.Mod.Head2Head.Shared {
 				list.Add(ph);
 			}
 			return list;
+		}
+
+		internal MatchDefinition BuildFullgame() {
+			MatchDefinition def = new MatchDefinition() {
+				Owner = PlayerID.MyID ?? PlayerID.Default,
+				CreationInstant = SyncedClock.Now,
+				UseFreshSavefile = true,
+				AllowCheatMode = AllowCheatMode,
+				CategoryDisplayNameOverride = Util.TranslatedIfAvailable(DisplayName),
+			};
+			foreach (CustomMatchPhaseTemplate phtem in Phases) {
+				MatchPhase ph = new MatchPhase() {
+					category = StandardCategory.Custom,
+					Area = Area,
+					Fullgame = true,
+					LevelSet = phtem.LevelSet,
+				};
+				foreach (CustomMatchObjectiveTemplate objtem in phtem.Objectives) {
+					MatchObjective ob = new MatchObjective() {
+						ObjectiveType = objtem.ObjectiveType,
+						TimeLimit = objtem.TimeLimit,
+						CollectableGoal = objtem.CollectableCount,
+						CustomTypeKey = objtem.CustomTypeKey,
+						CustomDescription = Util.TranslatedIfAvailable(objtem.Description),
+						Side = objtem.Side,
+					};
+					ph.Objectives.Add(ob);
+				}
+				def.Phases.Add(ph);
+			}
+			return def;
 		}
 
 		internal static void AddTemplateFromMeta(FullgameMeta meta) {
@@ -154,6 +186,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			else obtem.TimeLimit = 0;
 			obtem.CustomTypeKey = meta.ID;
 			obtem.Description = meta.Description;
+			obtem.Side = GetAreaMode(meta.Side);
 			return obtem;
 		}
 
@@ -198,5 +231,6 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public long TimeLimit = 0;
 		public string CustomTypeKey;
 		public string Description;
+		public AreaMode Side;
 	}
 }

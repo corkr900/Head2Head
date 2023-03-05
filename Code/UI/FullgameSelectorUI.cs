@@ -1,4 +1,5 @@
-﻿using Celeste.Mod.Head2Head.Shared;
+﻿using Celeste.Mod.Head2Head.Integration;
+using Celeste.Mod.Head2Head.Shared;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Monocle;
@@ -68,9 +69,59 @@ namespace Celeste.Mod.Head2Head.Entities {
 			}
 			ret.Add(new Tuple<string, List<Option>>("Celeste", vanillaList));
 
+			// Collab Lobbies
+			if (CollabUtils2Integration.IsCollabUtils2Installed) {
+				// Collect a list of all lobbies and their maps
+				List<Tuple<string, AreaData, List<AreaData>>> collabSets = new List<Tuple<string, AreaData, List<AreaData>>>();
+				foreach (AreaData data in AreaData.Areas) {
+					// This pattern assumes the lobby will get hit before its levels in the iteration
+					// Check whether this is a lobby
+					string setForLobby = CollabUtils2Integration.GetLobbyLevelSet(data.SID);
+					if (!string.IsNullOrEmpty(setForLobby)) {
+						collabSets.Add(new Tuple<string, AreaData, List<AreaData>>(setForLobby, data, new List<AreaData>()));
+						continue;
+					}
+					// Check whether this map is in a lobby's set
+					int idx = collabSets.FindIndex((Tuple<string, AreaData, List<AreaData>> tup) => tup.Item1 == data.LevelSet);
+					if (idx >= 0 && idx < collabSets.Count) {
+						collabSets[idx].Item3.Add(data);
+					}
+				}
+				// Generate the lobby run category for each
+				foreach (Tuple<string, AreaData, List<AreaData>> tup in collabSets) {
+					// Set up the collection
+					string collabLevelSet = tup.Item2.LevelSet;
+					int idx = ret.FindIndex((Tuple<string, List<Option>> rettup) => rettup.Item1 == collabLevelSet);
+					List<Option> list;
+					if (idx < 0 || idx >= ret.Count) {
+						list = new List<Option>();
+						ret.Add(new Tuple<string, List<Option>>(collabLevelSet, list));
+					}
+					else {
+						list = ret[idx].Item2;
+					}
+					// Finally make the category
+					list.Add(new Option() {
+						Cat = StandardCategory.Custom,
+						CustomIcon = GFX.Gui[tup.Item2.Icon],
+						CustomTitle = Dialog.CleanLevelSet(tup.Item2.Name),
+						Template = GetTemplateForCollabLobby(tup),
+					}.AfterInitialize());
+				}
+			}
+
 			// Custom Fullgame Categories
 			foreach (KeyValuePair<string, List<CustomMatchTemplate>> set in CustomMatchTemplate.FullgameTemplates) {
-				List<Option> list = new List<Option>();
+				int idx = ret.FindIndex((Tuple<string, List<Option>> tup) => tup.Item1 == set.Key);
+				List<Option> list;
+				if (idx < 0 || idx >= ret.Count) {
+					list = new List<Option>();
+					ret.Add(new Tuple<string, List<Option>>(set.Key, list));
+				}
+				else {
+					list = ret[idx].Item2;
+				}
+				
 				foreach (CustomMatchTemplate template in set.Value) {
 					list.Add(new Option() {
 						Cat = StandardCategory.Custom,
@@ -79,9 +130,30 @@ namespace Celeste.Mod.Head2Head.Entities {
 						Template = template,
 					}.AfterInitialize());
 				}
-				ret.Add(new Tuple<string, List<Option>>(set.Key, list));
 			}
 
+			return ret;
+		}
+
+		private CustomMatchTemplate GetTemplateForCollabLobby(Tuple<string, AreaData, List<AreaData>> tup) {
+			GlobalAreaKey area = new GlobalAreaKey(tup.Item2.SID);
+			CustomMatchTemplate ret = new CustomMatchTemplate();
+			ret.Key = "Autogen_CollabLobby_" + tup.Item2.SID;
+			ret.Area = area;
+			ret.IconPath = tup.Item2.Icon;
+			ret.DisplayName = tup.Item2.CompleteScreenName;
+			ret.AllowCheatMode = false;
+			CustomMatchPhaseTemplate ph = new CustomMatchPhaseTemplate() {
+				Area = area,
+				LevelSet = tup.Item1,
+			};
+			foreach (AreaData data in tup.Item3) {
+				ph.Objectives.Add(new CustomMatchObjectiveTemplate() {
+					ObjectiveType = MatchObjectiveType.ChapterComplete,
+					CustomTypeKey = data.SID,
+				});
+			}
+			ret.Phases.Add(ph);
 			return ret;
 		}
 
@@ -200,14 +272,13 @@ namespace Celeste.Mod.Head2Head.Entities {
 					Option o = categories[selectedSetIdx].Item2[HoveredOption];
 					MatchDefinition def;
 					if (o.Cat == StandardCategory.Custom) {
-						// TODO (!!!)
-						throw new NotImplementedException("Custom Fullgame Categories have not been implemented yet");
+						def = o.Template.BuildFullgame();
 					}
 					else {
 						def = StandardMatches.GetFullgameCategoryDefinition(o.Cat);
 					}
 					if (def == null) {
-						Logger.Log(LogLevel.Error, "Head2Head", "Fullgame category definition is null: " + o.Cat.ToString());
+						Logger.Log(LogLevel.Error, "Head2Head", "Fullgame category build failed: " + o.Cat.ToString());
 						return;
 					}
 					Head2HeadModule.Instance.buildingMatch = def;
@@ -340,7 +411,7 @@ namespace Celeste.Mod.Head2Head.Entities {
 			public string Text;
 			public override void Render() {
 				if (Shown) {
-					ActiveFont.DrawOutline(Text, Position, new Vector2(0.5f, 0.5f), Vector2.One, Color.White, 2f, Color.Black);
+					ActiveFont.DrawOutline(Util.TranslatedIfAvailable(Text), Position, new Vector2(0.5f, 0.5f), Vector2.One, Color.White, 2f, Color.Black);
 				}
 			}
 		}

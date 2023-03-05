@@ -44,6 +44,7 @@ namespace Celeste.Mod.Head2Head.Integration {
 	public class ObjectiveMeta : IMeta {
 		public string Type;
 		public string ID;
+		public string Side;
 		public int Count;
 		public string TimeLimit;
 		public string Description;

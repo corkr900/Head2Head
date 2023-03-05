@@ -258,14 +258,6 @@ namespace Celeste.Mod.Head2Head {
 			CelesteTASIntegration.Unload();
 		}
 
-		public override void LoadContent(bool firstLoad) {
-			base.LoadContent(firstLoad);
-			if (!firstLoad) {
-				CustomMatchTemplate.ClearCustomTemplates();
-			}
-			ScanModsForIntegrationMeta();
-		}
-
 		public override void CreateModMenuSection(TextMenu menu, bool inGame, FMOD.Studio.EventInstance snapshot)
 		{
 			base.CreateModMenuSection(menu, inGame, snapshot);
@@ -354,7 +346,10 @@ namespace Celeste.Mod.Head2Head {
 			currentSession = session;
 			GlobalAreaKey area = new GlobalAreaKey(session.Area);
 			PlayerStatus.Current.ChapterEntered(area, session);
-			if (!area.Equals(GlobalAreaKey.Head2HeadLobby) && !area.Equals(GlobalAreaKey.Overworld)) {
+			if (area.Equals(GlobalAreaKey.Head2HeadLobby)) {
+				ScanModsForIntegrationMeta();
+			}
+			else if (!area.Equals(GlobalAreaKey.Overworld)) {
 				PlayerEnteredAMap = true;
 			}
 			ActionLogger.EnteringArea();
@@ -836,6 +831,7 @@ namespace Celeste.Mod.Head2Head {
 		// #######################################################
 
 		public void ScanModsForIntegrationMeta() {
+			CustomMatchTemplate.ClearCustomTemplates();
 			foreach (ModContent mod in Everest.Content.Mods) {
 				if (mod.Map.ContainsKey("Head2Head")) {
 					ModAsset asset = mod.Map["Head2Head"];

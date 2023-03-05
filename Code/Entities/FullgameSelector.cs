@@ -13,6 +13,7 @@ namespace Celeste.Mod.Head2Head.Entities {
 		private Player player;
 		private Sprite sprite;
 		private TalkComponent talkComponent;
+		public static FullgameSelector ActiveSelector { get; private set; }
 
 		public FullgameSelector(EntityData data, Vector2 offset) {
 			Position = data.Position + offset;
@@ -44,6 +45,7 @@ namespace Celeste.Mod.Head2Head.Entities {
 		}
 
 		private void OpenUI(Player player) {
+			ActiveSelector = this;
 			this.player = player;
 			player.StateMachine.State = Player.StDummy;
 			player.SceneAs<Level>().PauseLock = true;
@@ -57,6 +59,7 @@ namespace Celeste.Mod.Head2Head.Entities {
 		public void CloseUI() {
 			player.StateMachine.State = Player.StNormal;
 			player.SceneAs<Level>().PauseLock = false;
+			ActiveSelector = null;
 		}
 	}
 }
