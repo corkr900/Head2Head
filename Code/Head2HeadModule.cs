@@ -37,7 +37,7 @@ namespace Celeste.Mod.Head2Head {
 		internal int MatchTimeoutMinutes = 15;
 
 		// Constants that might change in the future
-		public static readonly string ProtocolVersion = "1_1_5";
+		public static readonly string ProtocolVersion = "1_1_6";
 
 		// Other static stuff
 		public static Head2HeadModule Instance { get; private set; }
