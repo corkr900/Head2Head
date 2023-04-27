@@ -47,8 +47,8 @@ namespace Celeste.Mod.Head2Head.UI {
 				if (set == "Head2Head") continue;
 
 				if (CollabUtils2Integration.IsCollabUtils2Installed) {
-					if (!string.IsNullOrEmpty(CollabUtils2Integration.GetCollabNameForSID(areaData.SID))
-						&& string.IsNullOrEmpty(CollabUtils2Integration.GetLobbyLevelSet(areaData.SID))) {
+					if (!string.IsNullOrEmpty(CollabUtils2Integration.GetCollabNameForSID?.Invoke(areaData.SID))
+						&& string.IsNullOrEmpty(CollabUtils2Integration.GetLobbyLevelSet?.Invoke(areaData.SID))) {
 						continue;  // Exclude non-lobbies from collabs
 					}
 				}

@@ -163,7 +163,7 @@ namespace Celeste.Mod.Head2Head.UI {
 			int count = AreaData.Areas.Count;
 			for (int i = 0; i < count; i++) {
 				AreaData data = AreaData.Areas[i];
-				string collabSet = CollabUtils2Integration.GetLobbyLevelSet(data.SID);
+				string collabSet = CollabUtils2Integration.GetLobbyLevelSet?.Invoke(data.SID);
 				if (string.IsNullOrEmpty(collabSet)) continue;  // Not a collab lobby
 				if (!maps.ContainsKey(data.SID)) {
 					maps.Add(data.SID, new List<CollabMap>());
@@ -173,8 +173,8 @@ namespace Celeste.Mod.Head2Head.UI {
 			for (int i = 0; i < count; i++) {
 				AreaData data = AreaData.Areas[i];
 				string set = data.LevelSet;
-				if (!CollabUtils2Integration.IsCollabLevelSet(set)) continue;  // Not a collab lobby
-				string lobby = CollabUtils2Integration.GetLobbyForLevelSet(set);
+				if (!(CollabUtils2Integration.IsCollabLevelSet?.Invoke(set) ?? false)) continue;  // Not a collab lobby
+				string lobby = CollabUtils2Integration.GetLobbyForLevelSet?.Invoke(set);
 				if (string.IsNullOrEmpty(lobby) || !maps.ContainsKey(lobby)) continue;
 				maps[lobby].Add(CollabMap.Add(scene, i, YPosBase + maps[lobby].Count * YPosStep));
 			}

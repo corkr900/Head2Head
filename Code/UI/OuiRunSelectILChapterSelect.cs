@@ -263,7 +263,7 @@ namespace Celeste.Mod.Head2Head.UI {
 					}
 					else if (Input.MenuConfirm.Pressed) {
 						Audio.Play("event:/ui/world_map/icon/select");
-						if (string.IsNullOrEmpty(CollabUtils2Integration.GetLobbyLevelSet(ILSelector.LastArea.SID))) {
+						if (string.IsNullOrEmpty(CollabUtils2Integration.GetLobbyLevelSet?.Invoke(ILSelector.LastArea.SID))) {
 							// not a collab lobby
 							Overworld.Goto<OuiRunSelectILChapterPanel>();
 						}

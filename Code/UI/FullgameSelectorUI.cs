@@ -76,7 +76,7 @@ namespace Celeste.Mod.Head2Head.Entities {
 				foreach (AreaData data in AreaData.Areas) {
 					// This pattern assumes the lobby will get hit before its levels in the iteration
 					// Check whether this is a lobby
-					string setForLobby = CollabUtils2Integration.GetLobbyLevelSet(data.SID);
+					string setForLobby = CollabUtils2Integration.GetLobbyLevelSet?.Invoke(data.SID);
 					if (!string.IsNullOrEmpty(setForLobby)) {
 						collabSets.Add(new Tuple<string, AreaData, List<AreaData>>(setForLobby, data, new List<AreaData>()));
 						continue;

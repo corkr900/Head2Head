@@ -363,7 +363,7 @@ namespace Celeste.Mod.Head2Head.UI {
 
 		public override void Update() {
 			if (Selected && Focused && Input.QuickRestart.Pressed) {
-				string lobby = CollabUtils2Integration.GetLobbyForLevelSet(ILSelector.LastArea.Data.LevelSet);
+				string lobby = CollabUtils2Integration.GetLobbyForLevelSet?.Invoke(ILSelector.LastArea.Data.LevelSet);
 				if (!string.IsNullOrEmpty(lobby)) ILSelector.LastArea = new GlobalAreaKey(lobby);
 				Overworld.Goto<OuiRunSelectILCollabMapSelect>();
 				Overworld.Goto<OuiMapSearch>();
@@ -543,7 +543,7 @@ namespace Celeste.Mod.Head2Head.UI {
 		}
 
 		private void GoBack() {
-			string lobby = CollabUtils2Integration.GetLobbyForLevelSet(ILSelector.LastArea.Data.LevelSet);
+			string lobby = CollabUtils2Integration.GetLobbyForLevelSet?.Invoke(ILSelector.LastArea.Data.LevelSet);
 			if (string.IsNullOrEmpty(lobby)) {
 				Overworld.Goto<OuiRunSelectILChapterSelect>();
 			}

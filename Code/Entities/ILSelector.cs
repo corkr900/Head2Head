@@ -85,7 +85,7 @@ namespace Celeste.Mod.Head2Head.Entities {
 			Area = GlobalAreaKey.Overworld;
 			Category = StandardCategory.Clear;
 
-			string collabLobby = CollabUtils2Integration.GetLobbyForLevelSet(LastArea.Data.LevelSet);
+			string collabLobby = CollabUtils2Integration.GetLobbyForLevelSet?.Invoke(LastArea.Data.LevelSet);
 			if (!string.IsNullOrEmpty(collabLobby)) {
 				LastArea = new GlobalAreaKey(collabLobby);
 			}
@@ -268,7 +268,7 @@ namespace Celeste.Mod.Head2Head.Entities {
 				self.OuiIcons[area.ID].Select();
 			}
 			self.Overworld.Mountain.Model.EaseState(area.MountainState);
-			if (string.IsNullOrEmpty(CollabUtils2Integration.GetLobbyLevelSet(LastArea.SID))) {
+			if (string.IsNullOrEmpty(CollabUtils2Integration.GetLobbyLevelSet?.Invoke(LastArea.SID))) {
 				// not a collab lobby
 				self.Overworld.Goto<OuiRunSelectILChapterPanel>();
 			}
