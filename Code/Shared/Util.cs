@@ -62,7 +62,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			if (area.Data.Mode[(int)area.Mode].MapData.DetectedCassette) return true;
 			MapData md = GetMapDataForMode(area);
 			if (md == null) return false;
-			DynamicData dd = new DynamicData(md);
+			DynamicData dd = DynamicData.For(md);
 			if (!dd.Data.ContainsKey("HasCassette")) return false;
 			return dd.Get<bool>("HasCassette");
 		}
@@ -71,7 +71,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			if (!area.ExistsLocal) return false;
 			MapMetaModeProperties props = area.ModeMetaProperties;
 			if (props?.HeartIsEnd == true) return false;
-			DynamicData dd = new DynamicData(GetMapDataForMode(area));
+			DynamicData dd = DynamicData.For(GetMapDataForMode(area));
 			if (!dd.Data.ContainsKey("DetectedRealHeartGem")) return false;
 			return dd.Get<bool>("DetectedRealHeartGem");
 		}
@@ -173,6 +173,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 		internal static bool IsUpdateAvailable() {
 			SortedDictionary<ModUpdateInfo, EverestModuleMetadata> updates = ModUpdaterHelper.GetAsyncLoadedModUpdates();
+			if (updates == null) return false;
 			foreach(EverestModuleMetadata meta in updates.Values) {
 				if (meta.Name == Head2HeadModule.Instance.Metadata.Name
 					&& meta.Version > Head2HeadModule.Instance.Metadata.Version) {

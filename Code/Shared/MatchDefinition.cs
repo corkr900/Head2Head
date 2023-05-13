@@ -415,7 +415,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 
         public static MatchObjectiveType GetTypeForStrawberry(Strawberry s) {
             if (s.Golden) {
-                DynamicData dd = new DynamicData(s);
+                DynamicData dd = DynamicData.For(s);
                 if (dd.Data.ContainsKey("IsWingedGolden")) {
                     return MatchObjectiveType.WingedGoldenStrawberry;
                 }

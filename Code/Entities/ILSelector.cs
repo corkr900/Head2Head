@@ -196,8 +196,7 @@ namespace Celeste.Mod.Head2Head.Entities {
 				orig(self);
 			}
 			else {
-				DynamicData dd = new DynamicData(self);
-				dd.Invoke("clearSearch");
+				self.clearSearch();
 				if (self.FromChapterSelect) {
 					Audio.Play("event:/ui/main/button_back");
 					self.Overworld.Goto<OuiRunSelectILChapterSelect>();
@@ -234,10 +233,8 @@ namespace Celeste.Mod.Head2Head.Entities {
 				orig(self);
 				return;
 			}
-			DynamicData dd = new DynamicData(self);
-			TextMenu menu = dd.Get<TextMenu>("menu");
 			bool goingToChapSelect = false;
-			if (menu != null && menu.Focused && self.Selected) {
+			if (self.menu != null && self.menu.Focused && self.Selected) {
 				self.Overworld.Maddy.Show = false;
 				if (Input.MenuCancel.Pressed || Input.Pause.Pressed || Input.ESC.Pressed) {
 					Audio.Play("event:/ui/main/button_back");
@@ -260,7 +257,6 @@ namespace Celeste.Mod.Head2Head.Entities {
 				Audio.Play("event:/ui/main/button_invalid");
 				return;
 			}
-			DynamicData dd = new DynamicData(self);
 			self.Focused = false;
 			Audio.Play("event:/ui/world_map/icon/select");
 			LastArea = areaKey;

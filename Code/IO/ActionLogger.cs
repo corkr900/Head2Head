@@ -50,8 +50,7 @@ namespace Celeste.Mod.Head2Head.IO {
 		/// <param name="matchID"></param>
 		/// <returns>Returns "" if there is no matching file</returns>
 		private static string GetLogFileName(string matchID) {
-			DynamicData dd = new DynamicData(typeof(UserIO));
-			string dirpath = dd.Get<string>("SavePath");
+			string dirpath = UserIO.SavePath;
 			foreach (string file in Directory.GetFiles(dirpath, "Head2Head*")) {
 				if (string.IsNullOrEmpty(file)) continue;
 				string filename = Path.GetFileNameWithoutExtension(file);
@@ -68,8 +67,7 @@ namespace Celeste.Mod.Head2Head.IO {
 
 		public static void PurgeOldLogs() {
 			// Delete logs older than today or yesterday
-			DynamicData dd = new DynamicData(typeof(UserIO));
-			string dirpath = dd.Get<string>("SavePath");
+			string dirpath = UserIO.SavePath;
 			DateTime basedate = DateTime.Today;
 			foreach (string file in Directory.GetFiles(dirpath, "Head2Head*")) {
 				if (string.IsNullOrEmpty(file)) continue;
@@ -257,8 +255,7 @@ namespace Celeste.Mod.Head2Head.IO {
 		/// </summary>
 		/// <returns>Returns "" if there is no appropriate path</returns>
 		private string GetLogPath() {
-			DynamicData dd = new DynamicData(typeof(UserIO));
-			string handle = dd.Invoke("GetHandle", string.Format("Head2Head {0} {1}", matchBeginDate, matchID)) as string;
+			string handle = UserIO.GetHandle(string.Format("Head2Head {0} {1}", matchBeginDate, matchID));
 			return handle ?? "";
 		}
 	}

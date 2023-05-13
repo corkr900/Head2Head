@@ -458,7 +458,7 @@ namespace Celeste.Mod.Head2Head {
 
 		private void OnLevelRender(On.Celeste.Level.orig_Render orig, Level self) {
 			orig(self);
-			DynamicData dd = new DynamicData(self);
+			DynamicData dd = DynamicData.For(self);
 			H2HHudRenderer hud = dd.Get<H2HHudRenderer>("H2HHudRenderer");
 			hud?.Render(self);
 		}
@@ -466,7 +466,7 @@ namespace Celeste.Mod.Head2Head {
 		public static void OnAddRenderers(LevelLoader loader) {
 			H2HHudRenderer ren = new H2HHudRenderer();
 			loader.Level.Add(ren);
-			DynamicData dd = new DynamicData(loader.Level);
+			DynamicData dd = DynamicData.For(loader.Level);
 			dd.Set("H2HHudRenderer", ren);
 		}
 
@@ -484,7 +484,7 @@ namespace Celeste.Mod.Head2Head {
 		private void OnSpeedrunTimerDisplayRender(On.Celeste.SpeedrunTimerDisplay.orig_Render orig, SpeedrunTimerDisplay self) {
 			if (PlayerStatus.Current.CurrentArea.Equals(GlobalAreaKey.Head2HeadLobby)) {
 				string timeString = TimeSpan.FromTicks(PlayerStatus.Current.lobbyTimer).ShortGameplayFormat();
-				new DynamicData(self).Get<MTexture>("bg")?.Draw(new Vector2(0, self.Y));
+				self.bg?.Draw(new Vector2(0, self.Y));
 				SpeedrunTimerDisplay.DrawTime(new Vector2(32f, self.Y + 44f), timeString);
 			}
 			else {
@@ -494,7 +494,7 @@ namespace Celeste.Mod.Head2Head {
 
 		private EntityData OnLevelDataCreateEntityData(On.Celeste.LevelData.orig_CreateEntityData orig, LevelData self, BinaryPacker.Element entity) {
 			EntityData data = orig(self, entity);
-			DynamicData dd = new DynamicData(self);
+			DynamicData dd = DynamicData.For(self);
 			// heart
 			if (!dd.Data.ContainsKey("HasRealHeartGem")) {
 				dd.Set("HasRealHeartGem", Util.EntityIsRealHeartGem(entity));
@@ -514,10 +514,10 @@ namespace Celeste.Mod.Head2Head {
 
 		public static void OnMapDataCtor(On.Celeste.MapData.orig_ctor orig, MapData self, AreaKey area) {
 			orig(self, area);
-			DynamicData ddself = new DynamicData(self);
+			DynamicData ddself = DynamicData.For(self);
 			bool found = false;
 			foreach (LevelData lev in self.Levels) {
-				DynamicData ddlev = new DynamicData(lev);
+				DynamicData ddlev = DynamicData.For(lev);
 				if (!ddlev.Data.ContainsKey("HasRealHeartGem")) ddlev.Set("HasRealHeartGem", false);
 				if (ddlev.Get<bool>("HasRealHeartGem")) {
 					found = true;
@@ -529,12 +529,11 @@ namespace Celeste.Mod.Head2Head {
 
 		private void OnAreaCompleteUpdate(On.Celeste.AreaComplete.orig_Update orig, AreaComplete self)
 		{
-			DynamicData dd = new DynamicData(self);
-			if (doAutoLaunch && Input.MenuConfirm.Pressed && dd.Get<bool>("finishedSlide") && dd.Get<bool>("canConfirm"))
+			if (doAutoLaunch && Input.MenuConfirm.Pressed && self.finishedSlide && self.canConfirm)
 			{
 				if (DoPostPhaseAutoLaunch(true, MatchObjectiveType.ChapterComplete))
 				{
-					dd.Set("canConfirm", false);
+					self.canConfirm = false;
 				}
 			}
 			orig(self);
@@ -693,7 +692,7 @@ namespace Celeste.Mod.Head2Head {
 		private void OnStrawberryCtor(On.Celeste.Strawberry.orig_ctor orig, Strawberry self, EntityData data, Vector2 offset, EntityID gid) {
 			orig(self, data, offset, gid);
 			if (self.Golden && self.Winged) {
-				DynamicData dd = new DynamicData(self);
+				DynamicData dd = DynamicData.For(self);
 				dd.Set("IsWingedGolden", true);
 			}
 		}
@@ -1290,8 +1289,7 @@ namespace Celeste.Mod.Head2Head {
 
 		private void ForceUnpause(Level level) {
 			if (level == null) return;
-			DynamicData dd = new DynamicData(level);
-			dd.Set("unpauseTimer", 0.15f);
+			level.unpauseTimer = 0.15f;
 			level.Paused = false;
 			foreach (Entity e in level.Entities) {
 				if (e is TextMenu menu) {

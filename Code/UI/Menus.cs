@@ -82,8 +82,7 @@ namespace Celeste.Mod.Head2Head.UI
 			public void Close(TextMenu curr)
 			{
 				if (curr != null) curr.RemoveSelf();
-				DynamicData dd = new DynamicData(level);
-				dd.Set("unpauseTimer", 0.15f);
+				level.unpauseTimer = 0.15f;
 				level.Paused = false;
 				Audio.Play("event:/ui/game/unpause");
 			}
@@ -94,10 +93,10 @@ namespace Celeste.Mod.Head2Head.UI
 		private static ButtonExt AddButton(this TextMenu menu, string labelDesc, Action onPress, bool labelIsLiteral = false) {
 			ButtonExt btn = new ButtonExt(labelIsLiteral ? labelDesc : Dialog.Clean(labelDesc));
 			btn.ConfirmSfx = "";
-			DynamicData dd = new DynamicData(btn);
+			DynamicData dd = DynamicData.For(btn);
 			dd.Set("H2H_SoftDisable", false);
 			btn.Pressed(() => {
-				DynamicData dd2 = new DynamicData(btn);
+				DynamicData dd2 = DynamicData.For(btn);
 				if (dd2.Get<bool>("H2H_SoftDisable")) {
 					Audio.Play("event:/ui/main/button_invalid");
 					return;
@@ -111,7 +110,7 @@ namespace Celeste.Mod.Head2Head.UI
 		private static void SoftDisable(this ButtonExt btn, TextMenu menu, string newSubtext, params string[] fmtArgs) {
 			btn.TextColor = btn.TextColorDisabled;
 			btn.AddDescription(menu, string.Format(GetDialogWithLineBreaks(newSubtext), fmtArgs));
-			DynamicData dd = new DynamicData(btn);
+			DynamicData dd = DynamicData.For(btn);
 			dd.Set("H2H_SoftDisable", true);
 		}
 
