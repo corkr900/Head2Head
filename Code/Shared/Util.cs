@@ -174,9 +174,9 @@ namespace Celeste.Mod.Head2Head.Shared {
 		internal static bool IsUpdateAvailable() {
 			SortedDictionary<ModUpdateInfo, EverestModuleMetadata> updates = ModUpdaterHelper.GetAsyncLoadedModUpdates();
 			if (updates == null) return false;
-			foreach(EverestModuleMetadata meta in updates.Values) {
-				if (meta.Name == Head2HeadModule.Instance.Metadata.Name
-					&& meta.Version > Head2HeadModule.Instance.Metadata.Version) {
+			foreach(KeyValuePair<ModUpdateInfo, EverestModuleMetadata> update in updates) {
+				if (update.Value.Name != Head2HeadModule.Instance.Metadata.Name) continue;
+				if (Version.TryParse(update.Key.Version, out Version vers) && vers > Head2HeadModule.Instance.Metadata.Version) {
 					return true;
 				}
 			}
