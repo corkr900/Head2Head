@@ -99,6 +99,7 @@ namespace Celeste.Mod.Head2Head.UI {
 				AreaData areaData = AreaData.Get(current.Area);
 				if (areaData != null && areaData.GetLevelSet() == currentLevelSet) {
 					stats = stats ?? Util.GetSetStats(areaData.LevelSet);
+					if (stats == null) continue;
 					int id = areaData.ToKey().ID;
 					if ((string.IsNullOrEmpty(currentLevelSet) || id <= Math.Max(1, stats.AreaOffset + stats.MaxArea)) && current != unselected) {
 						current.Position = current.HiddenPosition;
@@ -220,12 +221,16 @@ namespace Celeste.Mod.Head2Head.UI {
 
 		private void GetMinMaxArea(out int areaOffs, out int areaMax) {
 			LevelSetStats stats = Util.GetSetStats(ILSelector.LastArea.Local_Safe.LevelSet);
+			if (stats == null) {
+				// This is hit for loose bin files
+				areaOffs = areaMax = ILSelector.LastArea.Local_Safe.ID;
+				return;
+			}
 			areaOffs = stats.AreaOffset;
 			areaMax = areaOffs + stats.MaxArea;
 		}
 
 		public void orig_Update() {
-			LevelSetStats stats = Util.GetSetStats(currentLevelSet);
 			if (Focused) {
 				inputDelay -= Engine.DeltaTime;
 				if (area >= 0 && area < AreaData.Areas.Count) {
@@ -241,21 +246,24 @@ namespace Celeste.Mod.Head2Head.UI {
 					Overworld.Maddy.Hide();
 				}
 				else if (inputDelay <= 0f) {
-					if (area > stats.AreaOffset && Input.MenuLeft.Pressed) {
-						Audio.Play("event:/ui/world_map/icon/roll_left");
-						inputDelay = 0.15f;
-						area--;
-						icons[area].Hovered(-1);
-						EaseCamera();
-						Overworld.Maddy.Hide();
+					GetMinMaxArea(out int minArea, out int areaMax);
+					if (Input.MenuLeft.Pressed) {
+						if (area > minArea) {
+							Audio.Play("event:/ui/world_map/icon/roll_left");
+							inputDelay = 0.15f;
+							area--;
+							icons[area].Hovered(-1);
+							EaseCamera();
+							Overworld.Maddy.Hide();
+						}
 					}
 					else if (Input.MenuRight.Pressed) {
-						if (area < stats.AreaOffset + stats.MaxArea) {
+						if (area < minArea + areaMax) {
 							Audio.Play("event:/ui/world_map/icon/roll_right");
 							inputDelay = 0.15f;
 							area++;
 							icons[area].Hovered(1);
-							if (area <= stats.AreaOffset + stats.MaxArea) {
+							if (area <= minArea + areaMax) {
 								EaseCamera();
 							}
 							Overworld.Maddy.Hide();

@@ -37,7 +37,7 @@ namespace Celeste.Mod.Head2Head {
 		internal int MatchTimeoutMinutes = 15;
 
 		// Constants that might change in the future
-		public static readonly string ProtocolVersion = "1_1_10";
+		public static readonly string ProtocolVersion = "1_1_11";
 
 		// Other static stuff
 		public static Head2HeadModule Instance { get; private set; }
@@ -167,7 +167,6 @@ namespace Celeste.Mod.Head2Head {
 			CNetComm.OnReceivePlayerStatus += OnPlayerStatusUpdate;
 			CNetComm.OnReceiveMatchReset += OnMatchReset;
 			CNetComm.OnReceiveScanRequest += OnScanRequest;
-			CNetComm.OnReceiveScanResponse += OnScanResponse;
 			CNetComm.OnReceiveMisc += OnMiscMessage;
 			PlayerStatus.OnMatchPhaseCompleted += OnCompletedMatchPhase;
 			// Misc other setup
@@ -247,7 +246,6 @@ namespace Celeste.Mod.Head2Head {
 			CNetComm.OnReceivePlayerStatus -= OnPlayerStatusUpdate;
 			CNetComm.OnReceiveMatchReset -= OnMatchReset;
 			CNetComm.OnReceiveScanRequest -= OnScanRequest;
-			CNetComm.OnReceiveScanResponse -= OnScanResponse;
 			CNetComm.OnReceiveMisc -= OnMiscMessage;
 			PlayerStatus.OnMatchPhaseCompleted -= OnCompletedMatchPhase;
 			// Misc other cleanup
@@ -699,14 +697,18 @@ namespace Celeste.Mod.Head2Head {
 
 		// ########################################
 
-		private void OnPlayerStatusUpdate(DataH2HPlayerStatus data) {
-			if (!data.playerID.Equals(PlayerID.MyID)) {
-				if (knownPlayers.ContainsKey(data.playerID)) {
-					knownPlayers[data.playerID] = data.Status;
+		private void IntakePlayerStatusUpdate(PlayerID id, PlayerStatus stat) {
+			if (!id.Equals(PlayerID.MyID)) {
+				if (knownPlayers.ContainsKey(id)) {
+					knownPlayers[id] = stat;
 				}
-				else knownPlayers.Add(data.playerID, data.Status);
+				else knownPlayers.Add(id, stat);
 			}
 			OnMatchCurrentMatchUpdated?.Invoke();
+		}
+
+		private void OnPlayerStatusUpdate(DataH2HPlayerStatus data) {
+			IntakePlayerStatusUpdate(data.playerID, data.Status);
 		}
 
 		private void OnMatchReset(DataH2HMatchReset data) {
@@ -746,35 +748,8 @@ namespace Celeste.Mod.Head2Head {
 
 		private void OnScanRequest(DataH2HScanRequest data) {
 			if (data.playerID.Equals(PlayerID.MyIDSafe)) return;
-			MatchDefinition def = PlayerStatus.Current.CurrentMatch;
-			if (def == null) return;
-			CNetComm.Instance.SendScanResponse(data.playerID, def,
-				!data.AutoRejoin ? null
-				: knownPlayers.ContainsKey(data.playerID) ? knownPlayers[data.playerID] : null);
-		}
-
-		private void OnScanResponse(DataH2HScanResponse data) {
-			if (!data.Requestor.Equals(PlayerID.MyID)) return;
-
-			// sync data
-			if (knownPlayers.ContainsKey(data.playerID)) knownPlayers[data.playerID] = data.SenderStatus;
-			else knownPlayers.Add(data.playerID, data.SenderStatus);
-			MatchDefinition def = data.MatchDef;
-			if (knownMatches.ContainsKey(def.MatchID)) knownMatches[def.MatchID].MergeDynamic(def);
-			else knownMatches.Add(def.MatchID, def);
-
-			MatchDefinition curdef = PlayerStatus.Current.CurrentMatch;
-			bool tryJoin = data.RequestorStatus != null && (curdef == null || curdef.PlayerCanLeaveFreely(PlayerID.MyIDSafe));
-			if (!tryJoin) return;
-
-			// try join (in progress takes priority)
-			if (RejoinMatch(def, data.RequestorStatus)) return;
-			// try join (joined, not started)
-			ResultCategory cat = def.GetPlayerResultCat(PlayerID.MyIDSafe);
-			if (cat == ResultCategory.Joined) {
-				PlayerStatus.Current.CurrentMatch = def;
-				PlayerStatus.Current.Updated();
-			}
+			PlayerStatus.Current?.CurrentMatch?.BroadcastUpdate();
+			PlayerStatus.Current?.Updated();
 		}
 
 		private void OnMiscMessage(DataH2HMisc data) {

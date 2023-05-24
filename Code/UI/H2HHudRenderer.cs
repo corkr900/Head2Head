@@ -252,7 +252,7 @@ namespace Celeste.Mod.Head2Head.UI {
 									strawbsTotal += obj.CollectableGoal;
 									int idx = stat.objectives.FindIndex((H2HMatchObjectiveState s) => s.ObjectiveID == obj.ID);
 									if (idx < 0) continue;
-									strawbsCollected += stat.objectives[idx].CollectedItems?.Count ?? 0;
+									strawbsCollected += stat.objectives[idx].CountCollectables();//.CollectedItems?.Count ?? 0;
 								}
 							}
 						}
@@ -346,7 +346,7 @@ namespace Celeste.Mod.Head2Head.UI {
 						(H2HMatchObjectiveState s) => s.ObjectiveID == obj.ID);
 					if (oblist.Count > 0) {
 						H2HMatchObjectiveState state = oblist[0];
-						ststext.Add(string.Format("done={0}; ct={1}; frm={2}", state.Completed, state.CollectedItems?.Count, state.FinalRoom));
+						ststext.Add(string.Format("done={0}; ct={1}; frm={2}", state.Completed, state.CountCollectables(), state.FinalRoom));
 					}
 					else ststext.Add("-");
 				}

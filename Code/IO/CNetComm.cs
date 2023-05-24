@@ -73,9 +73,6 @@ namespace Celeste.Mod.Head2Head.IO {
 		public delegate void OnReceiveScanRequestHandler(DataH2HScanRequest data);
 		public static event OnReceiveScanRequestHandler OnReceiveScanRequest;
 
-		public delegate void OnReceiveScanResponseHandler(DataH2HScanResponse data);
-		public static event OnReceiveScanResponseHandler OnReceiveScanResponse;
-
 		public delegate void OnReceiveMiscHandler(DataH2HMisc data);
 		public static event OnReceiveMiscHandler OnReceiveMisc;
 
@@ -174,19 +171,6 @@ namespace Celeste.Mod.Head2Head.IO {
 			MessageCounter++;
 		}
 
-		internal void SendScanResponse(PlayerID requestor, MatchDefinition def, PlayerStatus reqstat) {
-			if (!CanSendMessages) {
-				return;
-			}
-			CnetClient.SendAndHandle(new DataH2HScanResponse() {
-				Requestor = requestor,
-				RequestorStatus = reqstat,
-				SenderStatus = PlayerStatus.Current,
-				MatchDef = def,
-			});
-			MessageCounter++;
-		}
-
 		internal void SendMisc(string message, PlayerID targetPlayer) {
 			if (!CanSendMessages) {
 				return;
@@ -223,10 +207,6 @@ namespace Celeste.Mod.Head2Head.IO {
 		public void Handle(CelesteNetConnection con, DataH2HScanRequest data) {
 			if (data.player == null) data.player = CnetClient.PlayerInfo;  // It's null when handling our own messages
 			updateQueue.Enqueue(() => OnReceiveScanRequest?.Invoke(data));
-		}
-		public void Handle(CelesteNetConnection con, DataH2HScanResponse data) {
-			if (data.player == null) data.player = CnetClient.PlayerInfo;  // It's null when handling our own messages
-			updateQueue.Enqueue(() => OnReceiveScanResponse?.Invoke(data));
 		}
 		public void Handle(CelesteNetConnection con, DataH2HMisc data) {
 			if (data.player == null) data.player = CnetClient.PlayerInfo;  // It's null when handling our own messages
