@@ -92,7 +92,7 @@ namespace Celeste.Mod.Head2Head.Entities {
 
 		private int width;
 		private int height;
-		private Vector2 SpritePosition;
+		//private Vector2 SpritePosition;
 		private Sprite sprite;
 		private bool isStart;
 		private bool isFinish;

@@ -34,7 +34,7 @@ namespace Celeste.Mod.Head2Head.Integration {
 				// Misc
 				IsCelesteTASInstalled = true;
 			}
-			catch (Exception e) {
+			catch (Exception) {
 				IsCelesteTASInstalled = false;
 			}
 		}

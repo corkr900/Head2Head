@@ -1,10 +1,4 @@
-﻿using Celeste.Mod.Head2Head.UI;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Celeste.Mod.Head2Head.UI;
+﻿using System;
 
 namespace Celeste.Mod.Head2Head.Shared {
 	public class Role {
@@ -45,6 +39,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 				case "bta":
 				case "wbta":
 				case "bta-host":
+				case "bta-practice":
 					return false;
 				default:
 					return true;
@@ -142,15 +137,39 @@ namespace Celeste.Mod.Head2Head.Shared {
 						StandardCategory.Clear,
 					};
 				case "bta":
-				case "bta-host":
 				case "bta-practice":
 					return new StandardCategory[] {
 						StandardCategory.Clear,
-						StandardCategory.OneFifthBerries,
-						StandardCategory.OneThirdBerries,
+						StandardCategory.ARB,
+						StandardCategory.ARBHeart,
+						StandardCategory.FullClear,
+					};
+				case "bta-host":
+					return new StandardCategory[] {
+						StandardCategory.Clear,
+						StandardCategory.ARB,
+						StandardCategory.ARBHeart,
+						StandardCategory.FullClear,
 						StandardCategory.TimeLimit,
 					};
+			}
+		}
 
+		public static bool? ShowCategoryOverride(int? id, AreaMode areaMode, StandardCategory cat) {
+			switch (role) {
+				default:
+					return null;
+				case "bta":
+				case "bta-practice":
+				case "bta-host":
+					if (areaMode != AreaMode.Normal) return null;
+					if (id == 0) return role == "bta-host";
+					if (cat == StandardCategory.ARB) return id == 5 || id == 7 || id == 8;
+					else if (cat == StandardCategory.ARBHeart) return id == 1 || id == 2 || id == 3 || id == 4;
+					else if (cat == StandardCategory.Clear) return (id == 1 && role == "bta-host") || id == 6;
+					else if (cat == StandardCategory.TimeLimit) return id == 10 && role == "bta-host";
+					else if (cat == StandardCategory.FullClear) return id == 9;
+					return false;
 			}
 		}
 
@@ -168,6 +187,18 @@ namespace Celeste.Mod.Head2Head.Shared {
 				default:
 					return true;
 				case "bta":
+					return false;
+			}
+		}
+
+		internal static bool AllowCustomCategories() {
+			switch (role) {
+				default:
+					return true;
+				case "bta":
+				case "bta-host":
+				case "bta-practice":
+				case "wbta":
 					return false;
 			}
 		}

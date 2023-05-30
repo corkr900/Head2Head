@@ -34,7 +34,7 @@ namespace Celeste.Mod.Head2Head {
 		// Constants
 		private const int START_TIMER_LEAD_MS = 5000;
 		internal const string BTA_MATCH_PASS = "BTAMatchPass";
-		internal int MatchTimeoutMinutes = 15;
+		internal int MatchTimeoutMinutes = 25;
 
 		// Constants that might change in the future
 		public static readonly string ProtocolVersion = "1_1_11";
@@ -803,6 +803,10 @@ namespace Celeste.Mod.Head2Head {
 		}
 
 		// #######################################################
+
+		public static void InvokeMatchUpdatedEvent() {
+			OnMatchCurrentMatchUpdated?.Invoke();
+		}
 
 		public void ScanModsForIntegrationMeta() {
 			CustomMatchTemplate.ClearCustomTemplates();

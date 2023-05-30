@@ -22,6 +22,12 @@ namespace Celeste.Mod.Head2Head.Control {
 			CNetComm.Instance?.SendTestMessage();
 		}
 
+		[Command("h2h_matchpass", "give yourself a bta match pass")]
+		internal static void MatchPass(string arg) {
+			Role.GiveBTAMatchPass();
+			Head2HeadModule.InvokeMatchUpdatedEvent();
+		}
+
 		[Command("h2h_add", "Add a phase to the match")]
 		internal static void AddPhase(string arg) {
 			arg = arg?.ToLower();

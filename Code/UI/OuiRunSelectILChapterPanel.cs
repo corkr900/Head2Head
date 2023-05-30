@@ -18,41 +18,23 @@ namespace Celeste.Mod.Head2Head.UI {
 	public class OuiRunSelectILChapterPanel : Oui {
 		private class Option {
 			public string Label;
-
 			public string ID;
-
 			public MTexture Icon;
-
 			public MTexture Bg = GFX.Gui["areaselect/tab"];
-
 			public Color BgColor = Calc.HexToColor("3c6180");
-
 			public AreaMode Mode = AreaMode.Normal;
-
 			public StandardCategory Category = StandardCategory.Clear;
-
 			public CustomMatchTemplate CustomTemplate = null;
-
 			public float Pop;
-
 			public bool Large = true;
-
 			public int Siblings;
-
 			public float Slide;
-
 			public float Appear = 1f;
-
 			public float IconEase = 1f;
-
 			public bool Appeared;
-
 			public float Faded;
-
 			public float CheckpointSlideOut;
-
 			public float CheckpointRotation;
-
 			public Vector2 CheckpointOffset;
 
 			public float Scale {
@@ -102,53 +84,31 @@ namespace Celeste.Mod.Head2Head.UI {
 		}
 
 		public AreaKey Area;
-
 		public AreaStats RealStats;
-
 		public AreaStats DisplayedStats;
-
 		public AreaData Data;
-
 		public bool EnteringChapter;
-
 		public const int ContentOffsetX = 440;
-
 		public const int PanelHeight = 300;
 
 		private bool initialized;
-
 		private string chapter = "";
-
 		private bool selectingMode = true;
-
 		private float height;
-
 		private bool resizing;
-
 		private Wiggler wiggler;
-
 		private Wiggler modeAppearWiggler;
-
 		private MTexture card = new MTexture();
-
 		private Vector2 contentOffset;
-
 		private int categoryOption;
-
 		private int modeOption;
-
 		private List<Option> modes = new List<Option>();
-
 		private List<Option> categories = new List<Option>();
-
 		private bool instantClose;
 
 		public Vector2 OpenPosition => new Vector2(1070f, 100f);
-
 		public Vector2 ClosePosition => new Vector2(2220f, 100f);
-
 		public Vector2 IconOffset => new Vector2(690f, 86f);
-
 		private Vector2 OptionsRenderPosition => Position + new Vector2(contentOffset.X, 128f + height);
 
 		private int option {

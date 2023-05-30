@@ -42,7 +42,7 @@ namespace Celeste.Mod.Head2Head.Integration {
 				// Misc
 				IsCollabUtils2Installed = MiniHeart != null || ReturnToLobbyHelper != null;
 			}
-			catch(Exception e) {
+			catch(Exception) {
 				IsCollabUtils2Installed = false;
 			}
 		}

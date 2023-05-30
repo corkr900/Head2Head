@@ -1,5 +1,6 @@
 ﻿using Celeste.Mod.Head2Head.Entities;
 using Celeste.Mod.Head2Head.IO;
+using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -789,6 +790,37 @@ namespace Celeste.Mod.Head2Head.Shared {
 			return area.ExistsLocal && area.Data.HasMode(area.Mode) && GetCategories(area).Count > 0;  // TODO reimplement so its more efficient
 		}
 
+		private static bool ShowCategory(int? id, AreaMode areaMode, StandardCategory cat) {
+			bool? roleOverride = Role.ShowCategoryOverride(id, areaMode, cat);
+			if (roleOverride != null) return roleOverride.Value;
+			if (!Head2HeadModule.Settings.UseSRCRulesForARB) return true;
+			if (cat != StandardCategory.ARB && cat != StandardCategory.ARBHeart) return true;
+			switch (id) {
+				default:  // custom
+					if (cat == StandardCategory.ARBHeart) return false;
+					else return true;
+				case 0:  // Prologue
+				case 6:  // Reflection
+				case 8:  // Epilogue
+				case 10: // Farewell
+					// disallow both ARB and ARB+Heart
+					return false;
+				case 1:  // Forsaken City
+				case 3:  // Celestial Resort
+				case 4:  // Golden Ridge
+					// allow only ARB+Heart
+					if (cat == StandardCategory.ARB) return false;
+					else return true;
+				case 2:  // Old Site
+				case 5:  // Mirror Temple
+				case 7:  // Summit
+				case 9:  // Core
+					// allow only ARB
+					if (cat == StandardCategory.ARBHeart) return false;
+					else return true;
+			}
+		}
+
 		public static List<Tuple<StandardCategory, CustomMatchTemplate>> GetCategories(GlobalAreaKey gArea) {
 			List<Tuple<StandardCategory, CustomMatchTemplate>> ret = new List<Tuple<StandardCategory, CustomMatchTemplate>>();
 			StandardCategory[] cats = Role.GetValidCategories();
@@ -797,36 +829,11 @@ namespace Celeste.Mod.Head2Head.Shared {
 				if (cat == StandardCategory.Custom) continue;
 				if (!IsCategoryValid(cat, gArea, null)) continue;
 				// enforce SRC Rules setting
-				if (Head2HeadModule.Settings.UseSRCRulesForARB && (cat == StandardCategory.ARB || cat == StandardCategory.ARBHeart)) {
-					switch (gArea.Local?.ID) {
-						default:  // custom
-							if (cat == StandardCategory.ARBHeart) continue;
-							else break;  
-						case 0:  // Prologue
-						case 6:  // Reflection
-						case 8:  // Epilogue
-						case 10: // Farewell
-							// disallow both ARB and ARB+Heart
-							continue;
-						case 1:  // Forsaken City
-						case 3:  // Celestial Resort
-						case 4:  // Golden Ridge
-							// allow only ARB+Heart
-							if (cat == StandardCategory.ARB) continue;
-							else break;
-						case 2:  // Old Site
-						case 5:  // Mirror Temple
-						case 7:  // Summit
-						case 9:  // Core
-							// allow only ARB
-							if (cat == StandardCategory.ARBHeart) continue;
-							else break;
-					}
-				}
+				if (!ShowCategory(gArea.Local?.ID, gArea.Local?.Mode ?? AreaMode.Normal, cat)) continue;
 				ret.Add(new Tuple<StandardCategory, CustomMatchTemplate>(cat, null));
 			}
 			// Custom Categories
-			if (CustomMatchTemplate.ILTemplates.ContainsKey(gArea)) {
+			if (Role.AllowCustomCategories() && CustomMatchTemplate.ILTemplates.ContainsKey(gArea)) {
 				foreach (CustomMatchTemplate template in CustomMatchTemplate.ILTemplates[gArea]) {
 					if (!IsCategoryValid(StandardCategory.Custom, gArea, template)) continue;
 					ret.Add(new Tuple<StandardCategory, CustomMatchTemplate>(StandardCategory.Custom, template));
