@@ -141,7 +141,9 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.Strawberry.ctor += OnStrawberryCtor;
 			On.Celeste.LevelLoader.StartLevel += OnLevelLoaderStart;
 			On.Celeste.AreaComplete.Update += OnAreaCompleteUpdate;
+			On.Celeste.GameplayStats.Render += OnGameplayStatsRender;
 			On.Celeste.OverworldLoader.Begin += OnOverworldLoaderBegin;
+			On.Celeste.OuiChapterPanel.DrawCheckpoint += OnOUIChapterPanelDrawCheckpoint;
 			On.Celeste.OuiChapterPanel._GetCheckpoints += OnOUIChapterPanel_GetCheckpoints;
 			On.Celeste.OuiChapterSelectIcon.Show += OnOuiChapterSelectIconShow;
 			On.Celeste.SpeedrunTimerDisplay.Render += OnSpeedrunTimerDisplayRender;
@@ -220,7 +222,9 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.Strawberry.ctor -= OnStrawberryCtor;
 			On.Celeste.LevelLoader.StartLevel -= OnLevelLoaderStart;
 			On.Celeste.AreaComplete.Update -= OnAreaCompleteUpdate;
+			On.Celeste.GameplayStats.Render += OnGameplayStatsRender;
 			On.Celeste.OverworldLoader.Begin -= OnOverworldLoaderBegin;
+			On.Celeste.OuiChapterPanel.DrawCheckpoint -= OnOUIChapterPanelDrawCheckpoint;
 			On.Celeste.OuiChapterPanel._GetCheckpoints -= OnOUIChapterPanel_GetCheckpoints;
 			On.Celeste.OuiChapterSelectIcon.Show -= OnOuiChapterSelectIconShow;
 			On.Celeste.SpeedrunTimerDisplay.Render -= OnSpeedrunTimerDisplayRender;
@@ -692,6 +696,34 @@ namespace Celeste.Mod.Head2Head {
 			if (self.Golden && self.Winged) {
 				DynamicData dd = DynamicData.For(self);
 				dd.Set("IsWingedGolden", true);
+			}
+		}
+
+		private void OnOUIChapterPanelDrawCheckpoint(On.Celeste.OuiChapterPanel.orig_DrawCheckpoint orig, OuiChapterPanel self, Vector2 center, object option, int checkpointIndex) {
+			HashSet<EntityID> orig_strawbs = self.RealStats.Modes[(int)self.Area.Mode].Strawberries;
+			bool debugMode = global::Celeste.SaveData.Instance.CheatMode;
+			if (PlayerStatus.Current?.IsInMatch(false) ?? false) {
+				self.RealStats.Modes[(int)self.Area.Mode].Strawberries = PlayerStatus.Current.GetAllCollectedStrawbs(new GlobalAreaKey(self.Area));
+				global::Celeste.SaveData.Instance.DebugMode = true;  // force berry UI to show in overworld
+			}
+			orig(self, center, option, checkpointIndex);
+			if (PlayerStatus.Current?.IsInMatch(false) ?? false) {
+				self.RealStats.Modes[(int)self.Area.Mode].Strawberries = orig_strawbs;
+				global::Celeste.SaveData.Instance.DebugMode = debugMode;
+			}
+		}
+
+		private void OnGameplayStatsRender(On.Celeste.GameplayStats.orig_Render orig, GameplayStats self) {
+			HashSet<EntityID> orig_strawbs = self.SceneAs<Level>()?.Session?.Strawberries;
+			bool debugMode = global::Celeste.SaveData.Instance.CheatMode;
+			if (orig_strawbs != null && (PlayerStatus.Current?.IsInMatch(false) ?? false)) {
+				self.SceneAs<Level>().Session.Strawberries = PlayerStatus.Current.GetAllCollectedStrawbs(new GlobalAreaKey(self.SceneAs<Level>().Session.Area));
+				global::Celeste.SaveData.Instance.DebugMode = true;  // force berry UI to show in pause
+			}
+			orig(self);
+			if (orig_strawbs != null && (PlayerStatus.Current?.IsInMatch(false) ?? false)) {
+				self.SceneAs<Level>().Session.Strawberries = orig_strawbs;
+				global::Celeste.SaveData.Instance.DebugMode = debugMode;
 			}
 		}
 

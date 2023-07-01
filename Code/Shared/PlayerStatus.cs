@@ -515,6 +515,8 @@ namespace Celeste.Mod.Head2Head.Shared {
 			}
 		}
 
+		// MISC
+
 		public bool CanStageMatch() {
 			if (Current != this) return false;
 			if (string.IsNullOrEmpty(CurrentMatchID)) return true;
@@ -539,6 +541,17 @@ namespace Celeste.Mod.Head2Head.Shared {
 			FileTimerAtLastObjectiveComplete = other.FileTimerAtLastObjectiveComplete;
 			reachedCheckpoints = other.reachedCheckpoints;
 			FileSlotBeforeMatchStart = other.FileSlotBeforeMatchStart;
+		}
+
+		public HashSet<EntityID> GetAllCollectedStrawbs(GlobalAreaKey gak) {
+			HashSet<EntityID> strawbs = new HashSet<EntityID>();
+			foreach (H2HMatchObjectiveState ob in objectives) {
+				if (!ob.CollectedItems.ContainsKey(gak)) continue;
+				foreach (EntityID x in ob.CollectedItems[gak]) {
+					strawbs.Add(x);
+				}
+			}
+			return strawbs;
 		}
 	}
 

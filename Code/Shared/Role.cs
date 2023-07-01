@@ -163,11 +163,11 @@ namespace Celeste.Mod.Head2Head.Shared {
 				case "bta-practice":
 				case "bta-host":
 					if (areaMode != AreaMode.Normal) return null;
-					if (id == 0) return role == "bta-host";
+					if (id == 0) return role != "bta";
 					if (cat == StandardCategory.ARB) return id == 5 || id == 7 || id == 8;
 					else if (cat == StandardCategory.ARBHeart) return id == 1 || id == 2 || id == 3 || id == 4;
-					else if (cat == StandardCategory.Clear) return (id == 1 && role == "bta-host") || id == 6;
-					else if (cat == StandardCategory.TimeLimit) return id == 10 && role == "bta-host";
+					else if (cat == StandardCategory.Clear) return (id == 1 && role != "bta") || id == 6;
+					else if (cat == StandardCategory.TimeLimit) return id == 10 && role != "bta";
 					else if (cat == StandardCategory.FullClear) return id == 9;
 					return false;
 			}
