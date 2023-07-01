@@ -562,7 +562,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public HashSet<EntityID> GetAllCollectedStrawbs(GlobalAreaKey gak) {
 			HashSet<EntityID> strawbs = new HashSet<EntityID>();
 			foreach (H2HMatchObjectiveState ob in objectives) {
-				if (!ob.CollectedItems.ContainsKey(gak)) continue;
+				if (ob.CollectedItems?.ContainsKey(gak) != true) continue;
 				foreach (EntityID x in ob.CollectedItems[gak]) {
 					strawbs.Add(x);
 				}
