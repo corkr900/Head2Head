@@ -37,7 +37,7 @@ namespace Celeste.Mod.Head2Head {
 		internal int MatchTimeoutMinutes = 25;
 
 		// Constants that might change in the future
-		public static readonly string ProtocolVersion = "1_1_11";
+		public static readonly string ProtocolVersion = "1_1_13";
 
 		// Other static stuff
 		public static Head2HeadModule Instance { get; private set; }
@@ -138,6 +138,7 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.SaveData.BeforeSave += OnSaveDataBeforeSave;
 			On.Celeste.SaveData.FoundAnyCheckpoints += OnSaveDataFoundAnyCheckpoints;
 			On.Celeste.LevelData.CreateEntityData += OnLevelDataCreateEntityData;
+			On.Celeste.SummitGem.SmashRoutine += OnSummitGemSmashRoutine;
 			On.Celeste.Strawberry.ctor += OnStrawberryCtor;
 			On.Celeste.LevelLoader.StartLevel += OnLevelLoaderStart;
 			On.Celeste.AreaComplete.Update += OnAreaCompleteUpdate;
@@ -145,6 +146,7 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.OverworldLoader.Begin += OnOverworldLoaderBegin;
 			On.Celeste.OuiChapterPanel.DrawCheckpoint += OnOUIChapterPanelDrawCheckpoint;
 			On.Celeste.OuiChapterPanel._GetCheckpoints += OnOUIChapterPanel_GetCheckpoints;
+			On.Celeste.SummitGemManager.Routine += OnSummitGemManagerRoutine;
 			On.Celeste.OuiChapterSelectIcon.Show += OnOuiChapterSelectIconShow;
 			On.Celeste.SpeedrunTimerDisplay.Render += OnSpeedrunTimerDisplayRender;
 			On.Celeste.UnlockEverythingThingy.EnteredCheat += OnUnlockEverythingThingyEnteredCheat;
@@ -219,13 +221,15 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.SaveData.TryDelete -= OnSaveDataTryDelete;
 			On.Celeste.SaveData.BeforeSave -= OnSaveDataBeforeSave;
 			On.Celeste.LevelData.CreateEntityData -= OnLevelDataCreateEntityData;
+			On.Celeste.SummitGem.SmashRoutine -= OnSummitGemSmashRoutine;
 			On.Celeste.Strawberry.ctor -= OnStrawberryCtor;
 			On.Celeste.LevelLoader.StartLevel -= OnLevelLoaderStart;
 			On.Celeste.AreaComplete.Update -= OnAreaCompleteUpdate;
-			On.Celeste.GameplayStats.Render += OnGameplayStatsRender;
+			On.Celeste.GameplayStats.Render -= OnGameplayStatsRender;
 			On.Celeste.OverworldLoader.Begin -= OnOverworldLoaderBegin;
 			On.Celeste.OuiChapterPanel.DrawCheckpoint -= OnOUIChapterPanelDrawCheckpoint;
 			On.Celeste.OuiChapterPanel._GetCheckpoints -= OnOUIChapterPanel_GetCheckpoints;
+			On.Celeste.SummitGemManager.Routine -= OnSummitGemManagerRoutine;
 			On.Celeste.OuiChapterSelectIcon.Show -= OnOuiChapterSelectIconShow;
 			On.Celeste.SpeedrunTimerDisplay.Render -= OnSpeedrunTimerDisplayRender;
 			On.Celeste.UnlockEverythingThingy.EnteredCheat -= OnUnlockEverythingThingyEnteredCheat;
@@ -724,6 +728,127 @@ namespace Celeste.Mod.Head2Head {
 			if (orig_strawbs != null && (PlayerStatus.Current?.IsInMatch(false) ?? false)) {
 				self.SceneAs<Level>().Session.Strawberries = orig_strawbs;
 				global::Celeste.SaveData.Instance.DebugMode = debugMode;
+			}
+		}
+
+		private IEnumerator OnSummitGemSmashRoutine(On.Celeste.SummitGem.orig_SmashRoutine orig, SummitGem self, Player player, Level level) {
+			if (PlayerStatus.Current?.IsInMatch(false) ?? false) {
+				PlayerStatus.Current.SummitHeartGemCollected(self.GemID);
+			}
+			yield return new SwapImmediately(orig(self, player, level));
+		}
+
+		private IEnumerator OnSummitGemManagerRoutine(On.Celeste.SummitGemManager.orig_Routine orig, SummitGemManager self) {
+			if (PlayerStatus.Current?.IsInMatch(false) ?? false)
+				yield return new SwapImmediately(SummitGemManagerRoutineOverride(self));
+			else
+				yield return new SwapImmediately(orig(self));
+		}
+
+		/// <summary>
+		/// This Coroutine replaces SummitGemManager.Routine.
+		/// The main difference between them is that this override checks the PlayerStatus for summit gems
+		/// instead of savedata/session so that it only counts gems collected during the current h2h match.
+		/// </summary>
+		/// <param name="self">The SummitGemManager hosting the routine</param>
+		/// <returns></returns>
+		private IEnumerator SummitGemManagerRoutineOverride(SummitGemManager self) {
+			Level level = self.SceneAs<Level>();
+			if (level.Session.HeartGem) {
+				foreach (SummitGemManager.Gem gem2 in self.gems) {
+					gem2.Sprite.RemoveSelf();
+				}
+				self.gems.Clear();
+				yield break;
+			}
+			while (true) {
+				Player entity = level.Tracker.GetEntity<Player>();
+				if (entity != null && (entity.Position - self.Position).Length() < 64f) {
+					break;
+				}
+				yield return null;
+			}
+			yield return 0.5f;
+
+			// This is the main part of the routine we're changing
+			MatchObjective heartObjective = PlayerStatus.Current.FindObjective(MatchObjectiveType.HeartCollect, new GlobalAreaKey(level.Session.Area), true);
+			bool needsHeart = heartObjective != null;
+			bool alreadyHasHeart = needsHeart ? PlayerStatus.Current.IsObjectiveComplete(heartObjective.ID) : level.Session.OldStats.Modes[0].HeartGem;
+
+			int broken = 0;
+			int index = 0;
+			foreach (SummitGemManager.Gem gem in self.gems) {
+				bool hasGem = false;
+
+				// If we're dealing with a heart objective, check the PlayerStatus for the gems instead of savedata / session
+				if (needsHeart) {
+					hasGem = PlayerStatus.Current.SummitGems.Length > index ? PlayerStatus.Current.SummitGems[index] : false;
+				}
+				else {
+					hasGem = (global::Celeste.SaveData.Instance.SummitGems?[index] ?? false)
+						|| (alreadyHasHeart && level.Session.SummitGems[index]);
+				}
+
+				if (hasGem) {
+					switch (index) {
+						case 0:
+							Audio.Play("event:/game/07_summit/gem_unlock_1", gem.Position);
+							break;
+						case 1:
+							Audio.Play("event:/game/07_summit/gem_unlock_2", gem.Position);
+							break;
+						case 2:
+							Audio.Play("event:/game/07_summit/gem_unlock_3", gem.Position);
+							break;
+						case 3:
+							Audio.Play("event:/game/07_summit/gem_unlock_4", gem.Position);
+							break;
+						case 4:
+							Audio.Play("event:/game/07_summit/gem_unlock_5", gem.Position);
+							break;
+						case 5:
+							Audio.Play("event:/game/07_summit/gem_unlock_6", gem.Position);
+							break;
+					}
+					gem.Sprite.Play("spin");
+					while (gem.Sprite.CurrentAnimationID == "spin") {
+						gem.Bloom.Alpha = Calc.Approach(gem.Bloom.Alpha, 1f, Engine.DeltaTime * 3f);
+						if (gem.Bloom.Alpha > 0.5f) {
+							gem.Shake = Calc.ShakeVector(Calc.Random);
+						}
+						gem.Sprite.Y -= Engine.DeltaTime * 8f;
+						gem.Sprite.Scale = Vector2.One * (1f + gem.Bloom.Alpha * 0.1f);
+						yield return null;
+					}
+					yield return 0.2f;
+					level.Shake();
+					Input.Rumble(RumbleStrength.Light, RumbleLength.Short);
+					for (int i = 0; i < 20; i++) {
+						level.ParticlesFG.Emit(SummitGem.P_Shatter, gem.Position + new Vector2(Calc.Range(Calc.Random, -8, 8), Calc.Range(Calc.Random, -8, 8)), SummitGem.GemColors[index], Calc.NextFloat(Calc.Random, (float)Math.PI * 2f));
+					}
+					broken++;
+					gem.Bloom.RemoveSelf();
+					gem.Sprite.RemoveSelf();
+					yield return 0.25f;
+				}
+				index++;
+			}
+			if (broken < 6) {
+				yield break;
+			}
+			HeartGem heart = level.Entities.FindFirst<HeartGem>();
+			if (heart == null) {
+				yield break;
+			}
+			Audio.Play("event:/game/07_summit/gem_unlock_complete", heart.Position);
+			yield return 0.1f;
+			Vector2 from = heart.Position;
+			for (float p = 0f; p < 1f; p += Engine.DeltaTime) {
+				if (heart.Scene == null) {
+					break;
+				}
+				heart.Position = Vector2.Lerp(from, self.Position + new Vector2(0f, -16f), Ease.CubeOut(p));
+				yield return null;
 			}
 		}
 

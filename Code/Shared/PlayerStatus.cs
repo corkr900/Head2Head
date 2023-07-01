@@ -83,6 +83,10 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public List<H2HMatchPhaseState> phases { get; internal set; } = new List<H2HMatchPhaseState>();
 		public List<H2HMatchObjectiveState> objectives { get; internal set; } = new List<H2HMatchObjectiveState>();
 		public List<Tuple<GlobalAreaKey, string>> reachedCheckpoints { get; internal set; } = new List<Tuple<GlobalAreaKey, string>>();
+		/// <summary>
+		/// Keeps track of gems collected in vanilla summit. NOT SYNCHRONIZED
+		/// </summary>
+		public bool[] SummitGems { get; internal set; } = new bool[6];
 
 		/// <summary>
 		/// This is not sent over the network. It is to be set on receipt of an update.
@@ -207,6 +211,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public void MatchJoined() {
 			phases.Clear();
 			objectives.Clear();
+			SummitGems = new bool[6];
 			Updated();
 		}
 
@@ -216,6 +221,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			reachedCheckpoints.Clear();
 			FileTimerAtMatchBegin = SaveData.Instance.Time;
 			FileTimerAtLastCheckpoint = SaveData.Instance.Time;
+			SummitGems = new bool[6];
 			Updated();
 		}
 
@@ -223,6 +229,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			phases.Clear();
 			objectives.Clear();
 			CurrentMatch = null;
+			SummitGems = new bool[6];
 			Updated();
 		}
 
@@ -230,6 +237,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			phases.Clear();
 			objectives.Clear();
 			CurrentMatch = null;
+			SummitGems = new bool[6];
 			Updated();
 		}
 
@@ -296,7 +304,12 @@ namespace Celeste.Mod.Head2Head.Shared {
 			MatchObjective ob = FindObjective(MatchObjectiveType.Flag, area, false, flag);
 			if (ob != null && MarkObjective(ob, area)) Updated();
 		}
-
+		internal void SummitHeartGemCollected(int gid) {
+			if ((SummitGems?.Length ?? 0) < gid) {
+				SummitGems = new bool[(int)Calc.Max(6, gid)];
+			}
+			SummitGems[gid] = true;
+		}
 		internal void ChapterUnlocked(GlobalAreaKey area) {
 			if (!IsInMatch(false)) return;
 			MatchObjective ob = FindObjective(MatchObjectiveType.UnlockChapter, area, false, area.SID);
@@ -541,6 +554,9 @@ namespace Celeste.Mod.Head2Head.Shared {
 			FileTimerAtLastObjectiveComplete = other.FileTimerAtLastObjectiveComplete;
 			reachedCheckpoints = other.reachedCheckpoints;
 			FileSlotBeforeMatchStart = other.FileSlotBeforeMatchStart;
+			for (int i = 0; i < Calc.Min(SummitGems?.Length ?? 0, other.SummitGems?.Length ?? 0); i++) {
+				SummitGems[i] |= other.SummitGems[i];
+			}
 		}
 
 		public HashSet<EntityID> GetAllCollectedStrawbs(GlobalAreaKey gak) {
@@ -563,7 +579,6 @@ namespace Celeste.Mod.Head2Head.Shared {
 	public struct H2HMatchObjectiveState {
 		public uint ObjectiveID;
 		public bool Completed;
-		//public List<Tuple<GlobalAreaKey, EntityID, bool>> CollectedItems;
 		public Dictionary<GlobalAreaKey, List<EntityID>> CollectedItems;
 		public string FinalRoom;
 
