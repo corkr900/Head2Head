@@ -547,6 +547,7 @@ namespace Celeste.Mod.Head2Head {
 
 		private void OnCreatePauseMenuButtons(Level level, TextMenu menu, bool minimal)
 		{
+			if (Settings?.HidePauseMenuHelpdesk == true) return;
 			switch (Settings.ShowHelpdeskInPause) {
 				case Head2HeadModuleSettings.ShowHelpdeskInPauseMenu.Always:
 					break;

@@ -74,6 +74,10 @@ namespace Celeste.Mod.Head2Head {
 		[SettingIgnore]
 		public float HudOpacityInOverworld { get; set; } = 0.5f;
 
+		// Secret debug-only settings
+		[SettingIgnore]
+		public bool HidePauseMenuHelpdesk { get; set; } = false;
+
 		#endregion
 
 		#region Menu Building
