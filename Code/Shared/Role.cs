@@ -140,16 +140,17 @@ namespace Celeste.Mod.Head2Head.Shared {
 				case "bta-practice":
 					return new StandardCategory[] {
 						StandardCategory.Clear,
-						StandardCategory.ARB,
-						StandardCategory.ARBHeart,
-						StandardCategory.FullClear,
+						//StandardCategory.ARB,
+						//StandardCategory.ARBHeart,
+						//StandardCategory.FullClear,
+						StandardCategory.TimeLimit,
 					};
 				case "bta-host":
 					return new StandardCategory[] {
 						StandardCategory.Clear,
-						StandardCategory.ARB,
-						StandardCategory.ARBHeart,
-						StandardCategory.FullClear,
+						//StandardCategory.ARB,
+						//StandardCategory.ARBHeart,
+						//StandardCategory.FullClear,
 						StandardCategory.TimeLimit,
 					};
 			}
@@ -160,16 +161,13 @@ namespace Celeste.Mod.Head2Head.Shared {
 				default:
 					return null;
 				case "bta":
+					if (id == 0 || id == 8 || id == 10) return false;
+					return null;
 				case "bta-practice":
 				case "bta-host":
-					if (areaMode != AreaMode.Normal) return null;
-					if (id == 0) return role != "bta";
-					if (cat == StandardCategory.ARB) return id == 5 || id == 7 || id == 8;
-					else if (cat == StandardCategory.ARBHeart) return id == 1 || id == 2 || id == 3 || id == 4;
-					else if (cat == StandardCategory.Clear) return (id == 1 && role != "bta") || id == 6;
-					else if (cat == StandardCategory.TimeLimit) return id == 10 && role != "bta";
-					else if (cat == StandardCategory.FullClear) return id == 9;
-					return false;
+					if (id == 8) return false;
+					if (id == 10 && cat == StandardCategory.Clear) return false;
+					return null;
 			}
 		}
 
