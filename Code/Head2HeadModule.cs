@@ -179,6 +179,7 @@ namespace Celeste.Mod.Head2Head {
 			CollabUtils2Integration.Load();
 			SpeedrunToolIntegration.Load();
 			CelesteTASIntegration.Load();
+			RandomizerIntegration.Load();
 
 			SyncedClock.DoClockSync();
 		}
@@ -262,6 +263,7 @@ namespace Celeste.Mod.Head2Head {
 			CollabUtils2Integration.Unload();
 			SpeedrunToolIntegration.Unload();
 			CelesteTASIntegration.Unload();
+			RandomizerIntegration.Unload();
 		}
 
 		public override void CreateModMenuSection(TextMenu menu, bool inGame, FMOD.Studio.EventInstance snapshot)
@@ -772,6 +774,7 @@ namespace Celeste.Mod.Head2Head {
 			yield return 0.5f;
 
 			// This is the main part of the routine we're changing
+			bool isRandoMatch = PlayerStatus.Current.CurrentMatch?.HasRandomizerObjective ?? false;
 			MatchObjective heartObjective = PlayerStatus.Current.FindObjective(MatchObjectiveType.HeartCollect, new GlobalAreaKey(level.Session.Area), true);
 			bool needsHeart = heartObjective != null;
 			bool alreadyHasHeart = needsHeart ? PlayerStatus.Current.IsObjectiveComplete(heartObjective.ID) : level.Session.OldStats.Modes[0].HeartGem;
@@ -782,7 +785,12 @@ namespace Celeste.Mod.Head2Head {
 				bool hasGem = false;
 
 				// If we're dealing with a heart objective, check the PlayerStatus for the gems instead of savedata / session
-				if (needsHeart) {
+				if (isRandoMatch) {
+					hasGem = (global::Celeste.SaveData.Instance.SummitGems?[index] ?? false)
+						|| (alreadyHasHeart && level.Session.SummitGems[index])
+						|| (PlayerStatus.Current.SummitGems.Length > index ? PlayerStatus.Current.SummitGems[index] : false);
+				}
+				else if (needsHeart) {
 					hasGem = PlayerStatus.Current.SummitGems.Length > index ? PlayerStatus.Current.SummitGems[index] : false;
 				}
 				else {
@@ -1137,6 +1145,13 @@ namespace Celeste.Mod.Head2Head {
 			buildingMatch.CategoryDisplayNameOverride = Util.TranslatedIfAvailable(name);
 		}
 
+		internal void AddRandoToMatch(RandomizerIntegration.SettingsBuilder settingsBuilder) {
+			if (buildingMatch == null) {
+				return;
+			}
+			buildingMatch.RandoSettingsBuilder = settingsBuilder;
+		}
+
 		public void StageMatch() {
 			if (Util.IsUpdateAvailable()) {
 				Logger.Log(LogLevel.Info, "Head2Head", "Cannot stage match: you are using an outdated version of Head 2 Head");
@@ -1230,7 +1245,7 @@ namespace Celeste.Mod.Head2Head {
 				return;
 			}
 			foreach (MatchPhase ph in def.Phases) {
-				if (!ph.Area.ExistsLocal) {
+				if (!ph.Area.IsValidInstalledMap) {
 					Logger.Log(LogLevel.Info, "Head2Head", string.Format("Couldn't join match - map not installed: {0}", ph.Area.SID));
 					Engine.Commands.Log(string.Format("Couldn't join match - map not installed: {0}", ph.Area.SID));
 					return;
@@ -1351,7 +1366,7 @@ namespace Celeste.Mod.Head2Head {
 					Logger.Log(LogLevel.Verbose, "Head2Head", "Cannot start match: match contains a null phase");
 					return false;
 				}
-				if (!ph.Area.ExistsLocal || !ph.Area.VersionMatchesLocal) {
+				if (!ph.Area.IsValidInstalledMap || !ph.Area.VersionMatchesLocal) {
 					return false;
 				}
 			}
@@ -1379,20 +1394,23 @@ namespace Celeste.Mod.Head2Head {
 					return true;
 				}
 			}
+
 			// Begin!
 			Level level = GetLevelForCoroutine();
 			ForceUnpause(level);
 			Entity wrapper = new Entity();
 			wrapper.AddTag(Tags.Persistent | Tags.Global);
 			level?.Add(wrapper);
-			wrapper.Add(new Coroutine(StartMatchCoroutine(def.Phases[0].Area, false)));
+			wrapper.Add(new Coroutine(StartMatchCoroutine(def.Phases[0].Area, false, null, def.RandoSettingsBuilder)));
 			return true;
 		}
 
 		internal bool RejoinMatch(MatchDefinition def, PlayerStatus requestorStatus) {
 			ResultCategory cat = def.GetPlayerResultCat(PlayerID.MyIDSafe);
 			if (cat == ResultCategory.InMatch
-					&& def.Result[PlayerID.MyIDSafe]?.SaveFile == global::Celeste.SaveData.Instance.FileSlot) {
+					&& def.Result[PlayerID.MyIDSafe]?.SaveFile == global::Celeste.SaveData.Instance.FileSlot
+					&& !def.HasRandomizerObjective)
+			{
 				PlayerStatus.Current.CurrentMatch = def;
 				PlayerStatus.Current.Merge(requestorStatus);
 				PlayerStatus.Current.Updated();
@@ -1436,7 +1454,7 @@ namespace Celeste.Mod.Head2Head {
 			}
 		}
 
-		private IEnumerator StartMatchCoroutine(GlobalAreaKey gak, bool isRejoin, string startRoom = null) {
+		private IEnumerator StartMatchCoroutine(GlobalAreaKey gak, bool isRejoin, string startRoom = null, RandomizerIntegration.SettingsBuilder randoSettings = null) {
 			if (PlayerStatus.Current.CurrentMatch == null) yield break;
 			string idCheck = PlayerStatus.Current.CurrentMatchID;
 			DateTime startInstant = PlayerStatus.Current.CurrentMatch.BeginInstant;
@@ -1476,9 +1494,23 @@ namespace Celeste.Mod.Head2Head {
 			}
 			def.RegisterSaveFile();
 			ActionLogger.StartingMatch(def);
-			new FadeWipe(GetLevelForCoroutine(), false, () => {
-				LevelEnter.Go(new Session(gak.Local.Value, startRoom), false);
-			});
+
+			// Handle Randomizer matches
+			if (randoSettings != null) {
+				object settings = randoSettings.Build();
+				if (settings == null) {
+					Engine.Commands.Log("Failed to build Randomizer settings. :(");
+					Logger.Log(LogLevel.Warn, "Head2Head", "Failed to build Randomizer settings");
+					yield break;
+				}
+				yield return RandomizerIntegration.Begin(settings);
+			}
+			// handle standard matches
+			else {
+				new FadeWipe(GetLevelForCoroutine(), false, () => {
+					LevelEnter.Go(new Session(gak.Local.Value, startRoom), false);
+				});
+			}
 		}
 
 		public static PlayerStatus GetPlayerStatus(PlayerID id) {
@@ -1566,6 +1598,7 @@ namespace Celeste.Mod.Head2Head {
 			}
 			return -2;
 		}
+
 	}
 
 	public class Head2HeadModuleSaveData : EverestModuleSaveData {

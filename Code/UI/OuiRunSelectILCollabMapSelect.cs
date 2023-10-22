@@ -181,6 +181,10 @@ namespace Celeste.Mod.Head2Head.UI {
 		}
 
 		public override IEnumerator Enter(Oui from) {
+			var option = OuiRunSelectIL.GetChapterOption(ILSelector.LastLevelSetIndex, ILSelector.LastChapterIndex);
+			string levelSet = option.CollabLevelSetForLobby;
+			ILSelector.LastLevelSetIndex = OuiRunSelectIL.LevelSetToIdx(levelSet);
+			ILSelector.LastChapterIndex = 0;
 			foreach (KeyValuePair<string, List<CollabMap>> kvp in maps) {
 				foreach (CollabMap map in kvp.Value) {
 					map.Show = false;
@@ -188,13 +192,13 @@ namespace Celeste.Mod.Head2Head.UI {
 					map.Enabled = kvp.Key == kvp.Key;
 				}
 			}
-			if (maps.ContainsKey(ILSelector.LastArea.SID)) {
-				hovered = Calc.Clamp(hovered, 0, maps[ILSelector.LastArea.SID].Count - 1);
-				foreach (CollabMap map in maps[ILSelector.LastArea.SID]) {
+			if (maps.ContainsKey(option.Data.SID)) {
+				hovered = Calc.Clamp(hovered, 0, maps[option.Data.SID].Count - 1);
+				foreach (CollabMap map in maps[option.Data.SID]) {
 					map.Enabled = true;
 					map.Show = true;
 					map.Scroll = scrollCurrent;
-					if (maps[ILSelector.LastArea.SID].IndexOf(map) == hovered) {  // TODO this makes an n^2 runtime (bad)
+					if (maps[option.Data.SID].IndexOf(map) == hovered) {
 						SetInitialHover(map);
 					}
 					yield return 0.02f;
@@ -225,7 +229,8 @@ namespace Celeste.Mod.Head2Head.UI {
 				scrollLerp = Calc.Approach(scrollLerp, 1, Engine.DeltaTime / CollabMap.SelectEaseTime);
 				scrollCurrent = Calc.LerpClamp(scrollBase, scrollTarget, Ease.CubeInOut(scrollLerp));
 				pointer.Scroll = scrollCurrent;
-				foreach (CollabMap map in maps[ILSelector.LastArea.SID]) {
+				RunOptionsILChapter option = OuiRunSelectIL.GetChapterOption(ILSelector.LastLevelSetIndex, ILSelector.LastChapterIndex);
+				foreach (CollabMap map in maps[option.Data.SID]) {
 					map.Scroll = scrollCurrent;
 				}
 
@@ -233,7 +238,7 @@ namespace Celeste.Mod.Head2Head.UI {
 					Audio.Play("event:/ui/world_map/chapter/tab_roll_left");
 					SetHover(hovered - 1);
 				}
-				else if (Input.MenuDown.Pressed && hovered < maps[ILSelector.LastArea.SID].Count - 1) {
+				else if (Input.MenuDown.Pressed && hovered < maps[option.Data.SID].Count - 1) {
 					Audio.Play("event:/ui/world_map/chapter/tab_roll_right");
 					SetHover(hovered + 1);
 				}
@@ -243,7 +248,7 @@ namespace Celeste.Mod.Head2Head.UI {
 				}
 				else if (Input.MenuConfirm.Pressed) {
 					Audio.Play("event:/ui/world_map/icon/select");
-					ILSelector.LastArea = new GlobalAreaKey(maps[ILSelector.LastArea.SID][hovered].LocalID, AreaMode.Normal);
+					ILSelector.LastChapterIndex = hovered;
 					Overworld.Goto<OuiRunSelectILChapterPanel>();
 				}
 			}
@@ -259,7 +264,8 @@ namespace Celeste.Mod.Head2Head.UI {
 		}
 
 		private void SetHover(int newHover) {
-			List<CollabMap> list = maps[ILSelector.LastArea.SID];
+			RunOptionsILChapter option = OuiRunSelectIL.GetChapterOption(ILSelector.LastLevelSetIndex, ILSelector.LastChapterIndex);
+			List<CollabMap> list = maps[option.Data.SID];
 			list[hovered].Hovered = false;
 			hovered = newHover;
 			list[hovered].Hovered = true;
@@ -279,8 +285,8 @@ namespace Celeste.Mod.Head2Head.UI {
 			if (currentPtrPos >= deadZoneMin && currentPtrPos <= deadZoneMax) {  // Current targets are with deadzone; this is fine.
 				return scrollTarget;
 			}
-
-			float regionHeight = YPosBase * 2 + YPosStep * maps[ILSelector.LastArea.SID].Count;
+			RunOptionsILChapter option = OuiRunSelectIL.GetChapterOption(ILSelector.LastLevelSetIndex, ILSelector.LastChapterIndex);
+			float regionHeight = YPosBase * 2 + YPosStep * maps[option.Data.SID].Count;
 			float minScroll = 0;
 			float maxScroll = Calc.Clamp(regionHeight - screenHeight, 0, float.MaxValue);
 

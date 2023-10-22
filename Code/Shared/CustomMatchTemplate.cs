@@ -23,6 +23,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public string DisplayName;
 		public bool AllowCheatMode;
 		public List<CustomMatchPhaseTemplate> Phases = new List<CustomMatchPhaseTemplate>();
+		public RandomizerOptionsTemplate RandoOptions;
 
 		public List<MatchPhase> Build() {
 			int count = 0;
@@ -34,7 +35,6 @@ namespace Celeste.Mod.Head2Head.Shared {
 				ph.Area = tPhase.Area;
 				ph.Objectives = new List<MatchObjective>();
 				foreach (CustomMatchObjectiveTemplate tObj in tPhase.Objectives) {
-
 					ph.Objectives.Add(new MatchObjective() {
 						ObjectiveType = tObj.ObjectiveType,
 						TimeLimit = tObj.TimeLimit,
@@ -232,5 +232,17 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public string CustomTypeKey;
 		public string Description;
 		public AreaMode Side;
+	}
+
+	public class RandomizerOptionsTemplate {
+		public string Difficulty;
+		public string SeedType;
+		public string LogicType;
+		public string NumDashes;
+		public string DifficultyEagerness;
+		public string MapLength;
+		public string ShineLights;
+		public string Darkness;
+		public string StrawberryDensity;
 	}
 }

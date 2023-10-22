@@ -419,7 +419,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			return def;
 		}
 		public static MatchDefinition FullGameBnyPercent() {
-			// TODO (!!!) Bny% CANNOT finish any A sides
+			// TODO (!) Bny% CANNOT finish any A sides
 			MatchDefinition def = new MatchDefinition() {
 				Owner = PlayerID.MyID ?? PlayerID.Default,
 				CreationInstant = SyncedClock.Now,
@@ -725,9 +725,9 @@ namespace Celeste.Mod.Head2Head.Shared {
 						return cat == StandardCategory.Clear;
 					case 9:  // Core
 						return cat == StandardCategory.Clear
+							|| cat == StandardCategory.ARB
 							|| cat == StandardCategory.OneFifthBerries
 							|| cat == StandardCategory.OneThirdBerries
-							|| cat == StandardCategory.FullClear
 							|| cat == StandardCategory.CassetteGrab
 							|| cat == StandardCategory.Custom;
 					case 10:  // Farewell

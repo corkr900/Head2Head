@@ -1,4 +1,5 @@
 HEAD2HEAD_OVERWORLD= Overworld
+HEAD2HEAD_RANDOMIZER= Randomizer
 
 Head2Head= Head 2 Head
 Head2Head_00_Head2HeadLobby= Head 2 Head Lobby
@@ -13,6 +14,8 @@ Head2Head_me= Me
 Head2Head_LobbyRecords= Best Lobby Runs
 Head2Head_CountMore= {0} More...
 Head2Head_MapNotInstalled= {0} (Not Installed)
+
+Head2Head_WeeklySeed= Weekly Seed
 
 Head2Head_Setting_UseSRCARBRules= Use SRC ARB Categories
 Head2Head_Setting_UseSRCARBRules_Subtext= If turned on, either ARB or ARB + Heart will be hidden

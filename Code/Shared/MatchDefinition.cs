@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Monocle;
 using MonoMod.Utils;
+using Celeste.Mod.Head2Head.Integration;
 
 namespace Celeste.Mod.Head2Head.Shared {
 
@@ -25,6 +26,8 @@ namespace Celeste.Mod.Head2Head.Shared {
         public string CategoryDisplayNameOverride = "";
         public string RequiredRole = "";
         public DateTime CreationInstant;
+
+        public RandomizerIntegration.SettingsBuilder RandoSettingsBuilder;
 
 		#endregion
 
@@ -58,7 +61,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			get {
                 return Phases.Count == 0 ? CategoryDisplayName :
                     Phases[0].Fullgame ? FullGameDisplayName() :
-                    !Phases[0].Area.ExistsLocal ? string.Format(Dialog.Get("Head2Head_MapNotInstalled"), Phases[0].Area.DisplayName) :
+					(!Phases[0].Area.ExistsLocal && !Phases[0].Area.IsRandomizer) ? string.Format(Dialog.Get("Head2Head_MapNotInstalled"), Phases[0].Area.DisplayName) :
                     string.Format(Dialog.Get("Head2Head_MatchTitle"), Phases[0].Area.DisplayName, CategoryDisplayName);
 
             }
@@ -76,6 +79,17 @@ namespace Celeste.Mod.Head2Head.Shared {
                 return Dialog.Get("Head2Head_UntitledMatch");
 			}
 		}
+
+        public bool HasRandomizerObjective {
+            get {
+                foreach (var ph in Phases) {
+                    foreach (var obj in ph.Objectives) {
+                        if (obj.ObjectiveType == MatchObjectiveType.RandomizerClear) return true;
+                    }
+                }
+                return false;
+            }
+        }
 
         public GlobalAreaKey? VersionCheck() {
             foreach(MatchPhase ph in Phases) {
@@ -445,6 +459,8 @@ namespace Celeste.Mod.Head2Head.Shared {
         CustomObjective,
         // Fullgame
         UnlockChapter,
+        // Special
+        RandomizerClear,
     }
 
     /// <summary>
@@ -472,7 +488,13 @@ namespace Celeste.Mod.Head2Head.Shared {
             d.UseFreshSavefile = reader.ReadBoolean();
             d.AllowCheatMode = reader.ReadBoolean();
             d.BeginInstant = reader.ReadDateTime();
-            int numPlayers = reader.ReadInt32();
+
+			bool hasRandoOptions = reader.ReadBoolean();
+			if (hasRandoOptions) {
+                d.RandoSettingsBuilder = reader.ReadRandoSettings();
+			}
+
+			int numPlayers = reader.ReadInt32();
             d.Players.Capacity = numPlayers;
             for (int i = 0; i < numPlayers; i++) {
                 d.Players.Add(reader.ReadPlayerID());
@@ -504,6 +526,10 @@ namespace Celeste.Mod.Head2Head.Shared {
             writer.Write(m.UseFreshSavefile);
             writer.Write(m.AllowCheatMode);
             writer.Write(m.BeginInstant);
+            writer.Write(m.RandoSettingsBuilder != null);
+            if (m.RandoSettingsBuilder != null) {
+                writer.Write(m.RandoSettingsBuilder);
+            }
 
             writer.Write(m.Players.Count);
             foreach(PlayerID pid in m.Players) {

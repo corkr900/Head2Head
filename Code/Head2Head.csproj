@@ -86,6 +86,8 @@
     <Compile Include="Entities\FullgameSelector.cs" />
     <Compile Include="Entities\TimeTrialCheckpoint.cs" />
     <Compile Include="Integration\CelesteTASIntegration.cs" />
+    <Compile Include="Integration\ExternalEnum.cs" />
+    <Compile Include="Integration\RandomizerIntegration.cs" />
     <Compile Include="Integration\SpeedrunToolIntegration.cs" />
     <Compile Include="IO\SyncedClock.cs" />
     <Compile Include="UI\FullgameSelectorUI.cs" />

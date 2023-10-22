@@ -1,6 +1,7 @@
 ﻿using Celeste.Mod.Head2Head.Entities;
 using Celeste.Mod.Head2Head.Integration;
 using Celeste.Mod.Head2Head.Shared;
+using Monocle;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -35,27 +36,13 @@ namespace Celeste.Mod.Head2Head.UI {
 		}
 
 		public void SetNext() {
-			int iD = ILSelector.LastArea.Local_Safe.ID;
-			string levelSet = ILSelector.LastArea.Local_Safe.LevelSet;
-
-			int count = AreaData.Areas.Count;
-			for (int num = (count + iD + Direction) % count; num != iD; num = (count + num + Direction) % count) {
-				AreaData areaData = AreaData.Get(num);
-				if (areaData == null) continue;
-				string set = areaData.GetLevelSet();
-				if (string.IsNullOrEmpty(set) || set == levelSet) continue;
-				if (set == "Head2Head") continue;
-
-				if (CollabUtils2Integration.IsCollabUtils2Installed) {
-					if (!string.IsNullOrEmpty(CollabUtils2Integration.GetCollabNameForSID?.Invoke(areaData.SID))
-						&& string.IsNullOrEmpty(CollabUtils2Integration.GetLobbyLevelSet?.Invoke(areaData.SID))) {
-						continue;  // Exclude non-lobbies from collabs
-					}
-				}
-
-				// If we get here, this is our new level set
-				ILSelector.LastArea = new GlobalAreaKey(areaData.ToKey());
-				break;
+			if (Direction < 0) {
+				OuiRunSelectIL.PreviousLevelSet(ILSelector.LastLevelSetIndex, ref ILSelector.LastLevelSetIndex);
+				ILSelector.LastChapterIndex = Calc.Clamp(ILSelector.LastChapterIndex, 0, OuiRunSelectIL.GetNumOptionsInSet(ILSelector.LastLevelSetIndex) - 1);
+			}
+			else {
+				OuiRunSelectIL.NextLevelSet(ILSelector.LastLevelSetIndex, ref ILSelector.LastLevelSetIndex);
+				ILSelector.LastChapterIndex = Calc.Clamp(ILSelector.LastChapterIndex, 0, OuiRunSelectIL.GetNumOptionsInSet(ILSelector.LastLevelSetIndex) - 1);
 			}
 		}
 	}

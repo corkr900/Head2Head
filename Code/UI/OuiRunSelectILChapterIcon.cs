@@ -11,19 +11,28 @@ using System.Threading.Tasks;
 
 namespace Celeste.Mod.Head2Head.UI {
 	public class OuiRunSelectILChapterIcon : OuiChapterSelectIcon {
-		public OuiRunSelectILChapterIcon(int area, MTexture front, MTexture back) : base(area, front, back) { }
+		public int SpecialID { get; private set; }
+
+		public OuiRunSelectILChapterIcon(int area, MTexture front, MTexture back, int specialID = -1)
+			: base(area, front, back)
+		{
+			SpecialID = specialID;
+		}
 
 		public Vector2 IdlePositionOverride {
 			get {
-				float num = 960f + (float)(Area - ILSelector.LastArea.Local_Safe.ID) * 132f;
-				if (Area < ILSelector.LastArea.Local_Safe.ID) {
+				RunOptionsILChapter option = OuiRunSelectIL.GetChapterOption(ILSelector.LastLevelSetIndex, ILSelector.LastChapterIndex);
+				int lastID = option.IsSpecial ? option.SpecialID : option.Data.ID;
+				int nextID = option.IsSpecial ? SpecialID : Area;
+				float num = 960f + (nextID - lastID) * 132f;
+				if (nextID < lastID) {
 					num -= 80f;
 				}
-				else if (Area > ILSelector.LastArea.Local_Safe.ID) {
+				else if (nextID > lastID) {
 					num += 80f;
 				}
 				float y = 130f;
-				if (Area == ILSelector.LastArea.Local_Safe.ID) {
+				if (nextID == lastID) {
 					y = 140f;
 				}
 				return new Vector2(num, y);
@@ -39,18 +48,20 @@ namespace Celeste.Mod.Head2Head.UI {
 			base.Update();
 			// Undo changes made based on SaveData and replace them based on the actual thing we care about
 			if (SaveData.Instance != null) {
-				sizeEase = Calc.Approach(sizeEase, (ILSelector.LastArea.Local_Safe.ID == Area) ? 1f : 0f, Engine.DeltaTime * 4f);
+				RunOptionsILChapter option = OuiRunSelectIL.GetChapterOption(ILSelector.LastLevelSetIndex, ILSelector.LastChapterIndex);
+				if (option == null) return;
+				sizeEase = Calc.Approach(sizeEase, (option.Data?.ID == Area) ? 1f : 0f, Engine.DeltaTime * 4f);
 				if (SaveData.Instance.LastArea_Safe.ID == Area) {
-					base.Depth = +50;
+					Depth = +50;
 				}
 				else {
-					base.Depth = +45;
+					Depth = +45;
 				}
-				if (ILSelector.LastArea.Local_Safe.ID == Area) {
-					base.Depth = -50;
+				if (option.Data?.ID == Area) {
+					Depth = -50;
 				}
 				else {
-					base.Depth = -45;
+					Depth = -45;
 				}
 			}
 		}

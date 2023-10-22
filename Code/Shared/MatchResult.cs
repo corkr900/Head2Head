@@ -60,6 +60,7 @@ namespace Celeste.Mod.Head2Head.Shared {
         CheatMode = 8,
         SpeedrunTools = 9,
         TAS = 10,
+        RandomizerError = 11,
     }
 
     public static class MatchResultExtensions {

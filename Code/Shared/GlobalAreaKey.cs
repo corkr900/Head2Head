@@ -1,4 +1,5 @@
 ﻿using Celeste.Mod.CelesteNet;
+using Celeste.Mod.Head2Head.Integration;
 using Celeste.Mod.Meta;
 using System;
 using System.Collections.Generic;
@@ -59,13 +60,18 @@ namespace Celeste.Mod.Head2Head.Shared {
         public bool VersionMatchesLocal { get { return Version == LocalVersion; } }
         public bool ExistsLocal { get { return _localKey != null; } }
         public bool IsOverworld { get { return _localKey == null && _sid == "Overworld"; } }
-        public bool IsVanilla { get { return ExistsLocal && Local?.LevelSet == "Celeste"; } }
+		public bool IsRandomizer { get { return _localKey == null && _sid == "Randomizer" && RandomizerIntegration.RandomizerLoaded; } }
+        public bool IsValidInstalledMap { get { return ExistsLocal || IsRandomizer; } }
+		public bool IsVanilla { get { return ExistsLocal && Local?.LevelSet == "Celeste"; } }
         public string DisplayName {
             get {
                 if (IsOverworld) {
                     return Dialog.Get("HEAD2HEAD_OVERWORLD");
                 }
-                else if (ExistsLocal) {
+				else if (IsRandomizer) {
+					return Dialog.Get("HEAD2HEAD_RANDOMIZER");
+				}
+				else if (ExistsLocal) {
                     return Dialog.Get(Data.Name) + GetTranslatedSide(_localKey?.Mode);
                 }
                 else if (!string.IsNullOrEmpty(_originalDisplayName)) {
@@ -79,8 +85,13 @@ namespace Celeste.Mod.Head2Head.Shared {
             get {
                 return new GlobalAreaKey("Overworld");
             }
-        }
-        public static GlobalAreaKey VanillaPrologue {
+		}
+		public static GlobalAreaKey Randomizer {
+			get {
+				return new GlobalAreaKey("Randomizer");
+			}
+		}
+		public static GlobalAreaKey VanillaPrologue {
             get {
                 return new GlobalAreaKey(AreaData.Get(0).ToKey());
             }

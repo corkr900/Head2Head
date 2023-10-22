@@ -17,12 +17,14 @@ using Celeste.Mod.Head2Head.Shared;
 using FMOD.Studio;
 using Celeste.Mod.Head2Head.IO;
 using Celeste.Mod.Head2Head.Integration;
+using Celeste.Mod.CelesteNet;
 
 namespace Celeste.Mod.Head2Head.Entities {
 	[CustomEntity("Head2Head/ILSelector")]
 	public class ILSelector : Entity {
 
-		public static GlobalAreaKey LastArea = GlobalAreaKey.VanillaPrologue;
+		public static int LastLevelSetIndex = 0;
+		public static int LastChapterIndex = 0;
 
 		public static Dictionary<GlobalAreaKey, List<StandardCategory>> SuppressedCategories = new Dictionary<GlobalAreaKey, List<StandardCategory>>();
 		public static void SuppressCategory(GlobalAreaKey area, params StandardCategory[] cats) {
@@ -85,9 +87,10 @@ namespace Celeste.Mod.Head2Head.Entities {
 			Area = GlobalAreaKey.Overworld;
 			Category = StandardCategory.Clear;
 
-			string collabLobby = CollabUtils2Integration.GetLobbyForLevelSet?.Invoke(LastArea.Data.LevelSet);
+			var lastChapter = OuiRunSelectIL.GetChapterOption(LastLevelSetIndex, LastChapterIndex);
+			string collabLobby = lastChapter?.CollabLobby;
 			if (!string.IsNullOrEmpty(collabLobby)) {
-				LastArea = new GlobalAreaKey(collabLobby);
+				lastChapter = OuiRunSelectIL.GetChapterOption(collabLobby, ref LastLevelSetIndex, ref LastChapterIndex);
 			}
 
 			player.StateMachine.State = Player.StDummy;
@@ -172,6 +175,27 @@ namespace Celeste.Mod.Head2Head.Entities {
 						Head2HeadModule.Instance.AddMatchPhase(ph);
 					}
 					Head2HeadModule.Instance.NameBuildingMatch(CustomTemplate.DisplayName);
+					if (CustomTemplate.RandoOptions != null) {
+						RandomizerIntegration.SettingsBuilder bld = new RandomizerIntegration.SettingsBuilder();
+						bld.LogicType = CustomTemplate.RandoOptions.LogicType;
+						bld.Difficulty = CustomTemplate.RandoOptions.Difficulty;
+						bld.NumDashes = CustomTemplate.RandoOptions.NumDashes;
+						bld.DifficultyEagerness = CustomTemplate.RandoOptions.DifficultyEagerness;
+						bld.MapLength = CustomTemplate.RandoOptions.MapLength;
+						bld.ShineLights = CustomTemplate.RandoOptions.ShineLights;
+						bld.Darkness = CustomTemplate.RandoOptions.Darkness;
+						bld.StrawberryDensity = CustomTemplate.RandoOptions.StrawberryDensity;
+						if (CustomTemplate.RandoOptions.SeedType == "Random") {
+							int numDays = (int)(SyncedClock.Now - DateTime.MinValue).TotalDays;
+							bld.RandomizeSeed();
+						}
+						else {
+							// Seed changes weekly
+							int numDays = (int)(SyncedClock.Now - DateTime.MinValue).TotalDays;
+							bld.RandomizeSeed(numDays / 7);
+						}
+						Head2HeadModule.Instance.AddRandoToMatch(bld);
+					}
 				}
 				else {
 					Head2HeadModule.Instance.AddMatchPhase(Category, Area);
@@ -219,7 +243,7 @@ namespace Celeste.Mod.Head2Head.Entities {
 					Audio.Play("event:/ui/main/button_invalid");
 					return;
 				}
-				LastArea = areaKey;
+				OuiRunSelectIL.GetChapterOption(areaKey.SID, ref LastLevelSetIndex, ref LastChapterIndex);
 				if (self.OuiIcons != null && area.ID < self.OuiIcons.Count) {
 					self.OuiIcons[area.ID].Select();
 				}
@@ -259,17 +283,19 @@ namespace Celeste.Mod.Head2Head.Entities {
 			}
 			self.Focused = false;
 			Audio.Play("event:/ui/world_map/icon/select");
-			LastArea = areaKey;
+			RunOptionsILChapter option = OuiRunSelectIL.GetChapterOption(areaKey.SID, ref LastLevelSetIndex, ref LastChapterIndex);
 			if (self.OuiIcons != null && area.ID < self.OuiIcons.Count) {
 				self.OuiIcons[area.ID].Select();
 			}
 			self.Overworld.Mountain.Model.EaseState(area.MountainState);
-			if (string.IsNullOrEmpty(CollabUtils2Integration.GetLobbyLevelSet?.Invoke(LastArea.SID))) {
+			string lobby = option.CollabLevelSetForLobby;
+			if (string.IsNullOrEmpty(lobby)) {
 				// not a collab lobby
 				self.Overworld.Goto<OuiRunSelectILChapterPanel>();
 			}
 			else {
 				// is a collab lobby
+				OuiRunSelectIL.GetChapterOption(lobby, ref LastLevelSetIndex, ref LastChapterIndex);
 				self.Overworld.Goto<OuiRunSelectILCollabMapSelect>();
 			}
 		}

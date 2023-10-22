@@ -72,6 +72,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 		public string CurrentMatchID { get; internal set; }
 		public GlobalAreaKey CurrentArea { get; internal set; }
+		public GlobalAreaKey? RandomizerArea { get; internal set; } = null;
 		public string CurrentRoom { get; internal set; }
 		public int FileSlotBeforeMatchStart { get; internal set; }
 		public string LastCheckpoint { get; internal set; } = null;
@@ -246,8 +247,10 @@ namespace Celeste.Mod.Head2Head.Shared {
 		internal void ChapterCompleted(GlobalAreaKey area) {
 			if (!IsInMatch(false)) return;
 			bool changes = false;
+			// Handler Chapter Complete objectives
 			MatchObjective ob = FindObjective(MatchObjectiveType.ChapterComplete, area, false, area.SID);
 			if (ob != null && MarkObjective(ob, area)) changes = true;
+			// Handle Time Limit objectives
 			ob = FindObjective(MatchObjectiveType.TimeLimit, area, false);
 			if (ob != null) {
 				string tmp = CurrentRoom;
@@ -255,6 +258,10 @@ namespace Celeste.Mod.Head2Head.Shared {
 				if (MarkObjective(ob, area)) changes = true;
 				CurrentRoom = tmp;  // restore to the actual real value
 			}
+			// Handle Randomizer Complete objectives
+			ob = FindObjective(MatchObjectiveType.RandomizerClear, area);
+			if (ob != null && MarkObjective(ob, area)) changes = true;
+			// Publish changes
 			if (changes) Updated();
 		}
 		internal void HeartCollected(GlobalAreaKey area) {
@@ -361,7 +368,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			if (includeFinished) {
 				return ph.Order <= currentp && ph.Area.Equals(area);
 			}
-			return ph.Order == currentp && ph.Area.Equals(area);
+			return ph.Order == currentp && (ph.Area.Equals(area) || area.Equals(RandomizerArea));
 		}
 
 		private bool IsObjectiveEligible(MatchObjective ob, MatchObjectiveType type, string entityTypeID, GlobalAreaKey area) {
@@ -393,6 +400,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			if (ob.CollectableGoal > 0) return MarkCountableObjective(ob, area, id.Value);
 			else return MarkObjectiveComplete(ob);
 		}
+
 		internal bool MarkCountableObjective(MatchObjective ob, GlobalAreaKey area, EntityID id) {
 			if (!IsInMatch(false)) return false;
 			if (ob == null) return false;
@@ -426,6 +434,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			}
 			return updated;
 		}
+
 		private bool MarkObjectiveComplete(MatchObjective ob) {
 			if (!IsInMatch(false)) return false;
 			bool found = false;

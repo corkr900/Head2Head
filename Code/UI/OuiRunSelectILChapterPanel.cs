@@ -2,7 +2,6 @@
 using Celeste.Mod.Head2Head.Integration;
 using Celeste.Mod.Head2Head.Shared;
 using Celeste.Mod.UI;
-using FMOD.Studio;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -10,6 +9,8 @@ using Monocle;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Dynamic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -156,7 +157,14 @@ namespace Celeste.Mod.Head2Head.UI {
 			}
 			else {
 				Visible = true;
-				Area.Mode = AreaMode.Normal;
+				var option = OuiRunSelectIL.GetChapterOption(ILSelector.LastLevelSetIndex, ILSelector.LastChapterIndex);
+				if (option.Data != null) {
+					Area = option.Data.ToKey();
+					Area.Mode = AreaMode.Normal;
+				}
+				else {
+					Area = GlobalAreaKey.VanillaPrologue.Local_Safe;
+				}
 				Reset();
 				for (float p = 0f; p < 1f; p += Engine.DeltaTime * 4f) {
 					yield return null;
@@ -167,40 +175,26 @@ namespace Celeste.Mod.Head2Head.UI {
 		}
 
 		private void Reset() {
-			Area = ILSelector.LastArea.Local_Safe;
-			Data = AreaData.Areas[Area.ID];
-			RealStats = SaveData.Instance.Areas_Safe[Area.ID];
-			if (SaveData.Instance.CurrentSession_Safe != null && SaveData.Instance.CurrentSession_Safe.OldStats != null && SaveData.Instance.CurrentSession_Safe.Area.ID == Area.ID) {
-				DisplayedStats = SaveData.Instance.CurrentSession_Safe.OldStats;
-				SaveData.Instance.CurrentSession_Safe = null;
-			}
-			else {
-				DisplayedStats = RealStats;
+			var chapterOption = OuiRunSelectIL.GetChapterOption(ILSelector.LastLevelSetIndex, ILSelector.LastChapterIndex);
+			Data = chapterOption.Data;
+			if (Data != null) {
+				RealStats = SaveData.Instance.Areas_Safe[Area.ID];
+				if (SaveData.Instance.CurrentSession_Safe != null && SaveData.Instance.CurrentSession_Safe.OldStats != null && SaveData.Instance.CurrentSession_Safe.Area.ID == Area.ID) {
+					DisplayedStats = SaveData.Instance.CurrentSession_Safe.OldStats;
+					SaveData.Instance.CurrentSession_Safe = null;
+				}
+				else {
+					DisplayedStats = RealStats;
+				}
 			}
 			height = GetModeHeight();
 			modes.Clear();
-			if (StandardMatches.HasAnyValidCategory(new GlobalAreaKey(Area.ID, AreaMode.Normal))) {
+			foreach (RunOptionsILSide side in OuiRunSelectIL.SelectableLevelSets[ILSelector.LastLevelSetIndex].Chapters[ILSelector.LastChapterIndex].Sides) {
 				modes.Add(new Option {
-					Label = Dialog.Clean(Data.Interlude ? "FILE_BEGIN" : "overworld_normal").ToUpper(),
-					Icon = GFX.Gui["menu/play"],
-					ID = "A",
-					Mode = AreaMode.Normal,
-				});
-			}
-			if (StandardMatches.HasAnyValidCategory(new GlobalAreaKey(Area.ID, AreaMode.BSide))) {
-				modes.Add(new Option {
-					Label = Dialog.Clean("overworld_remix"),
-					Icon = GFX.Gui["menu/remix"],
-					ID = "B",
-					Mode = AreaMode.BSide,
-				});
-			}
-			if (StandardMatches.HasAnyValidCategory(new GlobalAreaKey(Area.ID, AreaMode.CSide))) {
-				modes.Add(new Option {
-					Label = Dialog.Clean("overworld_remix2"),
-					Icon = GFX.Gui["menu/rmx2"],
-					ID = "C",
-					Mode = AreaMode.CSide,
+					Label = side.Label,
+					Icon = side.Icon,
+					ID = side.ID,
+					Mode = side.Mode,
 				});
 			}
 
@@ -217,14 +211,16 @@ namespace Celeste.Mod.Head2Head.UI {
 		}
 
 		private int GetModeHeight() {
-			AreaModeStats areaModeStats = RealStats.Modes[(int)Area.Mode];
-			bool flag = areaModeStats.Strawberries.Count <= 0;
-			if (!Data.Interlude_Safe && ((areaModeStats.Deaths > 0 && Area.Mode != 0) || areaModeStats.Completed || areaModeStats.HeartGem)) {
-				flag = false;
-			}
-			if (!flag) {
-				return 540;
-			}
+			//var option = OuiRunSelectIL.GetChapterOption(ILSelector.LastLevelSetIndex, ILSelector.LastChapterIndex);
+			//if (option.Data == null || RealStats == null) return 300;
+			//AreaModeStats areaModeStats = RealStats.Modes[(int)Area.Mode];
+			//bool flag = areaModeStats.Strawberries.Count <= 0;
+			//if (!Data.Interlude_Safe && ((areaModeStats.Deaths > 0 && Area.Mode != 0) || areaModeStats.Completed || areaModeStats.HeartGem)) {
+			//	flag = false;
+			//}
+			//if (!flag) {
+			//	return 540;
+			//}
 			return PanelHeight;
 		}
 
@@ -265,6 +261,7 @@ namespace Celeste.Mod.Head2Head.UI {
 			// Safeguards against a crash i can't reliably reproduce
 			if (options.Count == 0) yield break;
 			option = Calc.Clamp(option, 0, options.Count - 1);
+			int optionBeforeSwap = option;
 			// Now to the normal stuff
 			float fromHeight = height;
 			int toHeight = 730;
@@ -283,24 +280,48 @@ namespace Celeste.Mod.Head2Head.UI {
 			if (!selectingMode) {
 				categories.Clear();
 
-				List<Tuple<StandardCategory, CustomMatchTemplate>> cats = StandardMatches.GetCategories(new GlobalAreaKey(Area));
-				int siblings = cats.Count;
-				foreach (Tuple<StandardCategory, CustomMatchTemplate> catInfo in cats) {
-					string iconPath = (catInfo.Item1 == StandardCategory.Custom && !string.IsNullOrEmpty(catInfo.Item2.IconPath)) ?
-							catInfo.Item2.IconPath : Shared.Util.CategoryToIcon(catInfo.Item1);
-					string label = StandardMatches.GetCategoryTitle(catInfo.Item1, catInfo.Item2);
-					categories.Add(new Option {
-						Label = label,
-						BgColor = Calc.HexToColor("eabe26"),
-						Icon = GFX.Gui[iconPath],
-						Mode = Area.Mode,
-						Category = catInfo.Item1,
-						CustomTemplate = catInfo.Item2,
-						CheckpointRotation = (float)Calc.Random.Choose(-1, 1) * Calc.Random.Range(0.05f, 0.2f),
-						CheckpointOffset = new Vector2(Calc.Random.Range(-16, 16), Calc.Random.Range(-16, 16)),
-						Large = false,
-						Siblings = siblings,
-					});
+				var chapterOption = OuiRunSelectIL.GetChapterOption(ILSelector.LastLevelSetIndex, ILSelector.LastChapterIndex);
+				if (chapterOption.IsSpecial) {
+					// Special chapters get special categories :)
+					if (optionBeforeSwap >= 0 && optionBeforeSwap < chapterOption.Sides.Count) {
+						int siblings = chapterOption.Sides[optionBeforeSwap].Categories.Count;
+						foreach (RunOptionsILCategory cat in chapterOption.Sides[optionBeforeSwap].Categories) {
+							categories.Add(new Option {
+								Label = Util.TranslatedIfAvailable(cat.Title),
+								BgColor = Calc.HexToColor("eabe26"),
+								Icon = GFX.Gui[cat.IconPath],
+								Mode = chapterOption.Sides[optionBeforeSwap].Mode,
+								Category = StandardCategory.Custom,
+								CustomTemplate = cat.CustomTemplate,
+								CheckpointRotation = Calc.Random.Choose(-1, 1) * Calc.Random.Range(0.05f, 0.2f),
+								CheckpointOffset = new Vector2(Calc.Random.Range(-16, 16), Calc.Random.Range(-16, 16)),
+								Large = false,
+								Siblings = siblings,
+							});
+						}
+					}
+				}
+				else {
+					// Normal Levels, figure out valid categories
+					List<Tuple<StandardCategory, CustomMatchTemplate>> cats = StandardMatches.GetCategories(new GlobalAreaKey(Area));
+					int siblings = cats.Count;
+					foreach (Tuple<StandardCategory, CustomMatchTemplate> catInfo in cats) {
+						string iconPath = (catInfo.Item1 == StandardCategory.Custom && !string.IsNullOrEmpty(catInfo.Item2.IconPath)) ?
+								catInfo.Item2.IconPath : Util.CategoryToIcon(catInfo.Item1);
+						string label = StandardMatches.GetCategoryTitle(catInfo.Item1, catInfo.Item2);
+						categories.Add(new Option {
+							Label = label,
+							BgColor = Calc.HexToColor("eabe26"),
+							Icon = GFX.Gui[iconPath],
+							Mode = Area.Mode,
+							Category = catInfo.Item1,
+							CustomTemplate = catInfo.Item2,
+							CheckpointRotation = Calc.Random.Choose(-1, 1) * Calc.Random.Range(0.05f, 0.2f),
+							CheckpointOffset = new Vector2(Calc.Random.Range(-16, 16), Calc.Random.Range(-16, 16)),
+							Large = false,
+							Siblings = siblings,
+						});
+					}
 				}
 				option = 0;
 				for (int j = 0; j < options.Count; j++) {
@@ -323,8 +344,11 @@ namespace Celeste.Mod.Head2Head.UI {
 
 		public override void Update() {
 			if (Selected && Focused && Input.QuickRestart.Pressed) {
-				string lobby = CollabUtils2Integration.GetLobbyForLevelSet?.Invoke(ILSelector.LastArea.Data.LevelSet);
-				if (!string.IsNullOrEmpty(lobby)) ILSelector.LastArea = new GlobalAreaKey(lobby);
+				var option = OuiRunSelectIL.GetChapterOption(ILSelector.LastLevelSetIndex, ILSelector.LastChapterIndex);
+				string lobby = option.CollabLobby;
+				if (!string.IsNullOrEmpty(lobby)) {
+					OuiRunSelectIL.GetChapterOption(lobby, ref ILSelector.LastLevelSetIndex, ref ILSelector.LastChapterIndex);
+				}
 				Overworld.Goto<OuiRunSelectILCollabMapSelect>();
 				Overworld.Goto<OuiMapSearch>();
 			}
@@ -342,26 +366,19 @@ namespace Celeste.Mod.Head2Head.UI {
 			if (!initialized) {
 				return;
 			}
+			var chapterOption = OuiRunSelectIL.GetChapterOption(ILSelector.LastLevelSetIndex, ILSelector.LastChapterIndex);
+			Data = chapterOption.Data;
+
 			Vector2 optionsRenderPosition = OptionsRenderPosition;
 			for (int i = 0; i < options.Count; i++) {
 				if (!options[i].OnTopOfUI) {
 					options[i].Render(optionsRenderPosition, option == i, wiggler, modeAppearWiggler);
 				}
 			}
-			bool flag = false;
-			if (RealStats.Modes[(int)Area.Mode].Completed) {
-				int mode = (int)Area.Mode;
-				foreach (EntityData goldenberry in AreaData.Areas[Area.ID].Mode[mode].MapData.Goldenberries) {
-					EntityID item = new EntityID(goldenberry.Level.Name, goldenberry.ID);
-					if (RealStats.Modes[mode].Strawberries.Contains(item)) {
-						flag = true;
-						break;
-					}
-				}
-			}
-			MTexture mTexture = GFX.Gui[(!flag) ? _ModCardTexture("areaselect/cardtop") : _ModCardTexture("areaselect/cardtop_golden")];
+
+			MTexture mTexture = GFX.Gui[_ModCardTexture("areaselect/cardtop")];
 			mTexture.Draw(Position + new Vector2(0f, -32f));
-			MTexture mTexture2 = GFX.Gui[(!flag) ? _ModCardTexture("areaselect/card") : _ModCardTexture("areaselect/card_golden")];
+			MTexture mTexture2 = GFX.Gui[_ModCardTexture("areaselect/card")];
 			card = mTexture2.GetSubtexture(0, mTexture2.Height - (int)height, mTexture2.Width, (int)height, card);
 			card.Draw(Position + new Vector2(0f, -32 + mTexture.Height));
 			for (int j = 0; j < options.Count; j++) {
@@ -384,15 +401,15 @@ namespace Celeste.Mod.Head2Head.UI {
 					DrawCheckpoint(center, options[num], num);
 				}
 			}
-			GFX.Gui["areaselect/title"].Draw(Position + new Vector2(_FixTitleLength(-60f), 0f), Vector2.Zero, Data.TitleBaseColor);
-			GFX.Gui["areaselect/accent"].Draw(Position + new Vector2(_FixTitleLength(-60f), 0f), Vector2.Zero, Data.TitleAccentColor);
-			string text = Dialog.Clean(AreaData.Get(Area).Name);
-			if (Data.Interlude_Safe) {
-				ActiveFont.Draw(text, Position + IconOffset + new Vector2(-100f, 0f), new Vector2(1f, 0.5f), Vector2.One * 1f, Data.TitleTextColor * 0.8f);
+			GFX.Gui["areaselect/title"].Draw(Position + new Vector2(_FixTitleLength(-60f), 0f), Vector2.Zero, Data?.TitleBaseColor ?? Color.DarkSlateGray);
+			GFX.Gui["areaselect/accent"].Draw(Position + new Vector2(_FixTitleLength(-60f), 0f), Vector2.Zero, Data?.TitleAccentColor ?? Color.LightBlue);
+			string text = !string.IsNullOrEmpty(chapterOption.Title) ? Util.TranslatedIfAvailable(chapterOption.Title) : Dialog.Clean(AreaData.Get(Area).Name);
+			if (Data?.Interlude_Safe ?? true) {
+				ActiveFont.Draw(text, Position + IconOffset + new Vector2(-100f, 0f), new Vector2(1f, 0.5f), Vector2.One * 1f, (Data?.TitleTextColor ?? Color.AntiqueWhite) * 0.8f);
 			}
 			else {
-				ActiveFont.Draw(chapter, Position + IconOffset + new Vector2(-100f, -2f), new Vector2(1f, 1f), Vector2.One * 0.6f, Data.TitleAccentColor * 0.8f);
-				ActiveFont.Draw(text, Position + IconOffset + new Vector2(-100f, -18f), new Vector2(1f, 0f), Vector2.One * 1f, Data.TitleTextColor * 0.8f);
+				ActiveFont.Draw(chapter, Position + IconOffset + new Vector2(-100f, -2f), new Vector2(1f, 1f), Vector2.One * 0.6f, (Data?.TitleAccentColor ?? Color.AntiqueWhite) * 0.8f);
+				ActiveFont.Draw(text, Position + IconOffset + new Vector2(-100f, -18f), new Vector2(1f, 0f), Vector2.One * 1f, (Data?.TitleTextColor ?? Color.AntiqueWhite) * 0.8f);
 			}
 		}
 
@@ -503,12 +520,13 @@ namespace Celeste.Mod.Head2Head.UI {
 		}
 
 		private void GoBack() {
-			string lobby = CollabUtils2Integration.GetLobbyForLevelSet?.Invoke(ILSelector.LastArea.Data.LevelSet);
+			var option = OuiRunSelectIL.GetChapterOption(ILSelector.LastLevelSetIndex, ILSelector.LastChapterIndex);
+			string lobby = option.CollabLobby;
 			if (string.IsNullOrEmpty(lobby)) {
 				Overworld.Goto<OuiRunSelectILChapterSelect>();
 			}
 			else {
-				ILSelector.LastArea = new GlobalAreaKey(lobby);
+				OuiRunSelectIL.GetChapterOption(lobby, ref ILSelector.LastLevelSetIndex, ref ILSelector.LastChapterIndex);
 				Overworld.Goto<OuiRunSelectILCollabMapSelect>();
 			}
 		}

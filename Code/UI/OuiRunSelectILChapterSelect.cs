@@ -1,4 +1,5 @@
-﻿using Celeste.Mod.Head2Head.Entities;
+﻿using Celeste.Mod.CelesteNet;
+using Celeste.Mod.Head2Head.Entities;
 using Celeste.Mod.Head2Head.Integration;
 using Celeste.Mod.Head2Head.Shared;
 using Celeste.Mod.UI;
@@ -16,37 +17,27 @@ namespace Celeste.Mod.Head2Head.UI {
 	class OuiRunSelectILChapterSelect : Oui {
 
 		private List<OuiChapterSelectIcon> icons = new List<OuiChapterSelectIcon>();
-
+		private Dictionary<int, OuiRunSelectILChapterIcon> specialIcons = new Dictionary<int, OuiRunSelectILChapterIcon>();
 		private int indexToSnap = -1;
-
 		private const int scarfSegmentSize = 2;
-
 		private MTexture scarf = GFX.Gui["areas/hover"];
-
 		private MTexture[] scarfSegments;
-
 		private float ease;
-
 		private bool display;
-
 		private float inputDelay;
-
 		private MTexture levelSetScarf;
-
 		private float maplistEase;
-
 		private float searchEase;
-
 		private float levelsetEase;
-
 		private string currentLevelSet;
 
 		private int area {
 			get {
-				return ILSelector.LastArea.Local_Safe.ID;
+				var option = OuiRunSelectIL.GetChapterOption(ILSelector.LastLevelSetIndex, ILSelector.LastChapterIndex);
+				return option?.Data?.ID ?? 0;
 			}
 			set {
-				ILSelector.LastArea = new GlobalAreaKey(value);
+				OuiRunSelectIL.GetChapterOption(value, ref ILSelector.LastLevelSetIndex, ref ILSelector.LastChapterIndex);
 			}
 		}
 
@@ -54,13 +45,15 @@ namespace Celeste.Mod.Head2Head.UI {
 			base.Added(scene);
 
 			int count = AreaData.Areas.Count;
-			for (int i = 0; i < count; i++) {
-				MTexture mTexture = GFX.Gui[AreaData.Areas[i].Icon];
-				MTexture back = (GFX.Gui.Has(AreaData.Areas[i].Icon + "_back") ? GFX.Gui[AreaData.Areas[i].Icon + "_back"] : mTexture);
-				OuiRunSelectILChapterIcon icon = new OuiRunSelectILChapterIcon(i, mTexture, back);
+			// Add Normal Icons
+			for (int id = 0; id < count; id++) {
+				MTexture mTexture = GFX.Gui[AreaData.Areas[id].Icon];
+				MTexture back = GFX.Gui.Has(AreaData.Areas[id].Icon + "_back") ? GFX.Gui[AreaData.Areas[id].Icon + "_back"] : mTexture;
+				OuiRunSelectILChapterIcon icon = new OuiRunSelectILChapterIcon(id, mTexture, back);
 				icons.Add(icon);
 				Scene.Add(icon);
 			}
+			// Add Scarf things
 			scarfSegments = new MTexture[scarf.Height / scarfSegmentSize];
 			for (int j = 0; j < scarfSegments.Length; j++) {
 				scarfSegments[j] = scarf.GetSubtexture(0, j * scarfSegmentSize, scarf.Width, scarfSegmentSize);
@@ -79,12 +72,10 @@ namespace Celeste.Mod.Head2Head.UI {
 		}
 
 		public override IEnumerator Enter(Oui from) {
-			GetMinMaxArea(out int areaOffs, out int areaMax);
-			area = Calc.Clamp(area, areaOffs, areaMax);
+			ILSelector.LastChapterIndex = Calc.Clamp(ILSelector.LastChapterIndex, 0, OuiRunSelectIL.GetNumOptionsInSet(ILSelector.LastLevelSetIndex) - 1);
 			Visible = true;
-			EaseCamera();
 			display = true;
-			currentLevelSet = ILSelector.LastArea.Local_Safe.LevelSet;
+			currentLevelSet = OuiRunSelectIL.LevelSetIdxToSet(ILSelector.LastLevelSetIndex);
 			OuiChapterSelectIcon unselected = null;
 			if (from is OuiChapterPanel) {
 				(unselected = icons[area]).Unselect();
@@ -95,6 +86,7 @@ namespace Celeste.Mod.Head2Head.UI {
 			levelSetScarf = GFX.Gui.GetOrDefault("areas/" + currentLevelSet + "/hover", GFX.Gui["areas/hover"]);
 			updateScarf();
 			LevelSetStats stats = null;
+			// Process normal icons
 			foreach (OuiChapterSelectIcon current in icons) {
 				AreaData areaData = AreaData.Get(current.Area);
 				if (areaData != null && areaData.GetLevelSet() == currentLevelSet) {
@@ -106,6 +98,26 @@ namespace Celeste.Mod.Head2Head.UI {
 						current.Show();
 						current.AssistModeUnlockable = false;
 					}
+				}
+			}
+			// Process special icons
+			foreach (OuiChapterSelectIcon icon in specialIcons.Values) {
+				icon.RemoveSelf();
+			}
+			specialIcons.Clear();
+			var chapters = OuiRunSelectIL.SelectableLevelSets[ILSelector.LastLevelSetIndex].Chapters;
+			// Add Special Icons
+			for (int j = 0; j < chapters.Count; j++) {
+				var opt = chapters[j];
+				if (opt.IsSpecial) {
+					MTexture mTexture = GFX.Gui.GetOrDefault(opt.Icon, GFX.Gui["Head2Head/Categories/Custom"]);
+					MTexture back = mTexture;
+					OuiRunSelectILChapterIcon icon = new OuiRunSelectILChapterIcon(0, mTexture, back, opt.SpecialID);
+					specialIcons.Add(opt.SpecialID, icon);
+					Scene.Add(icon);
+					icon.Position = icon.HiddenPosition;
+					icon.Show();
+					icon.AssistModeUnlockable = false;
 				}
 			}
 			if (from is OuiChapterPanel) {
@@ -121,7 +133,13 @@ namespace Celeste.Mod.Head2Head.UI {
 		private IEnumerator EaseOut(Oui next) {
 			OuiChapterSelectIcon selected = null;
 			if (next is OuiChapterPanel) {
-				(selected = icons[area]).Select();
+				var curOption = OuiRunSelectIL.GetChapterOption(ILSelector.LastLevelSetIndex, ILSelector.LastChapterIndex);
+				if (curOption.IsSpecial) {
+					(selected = specialIcons[curOption.SpecialID]).Select();
+				}
+				else {
+					(selected = icons[area]).Select();
+				}
 			}
 			foreach (OuiChapterSelectIcon current in icons) {
 				AreaData areaData = AreaData.Get(current.Area);
@@ -131,6 +149,11 @@ namespace Celeste.Mod.Head2Head.UI {
 					}
 				}
 			}
+			foreach (OuiChapterSelectIcon current in specialIcons.Values) {
+				if (selected != current) {
+					current.Hide();
+				}
+			}
 			Visible = false;
 			yield break;
 		}
@@ -138,14 +161,12 @@ namespace Celeste.Mod.Head2Head.UI {
 		public override void Update() {
 			if (Focused && display) {
 				if (Input.Pause.Pressed || Input.ESC.Pressed) {
-					Overworld.Maddy.Hide();
 					Audio.Play("event:/ui/main/button_select");
 					Audio.Play("event:/ui/main/whoosh_large_in");
 					Overworld.Goto<OuiMapList>().OuiIcons = icons;
 					return;
 				}
 				if (Input.QuickRestart.Pressed) {
-					Overworld.Maddy.Hide();
 					Audio.Play("event:/ui/main/button_select");
 					Audio.Play("event:/ui/main/whoosh_large_in");
 					Overworld.Goto<OuiMapSearch>().OuiIcons = icons;
@@ -163,21 +184,6 @@ namespace Celeste.Mod.Head2Head.UI {
 					Audio.Play("event:/ui/world_map/chapter/pane_expand");
 					Audio.Play("event:/ui/world_map/icon/roll_right");
 					Overworld.Goto<OuiRunSelectILLevelSet>().Direction = 1;
-					return;
-				}
-				GetMinMaxArea(out int areaOffs, out int areaMax);
-				if (area < areaOffs) {
-					area = areaOffs;
-				}
-				else {
-					if (area > areaMax) {
-						area = areaMax;
-					}
-					while (area > 0 && icons[area].GetIsHidden()) {
-						area--;
-					}
-				}
-				if ((Input.MenuLeft.Pressed && (area - 1 < 0 || icons[area - 1].GetIsHidden())) || (Input.MenuRight.Pressed && (area + 1 >= icons.Count || icons[area + 1].GetIsHidden()))) {
 					return;
 				}
 			}
@@ -213,23 +219,6 @@ namespace Celeste.Mod.Head2Head.UI {
 			}
 		}
 
-		private void EaseCamera() {
-			AreaData areaData = AreaData.Areas[area];
-			base.Overworld.Mountain.EaseCamera(area, areaData.MountainIdle, null, nearTarget: true, areaData.GetMeta()?.Mountain?.Rotate ?? (areaData.GetLevelSet() == "Celeste" && area == 10));
-			base.Overworld.Mountain.Model.EaseState(areaData.MountainState);
-		}
-
-		private void GetMinMaxArea(out int areaOffs, out int areaMax) {
-			LevelSetStats stats = Util.GetSetStats(ILSelector.LastArea.Local_Safe.LevelSet);
-			if (stats == null) {
-				// This is hit for loose bin files
-				areaOffs = areaMax = ILSelector.LastArea.Local_Safe.ID;
-				return;
-			}
-			areaOffs = stats.AreaOffset;
-			areaMax = areaOffs + stats.MaxArea;
-		}
-
 		public void orig_Update() {
 			if (Focused) {
 				inputDelay -= Engine.DeltaTime;
@@ -243,35 +232,34 @@ namespace Celeste.Mod.Head2Head.UI {
 						ILSelector.ActiveSelector.Category = StandardCategory.Clear;
 					}
 					Overworld.Goto<OuiRunSelectILExit>();
-					Overworld.Maddy.Hide();
 				}
 				else if (inputDelay <= 0f) {
-					GetMinMaxArea(out int minArea, out int areaMax);
 					if (Input.MenuLeft.Pressed) {
-						if (area > minArea) {
+						if (ILSelector.LastChapterIndex > 0) {
 							Audio.Play("event:/ui/world_map/icon/roll_left");
 							inputDelay = 0.15f;
-							area--;
-							icons[area].Hovered(-1);
-							EaseCamera();
-							Overworld.Maddy.Hide();
+							ILSelector.LastChapterIndex--;
+							var option = OuiRunSelectIL.GetChapterOption(ILSelector.LastLevelSetIndex, ILSelector.LastChapterIndex);
+							var icon = option.IsSpecial ? specialIcons[option.SpecialID] : icons[option.Data.ID];
+							icon.Hovered(-1);
 						}
 					}
 					else if (Input.MenuRight.Pressed) {
-						if (area < minArea + areaMax) {
+						int numOptions = OuiRunSelectIL.GetNumOptionsInSet(ILSelector.LastLevelSetIndex);
+						if (ILSelector.LastChapterIndex < numOptions - 1) {
 							Audio.Play("event:/ui/world_map/icon/roll_right");
 							inputDelay = 0.15f;
-							area++;
-							icons[area].Hovered(1);
-							if (area <= minArea + areaMax) {
-								EaseCamera();
-							}
-							Overworld.Maddy.Hide();
+							ILSelector.LastChapterIndex++;
+							var option = OuiRunSelectIL.GetChapterOption(ILSelector.LastLevelSetIndex, ILSelector.LastChapterIndex);
+							var icon = option.IsSpecial ? specialIcons[option.SpecialID] : icons[option.Data.ID];
+							icon.Hovered(1);
 						}
 					}
 					else if (Input.MenuConfirm.Pressed) {
 						Audio.Play("event:/ui/world_map/icon/select");
-						if (string.IsNullOrEmpty(CollabUtils2Integration.GetLobbyLevelSet?.Invoke(ILSelector.LastArea.SID))) {
+						RunOptionsILChapter option = OuiRunSelectIL.GetChapterOption(ILSelector.LastLevelSetIndex, ILSelector.LastChapterIndex);
+						string lobby = option.CollabLobby;
+						if (string.IsNullOrEmpty(lobby)) {
 							// not a collab lobby
 							Overworld.Goto<OuiRunSelectILChapterPanel>();
 						}
@@ -298,10 +286,10 @@ namespace Celeste.Mod.Head2Head.UI {
 		}
 
 		public void orig_Render() {
-			Vector2 vector = new Vector2(960f, (float)(-scarf.Height) * Ease.CubeInOut(1f - ease));
+			Vector2 vector = new Vector2(960f, -scarf.Height * Ease.CubeInOut(1f - ease));
 			for (int i = 0; i < scarfSegments.Length; i++) {
-				float num = Ease.CubeIn((float)i / (float)scarfSegments.Length);
-				float x = num * (float)Math.Sin(base.Scene.RawTimeActive * 4f + (float)i * 0.05f) * 4f - num * 16f;
+				float num = Ease.CubeIn(i / (float)scarfSegments.Length);
+				float x = num * (float)Math.Sin(Scene.RawTimeActive * 4f + i * 0.05f) * 4f - num * 16f;
 				scarfSegments[i].DrawJustified(vector + new Vector2(x, i * scarfSegmentSize), new Vector2(0.5f, 0f));
 			}
 		}
