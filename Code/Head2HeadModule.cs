@@ -588,7 +588,7 @@ namespace Celeste.Mod.Head2Head {
 		}
 
 		private void OnSaveDataStart(On.Celeste.SaveData.orig_Start orig, SaveData data, int slot) {
-			if (PlayerStatus.Current.IsInMatch(false)) {
+			if (PlayerStatus.Current.IsInMatch(false) && !PlayerStatus.Current.CurrentMatch.HasRandomizerObjective) {
 				int matchslot = PlayerStatus.Current.GetMatchSaveFile();
 				if (matchslot != int.MinValue && matchslot != slot) {
 					PlayerStatus.Current.CurrentMatch?.PlayerDNF(DNFReason.ChangeFile);

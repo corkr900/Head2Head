@@ -1,5 +1,4 @@
 HEAD2HEAD_OVERWORLD= Overworld
-HEAD2HEAD_RANDOMIZER= Randomizer
 
 Head2Head= Head 2 Head
 Head2Head_00_Head2HeadLobby= Head 2 Head Lobby
@@ -15,7 +14,15 @@ Head2Head_LobbyRecords= Best Lobby Runs
 Head2Head_CountMore= {0} More...
 Head2Head_MapNotInstalled= {0} (Not Installed)
 
-Head2Head_WeeklySeed= Weekly Seed
+HEAD2HEAD_RANDOMIZER= Randomizer
+Head2Head_Rando_nodash= Dashless
+Head2Head_Rando_onedash= One Dash
+Head2Head_Rando_twodash= Two Dash
+Head2Head_Rando_WeeklySeed= Weekly Seed
+Head2Head_Rando_CatNameFormat= {0} {1}, {2}
+Head2Head_Rando_Dashcount_Zero= Dashless
+Head2Head_Rando_Dashcount_One= One Dash
+Head2Head_Rando_Dashcount_Two= Two Dashes
 
 Head2Head_Setting_UseSRCARBRules= Use SRC ARB Categories
 Head2Head_Setting_UseSRCARBRules_Subtext= If turned on, either ARB or ARB + Heart will be hidden

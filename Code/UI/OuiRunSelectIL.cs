@@ -176,51 +176,40 @@ namespace Celeste.Mod.Head2Head.UI {
 
 			// Pathway "chapter"
 			RunOptionsILChapter pathway = new RunOptionsILChapter();
-			pathway.Title = "Pathway Randomizer";  // TODO (!!) tokenize
+			pathway.Title = "Pathway Randomizer";
 			pathway.SpecialID = NewSpecialID();
 			pathway.Icon = "menu/pathway_icon";
 			setOption.Chapters.Add(pathway);
+			// Pathway 1 dash
 			RunOptionsILSide side = new RunOptionsILSide() {
-				Label = Dialog.Clean("overworld_normal").ToUpper(),
+				Label = Dialog.Clean("Head2Head_Rando_onedash"),
 				Icon = GFX.Gui["menu/play"],
 				ID = "A",
 				Mode = AreaMode.Normal,
 			};
 			pathway.Sides.Add(side);
-
-			side.Categories.Add(new RunOptionsILCategory() {
-				Title = "MODOPTIONS_RANDOMIZER_DIFFICULTY_EASY",
-				IconPath = "menu/skulls/strawberry",
-				CustomTemplate = RandomizerTemplate("Easy Pathway", "Pathway", "Easy"),  // TODO (!!) Tokenize
-			});
-			side.Categories.Add(new RunOptionsILCategory() {
-				Title = "MODOPTIONS_RANDOMIZER_DIFFICULTY_NORMAL",
-				IconPath = "menu/skulls/skullBlue",
-				CustomTemplate = RandomizerTemplate("Normal Pathway", "Pathway", "Normal"),  // TODO (!!) Tokenize
-			});
-			side.Categories.Add(new RunOptionsILCategory() {
-				Title = "MODOPTIONS_RANDOMIZER_DIFFICULTY_HARD",
-				IconPath = "menu/skulls/skullRed",
-				CustomTemplate = RandomizerTemplate("Hard Pathway", "Pathway", "Hard"),  // TODO (!!) Tokenize
-			});
-			side.Categories.Add(new RunOptionsILCategory() {
-				Title = "MODOPTIONS_RANDOMIZER_DIFFICULTY_EXPERT",
-				IconPath = "menu/skulls/skullGold",
-				CustomTemplate = RandomizerTemplate("Expert Pathway", "Pathway", "Expert"),  // TODO (!!) Tokenize
-			});
-			side.Categories.Add(new RunOptionsILCategory() {
-				Title = "MODOPTIONS_RANDOMIZER_DIFFICULTY_MASTER",
-				IconPath = "menu/skulls/skullOrange",
-				CustomTemplate = RandomizerTemplate("Master Pathway", "Pathway", "Master"),  // TODO (!!) Tokenize
-			});
-			side.Categories.Add(new RunOptionsILCategory() {
-				Title = "MODOPTIONS_RANDOMIZER_DIFFICULTY_PERFECT",
-				IconPath = "menu/skulls/skullPurple",
-				CustomTemplate = RandomizerTemplate("Perfect Pathway", "Pathway", "Perfect"),  // TODO (!!) Tokenize
-			});
+			AddAllDifficulties(side, "Pathway", "One");
+			// Pathway 2 dash
+			side = new RunOptionsILSide() {
+				Label = Dialog.Clean("Head2Head_Rando_twodash"),
+				Icon = GFX.Gui["menu/play"],
+				ID = "A",
+				Mode = AreaMode.Normal,
+			};
+			pathway.Sides.Add(side);
+			AddAllDifficulties(side, "Pathway", "Two");
+			// Pathway dashless
+			side = new RunOptionsILSide() {
+				Label = Dialog.Clean("Head2Head_Rando_nodash"),
+				Icon = GFX.Gui["menu/play"],
+				ID = "A",
+				Mode = AreaMode.Normal,
+			};
+			pathway.Sides.Add(side);
+			AddAllDifficulties(side, "Pathway", "Zero");
 			// Pathway Weekly
 			side = new RunOptionsILSide() {
-				Label = Dialog.Clean("Head2Head_WeeklySeed"),
+				Label = Dialog.Clean("Head2Head_Rando_WeeklySeed"),
 				Icon = GFX.Gui["menu/play"],
 				ID = "A",
 				Mode = AreaMode.Normal,
@@ -237,7 +226,7 @@ namespace Celeste.Mod.Head2Head.UI {
 				CustomTemplate = RandomizerTemplate("Weekly Pathway - Expert", "Pathway", "Expert", "Custom"),  // TODO (!!) Tokenize
 			});
 
-
+			//////////////////////////////////////////////////////////////////////
 			// Labyrinth "chapter"
 			RunOptionsILChapter labyrinth = new RunOptionsILChapter();
 			labyrinth.Title = "Labyrinth Randomizer";  // TODO (!!) tokenize
@@ -251,40 +240,28 @@ namespace Celeste.Mod.Head2Head.UI {
 				Mode = AreaMode.Normal,
 			};
 			labyrinth.Sides.Add(side);
-
-			side.Categories.Add(new RunOptionsILCategory() {
-				Title = "MODOPTIONS_RANDOMIZER_DIFFICULTY_EASY",
-				IconPath = "menu/skulls/strawberry",
-				CustomTemplate = RandomizerTemplate("Easy Labyrinth", "Labyrinth", "Easy"),  // TODO (!!) Tokenize
-			});
-			side.Categories.Add(new RunOptionsILCategory() {
-				Title = "MODOPTIONS_RANDOMIZER_DIFFICULTY_NORMAL",
-				IconPath = "menu/skulls/skullBlue",
-				CustomTemplate = RandomizerTemplate("Normal Labyrinth", "Labyrinth", "Normal"),  // TODO (!!) Tokenize
-			});
-			side.Categories.Add(new RunOptionsILCategory() {
-				Title = "MODOPTIONS_RANDOMIZER_DIFFICULTY_HARD",
-				IconPath = "menu/skulls/skullRed",
-				CustomTemplate = RandomizerTemplate("Hard Labyrinth", "Labyrinth", "Hard"),  // TODO (!!) Tokenize
-			});
-			side.Categories.Add(new RunOptionsILCategory() {
-				Title = "MODOPTIONS_RANDOMIZER_DIFFICULTY_EXPERT",
-				IconPath = "menu/skulls/skullGold",
-				CustomTemplate = RandomizerTemplate("Expert Labyrinth", "Labyrinth", "Expert"),  // TODO (!!) Tokenize
-			});
-			side.Categories.Add(new RunOptionsILCategory() {
-				Title = "MODOPTIONS_RANDOMIZER_DIFFICULTY_MASTER",
-				IconPath = "menu/skulls/skullOrange",
-				CustomTemplate = RandomizerTemplate("Master Labyrinth", "Labyrinth", "Master"),  // TODO (!!) Tokenize
-			});
-			side.Categories.Add(new RunOptionsILCategory() {
-				Title = "MODOPTIONS_RANDOMIZER_DIFFICULTY_PERFECT",
-				IconPath = "menu/skulls/skullPurple",
-				CustomTemplate = RandomizerTemplate("Perfect Labyrinth", "Labyrinth", "Perfect"),  // TODO (!!) Tokenize
-			});
+			AddAllDifficulties(side, "Labyrinth", "One");
+			// Labyrinth 2 dash
+			side = new RunOptionsILSide() {
+				Label = Dialog.Clean("Head2Head_Rando_twodash"),
+				Icon = GFX.Gui["menu/play"],
+				ID = "A",
+				Mode = AreaMode.Normal,
+			};
+			labyrinth.Sides.Add(side);
+			AddAllDifficulties(side, "Labyrinth", "Two");
+			// Labyrinth dashless
+			side = new RunOptionsILSide() {
+				Label = Dialog.Clean("Head2Head_Rando_nodash"),
+				Icon = GFX.Gui["menu/play"],
+				ID = "A",
+				Mode = AreaMode.Normal,
+			};
+			labyrinth.Sides.Add(side);
+			AddAllDifficulties(side, "Labyrinth", "Zero");
 			// Labyrinth Weekly
 			side = new RunOptionsILSide() {
-				Label = Dialog.Clean("Head2Head_WeeklySeed"),
+				Label = Dialog.Clean("Head2Head_Rando_WeeklySeed"),
 				Icon = GFX.Gui["menu/play"],
 				ID = "A",
 				Mode = AreaMode.Normal,
@@ -293,17 +270,62 @@ namespace Celeste.Mod.Head2Head.UI {
 			side.Categories.Add(new RunOptionsILCategory() {
 				Title = "MODOPTIONS_RANDOMIZER_DIFFICULTY_NORMAL",
 				IconPath = "menu/skulls/skullBlue",
-				CustomTemplate = RandomizerTemplate("Weekly Labyringth - Normal", "Labyrinth", "Normal", "Custom"),  // TODO (!!) Tokenize
+				CustomTemplate = RandomizerTemplate("Weekly Labyrinth - Normal", "Labyrinth", "Normal", "Custom"),  // TODO (!!) Tokenize
 			});
 			side.Categories.Add(new RunOptionsILCategory() {
 				Title = "MODOPTIONS_RANDOMIZER_DIFFICULTY_EXPERT",
 				IconPath = "menu/skulls/skullGold",
-				CustomTemplate = RandomizerTemplate("Weekly Labyringth - Expert", "Labyrinth", "Expert", "Custom"),  // TODO (!!) Tokenize
+				CustomTemplate = RandomizerTemplate("Weekly Labyrinth - Expert", "Labyrinth", "Expert", "Custom"),  // TODO (!!) Tokenize
 			});
+
 
 		}
 
-		private static CustomMatchTemplate RandomizerTemplate(string name, string logicType, string difficulty, string seedType = "Random") {
+		private static void AddAllDifficulties(RunOptionsILSide side, string type, string dashes) {
+			side.Categories.Add(new RunOptionsILCategory() {
+				Title = "MODOPTIONS_RANDOMIZER_DIFFICULTY_EASY",
+				IconPath = "menu/skulls/strawberry",
+				CustomTemplate = RandomizerTemplate(RandoCatDispName("Easy", type, dashes), type, "Easy", numDashes: dashes),
+			});
+			side.Categories.Add(new RunOptionsILCategory() {
+				Title = "MODOPTIONS_RANDOMIZER_DIFFICULTY_NORMAL",
+				IconPath = "menu/skulls/skullBlue",
+				CustomTemplate = RandomizerTemplate(RandoCatDispName("Normal", type, dashes), type, "Normal", numDashes: dashes),
+			});
+			side.Categories.Add(new RunOptionsILCategory() {
+				Title = "MODOPTIONS_RANDOMIZER_DIFFICULTY_HARD",
+				IconPath = "menu/skulls/skullRed",
+				CustomTemplate = RandomizerTemplate(RandoCatDispName("Hard", type, dashes), type, "Hard", numDashes: dashes),
+			});
+			side.Categories.Add(new RunOptionsILCategory() {
+				Title = "MODOPTIONS_RANDOMIZER_DIFFICULTY_EXPERT",
+				IconPath = "menu/skulls/skullGold",
+				CustomTemplate = RandomizerTemplate(RandoCatDispName("Expert", type, dashes), type, "Expert", numDashes: dashes),
+			});
+			side.Categories.Add(new RunOptionsILCategory() {
+				Title = "MODOPTIONS_RANDOMIZER_DIFFICULTY_MASTER",
+				IconPath = "menu/skulls/skullOrange",
+				CustomTemplate = RandomizerTemplate(RandoCatDispName("Master", type, dashes), type, "Master", numDashes: dashes),
+			});
+			side.Categories.Add(new RunOptionsILCategory() {
+				Title = "MODOPTIONS_RANDOMIZER_DIFFICULTY_PERFECT",
+				IconPath = "menu/skulls/skullPurple",
+				CustomTemplate = RandomizerTemplate(RandoCatDispName("Perfect", type, dashes), type, "Perfect", numDashes: dashes),
+			});
+		}
+
+		private static string RandoCatDispName(string diff, string logic, string numDashes) {
+			string diffDialogKey = "MODOPTIONS_RANDOMIZER_DIFFICULTY_" + diff.ToUpper();
+			string logicDialogKey = "MODOPTIONS_RANDOMIZER_LOGIC_" + logic.ToUpper();
+			string numDashesDialogKey = "Head2Head_Rando_Dashcount_" + numDashes;
+			return string.Format(
+				Dialog.Get("Head2Head_Rando_CatNameFormat"),
+				Dialog.Get(diffDialogKey),
+				Dialog.Get(logicDialogKey),
+				Dialog.Get(numDashesDialogKey));
+		}
+
+		private static CustomMatchTemplate RandomizerTemplate(string name, string logicType, string difficulty, string seedType = "Random", string numDashes = "One") {
 			CustomMatchTemplate template = new CustomMatchTemplate() {
 				DisplayName = name,
 				RandoOptions = new RandomizerOptionsTemplate {
@@ -311,9 +333,9 @@ namespace Celeste.Mod.Head2Head.UI {
 					LogicType = RandomizerIntegration.LogicTypeEnum.Valiate(logicType),
 					Difficulty = RandomizerIntegration.DifficultyEnum.Valiate(difficulty),
 					MapLength = RandomizerIntegration.MapLengthEnum.Valiate("Short"),
-					NumDashes = RandomizerIntegration.NumDashesEnum.Valiate("One"),
+					NumDashes = RandomizerIntegration.NumDashesEnum.Valiate(numDashes),
 					DifficultyEagerness = RandomizerIntegration.DifficultyEagernessEnum.Valiate("Medium"),
-					ShineLights = RandomizerIntegration.ShineLightsEnum.Valiate("Hubs"),
+					ShineLights = RandomizerIntegration.ShineLightsEnum.Valiate("On"),
 					Darkness = RandomizerIntegration.DarknessEnum.Valiate("Never"),
 					StrawberryDensity = RandomizerIntegration.StrawberryDensityEnum.Valiate("None"),
 				},

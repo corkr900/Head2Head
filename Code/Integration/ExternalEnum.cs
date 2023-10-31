@@ -27,8 +27,8 @@ namespace Celeste.Mod.Head2Head.Integration {
 			IsValid = true;
 		}
 
-		internal string Valiate(string difficulty, string dflt = null) {
-			if (IsValid && Values != null && Values.ContainsKey(difficulty)) { return difficulty; }
+		internal string Valiate(string val, string dflt = null) {
+			if (IsValid && Values != null && Values.ContainsKey(val)) { return val; }
 			return dflt;
 		}
 
