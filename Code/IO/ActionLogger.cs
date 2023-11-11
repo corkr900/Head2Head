@@ -300,7 +300,7 @@ namespace Celeste.Mod.Head2Head.IO {
 			areaSID = PlayerStatus.Current.CurrentArea.SID;
 			room = PlayerStatus.Current.CurrentRoom;
 			checkpoint = area.IsOverworld ? "Overworld"
-				: area.ExistsLocal ? AreaData.GetCheckpointName(area.Local_Safe, room)
+				: area.IsValidInstalledMap ? AreaData.GetCheckpointName(area.Local_Safe, room)
 				: "[unknown area]";
 			matchID = PlayerStatus.Current.CurrentMatchID;
 			saveDataIndex = SaveData.Instance?.FileSlot ?? -99;

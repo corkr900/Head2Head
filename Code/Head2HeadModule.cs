@@ -1045,6 +1045,7 @@ namespace Celeste.Mod.Head2Head {
 			if (def.State != MatchState.Staged) return false;
 			if (def.Players.Contains(PlayerID.MyIDSafe)) return false;
 			if (!Role.AllowMatchJoin(def)) return false;
+			if (!def.AllPhasesExistLocal()) return false;
 			if (def.VersionCheck() != null) return false;
 			return true;
 		}

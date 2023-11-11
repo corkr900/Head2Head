@@ -67,7 +67,7 @@ namespace Celeste.Mod.Head2Head.Shared {
             }
 		}
 
-        private string FullGameDisplayName() {
+		private string FullGameDisplayName() {
             string levelSet = Phases[0].Area.IsVanilla ? "Celeste" : Dialog.Clean(Phases[0].Area.Data.LevelSet);
             return string.Format(Dialog.Get("Head2Head_MatchTitle"), levelSet, CategoryDisplayName);
         }
@@ -334,7 +334,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 
         public bool AllPhasesExistLocal() {
             foreach(MatchPhase p in Phases) {
-                if (!p.Area.ExistsLocal) return false;
+                if (!p.Area.IsValidInstalledMap) return false;
 			}
             return true;
         }
