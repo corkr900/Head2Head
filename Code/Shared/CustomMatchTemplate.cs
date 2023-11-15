@@ -52,7 +52,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			MatchDefinition def = new MatchDefinition() {
 				Owner = PlayerID.MyID ?? PlayerID.Default,
 				CreationInstant = SyncedClock.Now,
-				UseFreshSavefile = true,
+				ChangeSavefile = true,
 				AllowCheatMode = AllowCheatMode,
 				CategoryDisplayNameOverride = Util.TranslatedIfAvailable(DisplayName),
 			};

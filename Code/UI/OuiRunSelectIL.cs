@@ -180,6 +180,7 @@ namespace Celeste.Mod.Head2Head.UI {
 			pathway.SpecialID = NewSpecialID();
 			pathway.Icon = "menu/pathway_icon";
 			setOption.Chapters.Add(pathway);
+
 			// Pathway 1 dash
 			RunOptionsILSide side = new RunOptionsILSide() {
 				Label = Dialog.Clean("Head2Head_Rando_onedash"),
@@ -189,6 +190,7 @@ namespace Celeste.Mod.Head2Head.UI {
 			};
 			pathway.Sides.Add(side);
 			AddAllDifficulties(side, "Pathway", "One");
+
 			// Pathway 2 dash
 			side = new RunOptionsILSide() {
 				Label = Dialog.Clean("Head2Head_Rando_twodash"),
@@ -198,6 +200,7 @@ namespace Celeste.Mod.Head2Head.UI {
 			};
 			pathway.Sides.Add(side);
 			AddAllDifficulties(side, "Pathway", "Two");
+
 			// Pathway dashless
 			side = new RunOptionsILSide() {
 				Label = Dialog.Clean("Head2Head_Rando_nodash"),
@@ -207,6 +210,7 @@ namespace Celeste.Mod.Head2Head.UI {
 			};
 			pathway.Sides.Add(side);
 			AddAllDifficulties(side, "Pathway", "Zero");
+
 			// Pathway Weekly
 			side = new RunOptionsILSide() {
 				Label = Dialog.Clean("Head2Head_Rando_WeeklySeed"),
@@ -225,8 +229,14 @@ namespace Celeste.Mod.Head2Head.UI {
 				IconPath = "menu/skulls/skullGold",
 				CustomTemplate = RandomizerTemplate("Weekly Pathway - Expert", "Pathway", "Expert", "Custom"),  // TODO (!!) Tokenize
 			});
+			side.Categories.Add(new RunOptionsILCategory() {
+				Title = "Dashless",  // TODO (!!) Tokenize
+				IconPath = "menu/skulls/skullRed",
+				CustomTemplate = RandomizerTemplate("Weekly Pathway - Dashless", "Pathway", "Normal", "Custom", "None"),  // TODO (!!) Tokenize
+			});
 
 			//////////////////////////////////////////////////////////////////////
+
 			// Labyrinth "chapter"
 			RunOptionsILChapter labyrinth = new RunOptionsILChapter();
 			labyrinth.Title = "Labyrinth Randomizer";  // TODO (!!) tokenize
@@ -241,6 +251,7 @@ namespace Celeste.Mod.Head2Head.UI {
 			};
 			labyrinth.Sides.Add(side);
 			AddAllDifficulties(side, "Labyrinth", "One");
+
 			// Labyrinth 2 dash
 			side = new RunOptionsILSide() {
 				Label = Dialog.Clean("Head2Head_Rando_twodash"),
@@ -250,6 +261,7 @@ namespace Celeste.Mod.Head2Head.UI {
 			};
 			labyrinth.Sides.Add(side);
 			AddAllDifficulties(side, "Labyrinth", "Two");
+
 			// Labyrinth dashless
 			side = new RunOptionsILSide() {
 				Label = Dialog.Clean("Head2Head_Rando_nodash"),
@@ -259,6 +271,7 @@ namespace Celeste.Mod.Head2Head.UI {
 			};
 			labyrinth.Sides.Add(side);
 			AddAllDifficulties(side, "Labyrinth", "Zero");
+
 			// Labyrinth Weekly
 			side = new RunOptionsILSide() {
 				Label = Dialog.Clean("Head2Head_Rando_WeeklySeed"),
@@ -277,8 +290,11 @@ namespace Celeste.Mod.Head2Head.UI {
 				IconPath = "menu/skulls/skullGold",
 				CustomTemplate = RandomizerTemplate("Weekly Labyrinth - Expert", "Labyrinth", "Expert", "Custom"),  // TODO (!!) Tokenize
 			});
-
-
+			side.Categories.Add(new RunOptionsILCategory() {
+				Title = "Dashless",  // TODO (!!) Tokenize
+				IconPath = "menu/skulls/skullRed",
+				CustomTemplate = RandomizerTemplate("Weekly Labyrinth - Dashless", "Labyrinth", "Normal", "Custom", "None"),  // TODO (!!) Tokenize
+			});
 		}
 
 		private static void AddAllDifficulties(RunOptionsILSide side, string type, string dashes) {

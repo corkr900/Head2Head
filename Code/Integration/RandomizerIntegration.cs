@@ -75,15 +75,6 @@ namespace Celeste.Mod.Head2Head.Integration {
 					f_RandoModule_StartMe.SetValue(null, key);
 				};
 
-				//RandoModule_StartMe_Get = () => {
-				//	return (AreaKey?)f_RandoModule_StartMe.GetValue(null);
-				//};
-
-				//RandoModule_SavedData_SavedSettings_Set = (object randoModuleInstance, object settings) => {
-				//	object SavedData = p_RandoModule_SavedData.GetValue(randoModuleInstance);
-				//	p_RandoModuleSettings_SavedSettings.SetValue(SavedData, settings);
-				//};
-
 				RandomizerLoaded = true;
 			}
 			catch(Exception e) {
@@ -136,7 +127,7 @@ namespace Celeste.Mod.Head2Head.Integration {
 				dd_settings.Set("Length", MapLengthEnum.ToVal(MapLength));
 				dd_settings.Set("Lights", ShineLightsEnum.ToVal(ShineLights));
 				dd_settings.Set("Darkness", DarknessEnum.ToVal(Darkness));
-				dd_settings.Set("Strawberriesy", StrawberryDensityEnum.ToVal(StrawberryDensity));
+				dd_settings.Set("Strawberries", StrawberryDensityEnum.ToVal(StrawberryDensity));
 				return settings;
 			}
 

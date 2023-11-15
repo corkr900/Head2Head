@@ -29,11 +29,19 @@ namespace Celeste.Mod.Head2Head.Shared {
 
         public RandomizerIntegration.SettingsBuilder RandoSettingsBuilder;
 
-		#endregion
+        #endregion
 
-		#region Fullgame Category Flags
+        #region Fullgame Category Flags
 
-		public bool UseFreshSavefile = false;
+        private bool _changeSavefile = false;
+		public bool ChangeSavefile {
+            get {
+                return _changeSavefile || HasRandomizerObjective;
+            }
+            set {
+                _changeSavefile = value;
+            }
+        }
         public bool AllowCheatMode = false;
 
         #endregion
@@ -485,7 +493,7 @@ namespace Celeste.Mod.Head2Head.Shared {
             d.SetState_NoUpdate((MatchState)Enum.Parse(typeof(MatchState), reader.ReadString()));
             d.CategoryDisplayNameOverride = reader.ReadString();
             d.RequiredRole = reader.ReadString();
-            d.UseFreshSavefile = reader.ReadBoolean();
+            d.ChangeSavefile = reader.ReadBoolean();
             d.AllowCheatMode = reader.ReadBoolean();
             d.BeginInstant = reader.ReadDateTime();
 
@@ -523,7 +531,7 @@ namespace Celeste.Mod.Head2Head.Shared {
             writer.Write(m.State.ToString() ?? "");
             writer.Write(m.CategoryDisplayNameOverride ?? "");
             writer.Write(m.RequiredRole ?? "");
-            writer.Write(m.UseFreshSavefile);
+            writer.Write(m.ChangeSavefile);
             writer.Write(m.AllowCheatMode);
             writer.Write(m.BeginInstant);
             writer.Write(m.RandoSettingsBuilder != null);

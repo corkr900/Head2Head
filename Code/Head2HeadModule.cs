@@ -33,11 +33,12 @@ namespace Celeste.Mod.Head2Head {
 	public class Head2HeadModule : EverestModule {
 		// Constants
 		private const int START_TIMER_LEAD_MS = 5000;
+		private const int DEBUG_SAVEFILE = -1;
 		internal const string BTA_MATCH_PASS = "BTAMatchPass";
 		internal int MatchTimeoutMinutes = 15;
 
 		// Constants that might change in the future
-		public static readonly string ProtocolVersion = "1_1_16";
+		public static readonly string ProtocolVersion = "1_1_17";
 
 		// Other static stuff
 		public static Head2HeadModule Instance { get; private set; }
@@ -588,13 +589,14 @@ namespace Celeste.Mod.Head2Head {
 		}
 
 		private void OnSaveDataStart(On.Celeste.SaveData.orig_Start orig, SaveData data, int slot) {
-			if (PlayerStatus.Current.IsInMatch(false) && !PlayerStatus.Current.CurrentMatch.HasRandomizerObjective) {
+			if (PlayerStatus.Current.IsInMatch(false)) {
 				int matchslot = PlayerStatus.Current.GetMatchSaveFile();
 				if (matchslot != int.MinValue && matchslot != slot) {
 					PlayerStatus.Current.CurrentMatch?.PlayerDNF(DNFReason.ChangeFile);
 				}
 			}
 			orig(data, slot);
+			Engine.Commands.Log($"Entered savefile: {slot}");  // TODO (!!!) remove this
 			ActionLogger.EnteredSavefile();
 		}
 
@@ -635,7 +637,7 @@ namespace Celeste.Mod.Head2Head {
 		public static int OnSaveDataGetUnlockedAreas_Safe(Func<SaveData, int> orig, SaveData self) {
 			// Show all chapters in file select when in IL match so that RTM doesnt cause issues in a fresh savefile
 			MatchDefinition def = PlayerStatus.Current.CurrentMatch;
-			if (def != null && !def.UseFreshSavefile && def.GetPlayerResultCat(PlayerID.MyIDSafe) == ResultCategory.InMatch) {
+			if (def != null && !def.ChangeSavefile && def.GetPlayerResultCat(PlayerID.MyIDSafe) == ResultCategory.InMatch) {
 				return self.LevelSetStats.AreaOffset + self.LevelSetStats.MaxArea;
 			}
 			else return orig(self);
@@ -645,7 +647,7 @@ namespace Celeste.Mod.Head2Head {
 			MatchDefinition def = PlayerStatus.Current.CurrentMatch;
 			if (def != null && def.GetPlayerResultCat(PlayerID.MyIDSafe) == ResultCategory.InMatch) {
 				// Don't update the unlocked areas while in IL match because we're exposing all of them anyway
-				if (!def.UseFreshSavefile) return;
+				if (!def.ChangeSavefile) return;
 				// Figure out what was unlocked and send it to PlayerStatus
 				int minCheck = self.UnlockedAreas_Safe + 1 + self.LevelSetStats.AreaOffset;
 				int maxCheck = Calc.Clamp(val, 0, self.LevelSetStats.MaxArea - 1) + self.LevelSetStats.AreaOffset;
@@ -1034,7 +1036,7 @@ namespace Celeste.Mod.Head2Head {
 			if (!CanBuildMatch()) return false;
 			if (buildingMatch == null) return false;
 			if (buildingMatch.Phases.Count == 0) return false;
-			if (buildingMatch.UseFreshSavefile && !Role.AllowFullgame()) return false;
+			if (buildingMatch.ChangeSavefile && !Role.AllowFullgame()) return false;
 			return true;
 		}
 
@@ -1166,7 +1168,7 @@ namespace Celeste.Mod.Head2Head {
 				Logger.Log(LogLevel.Verbose, "Head2Head", "You need to build a match before staging");
 				return;
 			}
-			if (buildingMatch.UseFreshSavefile && !Role.AllowFullgame()) {
+			if (buildingMatch.ChangeSavefile && !Role.AllowFullgame()) {
 				Logger.Log(LogLevel.Verbose, "Head2Head", "Your role prevents creating full-game a match");
 				return;
 			}
@@ -1481,14 +1483,19 @@ namespace Celeste.Mod.Head2Head {
 			if (def.State != MatchState.InProgress) yield break;
 			if (!isRejoin) {
 				PlayerStatus.Current.FileSlotBeforeMatchStart = global::Celeste.SaveData.Instance.FileSlot;
-				if (def.UseFreshSavefile) {
-					int slot = FindNextUnusedSlot();
-					if (slot >= 0) {
-						Util.SafeCreateAndSwitchFile(slot, false, false);
+				if (def.ChangeSavefile) {
+					if (def.HasRandomizerObjective) {
+						Util.SafeCreateAndSwitchFile(DEBUG_SAVEFILE, false, false);
 					}
 					else {
-						Logger.Log(LogLevel.Warn, "Head2Head", "Could not find a valid savefile slot for fullgame head 2 head match");
-						yield break;
+						int slot = FindNextUnusedSlot();
+						if (slot >= 0) {
+							Util.SafeCreateAndSwitchFile(slot, false, false);
+						}
+						else {
+							Logger.Log(LogLevel.Warn, "Head2Head", "Could not find a valid savefile slot for fullgame head 2 head match");
+							yield break;
+						}
 					}
 				}
 				PlayerStatus.Current.MatchStarted();
@@ -1525,7 +1532,7 @@ namespace Celeste.Mod.Head2Head {
 			if (args.MatchCompleted)
 			{
 				ActionLogger.CompletedMatch();
-				if (args.MatchDef.UseFreshSavefile) {
+				if (args.MatchDef.ChangeSavefile) {
 					returnToSlot = PlayerStatus.Current.FileSlotBeforeMatchStart;
 				}
 				autoLaunchArea = GlobalAreaKey.Head2HeadLobby;

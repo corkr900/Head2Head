@@ -192,7 +192,11 @@ namespace Celeste.Mod.Head2Head.Shared {
 		}
 
 		internal static bool SafeCreateAndSwitchFile(int slot, bool assist, bool variant) {
-			if (UserIO.Open(UserIO.Mode.Read)) {
+			if (slot == -1) {
+				SaveData.InitializeDebugMode();
+				return true;
+			}
+			else if (UserIO.Open(UserIO.Mode.Read)) {
 				string filepath = SaveData.GetFilename(slot);
 				if (UserIO.Exists(filepath)) {
 					UserIO.Close();

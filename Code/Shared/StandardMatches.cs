@@ -330,7 +330,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			MatchDefinition def = new MatchDefinition() {
 				Owner = PlayerID.MyID ?? PlayerID.Default,
 				CreationInstant = SyncedClock.Now,
-				UseFreshSavefile = true,
+				ChangeSavefile = true,
 				AllowCheatMode = false,
 			};
 			def.Phases.Add(new MatchPhase() {
@@ -351,7 +351,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			MatchDefinition def = new MatchDefinition() {
 				Owner = PlayerID.MyID ?? PlayerID.Default,
 				CreationInstant = SyncedClock.Now,
-				UseFreshSavefile = true,
+				ChangeSavefile = true,
 				AllowCheatMode = false,
 			};
 			def.Phases.Add(new MatchPhase() {
@@ -376,7 +376,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			MatchDefinition def = new MatchDefinition() {
 				Owner = PlayerID.MyID ?? PlayerID.Default,
 				CreationInstant = SyncedClock.Now,
-				UseFreshSavefile = true,
+				ChangeSavefile = true,
 				AllowCheatMode = false,
 			};
 			def.Phases.Add(new MatchPhase() {
@@ -397,7 +397,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			MatchDefinition def = new MatchDefinition() {
 				Owner = PlayerID.MyID ?? PlayerID.Default,
 				CreationInstant = SyncedClock.Now,
-				UseFreshSavefile = true,
+				ChangeSavefile = true,
 				AllowCheatMode = false,
 			};
 			def.Phases.Add(new MatchPhase() {
@@ -423,7 +423,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			MatchDefinition def = new MatchDefinition() {
 				Owner = PlayerID.MyID ?? PlayerID.Default,
 				CreationInstant = SyncedClock.Now,
-				UseFreshSavefile = true,
+				ChangeSavefile = true,
 				AllowCheatMode = false,
 			};
 			def.Phases.Add(new MatchPhase() {
@@ -444,7 +444,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			MatchDefinition def = new MatchDefinition() {
 				Owner = PlayerID.MyID ?? PlayerID.Default,
 				CreationInstant = SyncedClock.Now,
-				UseFreshSavefile = true,
+				ChangeSavefile = true,
 				AllowCheatMode = false,
 			};
 			def.Phases.Add(new MatchPhase() {
@@ -465,7 +465,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			MatchDefinition def = new MatchDefinition() {
 				Owner = PlayerID.MyID ?? PlayerID.Default,
 				CreationInstant = SyncedClock.Now,
-				UseFreshSavefile = true,
+				ChangeSavefile = true,
 				AllowCheatMode = false,
 			};
 			def.Phases.Add(new MatchPhase() {
@@ -494,7 +494,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			MatchDefinition def = new MatchDefinition() {
 				Owner = PlayerID.MyID ?? PlayerID.Default,
 				CreationInstant = SyncedClock.Now,
-				UseFreshSavefile = true,
+				ChangeSavefile = true,
 				AllowCheatMode = false,
 			};
 			def.Phases.Add(new MatchPhase() {
@@ -515,7 +515,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			MatchDefinition def = new MatchDefinition() {
 				Owner = PlayerID.MyID ?? PlayerID.Default,
 				CreationInstant = SyncedClock.Now,
-				UseFreshSavefile = true,
+				ChangeSavefile = true,
 				AllowCheatMode = true,
 			};
 			def.Phases.Add(new MatchPhase() {
@@ -572,7 +572,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			MatchDefinition def = new MatchDefinition() {
 				Owner = PlayerID.MyID ?? PlayerID.Default,
 				CreationInstant = SyncedClock.Now,
-				UseFreshSavefile = true,
+				ChangeSavefile = true,
 				AllowCheatMode = true,
 			};
 			def.Phases.Add(new MatchPhase() {
@@ -629,7 +629,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			MatchDefinition def = new MatchDefinition() {
 				Owner = PlayerID.MyID ?? PlayerID.Default,
 				CreationInstant = SyncedClock.Now,
-				UseFreshSavefile = true,
+				ChangeSavefile = true,
 				AllowCheatMode = true,
 			};
 			def.Phases.Add(new MatchPhase() {

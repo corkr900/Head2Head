@@ -56,7 +56,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		}
 
 		public static bool AllowAutoStage(MatchDefinition def) {
-			if (def.UseFreshSavefile && !AllowFullgame()) return false;
+			if (def.ChangeSavefile && !AllowFullgame()) return false;
 			bool hasReq = !string.IsNullOrEmpty(def.RequiredRole);
 			switch (role) {
 				default:
@@ -69,7 +69,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		}
 
 		public static bool AllowMatchJoin(MatchDefinition def) {
-			if (def.UseFreshSavefile && !AllowFullgame()) return false;
+			if (def.ChangeSavefile && !AllowFullgame()) return false;
 			bool hasReq = !string.IsNullOrEmpty(def.RequiredRole);
 			switch (role) {
 				default:
