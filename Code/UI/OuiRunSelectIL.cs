@@ -136,7 +136,8 @@ namespace Celeste.Mod.Head2Head.UI {
 			for (int id = 0; id < count; id++) {
 				AreaData areaData = AreaData.Get(id);
 				if (areaData == null) continue;
-				string set = areaData.GetLevelSet();
+				if (CollabUtils2Integration.IsCollabGym?.Invoke(areaData.SID) ?? false) continue;
+				string set = areaData.LevelSet;
 				if (string.IsNullOrEmpty(set)) continue;
 				if (set == "Head2Head") continue;
 
@@ -150,6 +151,9 @@ namespace Celeste.Mod.Head2Head.UI {
 
 				// Hide non-lobby collab maps
 				if (CollabUtils2Integration.IsCollabMap?.Invoke(areaData.SID) ?? false) {
+					setOption.Hidden = true;
+				}
+				else if (CollabUtils2Integration.IsCollabGym?.Invoke(areaData.SID) ?? false) {
 					setOption.Hidden = true;
 				}
 
