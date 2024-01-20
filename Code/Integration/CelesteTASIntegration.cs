@@ -15,7 +15,7 @@ namespace Celeste.Mod.Head2Head.Integration {
 		private static Type Manager;
 		private static MethodInfo Manager_EnableRun;
 
-		private static IDetour Hook_Manager_EnableRun;
+		private static Hook Hook_Manager_EnableRun;
 
 		internal static void Load() {
 			try {

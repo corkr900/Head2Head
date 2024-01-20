@@ -17,8 +17,8 @@ namespace Celeste.Mod.Head2Head.Integration {
 		internal static Type MiniHeart;
 		internal static Type ReturnToLobbyHelper;
 
-		private static IDetour hook_MiniHeart_SmashRoutine;
-		private static IDetour hook_ReturnToLobbyHelper_onLevelEnterGo;
+		private static Hook hook_MiniHeart_SmashRoutine;
+		private static Hook hook_ReturnToLobbyHelper_onLevelEnterGo;
 
 		internal static void Load() {
 			try {

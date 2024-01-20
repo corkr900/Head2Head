@@ -16,9 +16,9 @@ namespace Celeste.Mod.Head2Head.Integration {
 		private static MethodInfo StateManager_LoadState;
 		private static MethodInfo TeleportRoomUtils_TeleportTo;
 
-		private static IDetour Hook_StateManager_SaveState;
-		private static IDetour Hook_StateManager_LoadState;
-		private static IDetour Hook_TeleportRoomUtils_TeleportTo;
+		private static Hook Hook_StateManager_SaveState;
+		private static Hook Hook_StateManager_LoadState;
+		private static Hook Hook_TeleportRoomUtils_TeleportTo;
 
 		internal static void Load() {
 			try {

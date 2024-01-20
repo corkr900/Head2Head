@@ -350,7 +350,7 @@ namespace Celeste.Mod.Head2Head.UI {
 					OuiRunSelectIL.GetChapterOption(lobby, ref ILSelector.LastLevelSetIndex, ref ILSelector.LastChapterIndex);
 				}
 				Overworld.Goto<OuiRunSelectILCollabMapSelect>();
-				Overworld.Goto<OuiMapSearch>();
+				Overworld.Goto<OuiRunSelectILMapSearch>();
 			}
 			else if (instantClose) {
 				GoBack();

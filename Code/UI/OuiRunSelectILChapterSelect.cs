@@ -16,7 +16,7 @@ using System.Threading.Tasks;
 namespace Celeste.Mod.Head2Head.UI {
 	class OuiRunSelectILChapterSelect : Oui {
 
-		private List<OuiChapterSelectIcon> icons = new List<OuiChapterSelectIcon>();
+		private List<OuiRunSelectILChapterIcon> icons = new List<OuiRunSelectILChapterIcon>();
 		private Dictionary<int, OuiRunSelectILChapterIcon> specialIcons = new Dictionary<int, OuiRunSelectILChapterIcon>();
 		private int indexToSnap = -1;
 		private const int scarfSegmentSize = 2;
@@ -163,13 +163,13 @@ namespace Celeste.Mod.Head2Head.UI {
 				if (Input.Pause.Pressed || Input.ESC.Pressed) {
 					Audio.Play("event:/ui/main/button_select");
 					Audio.Play("event:/ui/main/whoosh_large_in");
-					Overworld.Goto<OuiMapList>().OuiIcons = icons;
+					Overworld.Goto<OuiRunSelectILMapList>().OuiIcons = icons;
 					return;
 				}
 				if (Input.QuickRestart.Pressed) {
 					Audio.Play("event:/ui/main/button_select");
 					Audio.Play("event:/ui/main/whoosh_large_in");
-					Overworld.Goto<OuiMapSearch>().OuiIcons = icons;
+					Overworld.Goto<OuiRunSelectILMapSearch>().OuiIcons = icons;
 					return;
 				}
 			}

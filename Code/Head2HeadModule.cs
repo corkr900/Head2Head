@@ -53,11 +53,11 @@ namespace Celeste.Mod.Head2Head {
 		}
 		private static string _version = null;
 
-		private static IDetour hook_Strawberry_orig_OnCollect;
-		private static IDetour hook_OuiChapterSelectIcon_Get_IdlePosition;
-		private static IDetour hook_SaveData_Get_UnlockedAreas_Safe;
-		private static IDetour hook_SaveData_Set_UnlockedAreas_Safe;
-		private static IDetour hook_HeartGemDoor_Get_HeartGems;
+		private static Hook hook_Strawberry_orig_OnCollect;
+		private static Hook hook_OuiChapterSelectIcon_Get_IdlePosition;
+		private static Hook hook_SaveData_Get_UnlockedAreas_Safe;
+		private static Hook hook_SaveData_Set_UnlockedAreas_Safe;
+		private static Hook hook_HeartGemDoor_Get_HeartGems;
 
 		// #######################################################
 
@@ -153,10 +153,6 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.UnlockEverythingThingy.EnteredCheat += OnUnlockEverythingThingyEnteredCheat;
 			On.Celeste.Editor.MapEditor.ctor += onDebugScreenOpened;
 			On.Celeste.Editor.MapEditor.LoadLevel += onDebugTeleport;
-			On.Celeste.Mod.UI.OuiMapList.Update += OnMapListUpdate;
-			On.Celeste.Mod.UI.OuiMapList.Inspect += OnMapListInspect;
-			On.Celeste.Mod.UI.OuiMapSearch.Inspect += OnMapSearchInspect;
-			On.Celeste.Mod.UI.OuiMapSearch.cleanExit += OnMapSearchCleanExit;
 			// Everest Events
 			Everest.Events.Level.OnLoadEntity += OnLevelLoadEntity;
 			Everest.Events.Level.OnExit += onLevelExit;
@@ -183,6 +179,8 @@ namespace Celeste.Mod.Head2Head {
 			RandomizerIntegration.Load();
 
 			SyncedClock.DoClockSync();
+
+
 		}
 
 		public override void Unload() {
@@ -237,10 +235,6 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.UnlockEverythingThingy.EnteredCheat -= OnUnlockEverythingThingyEnteredCheat;
 			On.Celeste.Editor.MapEditor.ctor -= onDebugScreenOpened;
 			On.Celeste.Editor.MapEditor.LoadLevel -= onDebugTeleport;
-			On.Celeste.Mod.UI.OuiMapList.Update -= OnMapListUpdate;
-			On.Celeste.Mod.UI.OuiMapList.Inspect -= OnMapListInspect;
-			On.Celeste.Mod.UI.OuiMapSearch.cleanExit -= OnMapSearchCleanExit;
-			On.Celeste.Mod.UI.OuiMapSearch.Inspect -= OnMapSearchInspect;
 			// Everest Events
 			Everest.Events.Level.OnLoadEntity -= OnLevelLoadEntity;
 			Everest.Events.Level.OnExit -= onLevelExit;
@@ -428,22 +422,6 @@ namespace Celeste.Mod.Head2Head {
 			orig(self, area);
 			PlayerStatus.Current.CassetteCollected(new GlobalAreaKey(area));
 			DoPostPhaseAutoLaunch(true, MatchObjectiveType.CassetteCollect);  // TODO find a better hook for returning to lobby after cassette collection
-		}
-
-		private void OnMapSearchCleanExit(On.Celeste.Mod.UI.OuiMapSearch.orig_cleanExit orig, OuiMapSearch self) {
-			ILSelector.OnMapSearchCleanExit(orig, self);
-		}
-
-		private void OnMapSearchInspect(On.Celeste.Mod.UI.OuiMapSearch.orig_Inspect orig, OuiMapSearch self, AreaData area, AreaMode mode) {
-			ILSelector.OnMapSearchInspect(orig, self, area, mode);
-		}
-
-		private void OnMapListUpdate(On.Celeste.Mod.UI.OuiMapList.orig_Update orig, OuiMapList self) {
-			ILSelector.OnMapListUpdate(orig, self);
-		}
-
-		private void OnMapListInspect(On.Celeste.Mod.UI.OuiMapList.orig_Inspect orig, OuiMapList self, AreaData area, AreaMode mode) {
-			ILSelector.OnMapListInspect(orig, self, area, mode);
 		}
 
 		private void OnOuiChapterSelectIconShow(On.Celeste.OuiChapterSelectIcon.orig_Show orig, OuiChapterSelectIcon self) {

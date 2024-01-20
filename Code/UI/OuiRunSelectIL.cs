@@ -9,9 +9,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using static Celeste.GaussianBlur;
-using static Celeste.Tentacles;
-using static MonoMod.InlineRT.MonoModRule;
 
 namespace Celeste.Mod.Head2Head.UI {
 	public class OuiRunSelectIL : Oui {
