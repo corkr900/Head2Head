@@ -92,27 +92,35 @@ namespace Celeste.Mod.Head2Head.UI {
 			return SelectableLevelSets[levelSetIdx].Chapters.Count;
 		}
 
-		internal static RunOptionsLevelSet PreviousLevelSet(int levelSetIn, ref int levelSetOut) {
+		internal static RunOptionsLevelSet PreviousLevelSet(int levelSetIn, ref int levelSetOut, bool includeHidden = false) {
 			if (SelectableLevelSets.Count == 0) {
 				levelSetOut = 0;
 				return null;
 			}
-			if (levelSetIn == 0) {
-				levelSetIn = SelectableLevelSets.Count;
+			levelSetOut = levelSetIn;
+			while (--levelSetOut != levelSetIn) {
+				if (levelSetOut < 0) {
+					levelSetOut = SelectableLevelSets.Count - 1;
+				}
+				RunOptionsLevelSet set = SelectableLevelSets[levelSetOut];
+				if (includeHidden || !set.Hidden) return set;
 			}
-			levelSetOut = levelSetIn - 1;
 			return SelectableLevelSets[levelSetOut];
 		}
 
-		internal static RunOptionsLevelSet NextLevelSet(int levelSetIn, ref int levelSetOut) {
+		internal static RunOptionsLevelSet NextLevelSet(int levelSetIn, ref int levelSetOut, bool includeHidden = false) {
 			if (SelectableLevelSets.Count == 0) {
 				levelSetOut = 0;
 				return null;
 			}
-			if (levelSetIn == SelectableLevelSets.Count - 1) {
-				levelSetIn = -1;
+			levelSetOut = levelSetIn;
+			while (++levelSetOut != levelSetIn) {
+				if (levelSetOut >= SelectableLevelSets.Count) {
+					levelSetOut = 0;
+				}
+				RunOptionsLevelSet set = SelectableLevelSets[levelSetOut];
+				if (includeHidden || !set.Hidden) return set;
 			}
-			levelSetOut = levelSetIn + 1;
 			return SelectableLevelSets[levelSetOut];
 		}
 
@@ -141,11 +149,8 @@ namespace Celeste.Mod.Head2Head.UI {
 				}
 
 				// Hide non-lobby collab maps
-				if (CollabUtils2Integration.IsCollabUtils2Installed) {
-					if (!string.IsNullOrEmpty(CollabUtils2Integration.GetCollabNameForSID?.Invoke(areaData.SID))
-						&& string.IsNullOrEmpty(CollabUtils2Integration.GetLobbyLevelSet?.Invoke(areaData.SID))) {
-						setOption.Hidden = true;
-					}
+				if (CollabUtils2Integration.IsCollabMap?.Invoke(areaData.SID) ?? false) {
+					setOption.Hidden = true;
 				}
 
 				// Add stuff about the level
@@ -419,7 +424,7 @@ namespace Celeste.Mod.Head2Head.UI {
 		public int SpecialID = 0;
 		public string CollabLobby {
 			get {
-				return Data == null ? null : CollabUtils2Integration.GetLobbyForLevelSet?.Invoke(Data.LevelSet);
+				return Data == null ? null : CollabUtils2Integration.GetLobbyForMap?.Invoke(Data.SID);
 			}
 		}
 		public string CollabLevelSetForLobby {

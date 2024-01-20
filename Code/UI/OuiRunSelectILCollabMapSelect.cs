@@ -144,6 +144,7 @@ namespace Celeste.Mod.Head2Head.UI {
 		private float scrollTarget;
 		private float scrollLerp;
 		private float scrollCurrent;
+		private string currentLobbySID;
 
 		public override bool IsStart(Overworld overworld, Overworld.StartMode start) => false;
 
@@ -173,7 +174,6 @@ namespace Celeste.Mod.Head2Head.UI {
 			for (int i = 0; i < count; i++) {
 				AreaData data = AreaData.Areas[i];
 				string set = data.LevelSet;
-				if (!(CollabUtils2Integration.IsCollabLevelSet?.Invoke(set) ?? false)) continue;  // Not a collab lobby
 				string lobby = CollabUtils2Integration.GetLobbyForLevelSet?.Invoke(set);
 				if (string.IsNullOrEmpty(lobby) || !maps.ContainsKey(lobby)) continue;
 				maps[lobby].Add(CollabMap.Add(scene, i, YPosBase + maps[lobby].Count * YPosStep));
@@ -182,9 +182,13 @@ namespace Celeste.Mod.Head2Head.UI {
 
 		public override IEnumerator Enter(Oui from) {
 			var option = OuiRunSelectIL.GetChapterOption(ILSelector.LastLevelSetIndex, ILSelector.LastChapterIndex);
-			string levelSet = option.CollabLevelSetForLobby;
-			ILSelector.LastLevelSetIndex = OuiRunSelectIL.LevelSetToIdx(levelSet);
-			ILSelector.LastChapterIndex = 0;
+			currentLobbySID = option.Data.SID;
+			if (string.IsNullOrEmpty(currentLobbySID)) {
+				Logger.Log(LogLevel.Error, "Head2Head", $"Entered collab level select OUI for non-lobby base map: {option?.Data?.SID}");
+				Engine.Commands.Log($"Entered collab level select OUI for non-lobby base map: {option?.Data?.SID}");
+				Overworld.Goto<OuiChapterPanel>();
+				yield break;
+			}
 			foreach (KeyValuePair<string, List<CollabMap>> kvp in maps) {
 				foreach (CollabMap map in kvp.Value) {
 					map.Show = false;
@@ -192,17 +196,23 @@ namespace Celeste.Mod.Head2Head.UI {
 					map.Enabled = kvp.Key == kvp.Key;
 				}
 			}
-			if (maps.ContainsKey(option.Data.SID)) {
-				hovered = Calc.Clamp(hovered, 0, maps[option.Data.SID].Count - 1);
-				foreach (CollabMap map in maps[option.Data.SID]) {
+			if (maps.ContainsKey(currentLobbySID)) {
+				hovered = Calc.Clamp(hovered, 0, maps[currentLobbySID].Count - 1);
+				foreach (CollabMap map in maps[currentLobbySID]) {
 					map.Enabled = true;
 					map.Show = true;
 					map.Scroll = scrollCurrent;
-					if (maps[option.Data.SID].IndexOf(map) == hovered) {
+					if (maps[currentLobbySID].IndexOf(map) == hovered) {
 						SetInitialHover(map);
 					}
 					yield return 0.02f;
 				}
+			}
+			else {
+				Logger.Log(LogLevel.Error, "Head2Head", $"Lobby's data not found: {option?.Data?.LevelSet}");
+				Engine.Commands.Log($"Lobby's data not found: {option?.Data?.LevelSet}");
+				Overworld.Goto<OuiChapterPanel>();
+				yield break;
 			}
 		}
 
@@ -230,7 +240,7 @@ namespace Celeste.Mod.Head2Head.UI {
 				scrollCurrent = Calc.LerpClamp(scrollBase, scrollTarget, Ease.CubeInOut(scrollLerp));
 				pointer.Scroll = scrollCurrent;
 				RunOptionsILChapter option = OuiRunSelectIL.GetChapterOption(ILSelector.LastLevelSetIndex, ILSelector.LastChapterIndex);
-				foreach (CollabMap map in maps[option.Data.SID]) {
+				foreach (CollabMap map in maps[currentLobbySID]) {
 					map.Scroll = scrollCurrent;
 				}
 
@@ -238,7 +248,7 @@ namespace Celeste.Mod.Head2Head.UI {
 					Audio.Play("event:/ui/world_map/chapter/tab_roll_left");
 					SetHover(hovered - 1);
 				}
-				else if (Input.MenuDown.Pressed && hovered < maps[option.Data.SID].Count - 1) {
+				else if (Input.MenuDown.Pressed && hovered < maps[currentLobbySID].Count - 1) {
 					Audio.Play("event:/ui/world_map/chapter/tab_roll_right");
 					SetHover(hovered + 1);
 				}
@@ -248,7 +258,7 @@ namespace Celeste.Mod.Head2Head.UI {
 				}
 				else if (Input.MenuConfirm.Pressed) {
 					Audio.Play("event:/ui/world_map/icon/select");
-					ILSelector.LastChapterIndex = hovered;
+					OuiRunSelectIL.GetChapterOption(maps[currentLobbySID][hovered].LocalID, ref ILSelector.LastLevelSetIndex, ref ILSelector.LastChapterIndex);
 					Overworld.Goto<OuiRunSelectILChapterPanel>();
 				}
 			}
@@ -265,7 +275,7 @@ namespace Celeste.Mod.Head2Head.UI {
 
 		private void SetHover(int newHover) {
 			RunOptionsILChapter option = OuiRunSelectIL.GetChapterOption(ILSelector.LastLevelSetIndex, ILSelector.LastChapterIndex);
-			List<CollabMap> list = maps[option.Data.SID];
+			List<CollabMap> list = maps[currentLobbySID];
 			list[hovered].Hovered = false;
 			hovered = newHover;
 			list[hovered].Hovered = true;
@@ -286,7 +296,7 @@ namespace Celeste.Mod.Head2Head.UI {
 				return scrollTarget;
 			}
 			RunOptionsILChapter option = OuiRunSelectIL.GetChapterOption(ILSelector.LastLevelSetIndex, ILSelector.LastChapterIndex);
-			float regionHeight = YPosBase * 2 + YPosStep * maps[option.Data.SID].Count;
+			float regionHeight = YPosBase * 2 + YPosStep * maps[currentLobbySID].Count;
 			float minScroll = 0;
 			float maxScroll = Calc.Clamp(regionHeight - screenHeight, 0, float.MaxValue);
 

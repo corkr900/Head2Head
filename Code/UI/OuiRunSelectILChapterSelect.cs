@@ -258,8 +258,8 @@ namespace Celeste.Mod.Head2Head.UI {
 					else if (Input.MenuConfirm.Pressed) {
 						Audio.Play("event:/ui/world_map/icon/select");
 						RunOptionsILChapter option = OuiRunSelectIL.GetChapterOption(ILSelector.LastLevelSetIndex, ILSelector.LastChapterIndex);
-						string lobby = option.CollabLobby;
-						if (string.IsNullOrEmpty(lobby)) {
+						string levelSet = option.CollabLevelSetForLobby;
+						if (string.IsNullOrEmpty(levelSet)) {
 							// not a collab lobby
 							Overworld.Goto<OuiRunSelectILChapterPanel>();
 						}
