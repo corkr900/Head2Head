@@ -31,12 +31,12 @@ namespace Celeste.Mod.Head2Head.Integration {
 				if (MiniHeart != null) {
 					hook_MiniHeart_SmashRoutine = new Hook(
 						MiniHeart.GetMethod("SmashRoutine", BindingFlags.NonPublic | BindingFlags.Instance),
-						typeof(CollabUtils2Integration).GetMethod("OnMiniHeartCollect"));
+						typeof(CollabUtils2Integration).GetMethod(nameof(OnMiniHeartCollect)));
 				}
 				if (ReturnToLobbyHelper != null) {
 					hook_ReturnToLobbyHelper_onLevelEnterGo = new Hook(
 						ReturnToLobbyHelper.GetMethod("onLevelEnterGo", BindingFlags.NonPublic | BindingFlags.Static),
-						typeof(CollabUtils2Integration).GetMethod("OnCollabOnLevelEnterGo"));
+						typeof(CollabUtils2Integration).GetMethod(nameof(OnCollabOnLevelEnterGo)));
 				}
 
 				// Misc

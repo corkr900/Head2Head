@@ -21,7 +21,7 @@ namespace Celeste.Mod.Head2Head.Integration {
 		private static Type t_RandoSettings;
 		private static MethodInfo m_RandoLogic_GenerateMap = null;
 		private static PropertyInfo p_RandoModule_SavedData = null;
-		private static PropertyInfo p_RandoModuleSettings_SavedSettings = null;
+		//private static PropertyInfo p_RandoModuleSettings_SavedSettings = null;
 		private static FieldInfo f_RandoModule_StartMe = null;
 		private static FieldInfo f_RandoModule_Instance = null;
 
@@ -55,7 +55,7 @@ namespace Celeste.Mod.Head2Head.Integration {
 				f_RandoModule_StartMe = t_RandoModule.GetField("StartMe", BindingFlags.Static | BindingFlags.Public);
 
 				Type t_RandoModuleSettings = p_RandoModule_SavedData.PropertyType;
-				p_RandoModuleSettings_SavedSettings = t_RandoModuleSettings.GetProperty("SavedSettings", BindingFlags.Instance | BindingFlags.Public);
+				//p_RandoModuleSettings_SavedSettings = t_RandoModuleSettings.GetProperty("SavedSettings", BindingFlags.Instance | BindingFlags.Public);
 
 				SeedTypeEnum = new ExternalEnum("Celeste.Mod.Randomizer.SeedType,Randomizer");
 				LogicTypeEnum = new ExternalEnum("Celeste.Mod.Randomizer.LogicType,Randomizer");
@@ -216,7 +216,7 @@ namespace Celeste.Mod.Head2Head.Integration {
 				yield return null;
 			}
 			if (newArea == null) {
-				Logger.Log(LogLevel.Error, "Head2Head", $"No Randomizer lever was generated. Launch will not proceed.");
+				Logger.Log(LogLevel.Error, "Head2Head", $"No Randomizer level was generated. Launch will not proceed.");
 				if (PlayerStatus.Current.IsInMatch(true)) {
 					PlayerStatus.Current.CurrentMatch?.PlayerDNF(DNFReason.RandomizerError);
 				}
