@@ -2,89 +2,61 @@
 using Celeste.Mod.Head2Head.Shared;
 using Celeste.Mod.Head2Head.UI;
 using Monocle;
+using MonoMod.ModInterop;
 using MonoMod.Utils;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using static Celeste.Mod.Head2Head.Integration.RandomizerIntegration;
 
 namespace Celeste.Mod.Head2Head.Integration {
+
+	[ModImportName("Randomizer.SettingsInterop")]
+	public static class RandomizerSettingsInterop {
+		public static Func<object> GetSettingsObject;
+		public static Action<object, AreaKey> EnableMap;
+		public static Action<object, IEnumerable<AreaKey>> EnableMaps;
+		public static Action<object> EnableVanillaMaps;
+		public static Action<object, string> SetSeed;
+		public static Action<object, string> SetRules;
+		public static Func<object, string, bool> SetSeedType;
+		public static Func<object, string, bool> SetAlgorithm;
+		public static Func<object, string, bool> SetDashes;
+		public static Func<object, string, bool> SetDifficulty;
+		public static Func<object, string, bool> SetDifficultyEagerness;
+		public static Func<object, string, bool> SetLength;
+		public static Func<object, string, bool> SetLights;
+		public static Func<object, string, bool> SetDarkness;
+		public static Func<object, string, bool> SetStrawberries;
+	}
+
+	[ModImportName("Randomizer.GenerationInterop")]
+	public static class RandomizerGenerationInterop {
+		public static Func<object, bool> Generate;
+		public static Func<bool> GenerationInProgress;
+		public static Func<bool> ReadyToLaunch;
+		public static Func<AreaKey?> GetGeneratedArea;
+		public static Func<bool> EnterGeneratedArea;
+	}
+
 	public class RandomizerIntegration {
 
-		public static bool RandomizerLoaded { get; private set; } = false;
-
-		private static Type t_RandoSettings;
-		private static MethodInfo m_RandoLogic_GenerateMap = null;
-		private static PropertyInfo p_RandoModule_SavedData = null;
-		//private static PropertyInfo p_RandoModuleSettings_SavedSettings = null;
-		private static FieldInfo f_RandoModule_StartMe = null;
-		private static FieldInfo f_RandoModule_Instance = null;
-
-		private static Func<object, AreaKey> RandoLogic_GenerateMap = null;
-		private static Action<AreaKey?> RandoModule_StartMe_Set = null;
-		//private static Func<AreaKey?> RandoModule_StartMe_Get = null;
-		//private static Action<object, object> RandoModule_SavedData_SavedSettings_Set = null;
-
-		internal static ExternalEnum SeedTypeEnum;
-		internal static ExternalEnum LogicTypeEnum;
-		internal static ExternalEnum MapLengthEnum;
-		internal static ExternalEnum NumDashesEnum;
-		internal static ExternalEnum DifficultyEnum;
-		internal static ExternalEnum DifficultyEagernessEnum;
-		internal static ExternalEnum ShineLightsEnum;
-		internal static ExternalEnum DarknessEnum;
-		internal static ExternalEnum StrawberryDensityEnum;
-
-		public static void Load() {
-			RandomizerLoaded = false;
-			try {
-				// Get all the types / fieldinfo / methodinfo necessary
-				t_RandoSettings = Type.GetType("Celeste.Mod.Randomizer.RandoSettings,Randomizer");
-
-				Type t_RandoLogic = Type.GetType("Celeste.Mod.Randomizer.RandoLogic,Randomizer");
-				m_RandoLogic_GenerateMap = t_RandoLogic.GetMethod("GenerateMap", BindingFlags.Static | BindingFlags.Public);
-
-				Type t_RandoModule = Type.GetType("Celeste.Mod.Randomizer.RandoModule,Randomizer");
-				p_RandoModule_SavedData = t_RandoModule.GetProperty("SavedData", BindingFlags.Instance | BindingFlags.Public);
-				f_RandoModule_Instance = t_RandoModule.GetField("Instance", BindingFlags.Static | BindingFlags.Public);
-				f_RandoModule_StartMe = t_RandoModule.GetField("StartMe", BindingFlags.Static | BindingFlags.Public);
-
-				Type t_RandoModuleSettings = p_RandoModule_SavedData.PropertyType;
-				//p_RandoModuleSettings_SavedSettings = t_RandoModuleSettings.GetProperty("SavedSettings", BindingFlags.Instance | BindingFlags.Public);
-
-				SeedTypeEnum = new ExternalEnum("Celeste.Mod.Randomizer.SeedType,Randomizer");
-				LogicTypeEnum = new ExternalEnum("Celeste.Mod.Randomizer.LogicType,Randomizer");
-				MapLengthEnum = new ExternalEnum("Celeste.Mod.Randomizer.MapLength,Randomizer");
-				NumDashesEnum = new ExternalEnum("Celeste.Mod.Randomizer.NumDashes,Randomizer");
-				DifficultyEnum = new ExternalEnum("Celeste.Mod.Randomizer.Difficulty,Randomizer");
-				DifficultyEagernessEnum = new ExternalEnum("Celeste.Mod.Randomizer.DifficultyEagerness,Randomizer");
-				ShineLightsEnum = new ExternalEnum("Celeste.Mod.Randomizer.ShineLights,Randomizer");
-				DarknessEnum = new ExternalEnum("Celeste.Mod.Randomizer.Darkness,Randomizer");
-				StrawberryDensityEnum = new ExternalEnum("Celeste.Mod.Randomizer.StrawberryDensity,Randomizer");
-
-				// Build the delegates for ease of use
-				RandoLogic_GenerateMap = (object settings) => {
-					return (AreaKey)m_RandoLogic_GenerateMap.Invoke(null, new object[] { settings });
-				};
-
-				RandoModule_StartMe_Set = (AreaKey? key) => {
-					f_RandoModule_StartMe.SetValue(null, key);
-				};
-
-				RandomizerLoaded = true;
-			}
-			catch(Exception e) {
-				RandomizerLoaded = false;
+		public static bool RandomizerLoaded {
+			get {
+				return RandomizerGenerationInterop.Generate != null
+					&& RandomizerSettingsInterop.GetSettingsObject != null;
 			}
 		}
 
-		internal static void Unload() {
-			RandomizerLoaded = false;
+		public static void Load() {
+			typeof(RandomizerGenerationInterop).ModInterop();
+			typeof(RandomizerSettingsInterop).ModInterop();
 		}
 
 		/// <summary>
@@ -113,54 +85,22 @@ namespace Celeste.Mod.Head2Head.Integration {
 			public object Build() {
 				if (!RandomizerLoaded) return null;
 
-				object settings = Activator.CreateInstance(t_RandoSettings);
-				DynamicData dd_settings = DynamicData.For(settings);
-				// Hardcoded setup
-				AddValidLevels(dd_settings);
-				dd_settings.Set("SeedType", SeedTypeEnum.ToVal("Custom"));
-				dd_settings.Set("Rules", "");
-				// Stuff that could actually change from one match to another
-				dd_settings.Set("Seed", Seed);
-				dd_settings.Set("Algorithm", LogicTypeEnum.ToVal(LogicType));
-				dd_settings.Set("Difficulty", DifficultyEnum.ToVal(Difficulty));
-				dd_settings.Set("Dashes", NumDashesEnum.ToVal(NumDashes));
-				dd_settings.Set("DifficultyEagerness", DifficultyEagernessEnum.ToVal(DifficultyEagerness));
-				dd_settings.Set("Length", MapLengthEnum.ToVal(MapLength));
-				dd_settings.Set("Lights", ShineLightsEnum.ToVal(ShineLights));
-				dd_settings.Set("Darkness", DarknessEnum.ToVal(Darkness));
-				dd_settings.Set("Strawberries", StrawberryDensityEnum.ToVal(StrawberryDensity));
+				object settings = RandomizerSettingsInterop.GetSettingsObject();
+				RandomizerSettingsInterop.EnableVanillaMaps(settings);
+				RandomizerSettingsInterop.SetSeedType(settings, "Custom");
+				RandomizerSettingsInterop.SetRules(settings, "");
+
+				RandomizerSettingsInterop.SetSeed(settings, Seed);
+				RandomizerSettingsInterop.SetAlgorithm(settings, LogicType);
+				RandomizerSettingsInterop.SetDifficulty(settings, Difficulty);
+				RandomizerSettingsInterop.SetDashes(settings, NumDashes);
+				RandomizerSettingsInterop.SetDifficultyEagerness(settings, DifficultyEagerness);
+				RandomizerSettingsInterop.SetLength(settings, MapLength);
+				RandomizerSettingsInterop.SetLights(settings, ShineLights);
+				RandomizerSettingsInterop.SetDarkness(settings, Darkness);
+				RandomizerSettingsInterop.SetStrawberries(settings, StrawberryDensity);
+
 				return settings;
-			}
-
-			private void AddValidLevels(DynamicData dd_Settings) {
-				dd_Settings.Invoke("EnableMap", new AreaKey(0, AreaMode.Normal));
-				dd_Settings.Invoke("EnableMap", new AreaKey(1, AreaMode.Normal));
-				dd_Settings.Invoke("EnableMap", new AreaKey(2, AreaMode.Normal));
-				dd_Settings.Invoke("EnableMap", new AreaKey(3, AreaMode.Normal));
-				dd_Settings.Invoke("EnableMap", new AreaKey(4, AreaMode.Normal));
-				dd_Settings.Invoke("EnableMap", new AreaKey(5, AreaMode.Normal));
-				dd_Settings.Invoke("EnableMap", new AreaKey(6, AreaMode.Normal));
-				dd_Settings.Invoke("EnableMap", new AreaKey(7, AreaMode.Normal));
-				dd_Settings.Invoke("EnableMap", new AreaKey(9, AreaMode.Normal));
-				dd_Settings.Invoke("EnableMap", new AreaKey(10, AreaMode.Normal));
-
-				dd_Settings.Invoke("EnableMap", new AreaKey(1, AreaMode.BSide));
-				dd_Settings.Invoke("EnableMap", new AreaKey(2, AreaMode.BSide));
-				dd_Settings.Invoke("EnableMap", new AreaKey(3, AreaMode.BSide));
-				dd_Settings.Invoke("EnableMap", new AreaKey(4, AreaMode.BSide));
-				dd_Settings.Invoke("EnableMap", new AreaKey(5, AreaMode.BSide));
-				dd_Settings.Invoke("EnableMap", new AreaKey(6, AreaMode.BSide));
-				dd_Settings.Invoke("EnableMap", new AreaKey(7, AreaMode.BSide));
-				dd_Settings.Invoke("EnableMap", new AreaKey(9, AreaMode.BSide));
-
-				dd_Settings.Invoke("EnableMap", new AreaKey(1, AreaMode.CSide));
-				dd_Settings.Invoke("EnableMap", new AreaKey(2, AreaMode.CSide));
-				dd_Settings.Invoke("EnableMap", new AreaKey(3, AreaMode.CSide));
-				dd_Settings.Invoke("EnableMap", new AreaKey(4, AreaMode.CSide));
-				dd_Settings.Invoke("EnableMap", new AreaKey(5, AreaMode.CSide));
-				dd_Settings.Invoke("EnableMap", new AreaKey(6, AreaMode.CSide));
-				dd_Settings.Invoke("EnableMap", new AreaKey(7, AreaMode.CSide));
-				dd_Settings.Invoke("EnableMap", new AreaKey(9, AreaMode.CSide));
 			}
 
 			internal void RandomizeSeed(int? seedseed = null) {
@@ -178,56 +118,21 @@ namespace Celeste.Mod.Head2Head.Integration {
 			}
 		}
 
-		public static IEnumerator<AreaKey?> Begin(object settings) {
-			Thread BuilderThread = null;
-			DynamicData dd_Settings = DynamicData.For(settings);
-			object RandoModuleInstance = null;
-			DynamicData dd_RandoModuleInstance = null;
+		public static bool BeginGeneration(object settings) {
+			return RandomizerGenerationInterop.Generate(settings);
+		}
 
-			try {
-				RandoModuleInstance = f_RandoModule_Instance.GetValue(null);
-				dd_RandoModuleInstance = DynamicData.For(RandoModuleInstance);
-			}
-			catch (Exception e) {
-				yield break;
-			}
-
-			AreaKey? newArea = null;
-
-			BuilderThread = new Thread(() => {
-				dd_Settings.Invoke("Enforce");
-				try {
-					newArea = RandoLogic_GenerateMap(settings);
-				}
-				catch (ThreadAbortException) {
-					return;
-				}
-				catch (Exception e) {
-					Engine.Commands.Log($"Failed to generate Randomizer level: {e.InnerException?.Message ?? "Unknown error"}");
-					Logger.Log(LogLevel.Error, "Head2Head", $"Failed to generate Randomizer level: {e.InnerException?.Message ?? "Unknown error"}");
-					Logger.Log(LogLevel.Error, "Head2Head", e.StackTrace);
-					return;
-				}
-				BuilderThread = null;
-			});
-			BuilderThread.Start();
-
-			while (newArea == null && BuilderThread.IsAlive) {
+		public static IEnumerator Begin() {
+			while (RandomizerGenerationInterop.GenerationInProgress()) {
 				yield return null;
 			}
-			if (newArea == null) {
-				Logger.Log(LogLevel.Error, "Head2Head", $"No Randomizer level was generated. Launch will not proceed.");
-				if (PlayerStatus.Current.IsInMatch(true)) {
-					PlayerStatus.Current.CurrentMatch?.PlayerDNF(DNFReason.RandomizerError);
-				}
-				yield break;
+			if (RandomizerGenerationInterop.ReadyToLaunch()) {
+				PlayerStatus.Current.RandomizerArea = new GlobalAreaKey(RandomizerGenerationInterop.GetGeneratedArea() ?? AreaKey.Default);
+				RandomizerGenerationInterop.EnterGeneratedArea();
 			}
-			if (!PlayerStatus.Current.IsInMatch(true)) {
-				Logger.Log(LogLevel.Warn, "Head2Head", $"Player is not in a match. Randomizer launch will not proceed.");
-				yield break;
+			else {
+				Logger.Log(LogLevel.Error, "Head2Head", "H2H + Randomizer: Randomizer area generation via ModInterop failed.");
 			}
-			PlayerStatus.Current.RandomizerArea = new GlobalAreaKey(newArea.Value);
-			RandoModule_StartMe_Set(newArea);
 		}
 	}
 
@@ -439,15 +344,15 @@ namespace Celeste.Mod.Head2Head.Integration {
 			CustomMatchTemplate template = new CustomMatchTemplate() {
 				DisplayName = name,
 				RandoOptions = new RandomizerOptionsTemplate {
-					SeedType = SeedTypeEnum.Valiate(seedType),
-					LogicType = LogicTypeEnum.Valiate(logicType),
-					Difficulty = DifficultyEnum.Valiate(difficulty),
-					MapLength = MapLengthEnum.Valiate("Short"),
-					NumDashes = NumDashesEnum.Valiate(numDashes),
-					DifficultyEagerness = DifficultyEagernessEnum.Valiate("Medium"),
-					ShineLights = ShineLightsEnum.Valiate("On"),
-					Darkness = DarknessEnum.Valiate("Never"),
-					StrawberryDensity = StrawberryDensityEnum.Valiate("None"),
+					SeedType = seedType,
+					LogicType = logicType,
+					Difficulty = difficulty,
+					NumDashes = numDashes,
+					MapLength = "Short",
+					DifficultyEagerness = "Medium",
+					ShineLights = "On",
+					Darkness = "Never",
+					StrawberryDensity = "None",
 				},
 			};
 			CustomMatchPhaseTemplate phase = new CustomMatchPhaseTemplate() {

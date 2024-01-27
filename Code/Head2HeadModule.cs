@@ -177,10 +177,7 @@ namespace Celeste.Mod.Head2Head {
 			SpeedrunToolIntegration.Load();
 			CelesteTASIntegration.Load();
 			RandomizerIntegration.Load();
-
 			SyncedClock.DoClockSync();
-
-
 		}
 
 		public override void Unload() {
@@ -258,7 +255,6 @@ namespace Celeste.Mod.Head2Head {
 			CollabUtils2Integration.Unload();
 			SpeedrunToolIntegration.Unload();
 			CelesteTASIntegration.Unload();
-			RandomizerIntegration.Unload();
 		}
 
 		public override void CreateModMenuSection(TextMenu menu, bool inGame, FMOD.Studio.EventInstance snapshot)
@@ -1437,6 +1433,10 @@ namespace Celeste.Mod.Head2Head {
 
 		private IEnumerator StartMatchCoroutine(GlobalAreaKey gak, bool isRejoin, string startRoom = null, RandomizerIntegration.SettingsBuilder randoSettings = null) {
 			if (PlayerStatus.Current.CurrentMatch == null) yield break;
+			if (randoSettings != null) {
+				// Start the rando generation immediately so there's no delay when entering
+				RandomizerIntegration.BeginGeneration(randoSettings.Build());
+			}
 			string idCheck = PlayerStatus.Current.CurrentMatchID;
 			DateTime startInstant = PlayerStatus.Current.CurrentMatch.BeginInstant;
 			DateTime now = SyncedClock.Now;
@@ -1452,7 +1452,7 @@ namespace Celeste.Mod.Head2Head {
 				yield return (float)((startInstant - now).TotalSeconds);
 				//if (level != null) level.PauseLock = false;
 			}
-
+			// If something changed during the countdown, bail out
 			if (PlayerStatus.Current.CurrentMatchID != idCheck) {
 				yield break;
 			}
@@ -1489,7 +1489,7 @@ namespace Celeste.Mod.Head2Head {
 					Logger.Log(LogLevel.Warn, "Head2Head", "Failed to build Randomizer settings");
 					yield break;
 				}
-				yield return RandomizerIntegration.Begin(settings);
+				yield return RandomizerIntegration.Begin();
 			}
 			// handle standard matches
 			else {
