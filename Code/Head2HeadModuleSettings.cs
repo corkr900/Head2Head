@@ -52,6 +52,10 @@ namespace Celeste.Mod.Head2Head {
 		[SettingMaxLength(12)]
 		public string Role { get; set; } = "";
 
+		[SettingName("Head2Head_Setting_Ruleset")]
+		[SettingSubText("Head2Head_Setting_Ruleset_Subtext")]
+		public string Ruleset { get; set; } = "default";
+
 		[SettingName("Head2Head_Setting_TimeServer")]
 		[SettingSubText("Head2Head_Setting_TimeServer_Subtext")]
 		public TimeServer NSTPTimeServer { get; set; } = TimeServer.Windows;
@@ -96,6 +100,9 @@ namespace Celeste.Mod.Head2Head {
 			AddSlider(menu, "Head2Head_Setting_HudOpacityInOverworld", HudOpacityInOverworld,
 				new float[] { 0.0f, 0.1f, 0.25f, 0.5f, 1.0f },
 				(float val) => HudOpacityInOverworld = val);
+			AddSlider(menu, "Head2Head_Setting_Ruleset", Ruleset,
+				new string[] { "default", "corkr900/Test/Ruleset01" },
+				(string val) => Ruleset = val);
 		}
 
 		#endregion
@@ -104,7 +111,7 @@ namespace Celeste.Mod.Head2Head {
 
 		private void AddSlider<T>(TextMenu menu, string labelkey, T setting, IEnumerable<T> vals, Action<T> changed)
 		{
-			TextMenuExt.EnumerableSlider<T> slider = new TextMenuExt.EnumerableSlider<T>(
+			EnumerableSlider<T> slider = new EnumerableSlider<T>(
 				Dialog.Get(labelkey), vals, setting);
 			slider.Change(changed);
 			menu.Add(slider);

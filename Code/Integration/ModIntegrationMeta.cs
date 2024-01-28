@@ -9,6 +9,20 @@ namespace Celeste.Mod.Head2Head.Integration {
 	public class ModIntegrationMeta : IMeta {
 		public FullgameMeta[] Fullgame;
 		public ILMeta[] IndividualLevels;
+		public RulesetMeta[] Rulesets;
+	}
+
+	public class RulesetMeta : IMeta {
+		public string ID;
+		public string Name;
+		public string Role;
+		public ILMeta[] Levels;
+		public FullgameMeta[] Fullgame;
+	}
+
+	public class LevelListMeta : IMeta {
+		public string SID;
+		public string Side;
 	}
 
 	public class FullgameMeta : IMeta {

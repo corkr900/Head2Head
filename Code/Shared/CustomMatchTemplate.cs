@@ -22,6 +22,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public string IconPath;
 		public string DisplayName;
 		public bool AllowCheatMode;
+		public bool IncludeInDefaultRuleset;
 		public List<CustomMatchPhaseTemplate> Phases = new List<CustomMatchPhaseTemplate>();
 		public RandomizerOptionsTemplate RandoOptions;
 
@@ -79,7 +80,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			return def;
 		}
 
-		internal static void AddTemplateFromMeta(FullgameMeta meta) {
+		internal static void AddTemplateFromMeta(FullgameMeta meta, bool addToDefaultRuleset) {
 			// Basic data
 			CustomMatchTemplate tem = new CustomMatchTemplate();
 			tem.Key = meta.ID;
@@ -87,6 +88,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			tem.IconPath = meta.Icon;
 			tem.Area = new GlobalAreaKey(meta.StartingMap);
 			tem.AllowCheatMode = meta.AllowCheatMode ?? false;
+			tem.IncludeInDefaultRuleset = addToDefaultRuleset;
 
 			// Misc other handling
 			CustomMatchPhaseTemplate ph = new CustomMatchPhaseTemplate();
@@ -109,36 +111,37 @@ namespace Celeste.Mod.Head2Head.Shared {
 			FullgameTemplates[meta.LevelSet].Add(tem);
 		}
 
-		public static void AddTemplateFromMeta(CategoryMeta meta, GlobalAreaKey area) {
+		public static CustomMatchTemplate AddTemplateFromMeta(CategoryMeta meta, GlobalAreaKey area, bool includeInDefaultRuleset) {
 			// Process Match data
 			CustomMatchTemplate tem = new CustomMatchTemplate();
 			tem.Key = meta.ID;
 			tem.Area = area;
 			tem.DisplayName = meta.Name;
+			tem.IncludeInDefaultRuleset = includeInDefaultRuleset;
 			if (GFX.Gui.Has(meta.Icon)) {
 				tem.IconPath = meta.Icon;
 			}
 			// Process Phase data
 			if (meta.Phases == null || meta.Phases.Length == 0) {
 				Logger.Log(LogLevel.Warn, "Head2Head", "No phases defined for category: " + meta.ID);
-				return;
+				return null;
 			}
 			foreach (PhaseMeta ph in meta.Phases) {
 				CustomMatchPhaseTemplate phtem = new CustomMatchPhaseTemplate();
 				GlobalAreaKey phArea = new GlobalAreaKey(ph.Map, GetAreaMode(ph.Side));
 				if (!phArea.ExistsLocal || phArea.IsOverworld || phArea.Equals(GlobalAreaKey.Head2HeadLobby)) {
 					Logger.Log(LogLevel.Warn, "Head2Head", "Phase has invalid area SID (" + ph.Map + ") for category: " + meta.ID);
-					return;
+					return null;
 				}
 				phtem.Area = phArea;
 				// Process Objective data
 				if (ph.Objectives == null || ph.Objectives.Length == 0) {
 					Logger.Log(LogLevel.Warn, "Head2Head", "No objectives defined in phase for category: " + meta.ID);
-					return;
+					return null;
 				}
 				foreach (ObjectiveMeta ob in ph.Objectives) {
 					CustomMatchObjectiveTemplate obtem = ParseObjectiveMeta(ob, meta.ID);
-					if (obtem == null) return;
+					if (obtem == null) return null;
 					phtem.Objectives.Add(obtem);
 				}
 				tem.Phases.Add(phtem);
@@ -149,6 +152,8 @@ namespace Celeste.Mod.Head2Head.Shared {
 			CustomMatchTemplate existing = ILTemplates[area].Find((CustomMatchTemplate cmt) => { return cmt.Key == tem.Key; });
 			if (existing != null) ILTemplates[area].Remove(existing);  // TODO reload stuff more smartly (it won't change very often)
 			ILTemplates[area].Add(tem);
+
+			return tem;
 		}
 
 		private static CustomMatchObjectiveTemplate ParseObjectiveMeta(ObjectiveMeta meta, string catID) {

@@ -76,10 +76,10 @@ namespace Celeste.Mod.Head2Head.UI {
 				Vector2 renderPosition = GetRenderPosition(center);
 				Color color = Color.Lerp(BgColor, Color.Black, (1f - Pop) * 0.6f);
 				Bg.DrawCentered(renderPosition + new Vector2(0f, 10f), color, (Appeared ? Scale : num) * new Vector2(Large ? 1f : 0.9f, 1f));
-				if (IconEase > 0f) {
+				if (Icon != null && IconEase > 0f) {
 					float num2 = Ease.CubeIn(IconEase);
 					Color color2 = Color.Lerp(Color.White, Color.Black, Faded * 0.6f) * num2;
-					Icon.DrawCentered(renderPosition, color2, (float)(Bg.Width - 50) / (float)Icon.Width * num * (2.5f - num2 * 1.5f));
+					Icon.DrawCentered(renderPosition, color2, (Bg.Width - 50f) / Icon.Width * num * (2.5f - num2 * 1.5f));
 				}
 			}
 		}
@@ -189,7 +189,7 @@ namespace Celeste.Mod.Head2Head.UI {
 			}
 			height = GetModeHeight();
 			modes.Clear();
-			foreach (RunOptionsILSide side in OuiRunSelectIL.SelectableLevelSets[ILSelector.LastLevelSetIndex].Chapters[ILSelector.LastChapterIndex].Sides) {
+			foreach (RunOptionsILSide side in OuiRunSelectIL.UsingRuleset.LevelSets[ILSelector.LastLevelSetIndex].Chapters[ILSelector.LastChapterIndex].Sides) {
 				modes.Add(new Option {
 					Label = side.Label,
 					Icon = side.Icon,
@@ -303,7 +303,7 @@ namespace Celeste.Mod.Head2Head.UI {
 				}
 				else {
 					// Normal Levels, figure out valid categories
-					List<Tuple<StandardCategory, CustomMatchTemplate>> cats = StandardMatches.GetCategories(new GlobalAreaKey(Area));
+					List<Tuple<StandardCategory, CustomMatchTemplate>> cats = StandardMatches.GetCategories(new GlobalAreaKey(Area), true);
 					int siblings = cats.Count;
 					foreach (Tuple<StandardCategory, CustomMatchTemplate> catInfo in cats) {
 						string iconPath = (catInfo.Item1 == StandardCategory.Custom && !string.IsNullOrEmpty(catInfo.Item2.IconPath)) ?

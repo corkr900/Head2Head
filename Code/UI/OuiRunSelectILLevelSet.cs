@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 namespace Celeste.Mod.Head2Head.UI {
 	public class OuiRunSelectILLevelSet : Oui {
 		public int Direction;
+		public RunOptionsLevelSet RunOptions;
 
 		public override IEnumerator Enter(Oui from) {
 			if (Direction == 0) {

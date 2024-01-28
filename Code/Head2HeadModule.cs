@@ -965,7 +965,7 @@ namespace Celeste.Mod.Head2Head {
 		private void ProcessIntegrationMeta(ModIntegrationMeta meta) {
 			if (meta.Fullgame != null) {
 				foreach (FullgameMeta cat in meta.Fullgame) {
-					CustomMatchTemplate.AddTemplateFromMeta(cat);
+					CustomMatchTemplate.AddTemplateFromMeta(cat, true);
 				}
 			}
 			if (meta.IndividualLevels != null) {
@@ -987,9 +987,14 @@ namespace Celeste.Mod.Head2Head {
 					// Handle IL additions
 					if (il.AddCategories != null) {
 						foreach (CategoryMeta newcat in il.AddCategories) {
-							CustomMatchTemplate.AddTemplateFromMeta(newcat, area);
+							CustomMatchTemplate.AddTemplateFromMeta(newcat, area, true);
 						}
 					}
+				}
+			}
+			if (meta.Rulesets != null) {
+				foreach(RulesetMeta ruleset in meta.Rulesets) {
+					Ruleset.ProcessMeta(ruleset);
 				}
 			}
 		}

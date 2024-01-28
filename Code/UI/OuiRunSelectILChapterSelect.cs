@@ -105,7 +105,7 @@ namespace Celeste.Mod.Head2Head.UI {
 				icon.RemoveSelf();
 			}
 			specialIcons.Clear();
-			var chapters = OuiRunSelectIL.SelectableLevelSets[ILSelector.LastLevelSetIndex].Chapters;
+			List<RunOptionsILChapter> chapters = OuiRunSelectIL.UsingRuleset.LevelSets[ILSelector.LastLevelSetIndex].Chapters;
 			// Add Special Icons
 			for (int j = 0; j < chapters.Count; j++) {
 				var opt = chapters[j];

@@ -685,12 +685,13 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 		// More Stuff
 
-		public static bool IsCategoryValid(StandardCategory cat, GlobalAreaKey area, CustomMatchTemplate template = null)
+		public static bool IsCategoryValid(StandardCategory cat, GlobalAreaKey area, CustomMatchTemplate template = null, bool defaultOnly = true)
 		{
 			if (area.IsOverworld) return false;
 			if (!area.ExistsLocal) return false;
 			if (ILSelector.IsSuppressed(area, cat)) return false;
-			if (area.IsVanilla) {
+			if (template?.IncludeInDefaultRuleset == false && defaultOnly) return false;
+            if (area.IsVanilla) {
 				if (area.Mode != AreaMode.Normal) {
 					return cat == StandardCategory.Clear
 						|| cat == StandardCategory.Custom;
@@ -772,22 +773,22 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 		public static bool HasAnyValidCategoryAnySide(GlobalAreaKey area) {
 			if (!area.ExistsLocal) return false;
-			if (HasAnyValidCategory(new GlobalAreaKey(area.Local.Value.ID, AreaMode.Normal))) {
+			if (HasAnyValidCategory(new GlobalAreaKey(area.Local.Value.ID, AreaMode.Normal), true)) {
 				return true;
 			}
 			if (area.Data.HasMode(AreaMode.BSide) &&
-				HasAnyValidCategory(new GlobalAreaKey(area.Local.Value.ID, AreaMode.BSide))) {
+				HasAnyValidCategory(new GlobalAreaKey(area.Local.Value.ID, AreaMode.BSide), true)) {
 				return true;
 			}
 			if (area.Data.HasMode(AreaMode.CSide) &&
-				HasAnyValidCategory(new GlobalAreaKey(area.Local.Value.ID, AreaMode.CSide))) {
+				HasAnyValidCategory(new GlobalAreaKey(area.Local.Value.ID, AreaMode.CSide), true)) {
 				return true;
 			}
 			return false;
 		}
 
-		public static bool HasAnyValidCategory(GlobalAreaKey area) {
-			return area.ExistsLocal && area.Data.HasMode(area.Mode) && GetCategories(area).Count > 0;  // TODO reimplement so its more efficient
+		public static bool HasAnyValidCategory(GlobalAreaKey area, bool defaultOnly) {
+			return area.ExistsLocal && area.Data.HasMode(area.Mode) && GetCategories(area, defaultOnly).Count > 0;  // TODO reimplement so its more efficient
 		}
 
 		private static bool ShowCategory(int? id, AreaMode areaMode, StandardCategory cat) {
@@ -821,7 +822,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			}
 		}
 
-		public static List<Tuple<StandardCategory, CustomMatchTemplate>> GetCategories(GlobalAreaKey gArea) {
+		public static List<Tuple<StandardCategory, CustomMatchTemplate>> GetCategories(GlobalAreaKey gArea, bool defaultOnly) {
 			List<Tuple<StandardCategory, CustomMatchTemplate>> ret = new List<Tuple<StandardCategory, CustomMatchTemplate>>();
 			StandardCategory[] cats = Role.GetValidCategories();
 			// Standard Categories
@@ -835,7 +836,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			// Custom Categories
 			if (Role.AllowCustomCategories() && CustomMatchTemplate.ILTemplates.ContainsKey(gArea)) {
 				foreach (CustomMatchTemplate template in CustomMatchTemplate.ILTemplates[gArea]) {
-					if (!IsCategoryValid(StandardCategory.Custom, gArea, template)) continue;
+					if (!IsCategoryValid(StandardCategory.Custom, gArea, template, defaultOnly)) continue;
 					ret.Add(new Tuple<StandardCategory, CustomMatchTemplate>(StandardCategory.Custom, template));
 				}
 			}

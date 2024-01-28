@@ -176,7 +176,7 @@ namespace Celeste.Mod.Head2Head.Integration {
 			// Pathway "chapter"
 			RunOptionsILChapter pathway = new RunOptionsILChapter();
 			pathway.Title = "Pathway Randomizer";
-			pathway.SpecialID = OuiRunSelectIL.NewSpecialID();
+			pathway.SpecialID = Ruleset.NewSpecialID();
 			pathway.Icon = "menu/pathway_icon";
 			setOption.Chapters.Add(pathway);
 
@@ -239,7 +239,7 @@ namespace Celeste.Mod.Head2Head.Integration {
 			// Labyrinth "chapter"
 			RunOptionsILChapter labyrinth = new RunOptionsILChapter();
 			labyrinth.Title = "Labyrinth Randomizer";  // TODO (!!) tokenize
-			labyrinth.SpecialID = OuiRunSelectIL.NewSpecialID();
+			labyrinth.SpecialID = Ruleset.NewSpecialID();
 			labyrinth.Icon = "menu/labyrinth_icon";
 			setOption.Chapters.Add(labyrinth);
 			side = new RunOptionsILSide() {
