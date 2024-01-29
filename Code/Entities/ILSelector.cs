@@ -23,8 +23,7 @@ namespace Celeste.Mod.Head2Head.Entities {
 	[CustomEntity("Head2Head/ILSelector")]
 	public class ILSelector : Entity {
 
-		public static int LastLevelSetIndex = 0;
-		public static int LastChapterIndex = 0;
+		public static RunOptionsILCategory ChosenCategory = null;
 
 		public static Dictionary<GlobalAreaKey, List<StandardCategory>> SuppressedCategories = new Dictionary<GlobalAreaKey, List<StandardCategory>>();
 		public static void SuppressCategory(GlobalAreaKey area, params StandardCategory[] cats) {
@@ -42,9 +41,6 @@ namespace Celeste.Mod.Head2Head.Entities {
 		private SceneWrappingEntity<Overworld> overworldWrapper;
 
 		public static ILSelector ActiveSelector { get; private set; } = null;
-		public GlobalAreaKey Area;
-		public StandardCategory Category;
-		public CustomMatchTemplate CustomTemplate;
 
 		private Sprite sprite;
 		private TalkComponent talkComponent;
@@ -84,14 +80,7 @@ namespace Celeste.Mod.Head2Head.Entities {
 			Level l = player.Scene as Level;
 			if (l != null) l.PauseLock = true;
 			ActiveSelector = this;
-			Area = GlobalAreaKey.Overworld;
-			Category = StandardCategory.Clear;
-
-			var lastChapter = OuiRunSelectIL.GetChapterOption(LastLevelSetIndex, LastChapterIndex);
-			string collabLobby = lastChapter?.CollabLobby;
-			if (!string.IsNullOrEmpty(collabLobby)) {
-				lastChapter = OuiRunSelectIL.GetChapterOption(collabLobby, ref LastLevelSetIndex, ref LastChapterIndex);
-			}
+			ChosenCategory = null;
 
 			player.StateMachine.State = Player.StDummy;
 			OuiRunSelectIL.Start = true;
@@ -169,48 +158,42 @@ namespace Celeste.Mod.Head2Head.Entities {
 				}
 			}
 
-			if (!Area.IsOverworld) {
-				if (Category == StandardCategory.Custom) {
-					foreach (MatchPhase ph in CustomTemplate.Build()) {
-						Head2HeadModule.Instance.AddMatchPhase(ph);
-					}
-					Head2HeadModule.Instance.NameBuildingMatch(CustomTemplate.DisplayName);
-					if (CustomTemplate.RandoOptions != null) {
-						RandomizerIntegration.SettingsBuilder bld = new RandomizerIntegration.SettingsBuilder();
-						bld.LogicType = CustomTemplate.RandoOptions.LogicType;
-						bld.Difficulty = CustomTemplate.RandoOptions.Difficulty;
-						bld.NumDashes = CustomTemplate.RandoOptions.NumDashes;
-						bld.DifficultyEagerness = CustomTemplate.RandoOptions.DifficultyEagerness;
-						bld.MapLength = CustomTemplate.RandoOptions.MapLength;
-						bld.ShineLights = CustomTemplate.RandoOptions.ShineLights;
-						bld.Darkness = CustomTemplate.RandoOptions.Darkness;
-						bld.StrawberryDensity = CustomTemplate.RandoOptions.StrawberryDensity;
-						if (CustomTemplate.RandoOptions.SeedType == "Random") {
-							int numDays = (int)(SyncedClock.Now - DateTime.MinValue).TotalDays;
-							bld.RandomizeSeed();
-						}
-						else {
-							// Seed changes weekly
-							int numDays = (int)(SyncedClock.Now - DateTime.MinValue).TotalDays;
-							bld.RandomizeSeed(numDays / 7);
-						}
-						Head2HeadModule.Instance.AddRandoToMatch(bld);
-					}
+			if (ChosenCategory != null) {
+				MatchTemplate tempate = ChosenCategory.Template;
+				foreach (MatchPhase ph in tempate.Build()) {
+					Head2HeadModule.Instance.AddMatchPhase(ph);
 				}
-				else {
-					Head2HeadModule.Instance.AddMatchPhase(Category, Area);
+				Head2HeadModule.Instance.NameBuildingMatch(tempate.DisplayName);
+
+				if (tempate.RandoOptions != null) {  // TODO (!) move this into the integration file
+					RandomizerIntegration.SettingsBuilder bld = new RandomizerIntegration.SettingsBuilder();
+					bld.LogicType = tempate.RandoOptions.LogicType;
+					bld.Difficulty = tempate.RandoOptions.Difficulty;
+					bld.NumDashes = tempate.RandoOptions.NumDashes;
+					bld.DifficultyEagerness = tempate.RandoOptions.DifficultyEagerness;
+					bld.MapLength = tempate.RandoOptions.MapLength;
+					bld.ShineLights = tempate.RandoOptions.ShineLights;
+					bld.Darkness = tempate.RandoOptions.Darkness;
+					bld.StrawberryDensity = tempate.RandoOptions.StrawberryDensity;
+					if (tempate.RandoOptions.SeedType == "Random") {
+						int numDays = (int)(SyncedClock.Now - DateTime.MinValue).TotalDays;
+						bld.RandomizeSeed();
+					}
+					else {
+						// Seed changes weekly
+						int numDays = (int)(SyncedClock.Now - DateTime.MinValue).TotalDays;
+						bld.RandomizeSeed(numDays / 7);
+					}
+					Head2HeadModule.Instance.AddRandoToMatch(bld);
 				}
-				Area = GlobalAreaKey.Overworld;
-				Category = StandardCategory.Clear;
-				CustomTemplate = null;
+				ChosenCategory = null;
 				Head2HeadModule.Instance.StageMatch();
 			}
 		}
 
 		internal static void OnPause(On.Celeste.Level.orig_Pause orig, Level self, int startIndex, bool minimal, bool quickReset) {
 			if (ActiveSelector != null) {
-				ActiveSelector.Area = GlobalAreaKey.Overworld;
-				ActiveSelector.Category = StandardCategory.Clear;
+				ChosenCategory = null;
 				ActiveSelector.Close(self, true, true);
 			}
 		}

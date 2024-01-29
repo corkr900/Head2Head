@@ -101,7 +101,7 @@ namespace Celeste.Mod.Head2Head {
 				new float[] { 0.0f, 0.1f, 0.25f, 0.5f, 1.0f },
 				(float val) => HudOpacityInOverworld = val);
 			AddSlider(menu, "Head2Head_Setting_Ruleset", Ruleset,
-				new string[] { "default", "corkr900/Test/Ruleset01" },
+				new string[] { "default", "corkr900/Test/Ruleset01" },  // TODO get the actual options
 				(string val) => Ruleset = val);
 		}
 

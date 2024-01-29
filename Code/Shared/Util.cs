@@ -82,8 +82,12 @@ namespace Celeste.Mod.Head2Head.Shared {
 		}
 
 		internal static bool HasTrackedBerries(GlobalAreaKey area) {
-			if (!area.ExistsLocal) return false;
-			return area.Data.Mode[(int)area.Mode].MapData.DetectedStrawberries > 0;
+			return TrackedBerryCount(area) > 0;
+		}
+
+		internal static int TrackedBerryCount(GlobalAreaKey area) {
+			if (!area.ExistsLocal) return 0;
+			return area.Data.Mode[(int)area.Mode].MapData.DetectedStrawberries;
 		}
 
 		internal static LevelSetStats GetSetStats(string levelSet) {

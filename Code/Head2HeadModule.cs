@@ -951,7 +951,7 @@ namespace Celeste.Mod.Head2Head {
 		}
 
 		public void ScanModsForIntegrationMeta() {
-			CustomMatchTemplate.ClearCustomTemplates();
+			MatchTemplate.ClearCustomTemplates();
 			foreach (ModContent mod in Everest.Content.Mods) {
 				if (mod.Map.ContainsKey("Head2Head")) {
 					ModAsset asset = mod.Map["Head2Head"];
@@ -965,13 +965,13 @@ namespace Celeste.Mod.Head2Head {
 		private void ProcessIntegrationMeta(ModIntegrationMeta meta) {
 			if (meta.Fullgame != null) {
 				foreach (FullgameMeta cat in meta.Fullgame) {
-					CustomMatchTemplate.AddTemplateFromMeta(cat, true);
+					MatchTemplate.AddTemplateFromMeta(cat, true);
 				}
 			}
 			if (meta.IndividualLevels != null) {
 				foreach (ILMeta il in meta.IndividualLevels) {
 					// Ensure the area is valid
-					GlobalAreaKey area = new GlobalAreaKey(il.Map, CustomMatchTemplate.GetAreaMode(il.Side));
+					GlobalAreaKey area = new GlobalAreaKey(il.Map, MatchTemplate.GetAreaMode(il.Side));
 					if (!area.ExistsLocal || area.IsOverworld) continue;
 
 					// Handle IL removals
@@ -987,7 +987,7 @@ namespace Celeste.Mod.Head2Head {
 					// Handle IL additions
 					if (il.AddCategories != null) {
 						foreach (CategoryMeta newcat in il.AddCategories) {
-							CustomMatchTemplate.AddTemplateFromMeta(newcat, area, true);
+							MatchTemplate.AddTemplateFromMeta(newcat, area, true);
 						}
 					}
 				}
@@ -1057,57 +1057,6 @@ namespace Celeste.Mod.Head2Head {
 				Owner = PlayerID.MyID ?? PlayerID.Default,
 				CreationInstant = SyncedClock.Now,
 			};
-		}
-
-		public void AddMatchPhase(StandardCategory category, GlobalAreaKey? areakey = null) {
-			MatchPhase mp = null;
-			GlobalAreaKey area = areakey ?? new GlobalAreaKey(currentSession.Area);
-			switch (category) {
-				default:
-					break;
-				case StandardCategory.Clear:
-					mp = StandardMatches.ILClear(area);
-					break;
-				case StandardCategory.FullClear:
-					mp = StandardMatches.ILFullClear(area);
-					break;
-				case StandardCategory.HeartCassette:
-					mp = StandardMatches.ILHeartCassette(area);
-					break;
-				case StandardCategory.ARB:
-					mp = StandardMatches.ILAllRedBerries(area);
-					break;
-				case StandardCategory.ARBHeart:
-					mp = StandardMatches.ILAllRedBerriesHeart(area);
-					break;
-				case StandardCategory.CassetteGrab:
-					mp = StandardMatches.ILCassetteGrab(area);
-					break;
-				case StandardCategory.MoonBerry:
-					mp = StandardMatches.ILMoonBerry(area);
-					break;
-				case StandardCategory.FullClearMoonBerry:
-					mp = StandardMatches.ILFCMoonBerry(area);
-					break;
-
-				// Specialty Categories
-				case StandardCategory.OneThirdBerries:
-					mp = StandardMatches.ILOneThirdBerries(area);
-					break;
-				case StandardCategory.OneFifthBerries:
-					mp = StandardMatches.ILOneFifthBerries(area);
-					break;
-				case StandardCategory.TimeLimit:
-					mp = StandardMatches.ILTimeLimit(area, Util.TimeValueInternal(MatchTimeoutMinutes, 0));
-					break;
-			}
-			if (mp == null) {
-				Logger.Log(LogLevel.Verbose, "Head2Head", string.Format("Couldn't add {0} ({1}) - Category is not valid for this chapter", area.DisplayName, category));
-				return;
-			}
-			else {
-				AddMatchPhase(mp);
-			}
 		}
 
 		public void AddMatchPhase(MatchPhase mp) {

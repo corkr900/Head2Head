@@ -143,7 +143,6 @@ namespace Celeste.Mod.Head2Head.Shared {
 						//StandardCategory.ARB,
 						//StandardCategory.ARBHeart,
 						//StandardCategory.FullClear,
-						StandardCategory.TimeLimit,
 					};
 				case "bta-host":
 					return new StandardCategory[] {
@@ -151,7 +150,6 @@ namespace Celeste.Mod.Head2Head.Shared {
 						//StandardCategory.ARB,
 						//StandardCategory.ARBHeart,
 						//StandardCategory.FullClear,
-						StandardCategory.TimeLimit,
 					};
 			}
 		}

@@ -27,7 +27,11 @@ namespace Celeste.Mod.Head2Head.UI {
 		}
 
 		public override IEnumerator Enter(Oui from) {
-			UsingRuleset = Ruleset.Current;
+			Ruleset newRuleset = Ruleset.Current;
+			if (newRuleset != UsingRuleset) {
+				UsingRuleset = newRuleset;
+				OuiRunSelectILChapterSelect.UsingLevelSet = UsingRuleset.LevelSets[0];
+			}
 			Audio.Play("event:/ui/world_map/icon/select");
 			Overworld.Goto<OuiRunSelectILChapterSelect>();
 			yield break;
@@ -46,36 +50,6 @@ namespace Celeste.Mod.Head2Head.UI {
 				if (UsingRuleset.LevelSets[i].LevelSet == setID) return i;
 			}
 			return 0;
-		}
-
-		public static RunOptionsILChapter GetChapterOption(int levelSetIdx, int chapterIdx) {
-			return UsingRuleset == null ? null : UsingRuleset.LevelSets[levelSetIdx].Chapters[chapterIdx];
-		}
-
-		public static RunOptionsILChapter GetChapterOption(string SID, ref int levelSetIdx, ref int chapterIdx) {
-			for (int i = 0; i < UsingRuleset.LevelSets.Count; i++) {
-				for (int j = 0; j < UsingRuleset.LevelSets[i].Chapters.Count; j++) {
-					if (UsingRuleset.LevelSets[i].Chapters[j].Data.SID == SID) {
-						levelSetIdx = i;
-						chapterIdx = j;
-						return UsingRuleset.LevelSets[i].Chapters[j];
-					}
-				}
-			}
-			return null;
-		}
-
-		public static RunOptionsILChapter GetChapterOption(int ID, ref int levelSetIdx, ref int chapterIdx) {
-			for (int i = 0; i < UsingRuleset.LevelSets.Count; i++) {
-				for (int j = 0; j < UsingRuleset.LevelSets[i].Chapters.Count; j++) {
-					if (UsingRuleset.LevelSets[i].Chapters[j].Data.ID == ID) {
-						levelSetIdx = i;
-						chapterIdx = j;
-						return UsingRuleset.LevelSets[i].Chapters[j];
-					}
-				}
-			}
-			return null;
 		}
 
 		public static int GetNumOptionsInSet(int levelSetIdx) {
@@ -132,7 +106,7 @@ namespace Celeste.Mod.Head2Head.UI {
 		public string Icon;
 		public AreaData Data;
 		public bool IsSpecial { get { return Data == null; } }
-		public int SpecialID = 0;
+		public readonly int InternalID = Ruleset.NewInternalID();
 		public string CollabLobby {
 			get {
 				return Data == null ? null : CollabUtils2Integration.GetLobbyForMap?.Invoke(Data.SID);
@@ -143,6 +117,15 @@ namespace Celeste.Mod.Head2Head.UI {
 				return CollabUtils2Integration.GetLobbyLevelSet?.Invoke(Data?.SID);
 			}
 		}
+
+		public string DisplayName => Title?.DialogCleanOrNull()
+			?? Title?.SpacedPascalCase()
+			?? Data?.Name?.DialogCleanOrNull()
+			?? Data?.Name?.SpacedPascalCase()
+			?? "UNNAMED_CHAPTER";
+
+		public string IconSafe => !string.IsNullOrEmpty(Icon) && GFX.Gui.Has(Icon) ? Icon : "areas/null";
+
 		public List<RunOptionsILSide> Sides = new List<RunOptionsILSide>();
 	}
 
@@ -157,7 +140,7 @@ namespace Celeste.Mod.Head2Head.UI {
 	public class RunOptionsILCategory {
 		public string Title;
 		internal string IconPath;
-		internal CustomMatchTemplate CustomTemplate;
+		internal MatchTemplate Template;
 	}
 
 }

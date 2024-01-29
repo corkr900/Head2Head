@@ -15,6 +15,8 @@ using System.Threading.Tasks;
 namespace Celeste.Mod.Head2Head.UI {
 	public class OuiRunSelectILMapSearch : Oui {
 
+		// TODO (!!!) rework this to work with the ruleset system
+
 		public List<OuiRunSelectILChapterIcon> OuiIcons;
 
 		private SearchMenu menu;
@@ -590,7 +592,7 @@ namespace Celeste.Mod.Head2Head.UI {
 				Audio.Play("event:/ui/main/button_invalid");
 				return;
 			}
-			OuiRunSelectIL.GetChapterOption(areaKey.SID, ref ILSelector.LastLevelSetIndex, ref ILSelector.LastChapterIndex);
+			//OuiRunSelectIL.GetChapterOption(areaKey.SID, ref ILSelector.LastLevelSetIndex, ref ILSelector.LastChapterIndex);
 			if (OuiIcons != null && area.ID < OuiIcons.Count) OuiIcons[area.ID].Select();
 			Overworld.Goto<OuiRunSelectILChapterPanel>();
 		}

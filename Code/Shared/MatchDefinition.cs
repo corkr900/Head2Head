@@ -194,7 +194,7 @@ namespace Celeste.Mod.Head2Head.Shared {
         public bool CanApplyTimeAdjustments() {
             return (State == MatchState.Staged || State == MatchState.InProgress)
                 && Phases.Count > 0
-                && Phases[0].category == StandardCategory.TimeLimit;
+                && Phases[0].Objectives.Any((MatchObjective ob) => ob.ObjectiveType == MatchObjectiveType.TimeLimit);
         }
 
         public void PlayerDNF(DNFReason reason) {
@@ -359,17 +359,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 		public string Title { 
             get {
-				switch (category) {
-                    default:
-                        return Util.TranslatedCategoryName(category);
-                    case StandardCategory.OneThirdBerries:
-                    case StandardCategory.OneFifthBerries:
-                        int berries = Objectives.Find((MatchObjective o) => o.ObjectiveType == MatchObjectiveType.Strawberries)?.CollectableGoal ?? 0;
-                        return string.Format(Dialog.Get("Head2Head_MatchTitle_BerryCount"), berries);
-                    case StandardCategory.TimeLimit:
-                        return string.Format(Dialog.Get("Head2Head_MatchTitle_TimeLimit"),
-                            Util.ReadableTimeSpanTitle(Objectives[0].AdjustedTimeLimit(PlayerID.MyIDSafe)));
-                }
+				return Util.TranslatedCategoryName(category);
             }
         }
 	}

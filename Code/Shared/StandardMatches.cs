@@ -22,11 +22,6 @@ namespace Celeste.Mod.Head2Head.Shared {
 		MoonBerry,
 		FullClearMoonBerry,
 
-		// Specialty Categories
-		OneFifthBerries,
-		OneThirdBerries,
-		TimeLimit,
-
 		// Fullgame
 		AnyPercent,
 		/// <summary>
@@ -48,254 +43,8 @@ namespace Celeste.Mod.Head2Head.Shared {
 	}
 
 	public static class StandardMatches {
-		public static MatchPhase ILClear(GlobalAreaKey area) {
-			if (string.IsNullOrEmpty(area.Local?.SID)) return null;
-			if (!IsCategoryValid(StandardCategory.Clear, area)) return null;
 
-			MatchPhase mp = new MatchPhase() {
-				category = StandardCategory.Clear,
-				Area = area,
-				Objectives = new List<MatchObjective>() {
-					new MatchObjective() {
-						ObjectiveType = MatchObjectiveType.ChapterComplete,
-					}
-				}
-			};
-			return mp;
-		}
-
-		public static MatchPhase ILHeartCassette(GlobalAreaKey area) {
-			if (string.IsNullOrEmpty(area.Local?.SID)) return null;
-			if (!IsCategoryValid(StandardCategory.HeartCassette, area)) return null;
-
-			MatchPhase mp = new MatchPhase() {
-				category = StandardCategory.HeartCassette,
-				Area = area,
-				Objectives = new List<MatchObjective>() {
-					new MatchObjective() {
-						ObjectiveType = MatchObjectiveType.HeartCollect,
-					},
-					new MatchObjective() {
-						ObjectiveType = MatchObjectiveType.CassetteCollect,
-					},
-					new MatchObjective() {
-						ObjectiveType = MatchObjectiveType.ChapterComplete,
-					}
-				}
-			};
-			return mp;
-		}
-
-		public static MatchPhase ILAllRedBerries(GlobalAreaKey area) {
-			if (string.IsNullOrEmpty(area.Local?.SID)) return null;
-			if (!IsCategoryValid(StandardCategory.ARB, area)) return null;
-
-			MatchPhase mp = new MatchPhase() {
-				category = StandardCategory.ARB,
-				Area = area,
-				Objectives = new List<MatchObjective>() {
-					new MatchObjective() {
-						ObjectiveType = MatchObjectiveType.Strawberries,
-						CollectableGoal = Util.CountBerries(area),
-					},
-					new MatchObjective() {
-						ObjectiveType = MatchObjectiveType.ChapterComplete,
-					},
-				}
-			};
-			return mp;
-		}
-
-		public static MatchPhase ILAllRedBerriesHeart(GlobalAreaKey area) {
-			if (string.IsNullOrEmpty(area.Local?.SID)) return null;
-			if (!IsCategoryValid(StandardCategory.ARBHeart, area)) return null;
-
-			MatchPhase mp = new MatchPhase() {
-				category = StandardCategory.ARBHeart,
-				Area = area,
-				Objectives = new List<MatchObjective>() {
-					new MatchObjective() {
-						ObjectiveType = MatchObjectiveType.Strawberries,
-						CollectableGoal = Util.CountBerries(area),
-					},
-					new MatchObjective() {
-						ObjectiveType = MatchObjectiveType.HeartCollect,
-					},
-					new MatchObjective() {
-						ObjectiveType = MatchObjectiveType.ChapterComplete,
-					},
-				}
-			};
-			return mp;
-		}
-
-		public static MatchPhase ILCassetteGrab(GlobalAreaKey area) {
-			if (string.IsNullOrEmpty(area.Local?.SID)) return null;
-			if (!IsCategoryValid(StandardCategory.CassetteGrab, area)) return null;
-
-			MatchPhase mp = new MatchPhase() {
-				category = StandardCategory.CassetteGrab,
-				Area = area,
-				Objectives = new List<MatchObjective>() {
-					new MatchObjective() {
-						ObjectiveType = MatchObjectiveType.CassetteCollect,
-					},
-				}
-			};
-			return mp;
-		}
-
-		public static MatchPhase ILFullClear(GlobalAreaKey area) {
-			if (string.IsNullOrEmpty(area.Local?.SID)) return null;
-			if (!IsCategoryValid(StandardCategory.FullClear, area)) return null;
-
-			MatchPhase mp = new MatchPhase() {
-				category = StandardCategory.FullClear,
-				Area = area,
-				Objectives = new List<MatchObjective>() {
-					new MatchObjective() {
-						ObjectiveType = MatchObjectiveType.ChapterComplete,
-					},
-				}
-			};
-			if (Util.HasOptionalRealHeart(area)) {
-				mp.Objectives.Add(new MatchObjective() {
-					ObjectiveType = MatchObjectiveType.HeartCollect,
-				});
-			}
-			if (Util.HasCassette(area)) {
-				mp.Objectives.Add(new MatchObjective() {
-					ObjectiveType = MatchObjectiveType.CassetteCollect,
-				});
-			}
-			if (Util.HasTrackedBerries(area)) {
-				mp.Objectives.Add(new MatchObjective() {
-					ObjectiveType = MatchObjectiveType.Strawberries,
-					CollectableGoal = Util.CountBerries(area)
-				});
-			}
-			return mp;
-		}
-
-		public static MatchPhase ILMoonBerry(GlobalAreaKey area) {
-			if (string.IsNullOrEmpty(area.Local?.SID)) return null;
-			if (!IsCategoryValid(StandardCategory.MoonBerry, area)) return null;
-
-			MatchPhase mp = new MatchPhase() {
-				category = StandardCategory.MoonBerry,
-				Area = area,
-				Objectives = new List<MatchObjective>() {
-					new MatchObjective() {
-						ObjectiveType = MatchObjectiveType.ChapterComplete,
-					},
-					new MatchObjective() {
-						ObjectiveType = MatchObjectiveType.MoonBerry,
-						CollectableGoal = Util.CountMoonBerries(area),
-					},
-				}
-			};
-			return mp;
-		}
-
-		public static MatchPhase ILFCMoonBerry(GlobalAreaKey area) {
-			if (string.IsNullOrEmpty(area.Local?.SID)) return null;
-			if (!IsCategoryValid(StandardCategory.FullClearMoonBerry, area)) return null;
-
-			MatchPhase mp = new MatchPhase() {
-				category = StandardCategory.FullClearMoonBerry,
-				Area = area,
-				Objectives = new List<MatchObjective>() {
-					new MatchObjective() {
-						ObjectiveType = MatchObjectiveType.ChapterComplete,
-					},
-				}
-			};
-			if (Util.HasOptionalRealHeart(area)) {
-				mp.Objectives.Add(new MatchObjective() {
-					ObjectiveType = MatchObjectiveType.HeartCollect,
-				});
-			}
-			if (Util.HasCassette(area)) {
-				mp.Objectives.Add(new MatchObjective() {
-					ObjectiveType = MatchObjectiveType.CassetteCollect,
-				});
-			}
-			if (Util.HasTrackedBerries(area)) {
-				mp.Objectives.Add(new MatchObjective() {
-					ObjectiveType = MatchObjectiveType.Strawberries,
-					CollectableGoal = Util.CountBerries(area)
-				});
-			}
-			int moonberries = Util.CountMoonBerries(area);
-			if (moonberries > 0) {
-				mp.Objectives.Add(new MatchObjective() {
-					ObjectiveType = MatchObjectiveType.MoonBerry,
-					CollectableGoal = moonberries,
-				});
-			}
-			return mp;
-		}
-
-		// Specialty Categories
-
-		public static MatchPhase ILOneThirdBerries(GlobalAreaKey area) {
-			if (string.IsNullOrEmpty(area.Local?.SID)) return null;
-			if (!IsCategoryValid(StandardCategory.OneThirdBerries, area)) return null;
-
-			MatchPhase mp = new MatchPhase() {
-				category = StandardCategory.OneThirdBerries,
-				Area = area,
-				Objectives = new List<MatchObjective>() {
-					new MatchObjective() {
-						ObjectiveType = MatchObjectiveType.Strawberries,
-						CollectableGoal = (int)Math.Ceiling(Util.CountBerries(area) / 3.0),
-					},
-					new MatchObjective() {
-						ObjectiveType = MatchObjectiveType.ChapterComplete,
-					},
-				}
-			};
-			return mp;
-		}
-
-		public static MatchPhase ILOneFifthBerries(GlobalAreaKey area) {
-			if (string.IsNullOrEmpty(area.Local?.SID)) return null;
-			if (!IsCategoryValid(StandardCategory.OneFifthBerries, area)) return null;
-
-			MatchPhase mp = new MatchPhase() {
-				category = StandardCategory.OneFifthBerries,
-				Area = area,
-				Objectives = new List<MatchObjective>() {
-					new MatchObjective() {
-						ObjectiveType = MatchObjectiveType.Strawberries,
-						CollectableGoal = (int)Math.Ceiling(Util.CountBerries(area) / 5.0),
-					},
-					new MatchObjective() {
-						ObjectiveType = MatchObjectiveType.ChapterComplete,
-					},
-				}
-			};
-			return mp;
-		}
-
-		public static MatchPhase ILTimeLimit(GlobalAreaKey area, long timeLimit) {
-			if (string.IsNullOrEmpty(area.Local?.SID)) return null;
-			if (!IsCategoryValid(StandardCategory.TimeLimit, area)) return null;
-
-			MatchPhase mp = new MatchPhase() {
-				category = StandardCategory.TimeLimit,
-				Area = area,
-				Objectives = new List<MatchObjective>() {
-					new MatchObjective() {
-						ObjectiveType = MatchObjectiveType.TimeLimit,
-						TimeLimit = timeLimit,
-					},
-				}
-			};
-			return mp;
-		}
-
-		// Fullgame Categories
+		// TODO (!) cut over full-game categories to use the generic template framework
 
 		public static MatchDefinition GetFullgameCategoryDefinition(StandardCategory cat) {
 			switch (cat) {
@@ -685,7 +434,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 		// More Stuff
 
-		public static bool IsCategoryValid(StandardCategory cat, GlobalAreaKey area, CustomMatchTemplate template = null, bool defaultOnly = true)
+		public static bool IsCategoryValid(StandardCategory cat, GlobalAreaKey area, MatchTemplate template = null, bool defaultOnly = true)
 		{
 			if (area.IsOverworld) return false;
 			if (!area.ExistsLocal) return false;
@@ -700,42 +449,36 @@ namespace Celeste.Mod.Head2Head.Shared {
 					case null:
 					default:
 						return false;
-					case 1:
-					case 2:
-					case 3:
-					case 4:
-					case 5:
-					case 7:
+					case 1:  // City
+					case 2:  // Site
+					case 3:  // Resort
+					case 4:  // Ridge
+					case 5:  // Temple
+					case 7:  // Summit
 						return cat == StandardCategory.Clear
 							|| cat == StandardCategory.ARB
 							|| cat == StandardCategory.ARBHeart
-							|| cat == StandardCategory.OneFifthBerries
-							|| cat == StandardCategory.OneThirdBerries
 							|| cat == StandardCategory.HeartCassette
 							|| cat == StandardCategory.FullClear
 							|| cat == StandardCategory.CassetteGrab
 							|| cat == StandardCategory.Custom;
-					case 0:  // Prologue
-						return cat == StandardCategory.Clear;
 					case 6:  // Reflection
 						return cat == StandardCategory.Clear
 							|| cat == StandardCategory.FullClear
 							|| cat == StandardCategory.CassetteGrab
 							|| cat == StandardCategory.Custom;
-					case 8:  // epilogue
-						return cat == StandardCategory.Clear;
 					case 9:  // Core
 						return cat == StandardCategory.Clear
 							|| cat == StandardCategory.ARB
-							|| cat == StandardCategory.OneFifthBerries
-							|| cat == StandardCategory.OneThirdBerries
 							|| cat == StandardCategory.CassetteGrab
 							|| cat == StandardCategory.Custom;
 					case 10:  // Farewell
 						return cat == StandardCategory.Clear
 							|| cat == StandardCategory.MoonBerry
-							|| cat == StandardCategory.TimeLimit
 							|| cat == StandardCategory.Custom;
+					case 0:  // Prologue
+					case 8:  // Epilogue
+						return cat == StandardCategory.Clear;
 				}
 			}
 			else {
@@ -750,8 +493,6 @@ namespace Celeste.Mod.Head2Head.Shared {
 					case StandardCategory.Clear:
 						return true;
 					case StandardCategory.ARB:
-					case StandardCategory.OneThirdBerries:
-					case StandardCategory.OneFifthBerries:
 						return berries && (hasCassette || hasOptionalHeart || !canFC);
 					case StandardCategory.ARBHeart:
 						return berries && hasOptionalHeart && (hasCassette || !canFC);
@@ -788,7 +529,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		}
 
 		public static bool HasAnyValidCategory(GlobalAreaKey area, bool defaultOnly) {
-			return area.ExistsLocal && area.Data.HasMode(area.Mode) && GetCategories(area, defaultOnly).Count > 0;  // TODO reimplement so its more efficient
+			return area.ExistsLocal && area.Data.HasMode(area.Mode) && GetCategories(area, defaultOnly).Count > 0;  // TODO (!) reimplement so its more efficient
 		}
 
 		private static bool ShowCategory(int? id, AreaMode areaMode, StandardCategory cat) {
@@ -822,31 +563,292 @@ namespace Celeste.Mod.Head2Head.Shared {
 			}
 		}
 
-		public static List<Tuple<StandardCategory, CustomMatchTemplate>> GetCategories(GlobalAreaKey gArea, bool defaultOnly) {
-			List<Tuple<StandardCategory, CustomMatchTemplate>> ret = new List<Tuple<StandardCategory, CustomMatchTemplate>>();
+		public static List<MatchTemplate> GetCategories(GlobalAreaKey gArea, bool defaultOnly) {
+			List<MatchTemplate> ret = new List<MatchTemplate>();
 			StandardCategory[] cats = Role.GetValidCategories();
+			AreaMetaInfo areaMetaInfo = null;
 			// Standard Categories
 			foreach (StandardCategory cat in cats) {
 				if (cat == StandardCategory.Custom) continue;
 				if (!IsCategoryValid(cat, gArea, null)) continue;
 				// enforce SRC Rules setting
 				if (!ShowCategory(gArea.Local?.ID, gArea.Local?.Mode ?? AreaMode.Normal, cat)) continue;
-				ret.Add(new Tuple<StandardCategory, CustomMatchTemplate>(cat, null));
+				ret.Add(GetStandardMatchTemplate(cat, gArea, ref areaMetaInfo));
 			}
 			// Custom Categories
-			if (Role.AllowCustomCategories() && CustomMatchTemplate.ILTemplates.ContainsKey(gArea)) {
-				foreach (CustomMatchTemplate template in CustomMatchTemplate.ILTemplates[gArea]) {
+			if (Role.AllowCustomCategories() && MatchTemplate.ILTemplates.ContainsKey(gArea)) {
+				foreach (MatchTemplate template in MatchTemplate.ILTemplates[gArea]) {
 					if (!IsCategoryValid(StandardCategory.Custom, gArea, template, defaultOnly)) continue;
-					ret.Add(new Tuple<StandardCategory, CustomMatchTemplate>(StandardCategory.Custom, template));
+					ret.Add(template);
 				}
 			}
 			return ret;
 		}
 
-		public static string GetCategoryTitle(StandardCategory cat, CustomMatchTemplate tem) {
-			return (cat == StandardCategory.Custom && !string.IsNullOrEmpty(tem.DisplayName)) ?
+		public static string GetCategoryTitle(StandardCategory cat, MatchTemplate tem) {
+			return (cat == StandardCategory.Custom && !string.IsNullOrEmpty(tem?.DisplayName)) ?
 				Util.TranslatedIfAvailable(tem.DisplayName) :
 				Dialog.Get(string.Format("Head2Head_CategoryName_{0}", cat.ToString()));
+		}
+
+		private static MatchTemplate GetStandardMatchTemplate(StandardCategory cat, GlobalAreaKey area, ref AreaMetaInfo info) {
+			if (info == null) {
+				info = new AreaMetaInfo() {
+					BerryCount = Util.TrackedBerryCount(area),
+					HasCassette = Util.HasCassette(area),
+					HasOptionalHeart = Util.HasOptionalRealHeart(area),
+					CanFC = area.Data?.CanFullClear ?? false,
+					MoonBerryCount = Util.CountMoonBerries(area),
+				};
+			}
+			switch (cat) {
+				default:
+				case StandardCategory.Custom:
+					return null;
+				case StandardCategory.Clear:
+					return StandardTemplate_Clear(area, info);
+				case StandardCategory.ARB:
+					return StandardTemplate_ARB(area, info);
+				case StandardCategory.ARBHeart:
+					return StandardTemplate_ARBHeart(area, info);
+				case StandardCategory.HeartCassette:
+					return StandardTemplate_HeartCassette(area, info);
+				case StandardCategory.CassetteGrab:
+					return StandardTemplate_CassetteGrab(area, info);
+				case StandardCategory.FullClear:
+					return StandardTemplate_FullClear(area, info);
+				case StandardCategory.MoonBerry:
+					return StandardTemplate_MoonBerry(area, info);
+				case StandardCategory.FullClearMoonBerry:
+					return StandardTemplate_FullClearMoonBerry(area, info);
+			}
+		}
+
+		private static MatchTemplate StandardTemplate_Clear(GlobalAreaKey area, AreaMetaInfo info) {
+			return new MatchTemplate() {
+				AllowCheatMode = false,
+				Area = area,
+				DisplayName = GetCategoryTitle(StandardCategory.Clear, null),
+				IconPath = Util.CategoryToIcon(StandardCategory.Clear),
+				IncludeInDefaultRuleset = true,
+				Phases = {
+					new MatchPhaseTemplate() {
+						Area = area,
+						Objectives = {
+							new MatchObjectiveTemplate() {
+								ObjectiveType = MatchObjectiveType.ChapterComplete
+							}
+						}
+					}
+				}
+			};
+		}
+
+		private static MatchTemplate StandardTemplate_ARB(GlobalAreaKey area, AreaMetaInfo info) {
+			return new MatchTemplate() {
+				AllowCheatMode = false,
+				Area = area,
+				DisplayName = GetCategoryTitle(StandardCategory.ARB, null),
+				IconPath = Util.CategoryToIcon(StandardCategory.ARB),
+				IncludeInDefaultRuleset = true,
+				Phases = {
+					new MatchPhaseTemplate() {
+						Area = area,
+						Objectives = {
+							new MatchObjectiveTemplate() {
+								ObjectiveType = MatchObjectiveType.ChapterComplete
+							},
+							new MatchObjectiveTemplate() {
+								ObjectiveType = MatchObjectiveType.Strawberries,
+								CollectableCount = info.BerryCount,
+							}
+						}
+					}
+				}
+			};
+		}
+
+		private static MatchTemplate StandardTemplate_ARBHeart(GlobalAreaKey area, AreaMetaInfo info) {
+			return new MatchTemplate() {
+				AllowCheatMode = false,
+				Area = area,
+				DisplayName = GetCategoryTitle(StandardCategory.ARBHeart, null),
+				IconPath = Util.CategoryToIcon(StandardCategory.ARBHeart),
+				IncludeInDefaultRuleset = true,
+				Phases = {
+					new MatchPhaseTemplate() {
+						Area = area,
+						Objectives = {
+							new MatchObjectiveTemplate() {
+								ObjectiveType = MatchObjectiveType.ChapterComplete
+							},
+							new MatchObjectiveTemplate() {
+								ObjectiveType = MatchObjectiveType.Strawberries,
+								CollectableCount = info.BerryCount
+							},
+							new MatchObjectiveTemplate() {
+								ObjectiveType = MatchObjectiveType.HeartCollect
+							}
+						}
+					}
+				}
+			};
+		}
+
+		private static MatchTemplate StandardTemplate_HeartCassette(GlobalAreaKey area, AreaMetaInfo info) {
+			return new MatchTemplate() {
+				AllowCheatMode = false,
+				Area = area,
+				DisplayName = GetCategoryTitle(StandardCategory.HeartCassette, null),
+				IconPath = Util.CategoryToIcon(StandardCategory.HeartCassette),
+				IncludeInDefaultRuleset = true,
+				Phases = {
+					new MatchPhaseTemplate() {
+						Area = area,
+						Objectives = {
+							new MatchObjectiveTemplate() {
+								ObjectiveType = MatchObjectiveType.ChapterComplete
+							},
+							new MatchObjectiveTemplate() {
+								ObjectiveType = MatchObjectiveType.HeartCollect
+							},
+							new MatchObjectiveTemplate() {
+								ObjectiveType = MatchObjectiveType.CassetteCollect
+							}
+						}
+					}
+				}
+			};
+		}
+
+		private static MatchTemplate StandardTemplate_CassetteGrab(GlobalAreaKey area, AreaMetaInfo info) {
+			return new MatchTemplate() {
+				AllowCheatMode = false,
+				Area = area,
+				DisplayName = GetCategoryTitle(StandardCategory.CassetteGrab, null),
+				IconPath = Util.CategoryToIcon(StandardCategory.CassetteGrab),
+				IncludeInDefaultRuleset = true,
+				Phases = {
+					new MatchPhaseTemplate() {
+						Area = area,
+						Objectives = {
+							new MatchObjectiveTemplate() {
+								ObjectiveType = MatchObjectiveType.CassetteCollect
+							}
+						}
+					}
+				}
+			};
+		}
+
+		private static MatchTemplate StandardTemplate_FullClear(GlobalAreaKey area, AreaMetaInfo info) {
+			MatchTemplate ret = new MatchTemplate() {
+				AllowCheatMode = false,
+				Area = area,
+				DisplayName = GetCategoryTitle(StandardCategory.FullClear, null),
+				IconPath = Util.CategoryToIcon(StandardCategory.FullClear),
+				IncludeInDefaultRuleset = true,
+				Phases = {
+					new MatchPhaseTemplate() {
+						Area = area,
+						Objectives = {
+							new MatchObjectiveTemplate() {
+								ObjectiveType = MatchObjectiveType.ChapterComplete
+							}
+						}
+					}
+				}
+			};
+			if (info.HasCassette) {
+				ret.Phases[0].Objectives.Add(new MatchObjectiveTemplate() {
+					ObjectiveType = MatchObjectiveType.CassetteCollect
+				});
+			}
+			if (info.HasOptionalHeart) {
+				ret.Phases[0].Objectives.Add(new MatchObjectiveTemplate() {
+					ObjectiveType = MatchObjectiveType.HeartCollect
+				});
+			}
+			if (info.BerryCount > 0) {
+				ret.Phases[0].Objectives.Add(new MatchObjectiveTemplate() {
+					ObjectiveType = MatchObjectiveType.Strawberries,
+					CollectableCount = info.BerryCount
+				});
+			}
+			return ret;
+		}
+
+		private static MatchTemplate StandardTemplate_MoonBerry(GlobalAreaKey area, AreaMetaInfo info) {
+			return new MatchTemplate() {
+				AllowCheatMode = false,
+				Area = area,
+				DisplayName = GetCategoryTitle(StandardCategory.MoonBerry, null),
+				IconPath = Util.CategoryToIcon(StandardCategory.MoonBerry),
+				IncludeInDefaultRuleset = true,
+				Phases = {
+					new MatchPhaseTemplate() {
+						Area = area,
+						Objectives = {
+							new MatchObjectiveTemplate() {
+								ObjectiveType = MatchObjectiveType.ChapterComplete
+							},
+							new MatchObjectiveTemplate() {
+								ObjectiveType = MatchObjectiveType.MoonBerry,
+								CollectableCount = info.MoonBerryCount
+							},
+						}
+					}
+				}
+			};
+		}
+
+		private static MatchTemplate StandardTemplate_FullClearMoonBerry(GlobalAreaKey area, AreaMetaInfo info) {
+			MatchTemplate ret = new MatchTemplate() {
+				AllowCheatMode = false,
+				Area = area,
+				DisplayName = GetCategoryTitle(StandardCategory.FullClearMoonBerry, null),
+				IconPath = Util.CategoryToIcon(StandardCategory.FullClearMoonBerry),
+				IncludeInDefaultRuleset = true,
+				Phases = {
+					new MatchPhaseTemplate() {
+						Area = area,
+						Objectives = {
+							new MatchObjectiveTemplate() {
+								ObjectiveType = MatchObjectiveType.ChapterComplete
+							},
+							new MatchObjectiveTemplate() {
+								ObjectiveType = MatchObjectiveType.MoonBerry,
+								CollectableCount = info.MoonBerryCount
+							}
+						}
+					}
+				}
+			};
+			if (info.HasCassette) {
+				ret.Phases[0].Objectives.Add(new MatchObjectiveTemplate() {
+					ObjectiveType = MatchObjectiveType.CassetteCollect
+				});
+			}
+			if (info.HasOptionalHeart) {
+				ret.Phases[0].Objectives.Add(new MatchObjectiveTemplate() {
+					ObjectiveType = MatchObjectiveType.HeartCollect
+				});
+			}
+			if (info.BerryCount > 0) {
+				ret.Phases[0].Objectives.Add(new MatchObjectiveTemplate() {
+					ObjectiveType = MatchObjectiveType.Strawberries,
+					CollectableCount = info.BerryCount
+				});
+			}
+			return ret;
+		}
+
+		private class AreaMetaInfo {
+			public bool HasCassette;
+			public bool HasOptionalHeart;
+			public int MoonBerryCount;
+			public bool CanFC;
+			public int BerryCount;
 		}
 	}
 }

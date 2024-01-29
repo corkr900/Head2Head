@@ -61,7 +61,14 @@ namespace Celeste.Mod.Head2Head.Shared {
         public bool ExistsLocal { get { return _localKey != null; } }
         public bool IsOverworld { get { return _localKey == null && _sid == "Overworld"; } }
 		public bool IsRandomizer { get { return _localKey == null && _sid == "Randomizer" && RandomizerIntegration.RandomizerLoaded; } }
-        public bool IsValidInstalledMap { get { return ExistsLocal || IsRandomizer; } }
+		public bool IsValidInstalledMap { get { return ExistsLocal || IsRandomizer; } }
+		public bool IsValidMode {
+            get {
+                return _localKey != null
+                    && (int)_localKey.Value.Mode < (Data?.Mode?.Length ?? 0)
+                    && Data.Mode[(int)_localKey.Value.Mode] != null;
+            }
+        }
 		public bool IsVanilla { get { return ExistsLocal && Local?.LevelSet == "Celeste"; } }
         public string DisplayName {
             get {

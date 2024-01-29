@@ -111,7 +111,7 @@ namespace Celeste.Mod.Head2Head.Entities {
 			}
 
 			// Custom Fullgame Categories
-			foreach (KeyValuePair<string, List<CustomMatchTemplate>> set in CustomMatchTemplate.FullgameTemplates) {
+			foreach (KeyValuePair<string, List<MatchTemplate>> set in MatchTemplate.FullgameTemplates) {
 				int idx = ret.FindIndex((Tuple<string, List<Option>> tup) => tup.Item1 == set.Key);
 				List<Option> list;
 				if (idx < 0 || idx >= ret.Count) {
@@ -122,7 +122,7 @@ namespace Celeste.Mod.Head2Head.Entities {
 					list = ret[idx].Item2;
 				}
 				
-				foreach (CustomMatchTemplate template in set.Value) {
+				foreach (MatchTemplate template in set.Value) {
 					list.Add(new Option() {
 						Cat = StandardCategory.Custom,
 						CustomIcon = (!string.IsNullOrEmpty(template.IconPath) && GFX.Gui.Has(template.IconPath)) ? GFX.Gui[template.IconPath] : null,
@@ -135,20 +135,20 @@ namespace Celeste.Mod.Head2Head.Entities {
 			return ret;
 		}
 
-		private CustomMatchTemplate GetTemplateForCollabLobby(Tuple<string, AreaData, List<AreaData>> tup) {
+		private MatchTemplate GetTemplateForCollabLobby(Tuple<string, AreaData, List<AreaData>> tup) {
 			GlobalAreaKey area = new GlobalAreaKey(tup.Item2.SID);
-			CustomMatchTemplate ret = new CustomMatchTemplate();
+			MatchTemplate ret = new MatchTemplate();
 			ret.Key = "Autogen_CollabLobby_" + tup.Item2.SID;
 			ret.Area = area;
 			ret.IconPath = tup.Item2.Icon;
 			ret.DisplayName = tup.Item2.Name;
 			ret.AllowCheatMode = false;
-			CustomMatchPhaseTemplate ph = new CustomMatchPhaseTemplate() {
+			MatchPhaseTemplate ph = new MatchPhaseTemplate() {
 				Area = area,
 				LevelSet = tup.Item1,
 			};
 			foreach (AreaData data in tup.Item3) {
-				ph.Objectives.Add(new CustomMatchObjectiveTemplate() {
+				ph.Objectives.Add(new MatchObjectiveTemplate() {
 					ObjectiveType = MatchObjectiveType.ChapterComplete,
 					CustomTypeKey = data.SID,
 				});
@@ -307,7 +307,7 @@ namespace Celeste.Mod.Head2Head.Entities {
 
 			public string CustomTitle;
 			public MTexture CustomIcon;
-			public CustomMatchTemplate Template;
+			public MatchTemplate Template;
 
 			public string Title {
 				get {
