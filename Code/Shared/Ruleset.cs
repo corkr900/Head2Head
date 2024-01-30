@@ -13,12 +13,6 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 namespace Celeste.Mod.Head2Head.Shared {
 	public class Ruleset {
 
-		private static int _internalIDCounter = 0;
-		internal static int NewInternalID() {
-			return ++_internalIDCounter;
-		}
-
-
 		#region Static handling of default and custom rulesets
 
 		private static Ruleset _dflt = null;
@@ -59,9 +53,8 @@ namespace Celeste.Mod.Head2Head.Shared {
 				return;
 			}
 			if (customRulesets.ContainsKey(ruleset.ID)) {
-				// TODO (!!) this warning triggers when re-loading the same ruleset on a subsequent entry to the lobby...
-				Logger.Log(LogLevel.Warn, "Head2Head", $"Encountered duplicate ruleset ID '{ruleset.ID}'. Skipping.");
-				return;
+				Logger.Log(LogLevel.Warn, "Head2Head", $"Already found ruleset with ID '{ruleset.ID}'. Overwriting.");
+				customRulesets.Remove(ruleset.ID);
 			}
 			if (string.IsNullOrEmpty(ruleset.Name)) ruleset.Name = ruleset.ID;
 			RunOptionsLevelSet set = new RunOptionsLevelSet();
@@ -143,16 +136,18 @@ namespace Celeste.Mod.Head2Head.Shared {
 				}
 
 				// Hide non-lobby collab maps
-				if (CollabUtils2Integration.IsCollabMap?.Invoke(areaData.SID) ?? false) {
+				if (!setOption.Hidden && (CollabUtils2Integration.IsCollabMap?.Invoke(areaData.SID) ?? false)) {
 					setOption.Hidden = true;
 				}
-				else if (CollabUtils2Integration.IsCollabGym?.Invoke(areaData.SID) ?? false) {
+				else if (!setOption.Hidden && (CollabUtils2Integration.IsCollabGym?.Invoke(areaData.SID) ?? false)) {
 					setOption.Hidden = true;
 				}
 
 				// Add stuff about the level
 				RunOptionsILChapter chapter = new RunOptionsILChapter();
 				chapter.Data = areaData;
+				chapter.Icon = areaData.Icon;
+				chapter.Title = areaData.Name?.DialogClean();
 				if (BuildOptions_NormalChapter(chapter, areaData, areaData.ToKey())) {
 					setOption.Chapters.Add(chapter);
 					if (!setAdded) {

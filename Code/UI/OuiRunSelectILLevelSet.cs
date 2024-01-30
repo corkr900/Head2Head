@@ -15,13 +15,18 @@ namespace Celeste.Mod.Head2Head.UI {
 		private static int setIndex = 0;
 
 		public override IEnumerator Enter(Oui from) {
+			int startingIdx = setIndex;
 			if (Direction > 0) {
 				yield return 0.25f;
-				if (++setIndex >= OuiRunSelectIL.UsingRuleset.LevelSets.Count - 1) setIndex = 0;
+				while (Rotate() != startingIdx) {
+					if (!OuiRunSelectIL.UsingRuleset.LevelSets[setIndex].Hidden) break;
+				}
 			}
 			else if (Direction < 0) {
 				yield return 0.25f;
-				if (--setIndex < 0) setIndex = OuiRunSelectIL.UsingRuleset.LevelSets.Count - 1;
+				while (Rotate() != startingIdx) {
+					if (!OuiRunSelectIL.UsingRuleset.LevelSets[setIndex].Hidden) break;
+				}
 			}
 			else {
 				GotoChapterSelect();
@@ -34,6 +39,17 @@ namespace Celeste.Mod.Head2Head.UI {
 				Audio.Play("event:/ui/world_map/chapter/pane_contract");
 			}
 			GotoChapterSelect();
+		}
+
+		private int Rotate() {
+			int count = OuiRunSelectIL.UsingRuleset.LevelSets.Count;
+			if (Direction > 0) {
+				setIndex = setIndex >= count - 1 ? 0 : setIndex + 1;
+			}
+			else if (Direction < 0) {
+				setIndex = setIndex <= 0 ? count - 1 : setIndex - 1;
+			}
+			return setIndex;
 		}
 
 		private void GotoChapterSelect() {

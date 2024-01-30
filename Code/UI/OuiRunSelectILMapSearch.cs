@@ -17,7 +17,7 @@ namespace Celeste.Mod.Head2Head.UI {
 
 		// TODO (!!!) rework this to work with the ruleset system
 
-		public List<OuiRunSelectILChapterIcon> OuiIcons;
+		public List<ChapterIcon> OuiIcons;
 
 		private SearchMenu menu;
 

@@ -16,7 +16,7 @@ namespace Celeste.Mod.Head2Head.UI {
 	class OuiRunSelectILCollabMapSelect : Oui {
 
 		public class CollabMap : Entity {
-			internal static readonly float EnterEaseTime = 0.3f;
+			internal static readonly float EnterEaseTime = 0.2f;
 			internal static readonly float SelectEaseTime = 0.15f;
 			internal static readonly float SelectedXOffset = 60f;
 			internal static readonly float IconSize = 90f;
@@ -75,7 +75,7 @@ namespace Celeste.Mod.Head2Head.UI {
 				float xmin = -size.X;
 				float xmax = Margin;
 				float xpos = Calc.LerpClamp(xmin, xmax, Ease.CubeIn(EnterEase));
-				xpos += Calc.LerpClamp(0, SelectedXOffset + Margin, Ease.CubeInOut(SelectEase));
+				xpos += Calc.LerpClamp(0, SelectedXOffset + LeftSpacing, Ease.CubeInOut(SelectEase));
 
 				if (Icon != null) {
 					Icon.DrawJustified(new Vector2(xpos + IconSize/2f, YPosition - Scroll), new Vector2(0.5f, 0.5f), Color.White, 0.5f, iconRotation);
@@ -178,7 +178,8 @@ namespace Celeste.Mod.Head2Head.UI {
 		}
 
 		public override IEnumerator Enter(Oui from) {
-			if (!allMaps.ContainsKey(UsingLobby.Data.SID)) throw new InvalidOperationException("h2h: entered collab map select UI for a lobby that doesnt seem to be a collab lobby");
+			if (!allMaps.ContainsKey(UsingLobby.Data?.SID)) throw new InvalidOperationException("h2h: entered collab map select UI for a lobby that doesnt seem to be a collab lobby");
+			allMaps[UsingLobby.Data.SID].Clear();
 			foreach (RunOptionsLevelSet set in OuiRunSelectIL.UsingRuleset.LevelSets) {
 				string lobby = CollabUtils2Integration.GetLobbyForLevelSet?.Invoke(set.LevelSet);
 				if (lobby != UsingLobby.Data.SID) continue;
@@ -187,12 +188,12 @@ namespace Celeste.Mod.Head2Head.UI {
 				}
 			}
 
-			List <CollabMap> maps = null;
+			List <CollabMap> maps = lobbyMaps;
 			foreach (KeyValuePair<string, List<CollabMap>> kvp in allMaps) {
 				foreach (CollabMap map in kvp.Value) {
 					map.Show = false;
 					map.Hovered = false;
-					map.Enabled = kvp.Key == kvp.Key;
+					map.Enabled = false;
 				}
 			}
 			hovered = Calc.Clamp(hovered, 0, maps.Count - 1);
@@ -268,7 +269,7 @@ namespace Celeste.Mod.Head2Head.UI {
 			list[hovered].Hovered = false;
 			hovered = newHover;
 			list[hovered].Hovered = true;
-			pointer.SetNewTarget(new Vector2(CollabMap.Margin, list[hovered].YPosition));
+			pointer.SetNewTarget(new Vector2(CollabMap.LeftSpacing, list[hovered].YPosition));
 			scrollBase = scrollCurrent;
 			scrollTarget = GetScrollTarget();
 			scrollLerp = 0;
@@ -281,7 +282,7 @@ namespace Celeste.Mod.Head2Head.UI {
 			const float deadZoneMax = screenHeight * 2f / 3f;
 
 			float currentPtrPos = pointer.PosTarget.Y - scrollTarget;
-			if (currentPtrPos >= deadZoneMin && currentPtrPos <= deadZoneMax) {  // Current targets are with deadzone; this is fine.
+			if (currentPtrPos >= deadZoneMin && currentPtrPos <= deadZoneMax) {
 				return scrollTarget;
 			}
 			float regionHeight = YPosBase * 2 + YPosStep * lobbyMaps.Count;

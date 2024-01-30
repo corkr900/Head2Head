@@ -106,15 +106,14 @@ namespace Celeste.Mod.Head2Head.UI {
 		public string Icon;
 		public AreaData Data;
 		public bool IsSpecial { get { return Data == null; } }
-		public readonly int InternalID = Ruleset.NewInternalID();
 		public string CollabLobby {
 			get {
-				return Data == null ? null : CollabUtils2Integration.GetLobbyForMap?.Invoke(Data.SID);
+				return Data == null ? "" : CollabUtils2Integration.GetLobbyForMap?.Invoke(Data.SID);
 			}
 		}
 		public string CollabLevelSetForLobby {
 			get {
-				return CollabUtils2Integration.GetLobbyLevelSet?.Invoke(Data?.SID);
+				return string.IsNullOrEmpty(Data?.SID) ? "" : CollabUtils2Integration.GetLobbyLevelSet?.Invoke(Data.SID);
 			}
 		}
 

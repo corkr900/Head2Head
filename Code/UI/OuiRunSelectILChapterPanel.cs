@@ -129,6 +129,7 @@ namespace Celeste.Mod.Head2Head.UI {
 		}
 
 		public override IEnumerator Enter(Oui from) {
+			Position = ClosePosition;
 			Visible = true;
 			UsingSide = null;
 			Reset();

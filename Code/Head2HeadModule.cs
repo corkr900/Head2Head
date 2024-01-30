@@ -54,7 +54,6 @@ namespace Celeste.Mod.Head2Head {
 		private static string _version = null;
 
 		private static Hook hook_Strawberry_orig_OnCollect;
-		private static Hook hook_OuiChapterSelectIcon_Get_IdlePosition;
 		private static Hook hook_SaveData_Get_UnlockedAreas_Safe;
 		private static Hook hook_SaveData_Set_UnlockedAreas_Safe;
 		private static Hook hook_HeartGemDoor_Get_HeartGems;
@@ -100,19 +99,16 @@ namespace Celeste.Mod.Head2Head {
 			// Manual Hooks
 			hook_Strawberry_orig_OnCollect = new Hook(
 				typeof(Strawberry).GetMethod("orig_OnCollect", BindingFlags.Public | BindingFlags.Instance),
-				typeof(Head2HeadModule).GetMethod("OnStrawberryCollect"));
-			hook_OuiChapterSelectIcon_Get_IdlePosition = new Hook(
-				typeof(OuiChapterSelectIcon).GetProperty("IdlePosition").GetAccessors()[0],
-				typeof(Head2HeadModule).GetMethod("OnOuiChapterSelectIconGetIdlePosition"));
+				typeof(Head2HeadModule).GetMethod(nameof(OnStrawberryCollect)));
 			hook_SaveData_Get_UnlockedAreas_Safe = new Hook(
 				typeof(SaveData).GetProperty("UnlockedAreas_Safe").GetGetMethod(),
-				typeof(Head2HeadModule).GetMethod("OnSaveDataGetUnlockedAreas_Safe"));
+				typeof(Head2HeadModule).GetMethod(nameof(OnSaveDataGetUnlockedAreas_Safe)));
 			hook_SaveData_Set_UnlockedAreas_Safe = new Hook(
 				typeof(SaveData).GetProperty("UnlockedAreas_Safe").GetSetMethod(),
-				typeof(Head2HeadModule).GetMethod("OnSaveDataSetUnlockedAreas_Safe"));
+				typeof(Head2HeadModule).GetMethod(nameof(OnSaveDataSetUnlockedAreas_Safe)));
 			hook_HeartGemDoor_Get_HeartGems = new Hook(
 				typeof(HeartGemDoor).GetProperty("HeartGems").GetGetMethod(),
-				typeof(Head2HeadModule).GetMethod("OnHeartGemDoorGetHeartGems"));
+				typeof(Head2HeadModule).GetMethod(nameof(OnHeartGemDoorGetHeartGems)));
 
 			// IL Hooks
 			IL.Celeste.LevelLoader.LoadingThread += Level_LoadingThread;
@@ -148,7 +144,6 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.OuiChapterPanel.DrawCheckpoint += OnOUIChapterPanelDrawCheckpoint;
 			On.Celeste.OuiChapterPanel._GetCheckpoints += OnOUIChapterPanel_GetCheckpoints;
 			On.Celeste.SummitGemManager.Routine += OnSummitGemManagerRoutine;
-			On.Celeste.OuiChapterSelectIcon.Show += OnOuiChapterSelectIconShow;
 			On.Celeste.SpeedrunTimerDisplay.Render += OnSpeedrunTimerDisplayRender;
 			On.Celeste.UnlockEverythingThingy.EnteredCheat += OnUnlockEverythingThingyEnteredCheat;
 			On.Celeste.Editor.MapEditor.ctor += onDebugScreenOpened;
@@ -184,8 +179,6 @@ namespace Celeste.Mod.Head2Head {
 			// Manual Hooks
 			hook_Strawberry_orig_OnCollect?.Dispose();
 			hook_Strawberry_orig_OnCollect = null;
-			hook_OuiChapterSelectIcon_Get_IdlePosition?.Dispose();
-			hook_OuiChapterSelectIcon_Get_IdlePosition = null;
 			hook_SaveData_Get_UnlockedAreas_Safe?.Dispose();
 			hook_SaveData_Get_UnlockedAreas_Safe = null;
 			hook_SaveData_Set_UnlockedAreas_Safe?.Dispose();
@@ -227,7 +220,6 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.OuiChapterPanel.DrawCheckpoint -= OnOUIChapterPanelDrawCheckpoint;
 			On.Celeste.OuiChapterPanel._GetCheckpoints -= OnOUIChapterPanel_GetCheckpoints;
 			On.Celeste.SummitGemManager.Routine -= OnSummitGemManagerRoutine;
-			On.Celeste.OuiChapterSelectIcon.Show -= OnOuiChapterSelectIconShow;
 			On.Celeste.SpeedrunTimerDisplay.Render -= OnSpeedrunTimerDisplayRender;
 			On.Celeste.UnlockEverythingThingy.EnteredCheat -= OnUnlockEverythingThingyEnteredCheat;
 			On.Celeste.Editor.MapEditor.ctor -= onDebugScreenOpened;
@@ -404,10 +396,6 @@ namespace Celeste.Mod.Head2Head {
 			Instance.DoPostPhaseAutoLaunch(true, MatchObjective.GetTypeForStrawberry(self));
 		}
 
-		public static Vector2 OnOuiChapterSelectIconGetIdlePosition(Func<OuiChapterSelectIcon, Vector2> orig, OuiChapterSelectIcon self) {
-			return self is OuiRunSelectILChapterIcon icon ? icon.IdlePositionOverride : orig(self);
-		}
-
 		private void OnHeartCollected(On.Celeste.SaveData.orig_RegisterHeartGem orig, SaveData self, AreaKey area) {
 			orig(self, area);
 			PlayerStatus.Current.HeartCollected(new GlobalAreaKey(area));
@@ -418,12 +406,6 @@ namespace Celeste.Mod.Head2Head {
 			orig(self, area);
 			PlayerStatus.Current.CassetteCollected(new GlobalAreaKey(area));
 			DoPostPhaseAutoLaunch(true, MatchObjectiveType.CassetteCollect);  // TODO find a better hook for returning to lobby after cassette collection
-		}
-
-		private void OnOuiChapterSelectIconShow(On.Celeste.OuiChapterSelectIcon.orig_Show orig, OuiChapterSelectIcon self) {
-			orig(self);
-			if (self is OuiRunSelectILChapterIcon icon)
-				icon.OnAfterShow();
 		}
 
 		private void OnSceneBegin(On.Monocle.Scene.orig_Begin orig, Scene self) {
@@ -570,7 +552,6 @@ namespace Celeste.Mod.Head2Head {
 				}
 			}
 			orig(data, slot);
-			Engine.Commands.Log($"Entered savefile: {slot}");  // TODO (!!!) remove this
 			ActionLogger.EnteredSavefile();
 		}
 
