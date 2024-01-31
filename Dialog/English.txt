@@ -14,6 +14,10 @@ Head2Head_LobbyRecords= Best Lobby Runs
 Head2Head_CountMore= {0} More...
 Head2Head_MapNotInstalled= {0} (Not Installed)
 
+Head2Head_MatchTitle= {0} ({1})
+Head2Head_MatchTitle_BerryCount= {0} Berries
+Head2Head_MatchTitle_TimeLimit= {0} Limit
+
 HEAD2HEAD_RANDOMIZER= Randomizer
 Head2Head_Rando_nodash= Dashless
 Head2Head_Rando_onedash= One Dash
@@ -24,6 +28,10 @@ Head2Head_Rando_Dashcount_Zero= Dashless
 Head2Head_Rando_Dashcount_One= One Dash
 Head2Head_Rando_Dashcount_Two= Two Dashes
 
+################
+#   SETTINGS   #
+################
+
 Head2Head_Setting_UseSRCARBRules= Use SRC ARB Categories
 Head2Head_Setting_UseSRCARBRules_Subtext= If turned on, either ARB or ARB + Heart will be hidden
 for base-game chapters according to the rules on SRC for the
@@ -31,40 +39,51 @@ for base-game chapters according to the rules on SRC for the
 for all mod maps. If turned off, both categories will be
 shown for all chapters.
 Default: On
+
 Head2Head_Setting_Role= Role
-Head2Head_Setting_Role_Subtext= Your role changes the available functionality and the matches you are able to join.
+Head2Head_Setting_Role_Subtext= Your role changes the available functionality
+and the matches you are able to join.
 Default: (blank)
+
 Head2Head_Setting_UseActionLog= Use Action Logging
 Head2Head_Setting_UseActionLog_Subtext= If enabled, the system will keep track of key
 actions taken during a match. The log can be exported from
 the Head 2 Head Helpdesk to be sent to an event organizer
 for additional run verification.
 Default: Off
+
 Head2Head_Setting_LogExportDirectory= Action Log Export Location
 Head2Head_Setting_LogExportDirectory_Subtext= This is the directory action logs will be written to
 if you export them.
 Default: My Documents
+
 Head2Head_Setting_HudScale= HUD Scale
 Head2Head_Setting_HudScale_subtext= Controls the size of the Head 2 Head HUD.
 Default: 1
+
 Head2Head_Setting_HudOpacityBeforeMatch= HUD Opacity (Before/After Match)
 Head2Head_Setting_HudOpacityBeforeMatch_subtext= Changes the opacity of the Head 2 Head HUD
 before & after the match.
 Default: 1
+
 Head2Head_Setting_HudOpacityInMatch= HUD Opacity (During Match)
 Head2Head_Setting_HudOpacityInMatch_subtext= Changes the opacity of the Head 2 Head HUD during the match.
 Default: 0.25
+
 Head2Head_Setting_HudOpacityInOverworld= HUD Opacity (In Overworld)
 Head2Head_Setting_HudOpacityInOverworld_subtext= Changes the opacity of the Head 2 Head HUD in the overworld.
 Default: 0.5
+
 Head2Head_Setting_AutoStage= Auto-Stage New Matches
 Head2Head_Setting_AutoStage_Subtext= When other players create a Head2Head match, this setting controls whether
 it will be automatically set as your current match.
 Default: Only in Lobby
+
 Head2Head_Setting_ShowHDInPause= Show Helpdesk in Pause Menu
 Head2Head_Setting_ShowHDInPause_Subtext= Determines when the Head 2 Head Helpdesk should
 be accessible from the pause menu.
 Default: Online
+
 Head2Head_Setting_TimeServer= Time Server
 Head2Head_Setting_TimeServer_Subtext= Choose the time server to use to synchronize
 match starts. "None" will disable time syncing;
@@ -73,9 +92,13 @@ you to start matches out of sync with other players.
 You will need to restart the game to apply changes.
 Default: time.windows.com
 
-Head2Head_MatchTitle= {0} ({1})
-Head2Head_MatchTitle_BerryCount= {0} Berries
-Head2Head_MatchTitle_TimeLimit= {0} Limit
+Head2Head_Setting_Ruleset= Ruleset
+Head2Head_Setting_Ruleset_Subtext= Choose which ruleset to use.
+This will typically only be used for special events.
+
+#############################
+#   DISPLAYABLE ENUM VALS   #
+#############################
 
 modoptions_Head2HeadModule_autostagenewmatches_Never= Never
 modoptions_Head2HeadModule_autostagenewmatches_OnlyInLobby= Only in Lobby
@@ -146,16 +169,19 @@ Head2Head_MatchState_InProgress= In Progress
 Head2Head_MatchState_Completed= Completed
 
 Head2Head_DNFReason_None= No Reason
+Head2Head_DNFReason_MatchCancel= Match Cancelled
 Head2Head_DNFReason_DropOut= Dropped Out
-Head2Head_DNFReason_DebugTeleport= Debugged
+Head2Head_DNFReason_ChangeChannel= Changed Channel
 Head2Head_DNFReason_ChangeFile= Changed File
 Head2Head_DNFReason_DeleteFile= Deleted File
-Head2Head_DNFReason_ChangeChannel= Changed Channel
-Head2Head_DNFReason_CheatMode= Cheat Mode
-Head2Head_DNFReason_MatchCancel= Match Cancelled
-Head2Head_DNFReason_TAS= TAS
+Head2Head_DNFReason_DebugTeleport= Debugged
 Head2Head_DNFReason_Savestate= Savestate
+Head2Head_DNFReason_CheatMode= Cheat Mode
 Head2Head_DNFReason_SpeedrunTools= SpeedrunTools
+Head2Head_DNFReason_TAS= TAS
+Head2Head_DNFReason_RandomizerError= Randomizer Error
+Head2Head_DNFReason_EnabledVariant= Variant/Assist Mode
+Head2Head_DNFReason_DisabledRequiredVariant= Disabled Variant/Assist
 
 Head2Head_UntitledMatch= Untitled Match
 
@@ -260,3 +286,8 @@ Head2Head_menu_helpdesk_playerselect= Select Player
 
 Head2Head_menu_helpdesk_timeadjust= Time Adjustment
 Head2Head_menu_helpdesk_notimeadjust= Time adjustments cannot be applied to this match.
+
+#    MISC MENU    #
+
+Head2Head_menu_override_variants_subtitle= Your current Head 2 Head match does not allow changing variants.
+Head2Head_menu_override_assist_subtitle= Your current Head 2 Head match does not allow changing assist mode options.
