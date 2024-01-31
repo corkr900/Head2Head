@@ -1,4 +1,5 @@
-﻿using Celeste.Mod.UI;
+﻿using Celeste.Mod.Head2Head.Shared;
+using Celeste.Mod.UI;
 using FMOD.Studio;
 using System;
 using System.Collections.Generic;
@@ -45,17 +46,6 @@ namespace Celeste.Mod.Head2Head {
 		[SettingSubText("Head2Head_Setting_ShowHDInPause_Subtext")]
 		public ShowHelpdeskInPauseMenu ShowHelpdeskInPause { get; set; } = ShowHelpdeskInPauseMenu.Online;
 
-		[SettingName("Head2Head_Setting_Role")]
-		[SettingSubText("Head2Head_Setting_Role_Subtext")]
-		[SettingInGame(false)]
-		[SettingMinLength(0)]
-		[SettingMaxLength(12)]
-		public string Role { get; set; } = "";
-
-		[SettingName("Head2Head_Setting_Ruleset")]
-		[SettingSubText("Head2Head_Setting_Ruleset_Subtext")]
-		public string Ruleset { get; set; } = "default";
-
 		[SettingName("Head2Head_Setting_TimeServer")]
 		[SettingSubText("Head2Head_Setting_TimeServer_Subtext")]
 		public TimeServer NSTPTimeServer { get; set; } = TimeServer.Windows;
@@ -69,6 +59,10 @@ namespace Celeste.Mod.Head2Head {
 		}
 
 		// Settings with manual handling
+		[SettingIgnore]
+		public string Role { get; set; } = "";
+		[SettingIgnore]
+		public string Ruleset { get; set; } = "default";  // TODO (!!!) handle this becoming invalid by uninstalling a mod
 		[SettingIgnore]
 		public float HudScale { get; set; } = 1.0f;
 		[SettingIgnore]
@@ -89,7 +83,7 @@ namespace Celeste.Mod.Head2Head {
 		internal void CreateOptions(TextMenu menu, bool inGame, EventInstance snapshot)
 		{
 			AddSlider(menu, "Head2Head_Setting_HudScale", HudScale,
-				new float[] { 0.1f, 0.25f, 0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 2.0f },
+				new float[] { 0.2f, 0.3f, 0.4f, 0.5f, 0.6f, 0.7f, 0.8f, 0.9f, 1.0f, 1.1f, 1.2f, 1.3f, 1.4f, 1.5f, 1.6f, 1.7f, 1.8f, 1.9f, 2.0f },
 				(float val) => HudScale = val);
 			AddSlider(menu, "Head2Head_Setting_HudOpacityBeforeMatch", HudOpacityNotInMatch,
 				new float[] { 0.0f, 0.1f, 0.25f, 0.5f, 1.0f },
@@ -100,9 +94,31 @@ namespace Celeste.Mod.Head2Head {
 			AddSlider(menu, "Head2Head_Setting_HudOpacityInOverworld", HudOpacityInOverworld,
 				new float[] { 0.0f, 0.1f, 0.25f, 0.5f, 1.0f },
 				(float val) => HudOpacityInOverworld = val);
-			AddSlider(menu, "Head2Head_Setting_Ruleset", Ruleset,
-				new string[] { "default", "corkr900/Test/Ruleset01" },  // TODO get the actual options
-				(string val) => Ruleset = val);
+			AddSlider(menu, "Head2Head_Setting_Ruleset",
+				new RulesetOption { DisplayName = Shared.Ruleset.Get(Ruleset).DisplayName, InternalValue = Ruleset },
+				GetRulesetOptions(), (RulesetOption val) => Ruleset = val.InternalValue);
+		}
+
+		private RulesetOption[] GetRulesetOptions() {
+			List<RulesetOption> list = new List<RulesetOption>() {
+				new RulesetOption { DisplayName = "Default", InternalValue = "default" },  // TODO (!!!) tokenize
+			};
+			foreach(KeyValuePair<string, Ruleset> rset in Shared.Ruleset.CustomRulesets()) {  // TODO (!!!) this can run before rulesets get loaded
+				list.Add(new RulesetOption {
+					DisplayName = Shared.Util.TranslatedIfAvailable(rset.Value.DisplayName),
+					InternalValue = rset.Key,
+				});
+			}
+			return list.ToArray();
+		}
+
+		private struct RulesetOption {
+			public string DisplayName;
+			public string InternalValue;
+
+			public override string ToString() {
+				return DisplayName;
+			}
 		}
 
 		#endregion

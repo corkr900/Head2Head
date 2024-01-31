@@ -81,8 +81,12 @@ namespace Celeste.Mod.Head2Head.Shared {
 					}
 				}
 			}
-			customRulesets.Add(ruleset.ID, new Ruleset(ruleset.Role, set));
+			customRulesets.Add(ruleset.ID, new Ruleset(ruleset.Role, ruleset.Name, set));
 			Logger.Log(LogLevel.Info, "Head2Head", $"Processed ruleset {ruleset.ID}");
+		}
+
+		internal static IEnumerable<KeyValuePair<string, Ruleset>> CustomRulesets() {
+			return customRulesets;
 		}
 
 		#endregion Handle building custom rulesets
@@ -95,9 +99,11 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 		public readonly ImmutableList<RunOptionsLevelSet> LevelSets;
 		public readonly string Role;
+		public readonly string DisplayName;
 
-		protected Ruleset(string role, params RunOptionsLevelSet[] levels) {
+		protected Ruleset(string role, string dispName, params RunOptionsLevelSet[] levels) {
 			Role = role;
+			DisplayName = dispName;
 			LevelSets = ImmutableList.Create(levels);
 		}
 
@@ -105,8 +111,9 @@ namespace Celeste.Mod.Head2Head.Shared {
 	}
 
 	public class DefaultRuleset : Ruleset {
+		// TODO (!!!) Respect "Use SRC ARB Categories" setting
 
-		public DefaultRuleset() : base("", BuildSets()) {
+		public DefaultRuleset() : base("", "Default", BuildSets()) {  // TODO (!!!) tokenize
 
 		}
 

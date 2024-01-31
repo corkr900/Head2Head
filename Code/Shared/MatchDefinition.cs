@@ -22,9 +22,9 @@ namespace Celeste.Mod.Head2Head.Shared {
 
         public List<PlayerID> Players = new List<PlayerID>();
         public List<MatchPhase> Phases = new List<MatchPhase>();
-        public List<MatchRule> Rules = new List<MatchRule>();
+        public List<MatchRule> Rules = new List<MatchRule>();  // TODO (!!!!!) a way to set this
 
-        public string CategoryDisplayNameOverride = "";
+		public string CategoryDisplayNameOverride = "";
         public string RequiredRole = "";
         public DateTime CreationInstant;
 
