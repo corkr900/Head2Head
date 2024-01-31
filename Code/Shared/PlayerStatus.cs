@@ -84,15 +84,28 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public List<H2HMatchPhaseState> phases { get; internal set; } = new List<H2HMatchPhaseState>();
 		public List<H2HMatchObjectiveState> objectives { get; internal set; } = new List<H2HMatchObjectiveState>();
 		public List<Tuple<GlobalAreaKey, string>> reachedCheckpoints { get; internal set; } = new List<Tuple<GlobalAreaKey, string>>();
+
+		#region Non-synchronized data
+
 		/// <summary>
-		/// Keeps track of gems collected in vanilla summit. NOT SYNCHRONIZED
+		/// Keeps track of gems collected in vanilla summit.
 		/// </summary>
 		public bool[] SummitGems { get; internal set; } = new bool[6];
 
 		/// <summary>
-		/// This is not sent over the network. It is to be set on receipt of an update.
+		/// This is set on receipt of an update.
 		/// </summary>
 		public DateTime ReceivedAt = SyncedClock.Now;
+
+		/// <summary>
+		/// Assists & variants active prior to the match starting.
+		/// The system will restore them after the player finishes the match.
+		/// null means restoring isn't necessary.
+		/// </summary>
+		public Assists? ActiveAssistsBeforeMatch = null;
+
+		#endregion
+
 		public MatchState MatchState {
 			get {
 				return CurrentMatch?.State ?? MatchState.None;
@@ -240,6 +253,17 @@ namespace Celeste.Mod.Head2Head.Shared {
 			CurrentMatch = null;
 			SummitGems = new bool[6];
 			Updated();
+		}
+
+		public void BreakRule(MatchRule ruleBroken, DNFReason dnfReason) {
+			if (!IsInMatch(false)) return;
+			MatchDefinition def = CurrentMatch;
+			foreach (MatchRule rule in def.Rules) {
+				if (ruleBroken == rule) {
+					def.PlayerDNF(dnfReason);
+					return;
+				}
+			}
 		}
 
 		// CHECKING OFF OBJECTIVES/PHASES
@@ -517,6 +541,8 @@ namespace Celeste.Mod.Head2Head.Shared {
 				}
 				if (matchFinished) {  // All phases are complete
 					CurrentMatch.PlayerFinished(PlayerID.MyIDSafe, this);
+					// This would be problematic if we stored assists in a file-changing match. but we don't so it's fine:
+					RestoreOriginalAssists(SaveData.Instance);
 				}
 				OnMatchPhaseCompleted?.Invoke(new OnMatchPhaseCompletedArgs(
 					CurrentMatch,
@@ -578,6 +604,21 @@ namespace Celeste.Mod.Head2Head.Shared {
 			}
 			return strawbs;
 		}
+
+		public void ApplyMatchDefinedAssists(SaveData saveData) {
+			if (saveData == null || !IsInMatch(true)) return;
+			ActiveAssistsBeforeMatch = saveData.Assists;
+			saveData.Assists = Assists.Default;
+			MatchDefinition def = CurrentMatch;
+			if (def.Rules.IndexOf(MatchRule.NoGrabbing) > 0) saveData.Assists.NoGrabbing = true;
+		}
+
+		public void RestoreOriginalAssists(SaveData saveData) {
+			if (ActiveAssistsBeforeMatch == null) return;
+			saveData.Assists = ActiveAssistsBeforeMatch.Value;
+			ActiveAssistsBeforeMatch = null;
+		}
+
 	}
 
 	public struct H2HMatchPhaseState {

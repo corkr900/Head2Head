@@ -121,6 +121,8 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.Level.Render += OnLevelRender;
 			On.Celeste.Level.Pause += OnGamePause;
 			On.Celeste.Level.UpdateTime += OnLevelUpdateTime;
+			On.Celeste.Level.AssistMode += OnLevelAssistModeMenu;
+			On.Celeste.Level.VariantMode += OnLevelVariantModeMenu;
 			On.Celeste.Level.RegisterAreaComplete += OnLevelRegisterAreaComplete;
 			On.Celeste.Level.CompleteArea_bool_bool_bool += OnLevelAreaComplete;
 			On.Celeste.Player.Update += OnPlayerUpdate;
@@ -197,6 +199,8 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.Level.Render -= OnLevelRender;
 			On.Celeste.Level.Pause -= OnGamePause;
 			On.Celeste.Level.UpdateTime -= OnLevelUpdateTime;
+			On.Celeste.Level.AssistMode -= OnLevelAssistModeMenu;
+			On.Celeste.Level.VariantMode -= OnLevelVariantModeMenu;
 			On.Celeste.Level.RegisterAreaComplete -= OnLevelRegisterAreaComplete;
 			On.Celeste.Level.CompleteArea_bool_bool_bool -= OnLevelAreaComplete;
 			On.Celeste.Player.Update -= OnPlayerUpdate;
@@ -818,6 +822,43 @@ namespace Celeste.Mod.Head2Head {
 			}
 		}
 
+		private void OnLevelVariantModeMenu(On.Celeste.Level.orig_VariantMode orig, Level self, int returnIndex, bool minimal) {
+			// TODO extended variants lets you work around this
+			if (PlayerStatus.Current.IsInMatch(true)) {
+				OptionsMenuOverride(self, returnIndex, minimal, "MENU_VARIANT_TITLE", "Head2Head_menu_override_variants_subtitle");
+			}
+			else orig(self, returnIndex, minimal);
+		}
+
+		private void OnLevelAssistModeMenu(On.Celeste.Level.orig_AssistMode orig, Level self, int returnIndex, bool minimal) {
+			// TODO extended variants makes this not work at all
+			if (PlayerStatus.Current.IsInMatch(true)) {
+				OptionsMenuOverride(self, returnIndex, minimal, "MENU_ASSIST_TITLE", "Head2Head_menu_override_assist_subtitle");
+			}
+			else orig(self, returnIndex, minimal);
+		}
+
+		private void OptionsMenuOverride(Level self, int returnIndex, bool minimal, string header, string subtitle) {
+			self.Paused = true;
+			TextMenu menu = new TextMenu();
+			menu.Add(new TextMenu.Header(Dialog.Clean(header)));
+			menu.Add(new TextMenu.SubHeader(Dialog.Clean(subtitle), topPadding: true));
+			menu.OnESC = (menu.OnCancel = delegate
+			{
+				Audio.Play("event:/ui/main/button_back");
+				self.Pause(returnIndex, minimal);
+				menu.Close();
+			});
+			menu.OnPause = delegate
+			{
+				Audio.Play("event:/ui/main/button_back");
+				self.Paused = false;
+				self.unpauseTimer = 0.15f;
+				menu.Close();
+			};
+			self.Add(menu);
+		}
+
 		// ########################################
 
 		private void IntakePlayerStatusUpdate(PlayerID id, PlayerStatus stat) {
@@ -1366,6 +1407,13 @@ namespace Celeste.Mod.Head2Head {
 			}
 		}
 
+		/// <summary>
+		/// This coroutine does the bulk of the work of actually launching into a match that's starting.
+		/// </summary>
+		/// <param name="gak"></param>
+		/// <param name="isRejoin"></param>
+		/// <param name="startRoom"></param>
+		/// <param name="randoSettings"></param>
 		private IEnumerator StartMatchCoroutine(GlobalAreaKey gak, bool isRejoin, string startRoom = null, RandomizerIntegration.SettingsBuilder randoSettings = null) {
 			if (PlayerStatus.Current.CurrentMatch == null) yield break;
 			if (randoSettings != null) {
@@ -1383,9 +1431,7 @@ namespace Celeste.Mod.Head2Head {
 			}
 			else if (!Role.SkipCountdown()) {
 				Level level = GetLevelForCoroutine();
-				//if (level != null) level.PauseLock = true;
 				yield return (float)((startInstant - now).TotalSeconds);
-				//if (level != null) level.PauseLock = false;
 			}
 			// If something changed during the countdown, bail out
 			if (PlayerStatus.Current.CurrentMatchID != idCheck) {
@@ -1410,6 +1456,9 @@ namespace Celeste.Mod.Head2Head {
 							yield break;
 						}
 					}
+				}
+				else {
+					PlayerStatus.Current.ApplyMatchDefinedAssists(global::Celeste.SaveData.Instance);
 				}
 				PlayerStatus.Current.MatchStarted();
 			}

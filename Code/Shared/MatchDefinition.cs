@@ -22,6 +22,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 
         public List<PlayerID> Players = new List<PlayerID>();
         public List<MatchPhase> Phases = new List<MatchPhase>();
+        public List<MatchRule> Rules = new List<MatchRule>();
 
         public string CategoryDisplayNameOverride = "";
         public string RequiredRole = "";
@@ -473,6 +474,13 @@ namespace Celeste.Mod.Head2Head.Shared {
         Completed = 4,
     }
 
+    /// <summary>
+    /// Restrictions that can be placed on a match
+    /// </summary>
+    public enum MatchRule {
+        NoGrabbing,
+    }
+
     public static class MatchExtensions {
         public static MatchDefinition ReadMatch(this CelesteNetBinaryReader reader) {
             if (!reader.ReadBoolean()) return null;
@@ -491,7 +499,6 @@ namespace Celeste.Mod.Head2Head.Shared {
 			if (hasRandoOptions) {
                 d.RandoSettingsBuilder = reader.ReadRandoSettings();
 			}
-
 			int numPlayers = reader.ReadInt32();
             d.Players.Capacity = numPlayers;
             for (int i = 0; i < numPlayers; i++) {
@@ -506,7 +513,12 @@ namespace Celeste.Mod.Head2Head.Shared {
             if (hasResult) {
                 d.Result = reader.ReadMatchResult();
 			}
-            return d;
+			int numRules = reader.ReadInt32();
+			d.Rules.Capacity = numRules;
+			for (int i = 0; i < numRules; i++) {
+				d.Rules.Add((MatchRule)Enum.Parse(typeof(MatchRule), reader.ReadString()));
+			}
+			return d;
         }
 
         public static void Write(this CelesteNetBinaryWriter writer, MatchDefinition m) {
@@ -524,6 +536,7 @@ namespace Celeste.Mod.Head2Head.Shared {
             writer.Write(m.ChangeSavefile);
             writer.Write(m.AllowCheatMode);
             writer.Write(m.BeginInstant);
+
             writer.Write(m.RandoSettingsBuilder != null);
             if (m.RandoSettingsBuilder != null) {
                 writer.Write(m.RandoSettingsBuilder);
@@ -546,6 +559,11 @@ namespace Celeste.Mod.Head2Head.Shared {
                 writer.Write(true);
                 writer.Write(m.Result);
 			}
+
+            writer.Write(m.Rules.Count);
+            for (int i = 0; i < m.Rules.Count; i++) {
+                writer.Write(m.Rules[i].ToString());
+            }
         }
 
         public static MatchPhase ReadMatchPhase(this CelesteNetBinaryReader reader) {
