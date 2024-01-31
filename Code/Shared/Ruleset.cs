@@ -18,9 +18,8 @@ namespace Celeste.Mod.Head2Head.Shared {
 		private static Ruleset _dflt = null;
 		public static Ruleset Default {
 			get {
-				//if (_dflt == null) _dflt = new DefaultRuleset();
-				//return _dflt;
-				return new DefaultRuleset(); // TODO revert this
+				if (_dflt == null) _dflt = new DefaultRuleset();
+				return _dflt;
 			}
 		}
 
