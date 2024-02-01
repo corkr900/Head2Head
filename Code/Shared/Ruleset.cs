@@ -47,8 +47,8 @@ namespace Celeste.Mod.Head2Head.Shared {
 				Logger.Log(LogLevel.Error, "Head2Head", "Encountered custom ruleset with null ID :(");
 				return;
 			}
-			if (ruleset.Levels == null) {
-				Logger.Log(LogLevel.Error, "Head2Head", $"Custom ruleset '{ruleset.ID}' needs levels!");
+			if (ruleset.Chapters == null) {
+				Logger.Log(LogLevel.Error, "Head2Head", $"Custom ruleset '{ruleset.ID}' needs chapters!");
 				return;
 			}
 			if (customRulesets.ContainsKey(ruleset.ID)) {
@@ -57,29 +57,34 @@ namespace Celeste.Mod.Head2Head.Shared {
 			}
 			if (string.IsNullOrEmpty(ruleset.Name)) ruleset.Name = ruleset.ID;
 			RunOptionsLevelSet set = new RunOptionsLevelSet();
-			foreach (ILMeta il in ruleset.Levels) {
-				GlobalAreaKey area = new GlobalAreaKey(il.Map, MatchTemplate.GetAreaMode(il.Side));
-				if (!area.ExistsLocal || area.IsOverworld) continue;
-				AreaData data = area.Data;
-				RunOptionsILChapter chap = set.Chapters.FirstOrDefault((RunOptionsILChapter ch) => ch.Data?.SID == il.Map);
-				if (chap == null) {
-					chap = new RunOptionsILChapter();
-					set.Chapters.Add(chap);
+			foreach (RulesetChapterMeta chapterMeta in ruleset.Chapters) {
+				if (chapterMeta.Sides == null) {
+					Logger.Log(LogLevel.Warn, "Head2Head", $"Custom ruleset has chapter with null sides: {chapterMeta.Name}");
+					continue;
 				}
-				AreaMode mode = MatchTemplate.GetAreaMode(il.Side);
-				RunOptionsILSide side = chap.Sides.FirstOrDefault((RunOptionsILSide si) => si.Mode == mode);
-				if (side == null) {
-					side = new RunOptionsILSide();
-					side.Mode = mode;
-					chap.Sides.Add(side);
-				}
-				if (il.AddCategories != null) {
-					foreach (CategoryMeta newcat in il.AddCategories) {
+				RunOptionsILChapter chap = new RunOptionsILChapter();
+				chap.Data = new GlobalAreaKey(chapterMeta.MapSID).Data;
+				chap.Title = chapterMeta.Name;
+				chap.Icon = chapterMeta.Icon;
+				foreach (var sideMeta in chapterMeta.Sides) {
+					if (sideMeta.Categories == null) {
+						Logger.Log(LogLevel.Warn, "Head2Head", $"Custom ruleset has side with null categories: {chapterMeta.Name} -> {sideMeta.Name}");
+						continue;
+					}
+					RunOptionsILSide side = new RunOptionsILSide();
+					side.Mode = AreaMode.Normal;
+					side.Label = sideMeta.Name;
+					side.Icon = GFX.Gui.GetOrDefault(sideMeta.Icon, GFX.Gui["areaselect/startpoint"]);
+					foreach(var catMeta in sideMeta.Categories) {
 						RunOptionsILCategory cat = new RunOptionsILCategory();
-						cat.Template = MatchTemplate.AddTemplateFromMeta(newcat, area, false);
+						cat.Title = catMeta.Name;
+						cat.IconPath = catMeta.Icon;
+						cat.Template = MatchTemplate.AddTemplateFromMeta(catMeta, GlobalAreaKey.Overworld, false);
 						if (cat.Template != null) side.Categories.Add(cat);
 					}
+					chap.Sides.Add(side);
 				}
+				set.Chapters.Add(chap);
 			}
 			customRulesets.Add(ruleset.ID, new Ruleset(ruleset.Role, ruleset.Name, set));
 			Logger.Log(LogLevel.Info, "Head2Head", $"Processed ruleset {ruleset.ID}");

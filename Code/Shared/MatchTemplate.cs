@@ -25,8 +25,43 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public bool IncludeInDefaultRuleset;
 		public List<MatchPhaseTemplate> Phases = new List<MatchPhaseTemplate>();
 		public RandomizerOptionsTemplate RandoOptions;
+		public List<MatchRule> Rules = new List<MatchRule>();
 
-		public List<MatchPhase> Build() {
+		public MatchDefinition BuildIL() {
+			if (!Head2HeadModule.Instance.CanBuildMatch()) return null;
+			MatchDefinition def = new MatchDefinition() {
+				Owner = PlayerID.MyID ?? PlayerID.Default,
+				CreationInstant = SyncedClock.Now,
+			};
+			def.Phases = BuildILPhases();
+			def.CategoryDisplayNameOverride = DisplayName;
+			def.Rules = new List<MatchRule>(Rules);
+
+			if (RandoOptions != null) {  // TODO (!) move this into the integration file
+				RandomizerIntegration.SettingsBuilder bld = new RandomizerIntegration.SettingsBuilder();
+				bld.LogicType = RandoOptions.LogicType;
+				bld.Difficulty = RandoOptions.Difficulty;
+				bld.NumDashes = RandoOptions.NumDashes;
+				bld.DifficultyEagerness = RandoOptions.DifficultyEagerness;
+				bld.MapLength = RandoOptions.MapLength;
+				bld.ShineLights = RandoOptions.ShineLights;
+				bld.Darkness = RandoOptions.Darkness;
+				bld.StrawberryDensity = RandoOptions.StrawberryDensity;
+				if (RandoOptions.SeedType == "Random") {
+					bld.RandomizeSeed();
+				}
+				else {
+					// Seed changes weekly
+					int numDays = (int)(SyncedClock.Now - DateTime.MinValue).TotalDays;
+					bld.RandomizeSeed(numDays / 7);
+				}
+				def.RandoSettingsBuilder = bld;
+			}
+
+			return def;
+		}
+
+		public List<MatchPhase> BuildILPhases() {
 			int count = 0;
 			List<MatchPhase> list = new List<MatchPhase>();
 			foreach (MatchPhaseTemplate tPhase in Phases) {
@@ -56,6 +91,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 				ChangeSavefile = true,
 				AllowCheatMode = AllowCheatMode,
 				CategoryDisplayNameOverride = Util.TranslatedIfAvailable(DisplayName),
+				Rules = new List<MatchRule>(Rules),
 			};
 			foreach (MatchPhaseTemplate phtem in Phases) {
 				MatchPhase ph = new MatchPhase() {
@@ -80,7 +116,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			return def;
 		}
 
-		internal static void AddTemplateFromMeta(FullgameMeta meta, bool addToDefaultRuleset) {
+		internal static void AddTemplateFromMeta(FullgameCategoryMeta meta, bool addToDefaultRuleset) {
 			// Basic data
 			MatchTemplate tem = new MatchTemplate();
 			tem.Key = meta.ID;
@@ -89,6 +125,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			tem.Area = new GlobalAreaKey(meta.StartingMap);
 			tem.AllowCheatMode = meta.AllowCheatMode ?? false;
 			tem.IncludeInDefaultRuleset = addToDefaultRuleset;
+			tem.Rules = ParseRules(meta.Rules);
 
 			// Misc other handling
 			MatchPhaseTemplate ph = new MatchPhaseTemplate();
@@ -118,6 +155,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			tem.Area = area;
 			tem.DisplayName = meta.Name;
 			tem.IncludeInDefaultRuleset = includeInDefaultRuleset;
+			tem.Rules = ParseRules(meta.Rules);
 			if (GFX.Gui.Has(meta.Icon)) {
 				tem.IconPath = meta.Icon;
 			}
@@ -193,6 +231,20 @@ namespace Celeste.Mod.Head2Head.Shared {
 			obtem.Description = meta.Description;
 			obtem.Side = GetAreaMode(meta.Side);
 			return obtem;
+		}
+
+		private static List<MatchRule> ParseRules(string[] meta) {
+			if (meta == null) return new List<MatchRule>();
+			List<MatchRule> rules = new List<MatchRule>();
+			foreach (string rule in meta) {
+				if (Enum.TryParse(rule, out MatchRule parsedRule)) {
+					rules.Add(parsedRule);
+				}
+				else {
+					Logger.Log(LogLevel.Warn, "Head2Head", $"Found invalid match rule: {rule ?? "null"}");
+				}
+			}
+			return rules;
 		}
 
 		internal static AreaMode GetAreaMode(string side) {

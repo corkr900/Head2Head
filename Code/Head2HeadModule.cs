@@ -986,7 +986,7 @@ namespace Celeste.Mod.Head2Head {
 
 		private void ProcessIntegrationMeta(ModIntegrationMeta meta) {
 			if (meta.Fullgame != null) {
-				foreach (FullgameMeta cat in meta.Fullgame) {
+				foreach (FullgameCategoryMeta cat in meta.Fullgame) {
 					MatchTemplate.AddTemplateFromMeta(cat, true);
 				}
 			}
@@ -1062,23 +1062,24 @@ namespace Celeste.Mod.Head2Head {
 			return true;
 		}
 
-		public void StartMatchBuild() {
+		public bool StartMatchBuild() {
 			if (Util.IsUpdateAvailable()) {
 				Logger.Log(LogLevel.Warn, "Head2Head", "Cannot build match: you are using an outdated version of Head 2 Head");
-				return;
+				return false;
 			}
 			if (!Role.AllowMatchCreate()) {  // This is okay because this is for ILs only
 				Logger.Log(LogLevel.Verbose, "Head2Head", "Your role prevents building a match");
-				return;
+				return false;
 			}
 			if (!(CNetComm.Instance?.IsConnected ?? false)) {
 				//Logger.Log(LogLevel.Verbose, "Head2Head", "Connect to CelesteNet before building a match");
-				return;
+				return false;
 			}
 			buildingMatch = new MatchDefinition() {
 				Owner = PlayerID.MyID ?? PlayerID.Default,
 				CreationInstant = SyncedClock.Now,
 			};
+			return true;
 		}
 
 		public void AddMatchPhase(MatchPhase mp) {
@@ -1158,6 +1159,7 @@ namespace Celeste.Mod.Head2Head {
 				Logger.Log(LogLevel.Verbose, "Head2Head", "Player status prevents staging a match (are you already in one?)");
 				return;
 			}
+			def.State = MatchState.Staged;
 			MatchStaged(def, true);
 			ClearAutoLaunchInfo();
 		}
@@ -1220,6 +1222,7 @@ namespace Celeste.Mod.Head2Head {
 				def.Players.Add(PlayerID.MyIDSafe);
 				PlayerStatus.Current.MatchJoined();
 				def.BroadcastUpdate();
+				OnMatchCurrentMatchUpdated?.Invoke();
 			}
 		}
 

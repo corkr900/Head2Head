@@ -159,35 +159,11 @@ namespace Celeste.Mod.Head2Head.Entities {
 			}
 
 			if (ChosenCategory != null) {
-				MatchTemplate tempate = ChosenCategory.Template;
-				foreach (MatchPhase ph in tempate.Build()) {
-					Head2HeadModule.Instance.AddMatchPhase(ph);
-				}
-				Head2HeadModule.Instance.NameBuildingMatch(tempate.DisplayName);
-
-				if (tempate.RandoOptions != null) {  // TODO (!) move this into the integration file
-					RandomizerIntegration.SettingsBuilder bld = new RandomizerIntegration.SettingsBuilder();
-					bld.LogicType = tempate.RandoOptions.LogicType;
-					bld.Difficulty = tempate.RandoOptions.Difficulty;
-					bld.NumDashes = tempate.RandoOptions.NumDashes;
-					bld.DifficultyEagerness = tempate.RandoOptions.DifficultyEagerness;
-					bld.MapLength = tempate.RandoOptions.MapLength;
-					bld.ShineLights = tempate.RandoOptions.ShineLights;
-					bld.Darkness = tempate.RandoOptions.Darkness;
-					bld.StrawberryDensity = tempate.RandoOptions.StrawberryDensity;
-					if (tempate.RandoOptions.SeedType == "Random") {
-						int numDays = (int)(SyncedClock.Now - DateTime.MinValue).TotalDays;
-						bld.RandomizeSeed();
-					}
-					else {
-						// Seed changes weekly
-						int numDays = (int)(SyncedClock.Now - DateTime.MinValue).TotalDays;
-						bld.RandomizeSeed(numDays / 7);
-					}
-					Head2HeadModule.Instance.AddRandoToMatch(bld);
+				MatchDefinition def = ChosenCategory.Template.BuildIL();
+				if (def != null) {
+					Head2HeadModule.Instance.StageMatch(def);
 				}
 				ChosenCategory = null;
-				Head2HeadModule.Instance.StageMatch();
 			}
 		}
 
