@@ -610,7 +610,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			ActiveAssistsBeforeMatch = saveData.Assists;
 			saveData.Assists = Assists.Default;
 			MatchDefinition def = CurrentMatch;
-			if (def.Rules.IndexOf(MatchRule.NoGrabbing) > 0) saveData.Assists.NoGrabbing = true;
+			if (def.Rules.Contains(MatchRule.NoGrabbing)) saveData.Assists.NoGrabbing = true;
 		}
 
 		public void RestoreOriginalAssists(SaveData saveData) {
