@@ -94,10 +94,44 @@ namespace Celeste.Mod.Head2Head {
 			AddSlider(menu, "Head2Head_Setting_HudOpacityInOverworld", HudOpacityInOverworld,
 				new float[] { 0.0f, 0.1f, 0.25f, 0.5f, 1.0f },
 				(float val) => HudOpacityInOverworld = val);
-			AddSlider(menu, "Head2Head_Setting_Ruleset",
+
+			EnumerableSlider<RulesetOption> rulesetSlider = AddSlider(menu, "Head2Head_Setting_Ruleset",
 				new RulesetOption { DisplayName = Shared.Ruleset.Get(Ruleset).DisplayName, InternalValue = Ruleset },
-				GetRulesetOptions(), (RulesetOption val) => Ruleset = val.InternalValue);
-			// TODO validate role when changing ruleset and vice versa
+				GetRulesetOptions(), null);
+			EnumerableSlider<Role> roleSlider = AddSlider(menu, "Head2Head_Setting_Role", ActiveRole,
+				GetRoleOptions(), null);
+
+			rulesetSlider.Change(OnRulesetChanged(rulesetSlider, roleSlider));
+			roleSlider.Change(OnRoleChanged(roleSlider));
+		}
+
+		private Action<RulesetOption> OnRulesetChanged(EnumerableSlider<RulesetOption> rulesetSlider, EnumerableSlider<Role> roleSlider) {
+			return (RulesetOption opt) => {
+				Ruleset = opt.InternalValue;
+				EnforceRuleset();
+				EnforceRole();
+				UpdateSlider(roleSlider, GetRoleOptions);
+				Head2HeadModule.InvokeMatchUpdatedEvent();
+			};
+		}
+
+		private Action<Role> OnRoleChanged(EnumerableSlider<Role> roleSlider) {
+			return (Role opt) => {
+				ActiveRole = opt;
+				EnforceRole();
+				UpdateSlider(roleSlider, GetRoleOptions);
+				Head2HeadModule.InvokeMatchUpdatedEvent();
+			};
+		}
+
+		private void UpdateSlider<T>(EnumerableSlider<T> slider, Func<T[]> GetVals) {
+			slider.Values.Clear();
+			slider.Index = 0;
+			slider.PreviousIndex = 0;
+			T[] vals = GetVals();
+			foreach (T role in vals) {
+				slider.Add(role.ToString(), role, role.Equals(ActiveRole));
+			}
 		}
 
 		private RulesetOption[] GetRulesetOptions() {
@@ -113,6 +147,39 @@ namespace Celeste.Mod.Head2Head {
 			return list.ToArray();
 		}
 
+		private Role[] GetRoleOptions() {
+			Ruleset rset = Shared.Ruleset.Get(Ruleset);
+			if ((rset.Roles?.Count ?? 0) > 0) return rset.Roles.ToArray();
+			return new Role[] { Role.None };
+		}
+
+		/// <summary>
+		/// Ensures the current ruleset is valid. This should be done before validating role.
+		/// If the ruleset is invalid, it will get set to "default"
+		/// </summary>
+		/// <returns>true if ruleset was changed, false if already valid</returns>
+		private bool EnforceRuleset() {
+			if (!Shared.Ruleset.IsValid(Ruleset)) {
+				Ruleset = "default";
+				return true;
+			}
+			return false;
+		}
+
+		/// <summary>
+		/// Ensures the current role is valid. This should be done after validing ruleset.
+		/// If the ruleset is invalid, it will get set to the first-listed role in the ruleset
+		/// </summary>
+		/// <returns>true if role was changed, false if already valid</returns>
+		private bool EnforceRole() {
+			Ruleset rset = Shared.Ruleset.Get(Ruleset);
+			if (rset.Roles.Count > 0 && !rset.Roles.Contains(ActiveRole)) {
+				ActiveRole = rset.Roles[0];
+				return true;
+			}
+			return false;
+		}
+
 		private struct RulesetOption {
 			public string DisplayName;
 			public string InternalValue;
@@ -126,13 +193,14 @@ namespace Celeste.Mod.Head2Head {
 
 		#region Helpers
 
-		private void AddSlider<T>(TextMenu menu, string labelkey, T setting, IEnumerable<T> vals, Action<T> changed)
+		private EnumerableSlider<T> AddSlider<T>(TextMenu menu, string labelkey, T setting, IEnumerable<T> vals, Action<T> changed)
 		{
 			EnumerableSlider<T> slider = new EnumerableSlider<T>(
 				Dialog.Get(labelkey), vals, setting);
 			slider.Change(changed);
 			menu.Add(slider);
 			slider.AddDescription(menu, Dialog.Clean(labelkey + "_subtext"));
+			return slider;
 		}
 
 

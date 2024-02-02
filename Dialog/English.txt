@@ -43,7 +43,7 @@ Default: On
 Head2Head_Setting_Role= Role
 Head2Head_Setting_Role_Subtext= Your role changes the available functionality
 and the matches you are able to join.
-Default: (blank)
+Default: None
 
 Head2Head_Setting_UseActionLog= Use Action Logging
 Head2Head_Setting_UseActionLog_Subtext= If enabled, the system will keep track of key
