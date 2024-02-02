@@ -15,7 +15,7 @@ namespace Celeste.Mod.Head2Head.Integration {
 	public class RulesetMeta : IMeta {
 		public string ID;
 		public string Name;
-		public string Role;
+		public string[] Roles;
 		public RulesetChapterMeta[] Chapters;
 	}
 

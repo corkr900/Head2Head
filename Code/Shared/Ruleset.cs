@@ -86,7 +86,12 @@ namespace Celeste.Mod.Head2Head.Shared {
 				}
 				set.Chapters.Add(chap);
 			}
-			customRulesets.Add(ruleset.ID, new Ruleset(ruleset.Role, ruleset.Name, set));
+			Func<string,Role> EnumParser = (string rolestr) => {
+				if (Enum.TryParse(rolestr, out Role role)) return role;
+				Logger.Log(LogLevel.Warn, "Head2Head", $"Encountered invalid role '{rolestr}' in custom ruleset '{ruleset.Name}'");
+				return Role.None;
+			};
+			customRulesets.Add(ruleset.ID, new Ruleset(ruleset.Roles?.Select(EnumParser)?.ToArray(), ruleset.Name, set));
 			Logger.Log(LogLevel.Info, "Head2Head", $"Processed ruleset {ruleset.ID}");
 		}
 
@@ -103,13 +108,13 @@ namespace Celeste.Mod.Head2Head.Shared {
 		#region Instance behavior
 
 		public readonly ImmutableList<RunOptionsLevelSet> LevelSets;
-		public readonly string Role;
+		public readonly ImmutableList<Role> Roles;
 		public readonly string DisplayName;
 
-		protected Ruleset(string role, string dispName, params RunOptionsLevelSet[] levels) {
-			Role = role;
+		protected Ruleset(Role[] roles, string dispName, params RunOptionsLevelSet[] levels) {
 			DisplayName = dispName;
-			LevelSets = ImmutableList.Create(levels);
+			Roles = ImmutableList.Create(roles ?? Array.Empty<Role>());
+			LevelSets = ImmutableList.Create(levels ?? Array.Empty<RunOptionsLevelSet>());
 		}
 
 		#endregion Instance behavior
@@ -117,8 +122,9 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 	public class DefaultRuleset : Ruleset {
 		// TODO (!!!) Respect "Use SRC ARB Categories" setting
+		// TODO (!!!) Custom categories aren't getting added to the default ruleset
 
-		public DefaultRuleset() : base("", "Default", BuildSets()) {  // TODO (!!!) tokenize
+		public DefaultRuleset() : base(null, "Default", BuildSets()) {  // TODO (!!!) tokenize
 
 		}
 

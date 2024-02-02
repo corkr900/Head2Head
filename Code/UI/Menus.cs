@@ -247,7 +247,7 @@ namespace Celeste.Mod.Head2Head.UI
 			}
 
 			// Role-based additions
-			if (RoleLogic.role == "bta-host" || RoleLogic.role == "debug") {
+			if (RoleLogic.CanGrantMatchPass()) {
 				btn = menu.AddButton("Head2Head_menu_helpdesk_giveMatchPass", () => {
 					cxt.onPlayerSelection = (PlayerID id) => {
 						CNetComm.Instance.SendMisc(Head2HeadModule.BTA_MATCH_PASS, id);

@@ -60,7 +60,7 @@ namespace Celeste.Mod.Head2Head {
 
 		// Settings with manual handling
 		[SettingIgnore]
-		public string Role { get; set; } = "";
+		public Role ActiveRole { get; set; } = Role.None;
 		[SettingIgnore]
 		public string Ruleset { get; set; } = "default";  // TODO (!!!) handle this becoming invalid by uninstalling a mod
 		[SettingIgnore]
@@ -97,6 +97,7 @@ namespace Celeste.Mod.Head2Head {
 			AddSlider(menu, "Head2Head_Setting_Ruleset",
 				new RulesetOption { DisplayName = Shared.Ruleset.Get(Ruleset).DisplayName, InternalValue = Ruleset },
 				GetRulesetOptions(), (RulesetOption val) => Ruleset = val.InternalValue);
+			// TODO validate role when changing ruleset and vice versa
 		}
 
 		private RulesetOption[] GetRulesetOptions() {

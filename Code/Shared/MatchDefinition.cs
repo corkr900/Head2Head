@@ -22,11 +22,12 @@ namespace Celeste.Mod.Head2Head.Shared {
 
         public List<PlayerID> Players = new List<PlayerID>();
         public List<MatchPhase> Phases = new List<MatchPhase>();
-        public List<MatchRule> Rules = new List<MatchRule>();  // TODO (!!!!!) a way to set this
+        public List<MatchRule> Rules = new List<MatchRule>();
 
 		public string CategoryDisplayNameOverride = "";
-        public string RequiredRole = "";
-        public DateTime CreationInstant;
+        public List<Role> AllowedRoles = null;
+        public string RequiredRuleset;  // TODO (!!!) sync this and shit
+		public DateTime CreationInstant;
 
         public RandomizerIntegration.SettingsBuilder RandoSettingsBuilder;
 
@@ -100,7 +101,7 @@ namespace Celeste.Mod.Head2Head.Shared {
             }
         }
 
-        public GlobalAreaKey? VersionCheck() {
+		public GlobalAreaKey? VersionCheck() {
             foreach(MatchPhase ph in Phases) {
                 if (!ph.Area.VersionMatchesLocal) {
                     return ph.Area;
@@ -490,10 +491,15 @@ namespace Celeste.Mod.Head2Head.Shared {
             d.CreationInstant = reader.ReadDateTime();
             d.SetState_NoUpdate((MatchState)Enum.Parse(typeof(MatchState), reader.ReadString()));
             d.CategoryDisplayNameOverride = reader.ReadString();
-            d.RequiredRole = reader.ReadString();
             d.ChangeSavefile = reader.ReadBoolean();
             d.AllowCheatMode = reader.ReadBoolean();
             d.BeginInstant = reader.ReadDateTime();
+
+            int numAllowedRoles = reader.ReadInt32();
+            d.AllowedRoles = new List<Role>(numAllowedRoles);
+            for (int i = 0; i < numAllowedRoles; i++) {
+                d.AllowedRoles[i] = (Role)Enum.Parse(typeof(Role), reader.ReadString());
+            }
 
 			bool hasRandoOptions = reader.ReadBoolean();
 			if (hasRandoOptions) {
@@ -532,10 +538,14 @@ namespace Celeste.Mod.Head2Head.Shared {
             writer.Write(m.CreationInstant);
             writer.Write(m.State.ToString() ?? "");
             writer.Write(m.CategoryDisplayNameOverride ?? "");
-            writer.Write(m.RequiredRole ?? "");
             writer.Write(m.ChangeSavefile);
             writer.Write(m.AllowCheatMode);
             writer.Write(m.BeginInstant);
+
+            writer.Write(m.AllowedRoles?.Count ?? 0);
+            for (int i = 0; i < (m.AllowedRoles?.Count ?? 0); i++) {
+                writer.Write(m.AllowedRoles[i].ToString());
+            }
 
             writer.Write(m.RandoSettingsBuilder != null);
             if (m.RandoSettingsBuilder != null) {

@@ -434,13 +434,12 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 		// More Stuff
 
-		public static bool IsCategoryValid(StandardCategory cat, GlobalAreaKey area, MatchTemplate template = null, bool defaultOnly = true)
-		{
+		public static bool IsCategoryValid(StandardCategory cat, GlobalAreaKey area, MatchTemplate template = null, bool defaultOnly = true) {
 			if (area.IsOverworld) return false;
 			if (!area.ExistsLocal) return false;
 			if (ILSelector.IsSuppressed(area, cat)) return false;
 			if (template?.IncludeInDefaultRuleset == false && defaultOnly) return false;
-            if (area.IsVanilla) {
+			if (area.IsVanilla) {
 				if (area.Mode != AreaMode.Normal) {
 					return cat == StandardCategory.Clear
 						|| cat == StandardCategory.Custom;
@@ -532,51 +531,56 @@ namespace Celeste.Mod.Head2Head.Shared {
 			return area.ExistsLocal && area.Data.HasMode(area.Mode) && GetCategories(area, defaultOnly).Count > 0;  // TODO (!) reimplement so its more efficient
 		}
 
-		private static bool ShowCategory(int? id, AreaMode areaMode, StandardCategory cat) {
-			bool? roleOverride = RoleLogic.ShowCategoryOverride(id, areaMode, cat);
-			if (roleOverride != null) return roleOverride.Value;
+		private static bool PermittedBySRCARBSetting(int? id, AreaMode areaMode, StandardCategory cat) {
 			if (!Head2HeadModule.Settings.UseSRCRulesForARB) return true;
 			if (cat != StandardCategory.ARB && cat != StandardCategory.ARBHeart) return true;
 			switch (id) {
 				default:  // custom
-					if (cat == StandardCategory.ARBHeart) return false;
-					else return true;
+					return cat == StandardCategory.ARB;
 				case 0:  // Prologue
 				case 6:  // Reflection
 				case 8:  // Epilogue
 				case 10: // Farewell
-					// disallow both ARB and ARB+Heart
+						 // disallow both ARB and ARB+Heart
 					return false;
 				case 1:  // Forsaken City
 				case 3:  // Celestial Resort
 				case 4:  // Golden Ridge
 					// allow only ARB+Heart
-					if (cat == StandardCategory.ARB) return false;
-					else return true;
+					return cat == StandardCategory.ARBHeart;
 				case 2:  // Old Site
 				case 5:  // Mirror Temple
 				case 7:  // Summit
 				case 9:  // Core
 					// allow only ARB
-					if (cat == StandardCategory.ARBHeart) return false;
-					else return true;
+					return cat == StandardCategory.ARB;
 			}
 		}
 
+		public static StandardCategory[] StandardILCategories => new StandardCategory[] {
+			StandardCategory.Clear,
+			StandardCategory.HeartCassette,
+			StandardCategory.ARB,
+			StandardCategory.ARBHeart,
+			StandardCategory.CassetteGrab,
+			StandardCategory.FullClear,
+			StandardCategory.MoonBerry,
+			StandardCategory.FullClearMoonBerry,
+		};
+
 		public static List<MatchTemplate> GetCategories(GlobalAreaKey gArea, bool defaultOnly) {
 			List<MatchTemplate> ret = new List<MatchTemplate>();
-			StandardCategory[] cats = RoleLogic.GetValidCategories();
 			AreaMetaInfo areaMetaInfo = null;
 			// Standard Categories
-			foreach (StandardCategory cat in cats) {
+			foreach (StandardCategory cat in StandardILCategories) {
 				if (cat == StandardCategory.Custom) continue;
 				if (!IsCategoryValid(cat, gArea, null)) continue;
 				// enforce SRC Rules setting
-				if (!ShowCategory(gArea.Local?.ID, gArea.Local?.Mode ?? AreaMode.Normal, cat)) continue;
+				if (!PermittedBySRCARBSetting(gArea.Local?.ID, gArea.Local?.Mode ?? AreaMode.Normal, cat)) continue;
 				ret.Add(GetStandardMatchTemplate(cat, gArea, ref areaMetaInfo));
 			}
 			// Custom Categories
-			if (RoleLogic.AllowCustomCategories() && MatchTemplate.ILTemplates.ContainsKey(gArea)) {
+			if (MatchTemplate.ILTemplates.ContainsKey(gArea)) {
 				foreach (MatchTemplate template in MatchTemplate.ILTemplates[gArea]) {
 					if (!IsCategoryValid(StandardCategory.Custom, gArea, template, defaultOnly)) continue;
 					ret.Add(template);
