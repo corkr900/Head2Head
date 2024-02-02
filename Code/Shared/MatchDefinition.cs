@@ -202,7 +202,7 @@ namespace Celeste.Mod.Head2Head.Shared {
             PlayerID id = PlayerID.MyIDSafe;
 #if DEBUG
             // I need SOME way to test stuff...
-            if (Role.IsDebug && id.Name == "corkr900") return;
+            if (RoleLogic.IsDebug && id.Name == "corkr900") return;
 #endif
             PlayerStatus stat = PlayerStatus.Current;
             ResultCategory cat = GetPlayerResultCat(id);

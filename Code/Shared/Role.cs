@@ -1,7 +1,15 @@
 ﻿using System;
 
 namespace Celeste.Mod.Head2Head.Shared {
-	public class Role {
+
+	public enum Role {
+		None,
+		Participant,
+		Practice,
+		Host,
+	}
+
+	public static class RoleLogic {
 		internal static string role { get { return Head2HeadModule.Settings.Role; } }
 
 		// Roles that do stuff:

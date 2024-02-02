@@ -923,7 +923,7 @@ namespace Celeste.Mod.Head2Head {
 
 				case BTA_MATCH_PASS:
 					if (data.targetPlayer.Equals(PlayerID.MyID)) {
-						Role.GiveBTAMatchPass();
+						RoleLogic.GiveBTAMatchPass();
 						OnMatchCurrentMatchUpdated?.Invoke();
 					}
 					return;
@@ -1024,20 +1024,20 @@ namespace Celeste.Mod.Head2Head {
 		public bool CanBuildMatch() {
 			if (!CNetComm.Instance.IsConnected) return false;
 			if (CNetComm.Instance.CurrentChannelIsMain) return false;
-			if (!Role.AllowMatchCreate()) return false;
+			if (!RoleLogic.AllowMatchCreate()) return false;
 			if (Util.IsUpdateAvailable()) return false;
 			return PlayerStatus.Current.CanStageMatch();
 		}
 
 		public bool CanBuildFullgameMatch() {
-			return CanBuildMatch() && Role.AllowFullgame();
+			return CanBuildMatch() && RoleLogic.AllowFullgame();
 		}
 
 		public bool CanStageMatch() {
 			if (!CanBuildMatch()) return false;
 			if (buildingMatch == null) return false;
 			if (buildingMatch.Phases.Count == 0) return false;
-			if (buildingMatch.ChangeSavefile && !Role.AllowFullgame()) return false;
+			if (buildingMatch.ChangeSavefile && !RoleLogic.AllowFullgame()) return false;
 			return true;
 		}
 
@@ -1047,7 +1047,7 @@ namespace Celeste.Mod.Head2Head {
 			if (def == null) return false;
 			if (def.State != MatchState.Staged) return false;
 			if (def.Players.Contains(PlayerID.MyIDSafe)) return false;
-			if (!Role.AllowMatchJoin(def)) return false;
+			if (!RoleLogic.AllowMatchJoin(def)) return false;
 			if (!def.AllPhasesExistLocal()) return false;
 			if (def.VersionCheck() != null) return false;
 			return true;
@@ -1058,7 +1058,7 @@ namespace Celeste.Mod.Head2Head {
 			if (PlayerStatus.Current.CurrentMatch == null) return false;
 			if (PlayerStatus.Current.MatchState != MatchState.Staged) return false;
 			bool hasJoined = PlayerStatus.Current.CurrentMatch.Players.Contains(PlayerID.MyIDSafe);
-			if (!Role.AllowMatchStart(hasJoined)) return false;
+			if (!RoleLogic.AllowMatchStart(hasJoined)) return false;
 			return true;
 		}
 
@@ -1067,7 +1067,7 @@ namespace Celeste.Mod.Head2Head {
 				Logger.Log(LogLevel.Warn, "Head2Head", "Cannot build match: you are using an outdated version of Head 2 Head");
 				return false;
 			}
-			if (!Role.AllowMatchCreate()) {  // This is okay because this is for ILs only
+			if (!RoleLogic.AllowMatchCreate()) {  // This is okay because this is for ILs only
 				Logger.Log(LogLevel.Verbose, "Head2Head", "Your role prevents building a match");
 				return false;
 			}
@@ -1111,7 +1111,7 @@ namespace Celeste.Mod.Head2Head {
 				Logger.Log(LogLevel.Info, "Head2Head", "Cannot stage match: you are using an outdated version of Head 2 Head");
 				return;
 			}
-			if (!Role.AllowMatchCreate()) {
+			if (!RoleLogic.AllowMatchCreate()) {
 				Logger.Log(LogLevel.Verbose, "Head2Head", "Your role prevents creating a match");
 				return;
 			}
@@ -1119,7 +1119,7 @@ namespace Celeste.Mod.Head2Head {
 				Logger.Log(LogLevel.Verbose, "Head2Head", "You need to build a match before staging");
 				return;
 			}
-			if (buildingMatch.ChangeSavefile && !Role.AllowFullgame()) {
+			if (buildingMatch.ChangeSavefile && !RoleLogic.AllowFullgame()) {
 				Logger.Log(LogLevel.Verbose, "Head2Head", "Your role prevents creating full-game a match");
 				return;
 			}
@@ -1133,7 +1133,7 @@ namespace Celeste.Mod.Head2Head {
 				return;
 			}
 			buildingMatch.AssignIDs();
-			Role.HandleMatchCreation(buildingMatch);
+			RoleLogic.HandleMatchCreation(buildingMatch);
 			buildingMatch.State = MatchState.Staged;  // Sends update
 			buildingMatch = null;
 			ClearAutoLaunchInfo();
@@ -1169,7 +1169,7 @@ namespace Celeste.Mod.Head2Head {
 				if (Settings.AutoStageNewMatches == Head2HeadModuleSettings.AutoStageSetting.Never) return;
 				if (Settings.AutoStageNewMatches == Head2HeadModuleSettings.AutoStageSetting.OnlyInLobby
 					&& !PlayerStatus.Current.CurrentArea.Equals(GlobalAreaKey.Head2HeadLobby)) return;
-				if (!Role.AllowAutoStage(def)) return;
+				if (!RoleLogic.AllowAutoStage(def)) return;
 			}
 			MatchDefinition current = PlayerStatus.Current.CurrentMatch;
 			if (current != null) {
@@ -1213,7 +1213,7 @@ namespace Celeste.Mod.Head2Head {
 					return;
 				}
 			}
-			if (!Role.AllowMatchJoin(def)) {
+			if (!RoleLogic.AllowMatchJoin(def)) {
 				Logger.Log(LogLevel.Verbose, "Head2Head", "Your role prevents creating a match");
 				Engine.Commands.Log("Your role prevents joining this match");
 				return;
@@ -1241,7 +1241,7 @@ namespace Celeste.Mod.Head2Head {
 				return;
 			}
 			bool hasJoined = def.Players.Contains(PlayerID.MyIDSafe);
-			if (!Role.AllowMatchStart(hasJoined)) {
+			if (!RoleLogic.AllowMatchStart(hasJoined)) {
 				Logger.Log(LogLevel.Verbose, "Head2Head", "Your role prevents starting this match");
 				return;
 			}
@@ -1292,7 +1292,7 @@ namespace Celeste.Mod.Head2Head {
 			knownPlayers.Clear();
 			Instance.ClearAutoLaunchInfo();
 			Instance.buildingMatch = null;
-			Role.RemoveBTAPass();
+			RoleLogic.RemoveBTAPass();
 			if (curdef != null && !curdef.PlayerCanLeaveFreely(PlayerID.MyIDSafe)) {
 				knownMatches.Add(curdef.MatchID, curdef);
 			}
@@ -1344,7 +1344,7 @@ namespace Celeste.Mod.Head2Head {
 				return false;
 			}
 			else if (!def.Players.Contains(PlayerID.MyIDSafe)) {  // Player did not join the match
-				if (Role.LeaveUnjoinedMatchOnStart()) {
+				if (RoleLogic.LeaveUnjoinedMatchOnStart()) {
 					PlayerStatus.Current.CurrentMatch = null;
 					PlayerStatus.Current.Updated();
 					return true;
@@ -1432,7 +1432,7 @@ namespace Celeste.Mod.Head2Head {
 			else if (startInstant < now) {
 				Logger.Log(LogLevel.Info, "Head2Head", "Match begins in the past; skipping countdown (if this is not a rejoin, try syncing your system's clock)");
 			}
-			else if (!Role.SkipCountdown()) {
+			else if (!RoleLogic.SkipCountdown()) {
 				Level level = GetLevelForCoroutine();
 				yield return (float)((startInstant - now).TotalSeconds);
 			}

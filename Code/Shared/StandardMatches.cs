@@ -533,7 +533,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		}
 
 		private static bool ShowCategory(int? id, AreaMode areaMode, StandardCategory cat) {
-			bool? roleOverride = Role.ShowCategoryOverride(id, areaMode, cat);
+			bool? roleOverride = RoleLogic.ShowCategoryOverride(id, areaMode, cat);
 			if (roleOverride != null) return roleOverride.Value;
 			if (!Head2HeadModule.Settings.UseSRCRulesForARB) return true;
 			if (cat != StandardCategory.ARB && cat != StandardCategory.ARBHeart) return true;
@@ -565,7 +565,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 		public static List<MatchTemplate> GetCategories(GlobalAreaKey gArea, bool defaultOnly) {
 			List<MatchTemplate> ret = new List<MatchTemplate>();
-			StandardCategory[] cats = Role.GetValidCategories();
+			StandardCategory[] cats = RoleLogic.GetValidCategories();
 			AreaMetaInfo areaMetaInfo = null;
 			// Standard Categories
 			foreach (StandardCategory cat in cats) {
@@ -576,7 +576,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 				ret.Add(GetStandardMatchTemplate(cat, gArea, ref areaMetaInfo));
 			}
 			// Custom Categories
-			if (Role.AllowCustomCategories() && MatchTemplate.ILTemplates.ContainsKey(gArea)) {
+			if (RoleLogic.AllowCustomCategories() && MatchTemplate.ILTemplates.ContainsKey(gArea)) {
 				foreach (MatchTemplate template in MatchTemplate.ILTemplates[gArea]) {
 					if (!IsCategoryValid(StandardCategory.Custom, gArea, template, defaultOnly)) continue;
 					ret.Add(template);

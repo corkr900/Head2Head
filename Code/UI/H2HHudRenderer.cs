@@ -306,7 +306,7 @@ namespace Celeste.Mod.Head2Head.UI {
 		}
 
 		private bool ShouldShowMatchPass(Scene scene, MatchDefinition def) {
-			return Role.hasBTAMatchPass && PlayerStatus.Current.CurrentArea.Equals(GlobalAreaKey.Head2HeadLobby);
+			return RoleLogic.hasBTAMatchPass && PlayerStatus.Current.CurrentArea.Equals(GlobalAreaKey.Head2HeadLobby);
 		}
 
 		private void RenderMatchPass(Scene scene, MatchDefinition def) {
@@ -323,7 +323,7 @@ namespace Celeste.Mod.Head2Head.UI {
 		#region Debug Info
 
 		private bool ShouldShowDebugInfo(Scene scene, MatchDefinition def) {
-			return def != null && Role.IsDebug;
+			return def != null && RoleLogic.IsDebug;
 		}
 
 		private void RenderDebugInfo(Scene scene, MatchDefinition def) {

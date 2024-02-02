@@ -148,7 +148,7 @@ namespace Celeste.Mod.Head2Head.UI
 					btn.SoftDisable(menu, "Head2Head_menu_helpdesk_whynocreatematch_notconnected");
 				else if (CNetComm.Instance.CurrentChannelIsMain)
 					btn.SoftDisable(menu, "Head2Head_menu_helpdesk_whynocreatematch_mainchannel");
-				else if (!Role.AllowMatchCreate())
+				else if (!RoleLogic.AllowMatchCreate())
 					btn.SoftDisable(menu, "Head2Head_menu_helpdesk_whynocreatematch_role");
 				else if (!PlayerStatus.Current.CanStageMatch())
 					btn.SoftDisable(menu, "Head2Head_menu_helpdesk_whynocreatematch_playerstatus");
@@ -205,7 +205,7 @@ namespace Celeste.Mod.Head2Head.UI
 				}
 
 				// Force End
-				if (def_menu.State < MatchState.Completed && Role.AllowKillingMatch()) {
+				if (def_menu.State < MatchState.Completed && RoleLogic.AllowKillingMatch()) {
 					btn = menu.AddButton("Head2Head_menu_helpdesk_forceend", () => {
 						MatchDefinition def = PlayerStatus.Current.CurrentMatch;
 						if (def != null && def.State < MatchState.Completed) {
@@ -221,7 +221,7 @@ namespace Celeste.Mod.Head2Head.UI
 				}
 			}
 
-			if (Role.IsDebug) {
+			if (RoleLogic.IsDebug) {
 				// Purge Data
 				btn = menu.AddButton("Head2Head_menu_helpdesk_purge", () => {
 					Head2HeadModule.Instance.PurgeAllData();
@@ -247,7 +247,7 @@ namespace Celeste.Mod.Head2Head.UI
 			}
 
 			// Role-based additions
-			if (Role.role == "bta-host" || Role.role == "debug") {
+			if (RoleLogic.role == "bta-host" || RoleLogic.role == "debug") {
 				btn = menu.AddButton("Head2Head_menu_helpdesk_giveMatchPass", () => {
 					cxt.onPlayerSelection = (PlayerID id) => {
 						CNetComm.Instance.SendMisc(Head2HeadModule.BTA_MATCH_PASS, id);
@@ -385,7 +385,7 @@ namespace Celeste.Mod.Head2Head.UI
 				GlobalAreaKey? k = curmatch?.VersionCheck();
 				if (Util.IsUpdateAvailable())
 					btn.SoftDisable(menu, "Head2Head_menu_match_stage_update");
-				else if (!Role.AllowMatchJoin(cxtMatch))
+				else if (!RoleLogic.AllowMatchJoin(cxtMatch))
 					btn.SoftDisable(menu, "Head2Head_menu_match_join_role");
 				else if (!cxtMatch.AllPhasesExistLocal()) {
 					btn.SoftDisable(menu, "Head2Head_menu_match_join_notinstalled");
