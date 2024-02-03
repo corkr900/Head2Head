@@ -28,9 +28,11 @@ namespace Celeste.Mod.Head2Head.UI {
 			menu.Add(new TextMenu.SubHeader(Dialog.Clean("maplist_filters")));
 
 			menu.Add(new TextMenu.Slider(Dialog.Clean("maplist_type"), value => {
-				return value < 0
-					? Dialog.Clean("maplist_type_everything")
-					: Dialog.CleanLevelSet(OuiRunSelectIL.UsingRuleset.LevelSets[value].LevelSet);
+				string set = value < 0 ?
+					"maplist_type_everything" :
+					OuiRunSelectIL.UsingRuleset.LevelSets[value].LevelSet;
+				if (string.IsNullOrEmpty(set)) set = "No Level Set";  // TODO (!) tokenize
+				return Dialog.CleanLevelSet(set);
 			}, -1, OuiRunSelectIL.UsingRuleset.LevelSets.Count - 1, type).Change(value => {
 				type = value;
 				ReloadItems();
@@ -54,12 +56,12 @@ namespace Celeste.Mod.Head2Head.UI {
 				menu.Remove(item);
 			}
 			items.Clear();
-			if (type < 0) {
+			if (type >= 0 && type < OuiRunSelectIL.UsingRuleset.LevelSets.Count) {
 				ReloadItems(OuiRunSelectIL.UsingRuleset.LevelSets[type]);
 			}
 			else {
 				foreach (RunOptionsLevelSet set in OuiRunSelectIL.UsingRuleset.LevelSets) {
-					ReloadItems(OuiRunSelectIL.UsingRuleset.LevelSets[type]);
+					ReloadItems(set);
 				}
 			}
 			menu.BatchMode = false;
@@ -81,7 +83,9 @@ namespace Celeste.Mod.Head2Head.UI {
 		private void ReloadItems(RunOptionsLevelSet levelSet) {
 			if (levelSet.LevelSet == "Head2Head") return;
 
-			string setname = Util.TranslatedIfAvailable(levelSet.LevelSet);
+			string setname = string.IsNullOrEmpty(levelSet.LevelSet) ?
+				"No Level Set" :  // TODO (!) tokenize
+				Util.TranslatedIfAvailable(levelSet.LevelSet);
 			TextMenuExt.SubHeaderExt levelSetHeader = new TextMenuExt.SubHeaderExt(setname);
 			levelSetHeader.Alpha = 0f;
 			menu.Add(levelSetHeader);
@@ -188,19 +192,35 @@ namespace Celeste.Mod.Head2Head.UI {
 		}
 
 		protected void Inspect(RunOptionsLevelSet set, RunOptionsILChapter chapter) {
+			Focused = false;
+			Audio.Play(SFX.ui_world_icon_select);
 			OuiRunSelectILChapterSelect.UsingLevelSet = set;
 			string levelSetForLobby = chapter.CollabLevelSetForLobby;
-			if (string.IsNullOrEmpty(levelSetForLobby)) {
-				// not a collab lobby
-				OuiRunSelectILChapterPanel.UsingChapter = chapter;
-				Overworld.Goto<OuiRunSelectILChapterPanel>();
-			}
-			else {
+			if (!string.IsNullOrEmpty(levelSetForLobby)) {
 				// is a collab lobby
+				OuiRunSelectILChapterSelect.UsingLevelSet = set;
 				OuiRunSelectILCollabMapSelect.UsingLobby = chapter;
 				Overworld.Goto<OuiRunSelectILCollabMapSelect>();
 			}
+			else if (!string.IsNullOrEmpty(chapter.CollabLobby)) {
+				// collab map
+				foreach (RunOptionsLevelSet set2 in OuiRunSelectIL.UsingRuleset.LevelSets) {
+					foreach (RunOptionsILChapter chap2 in set2.Chapters) {
+						if (chap2.CollabLevelSetForLobby == set.LevelSet) {
+							OuiRunSelectILChapterSelect.UsingLevelSet = set2;
+							OuiRunSelectILCollabMapSelect.UsingLobby = chap2;
+							OuiRunSelectILChapterPanel.UsingChapter = chapter;
+							Overworld.Goto<OuiRunSelectILChapterPanel>();
+						}
+					}
+				}
+			}
+			else {
+				// not a collab lobby
+				OuiRunSelectILChapterSelect.UsingLevelSet = set;
+				OuiRunSelectILChapterPanel.UsingChapter = chapter;
+				Overworld.Goto<OuiRunSelectILChapterPanel>();
+			}
 		}
-
 	}
 }

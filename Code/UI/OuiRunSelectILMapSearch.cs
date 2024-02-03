@@ -14,26 +14,15 @@ using System.Threading.Tasks;
 
 namespace Celeste.Mod.Head2Head.UI {
 	public class OuiRunSelectILMapSearch : Oui {
-
-		// TODO (!!!) rework this to work with the ruleset system
-
-		public List<ChapterIcon> OuiIcons;
-
 		private SearchMenu menu;
 
 		private const float onScreenX = 960f;
 		private const float offScreenX = 2880f;
 
 		private float alpha = 0f;
-
 		private Color searchBarColor;
-
 		private List<TextMenuExt.IItemExt> items = new List<TextMenuExt.IItemExt>();
-
-		private List<string> sets = new List<string>();
-
 		public bool FromChapterSelect = false;
-
 		private bool searching;
 
 		public bool Searching {
@@ -50,17 +39,12 @@ namespace Celeste.Mod.Head2Head.UI {
 				searching = value;
 			}
 		}
-
 		private string search = "";
 		private string searchPrev = "";
-
 		private TextMenu.Item searchTitle;
-
 		private bool searchConsumedButton;
-
 		private int itemCount;
 		private int matchCount;
-
 		private bool quickMatched = false;
 
 		private TextMenu.SubHeader resultHeader;
@@ -250,127 +234,93 @@ namespace Celeste.Mod.Head2Head.UI {
 			itemCount = 0;
 			matchCount = 0;
 
-			((TextMenu)menu.rightMenu).BatchMode = true;
+			menu.rightMenu.BatchMode = true;
 
 			foreach (TextMenu.Item item in items)
 				menu.rightMenu.Remove(item);
 			items.Clear();
 
 			string lastLevelSet = null;
-			LevelSetStats levelSetStats = null;
-			int levelSetAreaOffset = 0;
-			int levelSetUnlockedAreas = int.MaxValue;
-			int levelSetUnlockedModes = int.MaxValue;
-			string name;
 
 			string[] searchHunks = search.Split(' ').Select(hunk => hunk.ToLower()).ToArray();
 			bool matched = false;
 
-			for (int i = 0; i < AreaData.Areas.Count; i++) {
-				AreaData area = AreaData.Get(i);
-				string id = area.Name;
-				name = id.DialogCleanOrNull() ?? id.SpacedPascalCase();
-				if (name.ToLower() == search.ToLower()) {
-					matchCount++;
+			for (int i = 0; i < OuiRunSelectIL.UsingRuleset.LevelSets.Count; i++) {
+				for (int j = 0; j < OuiRunSelectIL.UsingRuleset.LevelSets[i].Chapters.Count; j++) {
+					string name = OuiRunSelectIL.UsingRuleset.LevelSets[i].Chapters[j].DisplayName;
+					if (name.ToLower() == search.ToLower()) {
+						matchCount++;
+					}
 				}
 			}
 
-			SaveData save = SaveData.Instance;
-			List<AreaStats> areaStatsAll = save.Areas;
-			for (int i = 0; i < AreaData.Areas.Count; i++) {
-				AreaData area = AreaData.Get(i);
-				if (area == null || !area.HasMode(AreaMode.Normal))
-					continue;
+			for (int i = 0; i < OuiRunSelectIL.UsingRuleset.LevelSets.Count; i++) {
+				RunOptionsLevelSet set = OuiRunSelectIL.UsingRuleset.LevelSets[i];
+				for (int j = 0; j < set.Chapters.Count; j++) {
+					RunOptionsILChapter chap = set.Chapters[j];
+					string levelSet = set.LevelSet ?? "No Level Set";  // TODO (!) tokenize
+					string name = chap.DisplayName;
 
-				// TODO: Make subchapters hidden by default in the map list, even in debug mode.
-				if (!save.DebugMode && !string.IsNullOrEmpty(area.Meta?.Parent))
-					continue;
+					List<string> matchTargets = new List<string> {
+						name,
+						levelSet,
+						Dialog.CleanLevelSet(levelSet)
+					}.Select(text => text.ToLower()).ToList();
 
-				string levelSet = area.LevelSet;
-
-				string id = area.Name;
-				name = id.DialogCleanOrNull() ?? id.SpacedPascalCase();
-
-				if (levelSet == "Celeste" && i > levelSetAreaOffset + levelSetUnlockedAreas)
-					continue;
-
-				List<string> matchTargets = new List<string> {
-					id,
-					name,
-					levelSet,
-					Dialog.CleanLevelSet(levelSet)
-				}.Select(text => text.ToLower()).ToList();
-
-				List<string> unmatchedHunks = searchHunks.ToList();
-
-				foreach (string hunk in searchHunks) {
-					if (matchTargets.Any(target => target.Contains(hunk)))
-						unmatchedHunks.Remove(hunk);
-				}
-
-				if (unmatchedHunks.Count > 0)
-					continue;
-
-				itemCount++;
-
-				TextMenuExt.ButtonExt button = new TextMenuExt.ButtonExt(name);
-				button.Alpha = 0f;
-
-				if (area.Icon != "areas/null")
-					button.Icon = area.Icon;
-				button.IconWidth = 64f;
-
-				if (levelSet == "Celeste" && i > levelSetAreaOffset + levelSetUnlockedAreas)
-					button.Disabled = true;
-
-				if (name.ToLower() == search.ToLower()) {
-					if (!matched) {
-						perfectMatchHeader = new TextMenuExt.SubHeaderExt(Dialog.Clean("maplist_search_match"));
-						menu.rightMenu.Insert(0, perfectMatchHeader);
-						items.Insert(0, perfectMatchHeader);
-						matched = true;
+					List<string> unmatchedHunks = searchHunks.ToList();
+					foreach (string hunk in searchHunks) {
+						if (matchTargets.Any(target => target.Contains(hunk)))
+							unmatchedHunks.Remove(hunk);
 					}
+					if (unmatchedHunks.Count > 0)
+						continue;
+					itemCount++;
 
-					menu.rightMenu.Insert(1, button.Pressed(() => {
-						clearSearch();
-						Inspect(area, AreaMode.Normal);
-					}));
-					items.Insert(1, button);
+					TextMenuExt.ButtonExt button = new TextMenuExt.ButtonExt(name);
+					button.Alpha = 0f;
+					button.Icon = chap.IconSafe;
+					button.IconWidth = 64f;
+					if (name.ToLower() == search.ToLower()) {
+						if (!matched) {
+							perfectMatchHeader = new TextMenuExt.SubHeaderExt(Dialog.Clean("maplist_search_match"));
+							menu.rightMenu.Insert(0, perfectMatchHeader);
+							items.Insert(0, perfectMatchHeader);
+							matched = true;
+						}
 
-					if (matchCount > 1) {
-						lastLevelSet = levelSet;
-						levelSetStats = SaveData.Instance.GetLevelSetStatsFor(levelSet);
-						levelSetAreaOffset = levelSetStats.AreaOffset;
-						levelSetUnlockedAreas = levelSetStats.UnlockedAreas;
-						levelSetUnlockedModes = levelSetStats.UnlockedModes;
-						string setname = Dialog.CleanLevelSet(levelSet);
-						TextMenuExt.SubHeaderExt levelSetHeader = new TextMenuExt.SubHeaderExt(setname);
-						levelSetHeader.Alpha = 0f;
-						menu.rightMenu.Insert(1, levelSetHeader);
-						items.Insert(1, levelSetHeader);
+						menu.rightMenu.Insert(1, button.Pressed(() => {
+							clearSearch();
+							Inspect(set, chap);
+						}));
+						items.Insert(1, button);
+
+						if (matchCount > 1) {
+							lastLevelSet = levelSet;
+							string setname = Dialog.CleanLevelSet(levelSet);
+							TextMenuExt.SubHeaderExt levelSetHeader = new TextMenuExt.SubHeaderExt(setname);
+							levelSetHeader.Alpha = 0f;
+							menu.rightMenu.Insert(1, levelSetHeader);
+							items.Insert(1, levelSetHeader);
+						}
 					}
-				}
-				else {
+					else {
 
-					if (lastLevelSet != levelSet) {
-						lastLevelSet = levelSet;
-						levelSetStats = SaveData.Instance.GetLevelSetStatsFor(levelSet);
-						levelSetAreaOffset = levelSetStats.AreaOffset;
-						levelSetUnlockedAreas = levelSetStats.UnlockedAreas;
-						levelSetUnlockedModes = levelSetStats.UnlockedModes;
-						string setname = Dialog.CleanLevelSet(levelSet);
-						TextMenuExt.SubHeaderExt levelSetHeader = new TextMenuExt.SubHeaderExt(setname);
-						levelSetHeader.Alpha = 0f;
-						menu.rightMenu.Add(levelSetHeader);
-						items.Add(levelSetHeader);
+						if (lastLevelSet != levelSet) {
+							lastLevelSet = levelSet;
+							string setname = Dialog.CleanLevelSet(levelSet);
+							TextMenuExt.SubHeaderExt levelSetHeader = new TextMenuExt.SubHeaderExt(setname);
+							levelSetHeader.Alpha = 0f;
+							menu.rightMenu.Add(levelSetHeader);
+							items.Add(levelSetHeader);
+						}
+
+						menu.rightMenu.Add(button.Pressed(() => {
+							clearSearch();
+							Inspect(set, chap);
+						}));
+
+						items.Add(button);
 					}
-
-					menu.rightMenu.Add(button.Pressed(() => {
-						clearSearch();
-						Inspect(area, AreaMode.Normal);
-					}));
-
-					items.Add(button);
 				}
 			}
 
@@ -378,7 +328,7 @@ namespace Celeste.Mod.Head2Head.UI {
 				resultHeader.Title = string.Format(itemCount == 1 ? Dialog.Get("maplist_results_singular") : Dialog.Get("maplist_results_plural"), itemCount);
 			}
 
-			((TextMenu)menu.rightMenu).BatchMode = false;
+			menu.rightMenu.BatchMode = false;
 
 			// compute a delay so that options don't take more than a second to show up if many mods are installed.
 			float delayBetweenOptions = 0.03f;
@@ -584,17 +534,36 @@ namespace Celeste.Mod.Head2Head.UI {
 			MInput.Disabled = false;
 		}
 
-		protected void Inspect(AreaData area, AreaMode mode = AreaMode.Normal) {
+		protected void Inspect(RunOptionsLevelSet set, RunOptionsILChapter chapter) {
 			Focused = false;
 			Audio.Play(SFX.ui_world_icon_select);
-			GlobalAreaKey areaKey = new GlobalAreaKey(area.ToKey(mode));
-			if (areaKey.IsOverworld || !areaKey.IsValidInstalledMap || areaKey.Equals(GlobalAreaKey.Head2HeadLobby)) {
-				Audio.Play("event:/ui/main/button_invalid");
-				return;
+			OuiRunSelectILChapterSelect.UsingLevelSet = set;
+			string levelSetForLobby = chapter.CollabLevelSetForLobby;
+			if (!string.IsNullOrEmpty(levelSetForLobby)) {
+				// is a collab lobby
+				OuiRunSelectILChapterSelect.UsingLevelSet = set;
+				OuiRunSelectILCollabMapSelect.UsingLobby = chapter;
+				Overworld.Goto<OuiRunSelectILCollabMapSelect>();
 			}
-			//OuiRunSelectIL.GetChapterOption(areaKey.SID, ref ILSelector.LastLevelSetIndex, ref ILSelector.LastChapterIndex);
-			if (OuiIcons != null && area.ID < OuiIcons.Count) OuiIcons[area.ID].Select();
-			Overworld.Goto<OuiRunSelectILChapterPanel>();
+			else if (!string.IsNullOrEmpty(chapter.CollabLobby)) {
+				// collab map
+				foreach (RunOptionsLevelSet set2 in OuiRunSelectIL.UsingRuleset.LevelSets) {
+					foreach (RunOptionsILChapter chap2 in set2.Chapters) {
+						if (chap2.CollabLevelSetForLobby == set.LevelSet) {
+							OuiRunSelectILChapterSelect.UsingLevelSet = set2;
+							OuiRunSelectILCollabMapSelect.UsingLobby = chap2;
+							OuiRunSelectILChapterPanel.UsingChapter = chapter;
+							Overworld.Goto<OuiRunSelectILChapterPanel>();
+						}
+					}
+				}
+			}
+			else {
+				// not a collab lobby
+				OuiRunSelectILChapterSelect.UsingLevelSet = set;
+				OuiRunSelectILChapterPanel.UsingChapter = chapter;
+				Overworld.Goto<OuiRunSelectILChapterPanel>();
+			}
 		}
 
 	}
