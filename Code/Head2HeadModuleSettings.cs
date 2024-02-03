@@ -62,7 +62,7 @@ namespace Celeste.Mod.Head2Head {
 		[SettingIgnore]
 		public Role ActiveRole { get; set; } = Role.None;
 		[SettingIgnore]
-		public string Ruleset { get; set; } = "default";  // TODO (!!!) handle this becoming invalid by uninstalling a mod
+		public string Ruleset { get; set; } = "default";
 		[SettingIgnore]
 		public float HudScale { get; set; } = 1.0f;
 		[SettingIgnore]
@@ -83,6 +83,8 @@ namespace Celeste.Mod.Head2Head {
 		internal void CreateOptions(TextMenu menu, bool inGame, EventInstance snapshot)
 		{
 			Head2HeadModule.Instance.ScanModsForIntegrationMeta(true);
+			EnforceRuleset();
+			EnforceRole();
 
 			AddSlider(menu, "Head2Head_Setting_HudScale", HudScale,
 				new float[] { 0.2f, 0.3f, 0.4f, 0.5f, 0.6f, 0.7f, 0.8f, 0.9f, 1.0f, 1.1f, 1.2f, 1.3f, 1.4f, 1.5f, 1.6f, 1.7f, 1.8f, 1.9f, 2.0f },
