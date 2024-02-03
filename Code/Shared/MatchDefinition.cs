@@ -266,6 +266,7 @@ namespace Celeste.Mod.Head2Head.Shared {
         public void MergeDynamic(MatchDefinition newer) {
             if (newer == null) return;
             // Merge overall state
+            bool isMatchCompletion = _state < MatchState.Completed && newer._state >= MatchState.Completed;
             _state = (MatchState)Math.Max((int)_state, (int)newer._state);
             BeginInstant = newer.BeginInstant > BeginInstant ? newer.BeginInstant : BeginInstant;
 
@@ -322,6 +323,9 @@ namespace Celeste.Mod.Head2Head.Shared {
                 foreach (PlayerID id in playersToRemove) {
                     Result.players.Remove(id);
 				}
+            }
+            if (isMatchCompletion) {
+                PlayerStatus.Current.OnMatchEnded(this);
             }
         }
 
