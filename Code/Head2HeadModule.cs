@@ -1546,6 +1546,9 @@ namespace Celeste.Mod.Head2Head {
 			}
 			else LevelEnter.Go(new Session(area.Local.Value), false);
 			ClearAutoLaunchInfo();
+			if (!PlayerStatus.Current.IsInMatch(true)) {
+				PlayerStatus.Current.RestoreOriginalAssists(global::Celeste.SaveData.Instance);
+			}
 			return true;
 		}
 

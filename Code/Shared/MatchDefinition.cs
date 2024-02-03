@@ -260,6 +260,7 @@ namespace Celeste.Mod.Head2Head.Shared {
                 if (GetPlayerResultCat(player) <= ResultCategory.InMatch) return;
             }
             SetState_NoUpdate(MatchState.Completed);
+            PlayerStatus.Current.OnMatchEnded(this);
 		}
 
         public void MergeDynamic(MatchDefinition newer) {

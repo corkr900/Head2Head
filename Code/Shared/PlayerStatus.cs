@@ -244,6 +244,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			objectives.Clear();
 			CurrentMatch = null;
 			SummitGems = new bool[6];
+			RestoreOriginalAssists(SaveData.Instance);
 			Updated();
 		}
 
@@ -252,6 +253,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			objectives.Clear();
 			CurrentMatch = null;
 			SummitGems = new bool[6];
+			RestoreOriginalAssists(SaveData.Instance);
 			Updated();
 		}
 
@@ -345,6 +347,11 @@ namespace Celeste.Mod.Head2Head.Shared {
 			if (!IsInMatch(false)) return;
 			MatchObjective ob = FindObjective(MatchObjectiveType.UnlockChapter, area, false, area.SID);
 			if (ob != null && MarkObjective(ob, area)) Updated();
+		}
+		internal void OnMatchEnded(MatchDefinition def = null, SaveData saveData = null) {
+			if (def == null) def = CurrentMatch;
+			if (def == null || string.IsNullOrEmpty(CurrentMatchID) || def.MatchID != CurrentMatchID) return;
+			RestoreOriginalAssists(saveData ?? SaveData.Instance);
 		}
 
 		// objective help
@@ -541,8 +548,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 				}
 				if (matchFinished) {  // All phases are complete
 					CurrentMatch.PlayerFinished(PlayerID.MyIDSafe, this);
-					// This would be problematic if we stored assists in a file-changing match. but we don't so it's fine:
-					RestoreOriginalAssists(SaveData.Instance);
+					OnMatchEnded();
 				}
 				OnMatchPhaseCompleted?.Invoke(new OnMatchPhaseCompletedArgs(
 					CurrentMatch,
@@ -606,7 +612,8 @@ namespace Celeste.Mod.Head2Head.Shared {
 		}
 
 		public void ApplyMatchDefinedAssists(SaveData saveData) {
-			if (saveData == null || !IsInMatch(true)) return;
+			if (!IsInMatch(true)) return;
+			if (saveData == null) saveData = SaveData.Instance;
 			ActiveAssistsBeforeMatch = saveData.Assists;
 			saveData.Assists = Assists.Default;
 			MatchDefinition def = CurrentMatch;
@@ -615,6 +622,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 		public void RestoreOriginalAssists(SaveData saveData) {
 			if (ActiveAssistsBeforeMatch == null) return;
+			if (saveData == null) saveData = SaveData.Instance;
 			saveData.Assists = ActiveAssistsBeforeMatch.Value;
 			ActiveAssistsBeforeMatch = null;
 		}

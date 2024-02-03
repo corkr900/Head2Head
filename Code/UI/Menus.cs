@@ -210,6 +210,7 @@ namespace Celeste.Mod.Head2Head.UI
 						MatchDefinition def = PlayerStatus.Current.CurrentMatch;
 						if (def != null && def.State < MatchState.Completed) {
 							def.State = MatchState.Completed;  // Broadcasts update
+							PlayerStatus.Current.OnMatchEnded(def);
 						}
 						cxt.Refresh(menu);
 					});
