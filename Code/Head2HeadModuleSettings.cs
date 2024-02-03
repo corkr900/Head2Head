@@ -82,6 +82,8 @@ namespace Celeste.Mod.Head2Head {
 
 		internal void CreateOptions(TextMenu menu, bool inGame, EventInstance snapshot)
 		{
+			Head2HeadModule.Instance.ScanModsForIntegrationMeta(true);
+
 			AddSlider(menu, "Head2Head_Setting_HudScale", HudScale,
 				new float[] { 0.2f, 0.3f, 0.4f, 0.5f, 0.6f, 0.7f, 0.8f, 0.9f, 1.0f, 1.1f, 1.2f, 1.3f, 1.4f, 1.5f, 1.6f, 1.7f, 1.8f, 1.9f, 2.0f },
 				(float val) => HudScale = val);
@@ -136,9 +138,9 @@ namespace Celeste.Mod.Head2Head {
 
 		private RulesetOption[] GetRulesetOptions() {
 			List<RulesetOption> list = new List<RulesetOption>() {
-				new RulesetOption { DisplayName = "Default", InternalValue = "default" },  // TODO (!!!) tokenize
+				new RulesetOption { DisplayName = Dialog.Clean("Head2Head_DefaultRulesetName"), InternalValue = "default" },
 			};
-			foreach(KeyValuePair<string, Ruleset> rset in Shared.Ruleset.CustomRulesets()) {  // TODO (!!!) this can run before rulesets get loaded
+			foreach(KeyValuePair<string, Ruleset> rset in Shared.Ruleset.CustomRulesets()) {
 				list.Add(new RulesetOption {
 					DisplayName = Shared.Util.TranslatedIfAvailable(rset.Value.DisplayName),
 					InternalValue = rset.Key,

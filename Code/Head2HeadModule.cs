@@ -287,7 +287,7 @@ namespace Celeste.Mod.Head2Head {
 
 		private void OnCelesteCriticalFailure(On.Celeste.Celeste.orig_CriticalFailureHandler orig, Exception e) {
 			orig(e);
-			// TODO Cache off recovery data locally instead of relying on peers' info
+			// TODO (!) Cache off recovery data locally instead of relying on peers' info
 		}
 
 		private static void Level_LoadingThread(ILContext il) {
@@ -355,7 +355,7 @@ namespace Celeste.Mod.Head2Head {
 			if (PlayerEnteredAMap && !(new GlobalAreaKey(level.Session.Area).Equals(GlobalAreaKey.Head2HeadLobby))) {
 				PlayerCompletedARoom = true;
 			}
-			//ActionLogger.EnteringRoom();
+			ActionLogger.EnteringRoom();
 		}
 
 		private void onDebugScreenOpened(On.Celeste.Editor.MapEditor.orig_ctor orig, MapEditor self, AreaKey area, bool reloadMapData) {
@@ -972,7 +972,8 @@ namespace Celeste.Mod.Head2Head {
 			OnMatchCurrentMatchUpdated?.Invoke();
 		}
 
-		public void ScanModsForIntegrationMeta() {
+		public void ScanModsForIntegrationMeta(bool doNotReload = false) {
+			if (doNotReload && Ruleset.LoadedCustomRulesets) return;
 			MatchTemplate.ClearCustomTemplates();
 			foreach (ModContent mod in Everest.Content.Mods) {
 				if (mod.Map.ContainsKey("Head2Head")) {
@@ -982,6 +983,7 @@ namespace Celeste.Mod.Head2Head {
 					}
 				}
 			}
+			Ruleset.LoadedCustomRulesets = true;
 		}
 
 		private void ProcessIntegrationMeta(ModIntegrationMeta meta) {
@@ -989,6 +991,7 @@ namespace Celeste.Mod.Head2Head {
 				foreach (FullgameCategoryMeta cat in meta.Fullgame) {
 					MatchTemplate.AddTemplateFromMeta(cat, true);
 				}
+				Ruleset.DefaultRulesetStale = true;
 			}
 			if (meta.IndividualLevels != null) {
 				foreach (ILMeta il in meta.IndividualLevels) {
@@ -1013,6 +1016,7 @@ namespace Celeste.Mod.Head2Head {
 						}
 					}
 				}
+				Ruleset.DefaultRulesetStale = true;
 			}
 			if (meta.Rulesets != null) {
 				foreach(RulesetMeta ruleset in meta.Rulesets) {

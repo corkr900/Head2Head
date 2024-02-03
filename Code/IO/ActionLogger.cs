@@ -153,12 +153,13 @@ namespace Celeste.Mod.Head2Head.IO {
 		}
 
 		public static void EnteringRoom() {
-			if (!TrackActions()) return;
-			LoggableAction la = new LoggableAction(LoggableAction.ActionType.EnterRoom);
-			Current.Log(la);
-			if (!string.IsNullOrEmpty(la.checkpoint)) {
-				WriteLog();
-			}
+			return;  // Logging every room transition is too much noise
+			//if (!TrackActions()) return;
+			//LoggableAction la = new LoggableAction(LoggableAction.ActionType.EnterRoom);
+			//Current.Log(la);
+			//if (!string.IsNullOrEmpty(la.checkpoint)) {
+			//	WriteLog();
+			//}
 		}
 
 		public static void DebugView() {

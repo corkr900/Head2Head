@@ -37,7 +37,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			def.CategoryDisplayNameOverride = DisplayName;
 			def.Rules = new List<MatchRule>(Rules);
 
-			if (RandoOptions != null) {  // TODO (!) move this into the integration file
+			if (RandoOptions != null) {  // TODO move this into the integration file
 				RandomizerIntegration.SettingsBuilder bld = new RandomizerIntegration.SettingsBuilder();
 				bld.LogicType = RandoOptions.LogicType;
 				bld.Difficulty = RandoOptions.Difficulty;

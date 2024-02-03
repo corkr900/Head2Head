@@ -18,7 +18,10 @@ namespace Celeste.Mod.Head2Head.Shared {
 		private static Ruleset _dflt = null;
 		public static Ruleset Default {
 			get {
-				if (_dflt == null) _dflt = new DefaultRuleset();
+				if (_dflt == null || DefaultRulesetStale) {
+					_dflt = new DefaultRuleset();
+					DefaultRulesetStale = false;
+				}
 				return _dflt;
 			}
 		}
@@ -38,6 +41,9 @@ namespace Celeste.Mod.Head2Head.Shared {
 			}
 		}
 
+		internal static bool LoadedCustomRulesets = false;
+		internal static bool DefaultRulesetStale = true;
+
 		#endregion Static handling of default and custom rulesets
 
 		#region Handle building custom rulesets
@@ -45,7 +51,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		// TODO (!!!!!) For some reason the "5 berries + cassette" category is ignoring berries
 
 		internal static void ProcessMeta(RulesetMeta ruleset) {
-			if (string.IsNullOrEmpty(ruleset.ID)) {
+            if (string.IsNullOrEmpty(ruleset.ID)) {
 				Logger.Log(LogLevel.Error, "Head2Head", "Encountered custom ruleset with null ID :(");
 				return;
 			}
@@ -127,10 +133,8 @@ namespace Celeste.Mod.Head2Head.Shared {
 	}
 
 	public class DefaultRuleset : Ruleset {
-		// TODO (!!!) Respect "Use SRC ARB Categories" setting
-		// TODO (!!!) Custom categories aren't getting added to the default ruleset
 
-		public DefaultRuleset() : base(null, "Default", BuildSets()) {  // TODO (!!!) tokenize
+		public DefaultRuleset() : base(null, "Head2Head_DefaultRulesetName", BuildSets()) {
 
 		}
 

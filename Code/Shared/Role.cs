@@ -72,7 +72,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 		private static bool IsCurrentRulesetAllowed(MatchDefinition def) {
 			if (string.IsNullOrEmpty(def.RequiredRuleset)) return true;
-			else return def.AllowedRoles.Contains(ActiveRole);
+			else return def.RequiredRuleset == ActiveRulesetID;
 		}
 
 		public static bool IsCurrentRoleAndRulesetAllowed(MatchDefinition def)
