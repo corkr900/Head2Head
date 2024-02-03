@@ -12,6 +12,11 @@ namespace Celeste.Mod.Head2Head.Shared {
 		internal static Dictionary<GlobalAreaKey, List<MatchTemplate>> ILTemplates = new Dictionary<GlobalAreaKey, List<MatchTemplate>>();
 		internal static Dictionary<string, List<MatchTemplate>> FullgameTemplates = new Dictionary<string, List<MatchTemplate>>();
 
+		private static uint _idCounter = 0;
+		private static uint NewPhaseOrObjectiveID() {
+			return ++_idCounter;
+		}
+
 		internal void Register() {
 			if (!ILTemplates.ContainsKey(Area)) ILTemplates.Add(Area, new List<MatchTemplate>());
 			ILTemplates[Area].Add(this);
@@ -69,6 +74,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 				ph.category = StandardCategory.Custom;
 				ph.Order = count++;
 				ph.Area = tPhase.Area;
+				ph.ID = NewPhaseOrObjectiveID();
 				ph.Objectives = new List<MatchObjective>();
 				foreach (MatchObjectiveTemplate tObj in tPhase.Objectives) {
 					ph.Objectives.Add(new MatchObjective() {
@@ -77,7 +83,8 @@ namespace Celeste.Mod.Head2Head.Shared {
 						CollectableGoal = tObj.CollectableCount,
 						CustomTypeKey = tObj.CustomTypeKey,
 						CustomDescription = Util.TranslatedIfAvailable(tObj.Description),
-					});
+						ID = NewPhaseOrObjectiveID(),
+				});
 				}
 				list.Add(ph);
 			}
@@ -288,7 +295,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public long TimeLimit = 0;
 		public string CustomTypeKey;
 		public string Description;
-		public AreaMode Side; // TODO (!!!) figure out why I made this
+		public AreaMode Side;
 	}
 
 	public class RandomizerOptionsTemplate {
