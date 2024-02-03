@@ -177,6 +177,10 @@ namespace Celeste.Mod.Head2Head {
 		/// <returns>true if role was changed, false if already valid</returns>
 		private bool EnforceRole() {
 			Ruleset rset = Shared.Ruleset.Get(Ruleset);
+			if ((rset?.Roles?.Count ?? 0) <= 0) {
+				ActiveRole = Role.None;
+				return true;
+			}
 			if (rset.Roles.Count > 0 && !rset.Roles.Contains(ActiveRole)) {
 				ActiveRole = rset.Roles[0];
 				return true;

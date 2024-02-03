@@ -48,8 +48,6 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 		#region Handle building custom rulesets
 
-		// TODO (!!!!!) For some reason the "5 berries + cassette" category is ignoring berries
-
 		internal static void ProcessMeta(RulesetMeta ruleset) {
             if (string.IsNullOrEmpty(ruleset.ID)) {
 				Logger.Log(LogLevel.Error, "Head2Head", "Encountered custom ruleset with null ID :(");
