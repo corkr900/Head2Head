@@ -72,6 +72,9 @@ namespace Celeste.Mod.Head2Head.Shared {
 				chap.Data = new GlobalAreaKey(chapterMeta.MapSID).Data;
 				chap.Title = chapterMeta.Name;
 				chap.Icon = chapterMeta.Icon;
+				if (string.IsNullOrEmpty(chap.Icon) && chap.Data != null) {
+					chap.Icon = chap.Data.Icon;
+				}
 				foreach (var sideMeta in chapterMeta.Sides) {
 					if (sideMeta.Categories == null) {
 						Logger.Log(LogLevel.Warn, "Head2Head", $"Custom ruleset has side with null categories: {chapterMeta.Name} -> {sideMeta.Name}");
