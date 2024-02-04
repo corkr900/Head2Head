@@ -403,8 +403,9 @@ namespace Celeste.Mod.Head2Head.Shared {
                         return string.Format(Dialog.Get("Head2Head_ObjectiveDescription_CustomCollectable"),
                             CustomCollectables.GetDisplayName(CustomTypeKey), CollectableGoal);
                     case MatchObjectiveType.Strawberries:
-                    case MatchObjectiveType.MoonBerry:
-                        return string.Format(Dialog.Get("Head2Head_ObjectiveDescription_" + ObjectiveType.ToString()), CollectableGoal);
+					case MatchObjectiveType.MoonBerry:
+					case MatchObjectiveType.Keys:
+						return string.Format(Dialog.Get("Head2Head_ObjectiveDescription_" + ObjectiveType.ToString()), CollectableGoal);
                     case MatchObjectiveType.TimeLimit:
                         return string.Format(Dialog.Get("Head2Head_ObjectiveDescription_TimeLimit"),
                             Dialog.FileTime(AdjustedTimeLimit(PlayerID.MyIDSafe)));
@@ -463,6 +464,7 @@ namespace Celeste.Mod.Head2Head.Shared {
         HeartCollect,
         CassetteCollect,
         Strawberries,
+        Keys,
         MoonBerry,
         GoldenStrawberry,
         WingedGoldenStrawberry,

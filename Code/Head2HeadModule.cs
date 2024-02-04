@@ -118,6 +118,7 @@ namespace Celeste.Mod.Head2Head {
 			On.Monocle.Scene.Begin += OnSceneBegin;
 			On.Monocle.Scene.End += OnSceneEnd;
 
+			On.Celeste.Key.OnPlayer += OnKeyOnPlayer;
 			On.Celeste.Level.Render += OnLevelRender;
 			On.Celeste.Level.Pause += OnGamePause;
 			On.Celeste.Level.UpdateTime += OnLevelUpdateTime;
@@ -196,6 +197,7 @@ namespace Celeste.Mod.Head2Head {
 			On.Monocle.Scene.Begin -= OnSceneBegin;
 			On.Monocle.Scene.End -= OnSceneEnd;
 
+			On.Celeste.Key.OnPlayer -= OnKeyOnPlayer;
 			On.Celeste.Level.Render -= OnLevelRender;
 			On.Celeste.Level.Pause -= OnGamePause;
 			On.Celeste.Level.UpdateTime -= OnLevelUpdateTime;
@@ -410,6 +412,13 @@ namespace Celeste.Mod.Head2Head {
 			orig(self, area);
 			PlayerStatus.Current.CassetteCollected(new GlobalAreaKey(area));
 			DoPostPhaseAutoLaunch(true, MatchObjectiveType.CassetteCollect);  // TODO find a better hook for returning to lobby after cassette collection
+		}
+
+		private void OnKeyOnPlayer(On.Celeste.Key.orig_OnPlayer orig, Key self, Player player) {
+			orig(self, player);
+			if (player?.level?.Session?.Area != null) {
+				PlayerStatus.Current.KeyCollected(new GlobalAreaKey(player.level.Session.Area), self);
+			}
 		}
 
 		private void OnSceneBegin(On.Monocle.Scene.orig_Begin orig, Scene self) {

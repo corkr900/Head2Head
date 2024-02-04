@@ -139,6 +139,7 @@ Head2Head_CategoryName_AllBSides= All B Sides
 Head2Head_CategoryName_AllCSides= All C Sides
 
 Head2Head_ObjectiveDescription_Strawberries= Collect Strawberry (x{0})
+Head2Head_ObjectiveDescription_Keys= Collect Key (x{0})
 Head2Head_ObjectiveDescription_MoonBerry= Collect Moon Berry (x{0})
 Head2Head_ObjectiveDescription_ChapterComplete= Complete the Chapter
 Head2Head_ObjectiveDescription_HeartCollect= Collect the Crystal Heart
