@@ -70,7 +70,8 @@ namespace Celeste.Mod.Head2Head.Shared {
             }
         }
 		public bool IsVanilla { get { return ExistsLocal && Local?.LevelSet == "Celeste"; } }
-        public string DisplayName {
+		public bool IsH2HLobby => SID == Head2HeadLobbySID;
+		public string DisplayName {
             get {
                 if (IsOverworld) {
                     return Dialog.Get("HEAD2HEAD_OVERWORLD");
@@ -108,6 +109,7 @@ namespace Celeste.Mod.Head2Head.Shared {
                 return new GlobalAreaKey(Head2HeadLobbySID);
             }
         }
+
 
 		private static string GetTranslatedSide(AreaMode? mode) {
 			switch (mode) {
