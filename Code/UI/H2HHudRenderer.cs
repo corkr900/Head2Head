@@ -222,13 +222,12 @@ namespace Celeste.Mod.Head2Head.UI {
 
 		private string GetPlayerDetail(PlayerID id, ResultCategory cat, MatchDefinition def) {
 			if (cat == ResultCategory.Completed) {
-				// TODO (!!) UI for time limit
-				//if (def.Phases[0].category == StandardCategory.TimeLimit) {
-				//	MatchResultPlayer res = def.Result[id];
-				//	if (res.FinalRoom != "h2h_chapter_completed") {
-				//		return res.FinalRoom;
-				//	}
-				//}
+				if (def.Phases[0].HasTimeLimit) {
+					MatchResultPlayer res = def.Result[id];
+					if (res.FinalRoom != "h2h_chapter_completed") {
+						return res.FinalRoom;
+					}
+				}
 				long timer = def.Result == null ? 0 : def.Result[id]?.FileTimeTotal ?? 0;
 				return Dialog.FileTime(timer);
 			}
@@ -237,12 +236,11 @@ namespace Celeste.Mod.Head2Head.UI {
 					: Head2HeadModule.knownPlayers.ContainsKey(id) ? Head2HeadModule.knownPlayers[id]
 					: null;
 				if (stat != null) {
-					// TODO (!!) UI for time limit
-					//if (def.Phases[0].category == StandardCategory.TimeLimit) {
-					//	MatchObjective ob = def.Phases[0].Objectives[0];
-					//	long timeRemaining = Math.Max(stat.FileTimerAtMatchBegin + ob.AdjustedTimeLimit(id) - stat.CurrentFileTimer, 0);
-					//	return string.Format(Dialog.Get("Head2Head_hud_playerlist_timeremain"), Util.ReadableTimeSpanTitle(timeRemaining));
-					//}
+					if (def.Phases[0].HasTimeLimit) {
+						MatchObjective ob = def.Phases[0].Objectives[0];
+						long timeRemaining = Math.Max(stat.FileTimerAtMatchBegin + ob.AdjustedTimeLimit(id) - stat.CurrentFileTimer, 0);
+						return string.Format(Dialog.Get("Head2Head_hud_playerlist_timeremain"), Util.ReadableTimeSpanTitle(timeRemaining));
+					}
 					int strawbsTotal = 0;
 					int strawbsCollected = 0;
 					int curPhase = stat.CurrentPhase(id);
@@ -254,7 +252,7 @@ namespace Celeste.Mod.Head2Head.UI {
 									strawbsTotal += obj.CollectableGoal;
 									int idx = stat.objectives.FindIndex((H2HMatchObjectiveState s) => s.ObjectiveID == obj.ID);
 									if (idx < 0) continue;
-									strawbsCollected += stat.objectives[idx].CountCollectables();//.CollectedItems?.Count ?? 0;
+									strawbsCollected += stat.objectives[idx].CountCollectables();
 								}
 							}
 						}

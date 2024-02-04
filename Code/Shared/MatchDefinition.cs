@@ -364,9 +364,19 @@ namespace Celeste.Mod.Head2Head.Shared {
         public GlobalAreaKey Area;
         public List<MatchObjective> Objectives = new List<MatchObjective>();
 
-		public string Title { 
+        public string Title {
             get {
-				return Util.TranslatedCategoryName(category);
+                return Util.TranslatedCategoryName(category);
+            }
+        }
+
+        public bool HasTimeLimit {
+            get {
+                if (Objectives == null) return false;
+                foreach (MatchObjective obj in Objectives) {
+                    if (obj.ObjectiveType == MatchObjectiveType.TimeLimit) return true;
+                }
+                return false;
             }
         }
 	}

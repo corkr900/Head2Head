@@ -195,7 +195,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			// Add to the library
 			if (!ILTemplates.ContainsKey(area)) ILTemplates.Add(area, new List<MatchTemplate>());
 			MatchTemplate existing = ILTemplates[area].Find((MatchTemplate cmt) => { return cmt.Key == tem.Key; });
-			if (existing != null) ILTemplates[area].Remove(existing);  // TODO reload stuff more smartly (it won't change very often)
+			if (existing != null) ILTemplates[area].Remove(existing);
 			ILTemplates[area].Add(tem);
 
 			return tem;
