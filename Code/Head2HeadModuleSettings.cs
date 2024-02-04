@@ -32,6 +32,13 @@ namespace Celeste.Mod.Head2Head {
 			None,
 		}
 
+		public enum ShowObjectivesHUD {
+			Never,
+			OnlyInLobby,
+			InLobbyOrPause,
+			Always,
+		}
+
 		#region Settings
 
 		[SettingName("Head2Head_Setting_UseSRCARBRules")]
@@ -45,6 +52,10 @@ namespace Celeste.Mod.Head2Head {
 		[SettingName("Head2Head_Setting_ShowHDInPause")]
 		[SettingSubText("Head2Head_Setting_ShowHDInPause_Subtext")]
 		public ShowHelpdeskInPauseMenu ShowHelpdeskInPause { get; set; } = ShowHelpdeskInPauseMenu.Online;
+
+		[SettingName("Head2Head_Setting_ShowObjectivesHUD")]
+		[SettingSubText("Head2Head_Setting_ShowObjectivesHUD_Subtext")]
+		public ShowObjectivesHUD ShowObjectives { get; set; } = ShowObjectivesHUD.InLobbyOrPause;
 
 		[SettingName("Head2Head_Setting_TimeServer")]
 		[SettingSubText("Head2Head_Setting_TimeServer_Subtext")]

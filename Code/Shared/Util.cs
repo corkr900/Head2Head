@@ -4,6 +4,7 @@ using Celeste.Mod.Meta;
 using MonoMod.Utils;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -59,6 +60,12 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 		internal static bool HasCassette(GlobalAreaKey area) {
 			if (!area.ExistsLocal) return false;
+			if (area.IsVanilla) return area.SID switch {
+				"Celeste/0-Prologue" => false,
+				"Celeste/8-Epilogue" => false,
+				"Celeste/10-Farewell" => false,
+				_ => area.Mode == AreaMode.Normal
+			};
 			if (area.Data.Mode[(int)area.Mode].MapData.DetectedCassette) return true;
 			MapData md = GetMapDataForMode(area);
 			if (md == null) return false;
@@ -118,6 +125,14 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 		internal static object TranslatedDNFReason(DNFReason reason) {
 			return Dialog.Get(string.Format("Head2Head_DNFReason_{0}", reason.ToString()));
+		}
+
+		internal static string TranslatedRuleLabel(MatchRule rule) {
+			return Dialog.Clean($"Head2Head_RuleLabel_{rule}");
+		}
+
+		internal static string TranslatedObjectiveLabel(MatchObjectiveType objectiveType) {
+			return Dialog.Clean($"Head2Head_ObjectiveLabel_{objectiveType}");
 		}
 
 		internal static bool EntityIsRealHeartGem(BinaryPacker.Element entity) {
@@ -265,5 +280,6 @@ namespace Celeste.Mod.Head2Head.Shared {
 			if (!string.IsNullOrEmpty(name)) return name;
 			return Dialog.Clean("Head2Head_me");
 		}
+
 	}
 }

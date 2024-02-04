@@ -630,6 +630,16 @@ namespace Celeste.Mod.Head2Head.Shared {
 			ActiveAssistsBeforeMatch = null;
 		}
 
+		internal List<MatchObjective> CurrentObjectives() {
+			MatchDefinition def = CurrentMatch;
+			if (def == null) return new List<MatchObjective>();
+			MatchPhase min = null;
+			foreach (MatchPhase ph in def.Phases) {
+				if (IsPhaseComplete(ph.ID)) continue;
+				if (ph.Order < (min?.Order ?? 999999999)) min = ph;
+			}
+			return min?.Objectives ?? new List<MatchObjective>();
+		}
 	}
 
 	public struct H2HMatchPhaseState {

@@ -85,6 +85,10 @@ Head2Head_Setting_ShowHDInPause_Subtext= Determines when the Head 2 Head Helpdes
 be accessible from the pause menu.
 Default: Online
 
+Head2Head_Setting_ShowObjectivesHUD= Show Objectives HUD
+Head2Head_Setting_ShowObjectivesHUD_Subtext= Determines when to show the objectives progress HUD.
+Default: Lobby and Pause
+
 Head2Head_Setting_TimeServer= Time Server
 Head2Head_Setting_TimeServer_Subtext= Choose the time server to use to synchronize
 match starts. "None" will disable time syncing;
@@ -113,6 +117,11 @@ modoptions_Head2HeadModule_showhelpdeskinpause_Always= Always
 modoptions_Head2HeadModule_nstptimeserver_Windows= time.windows.com
 modoptions_Head2HeadModule_nstptimeserver_Pool= pool.ntp.org
 modoptions_Head2HeadModule_nstptimeserver_None= None
+
+modoptions_Head2HeadModule_showobjectives_Never= Never
+modoptions_Head2HeadModule_showobjectives_OnlyInLobby= Only in Lobby
+modoptions_Head2HeadModule_showobjectives_InLobbyOrPause= Lobby and Pause
+modoptions_Head2HeadModule_showobjectives_Always= Always
 
 Head2Head_CategoryName_Clear= Chapter Clear
 Head2Head_CategoryName_HeartCassette= Heart + Cassette
@@ -152,6 +161,20 @@ Head2Head_ObjectiveDescription_WingedGoldenStrawberry= Collect the winged golden
 Head2Head_ObjectiveDescription_Flag= Flag objective description unavailable
 Head2Head_ObjectiveDescription_EnterRoom= Enter Room {0}
 
+Head2Head_ObjectiveLabel_Strawberries= Strawberries
+Head2Head_ObjectiveLabel_Keys= Keys
+Head2Head_ObjectiveLabel_MoonBerry= Moon Berry
+Head2Head_ObjectiveLabel_ChapterComplete= Finish Chapter
+Head2Head_ObjectiveLabel_HeartCollect= Heart
+Head2Head_ObjectiveLabel_CassetteCollect= Cassette
+Head2Head_ObjectiveLabel_TimeLimit= Time Limit
+Head2Head_ObjectiveLabel_CustomCollectable= Unknown Collectable
+Head2Head_ObjectiveLabel_CustomObjective= Unknown Objective
+Head2Head_ObjectiveLabel_GoldenStrawberry= Golden Berry
+Head2Head_ObjectiveLabel_WingedGoldenStrawberry= Winged Golden
+Head2Head_ObjectiveLabel_Flag= Unknown Flag
+Head2Head_ObjectiveLabel_EnterRoom= Enter Room
+
 Head2Head_MatchStatus_None= Unknown
 Head2Head_MatchStatus_Building= Building
 Head2Head_MatchStatus_Staged= Staged
@@ -184,6 +207,8 @@ Head2Head_DNFReason_TAS= TAS
 Head2Head_DNFReason_RandomizerError= Randomizer Error
 Head2Head_DNFReason_EnabledVariant= Variant/Assist Mode
 Head2Head_DNFReason_DisabledRequiredVariant= Disabled Variant/Assist
+
+Head2Head_RuleLabel_NoGrabbing= No Grabbing
 
 Head2Head_UntitledMatch= Untitled Match
 

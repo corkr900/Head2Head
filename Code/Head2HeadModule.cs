@@ -141,6 +141,7 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.SummitGem.SmashRoutine += OnSummitGemSmashRoutine;
 			On.Celeste.Strawberry.ctor += OnStrawberryCtor;
 			On.Celeste.LevelLoader.StartLevel += OnLevelLoaderStart;
+			On.Celeste.LevelLoader.LoadingThread_Safe += OnLevelLoaderLevelLoadingThread_Safe;
 			On.Celeste.AreaComplete.Update += OnAreaCompleteUpdate;
 			On.Celeste.GameplayStats.Render += OnGameplayStatsRender;
 			On.Celeste.OverworldLoader.Begin += OnOverworldLoaderBegin;
@@ -220,6 +221,7 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.SummitGem.SmashRoutine -= OnSummitGemSmashRoutine;
 			On.Celeste.Strawberry.ctor -= OnStrawberryCtor;
 			On.Celeste.LevelLoader.StartLevel -= OnLevelLoaderStart;
+			On.Celeste.LevelLoader.LoadingThread_Safe -= OnLevelLoaderLevelLoadingThread_Safe;
 			On.Celeste.AreaComplete.Update -= OnAreaCompleteUpdate;
 			On.Celeste.GameplayStats.Render -= OnGameplayStatsRender;
 			On.Celeste.OverworldLoader.Begin -= OnOverworldLoaderBegin;
@@ -299,6 +301,11 @@ namespace Celeste.Mod.Head2Head {
 				cursor.Emit(OpCodes.Ldarg_0);
 				cursor.Emit(OpCodes.Call, typeof(Head2HeadModule).GetMethod("OnAddRenderers"));
 			}
+		}
+
+		private void OnLevelLoaderLevelLoadingThread_Safe(On.Celeste.LevelLoader.orig_LoadingThread_Safe orig, LevelLoader self) {
+			orig(self);
+			self.Level.Add(new ObjectiveProgressHUD());
 		}
 
 		private ScreenWipe OnLevelAreaComplete(On.Celeste.Level.orig_CompleteArea_bool_bool_bool orig, Level self, bool spotlightWipe, bool skipScreenWipe, bool skipCompleteScreen) {
