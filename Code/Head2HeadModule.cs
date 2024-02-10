@@ -1,4 +1,4 @@
-﻿using Celeste.Editor;
+using Celeste.Editor;
 using Celeste.Mod;
 using Celeste.Mod.Head2Head.Control;
 using Celeste.Mod.Head2Head.Data;
@@ -1179,6 +1179,7 @@ namespace Celeste.Mod.Head2Head {
 				Logger.Log(LogLevel.Verbose, "Head2Head", "Player status prevents staging a match (are you already in one?)");
 				return;
 			}
+			RoleLogic.HandleMatchCreation(def);
 			def.State = MatchState.Staged;
 			MatchStaged(def, true);
 			ClearAutoLaunchInfo();
