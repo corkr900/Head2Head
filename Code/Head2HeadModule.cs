@@ -1,4 +1,4 @@
-using Celeste.Editor;
+﻿using Celeste.Editor;
 using Celeste.Mod;
 using Celeste.Mod.Head2Head.Control;
 using Celeste.Mod.Head2Head.Data;
@@ -38,7 +38,7 @@ namespace Celeste.Mod.Head2Head {
 		internal int MatchTimeoutMinutes = 15;
 
 		// Constants that might change in the future
-		public static readonly string ProtocolVersion = "1_2_0";
+		public static readonly string ProtocolVersion = "1_2_1";
 
 		// Other static stuff
 		public static Head2HeadModule Instance { get; private set; }
