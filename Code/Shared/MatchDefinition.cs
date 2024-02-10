@@ -522,7 +522,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			int numAllowedRoles = reader.ReadInt32();
             d.AllowedRoles = new List<Role>(numAllowedRoles);
             for (int i = 0; i < numAllowedRoles; i++) {
-                d.AllowedRoles[i] = (Role)Enum.Parse(typeof(Role), reader.ReadString());
+                d.AllowedRoles.Add((Role)Enum.Parse(typeof(Role), reader.ReadString()));
             }
 
 			bool hasRandoOptions = reader.ReadBoolean();
