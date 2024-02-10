@@ -79,8 +79,9 @@ namespace Celeste.Mod.Head2Head.Shared {
 			=> IsCurrentRoleAllowed(def) && IsCurrentRulesetAllowed(def);
 
 		public static bool AllowAutoStage(MatchDefinition def) {
-			return def.ChangeSavefile && !AllowFullgame() ? false
-				: IsCurrentRoleAndRulesetAllowed(def);
+			if (def.ChangeSavefile && !AllowFullgame()) return false;
+			if (ActiveRole == Role.Host) return IsCurrentRulesetAllowed(def);
+			return IsCurrentRoleAndRulesetAllowed(def);
 		}
 
 		public static bool AllowMatchJoin(MatchDefinition def) {
