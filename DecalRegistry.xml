@@ -1,0 +1,8 @@
+<decals>
+  <decal path="Head2Head/arcade_sign">
+    <animation frames="0,1,2" />
+	<animationSpeed value="2" />
+	<light offsetX="16" color="3333ff" />
+	<light offsetX="-16" color="ff3333" />
+  </decal>
+</decals>
