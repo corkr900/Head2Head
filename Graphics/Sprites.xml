@@ -8,9 +8,9 @@
 		<Loop id="idle" path="Idle" delay=".25" frames="0,0,0,1,2,2,2,1" />
 	</Head2Head_FullgameSelector>
 
-  <Head2Head_Helpdesk path="Head2Head/Helpdesk/" start="idle">
-    <Loop id="idle" path="Idle" delay=".1" frames="0" />
-  </Head2Head_Helpdesk>
+	<Head2Head_Helpdesk path="Head2Head/Helpdesk/" start="idle">
+		<Loop id="idle" path="Idle" delay=".1" frames="0" />
+	</Head2Head_Helpdesk>
 
 	<Head2Head_MatchSwitch_Stage path="Head2Head/MatchSwitch/Stage" start="idle">
 		<Justify x="0.5" y="0.5"/>
@@ -53,6 +53,9 @@
 		<Anim id="raise" path="" delay="0.07" frames="1" goto="raised"/>
 		<Loop id="raised" path="" delay="0.2" frames="1"/>
 	</Head2Head_TimeTrial_Checkpoint>
-
+	
+	<Head2Head_ArcadeCabinet path="Head2Head/ArcadeCabinet/" start="FourInARow">
+		<Loop id="FourInARow" path="FourInARow" delay=".1" frames="0" />
+	</Head2Head_ArcadeCabinet>
 
 </Sprites>
