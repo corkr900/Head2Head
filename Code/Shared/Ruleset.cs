@@ -58,7 +58,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 				return;
 			}
 			if (customRulesets.ContainsKey(ruleset.ID)) {
-				Logger.Log(LogLevel.Warn, "Head2Head", $"Already found ruleset with ID '{ruleset.ID}'. Overwriting.");
+				// Already found ruleset with that ID; overwrite
 				customRulesets.Remove(ruleset.ID);
 			}
 			if (string.IsNullOrEmpty(ruleset.Name)) ruleset.Name = ruleset.ID;

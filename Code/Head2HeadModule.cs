@@ -35,10 +35,9 @@ namespace Celeste.Mod.Head2Head {
 		private const int START_TIMER_LEAD_MS = 5000;
 		private const int DEBUG_SAVEFILE = -1;
 		internal const string BTA_MATCH_PASS = "BTAMatchPass";
-		internal int MatchTimeoutMinutes = 15;
 
 		// Constants that might change in the future
-		public static readonly string ProtocolVersion = "1_2_1";
+		public static readonly string ProtocolVersion = "1_2_2";
 
 		// Other static stuff
 		public static Head2HeadModule Instance { get; private set; }
@@ -152,6 +151,10 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.UnlockEverythingThingy.EnteredCheat += OnUnlockEverythingThingyEnteredCheat;
 			On.Celeste.Editor.MapEditor.ctor += onDebugScreenOpened;
 			On.Celeste.Editor.MapEditor.LoadLevel += onDebugTeleport;
+			// TODO (!!!) get rid of these hooks if no longer needed
+			On.Celeste.Assists.EnfornceAssistMode += OnAssistsEnfornceAssistMode;
+			On.Celeste.SaveData.AssistModeChecks += OnSaveDataAssistModeChecks;
+
 			// Everest Events
 			Everest.Events.Level.OnLoadEntity += OnLevelLoadEntity;
 			Everest.Events.Level.OnExit += onLevelExit;
@@ -177,6 +180,20 @@ namespace Celeste.Mod.Head2Head {
 			CelesteTASIntegration.Load();
 			RandomizerIntegration.Load();
 			SyncedClock.DoClockSync();
+		}
+
+		private void OnSaveDataAssistModeChecks(On.Celeste.SaveData.orig_AssistModeChecks orig, SaveData self) {
+			if (PlayerStatus.Current.IsInMatch(false)) {
+				Logger.Log(LogLevel.Info, "Head2Head", $"Prevented SaveData.AssistModeChecks from executing; Player is in a match");
+			}
+			else orig(self);
+		}
+
+		private void OnAssistsEnfornceAssistMode(On.Celeste.Assists.orig_EnfornceAssistMode orig, ref Assists self) {
+			if (PlayerStatus.Current.IsInMatch(false)) {
+				Logger.Log(LogLevel.Info, "Head2Head", $"Prevented Assists.EnfornceAssistMode from executing; Player is in a match");
+			}
+			else orig(ref self);
 		}
 
 		public override void Unload() {
@@ -232,6 +249,9 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.UnlockEverythingThingy.EnteredCheat -= OnUnlockEverythingThingyEnteredCheat;
 			On.Celeste.Editor.MapEditor.ctor -= onDebugScreenOpened;
 			On.Celeste.Editor.MapEditor.LoadLevel -= onDebugTeleport;
+
+			On.Celeste.Assists.EnfornceAssistMode -= OnAssistsEnfornceAssistMode;
+			On.Celeste.SaveData.AssistModeChecks -= OnSaveDataAssistModeChecks;
 			// Everest Events
 			Everest.Events.Level.OnLoadEntity -= OnLevelLoadEntity;
 			Everest.Events.Level.OnExit -= onLevelExit;
@@ -1440,6 +1460,7 @@ namespace Celeste.Mod.Head2Head {
 		/// <param name="randoSettings"></param>
 		private IEnumerator StartMatchCoroutine(GlobalAreaKey gak, bool isRejoin, string startRoom = null, RandomizerIntegration.SettingsBuilder randoSettings = null) {
 			if (PlayerStatus.Current.CurrentMatch == null) yield break;
+			Logger.Log(LogLevel.Info, "Head2Head", $"Beginning match entry routine - {PlayerStatus.Current.CurrentMatchID}");
 			if (randoSettings != null) {
 				// Start the rando generation immediately so there's no delay when entering
 				RandomizerIntegration.BeginGeneration(randoSettings.Build());
@@ -1462,6 +1483,7 @@ namespace Celeste.Mod.Head2Head {
 				yield break;
 			}
 			MatchDefinition def = PlayerStatus.Current.CurrentMatch;
+			Logger.Log(LogLevel.Info, "Head2Head", $"Beginning match entry  - {def.MatchID}");
 			if (def == null) yield break;
 			if (def.State != MatchState.InProgress) yield break;
 			if (!isRejoin) {
@@ -1469,11 +1491,13 @@ namespace Celeste.Mod.Head2Head {
 				if (def.ChangeSavefile) {
 					if (def.HasRandomizerObjective) {
 						Util.SafeCreateAndSwitchFile(DEBUG_SAVEFILE, false, false);
+						Logger.Log(LogLevel.Info, "Head2Head", $"Switching to DEBUG savefile for rando match");
 					}
 					else {
 						int slot = FindNextUnusedSlot();
 						if (slot >= 0) {
 							Util.SafeCreateAndSwitchFile(slot, false, false);
+							Logger.Log(LogLevel.Info, "Head2Head", $"Switched to savefile {slot} for match");
 						}
 						else {
 							Logger.Log(LogLevel.Warn, "Head2Head", "Could not find a valid savefile slot for fullgame head 2 head match");
@@ -1481,13 +1505,26 @@ namespace Celeste.Mod.Head2Head {
 						}
 					}
 				}
-				else {
-					PlayerStatus.Current.ApplyMatchDefinedAssists(global::Celeste.SaveData.Instance);
-				}
+				PlayerStatus.Current.ApplyMatchDefinedAssists(true);
 				PlayerStatus.Current.MatchStarted();
 			}
 			def.RegisterSaveFile();
 			ActionLogger.StartingMatch(def);
+
+			// Log some info for debugging assistance
+			SaveData saveData = global::Celeste.SaveData.Instance;
+			Logger.Log(LogLevel.Warn, "Head2Head", $"File slot: {saveData.FileSlot} | assist: {saveData.AssistMode} | variants: {saveData.VariantMode}");
+			Logger.Log(LogLevel.Warn, "Head2Head", $"Enabled mods: {string.Join(", ", Everest.Modules.Select(
+				(EverestModule module) => module.Metadata.Name switch {
+					"Everest" => null,
+					"Celeste" => null,
+					"DialogCutscene" => null,
+					"UpdateChecker" => null,
+					"InfiniteSaves" => null,
+					"DebugRebind" => null,
+					"RebindPeriod" => null,
+					_ => module.Metadata.Name,
+				}).Where(s => !string.IsNullOrEmpty(s)))}");
 
 			// Handle Randomizer matches
 			if (randoSettings != null) {
@@ -1502,6 +1539,7 @@ namespace Celeste.Mod.Head2Head {
 			// handle standard matches
 			else {
 				new FadeWipe(GetLevelForCoroutine(), false, () => {
+					Logger.Log(LogLevel.Info, "Head2Head", $"Entering match arena! {def.MatchID}");
 					LevelEnter.Go(new Session(gak.Local.Value, startRoom), false);
 				});
 			}
@@ -1515,8 +1553,8 @@ namespace Celeste.Mod.Head2Head {
 
 		private void OnCompletedMatchPhase(PlayerStatus.OnMatchPhaseCompletedArgs args)
 		{
-			if (args.MatchCompleted)
-			{
+			if (args.MatchCompleted) {
+				Logger.Log(LogLevel.Info, "Head2Head", $"Match completed: {args.MatchDef.MatchDisplayName} (ID {args.MatchDef.MatchID})");
 				ActionLogger.CompletedMatch();
 				if (args.MatchDef.ChangeSavefile) {
 					returnToSlot = PlayerStatus.Current.FileSlotBeforeMatchStart;
@@ -1564,7 +1602,7 @@ namespace Celeste.Mod.Head2Head {
 			else LevelEnter.Go(new Session(area.Local.Value), false);
 			ClearAutoLaunchInfo();
 			if (!PlayerStatus.Current.IsInMatch(true)) {
-				PlayerStatus.Current.RestoreOriginalAssists(global::Celeste.SaveData.Instance);
+				PlayerStatus.Current.RestoreOriginalAssists();
 			}
 			return true;
 		}

@@ -199,7 +199,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 		public void ChapterExited(LevelExit.Mode mode, Session session) {
 			ResetLobbyRace();
-			Logger.Log(LogLevel.Info, "Head2Head", "Entering Overworld (chapter exited)");
+			Logger.Log(LogLevel.Info, "Head2Head", $"Entering Overworld (chapter exited - {mode})");
 			CurrentArea = GlobalAreaKey.Overworld;
 			CurrentRoom = "";
 			if (IsInMatch(false)) {
@@ -244,7 +244,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			objectives.Clear();
 			CurrentMatch = null;
 			SummitGems = new bool[6];
-			RestoreOriginalAssists(SaveData.Instance);
+			RestoreOriginalAssists();
 			Updated();
 		}
 
@@ -253,7 +253,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			objectives.Clear();
 			CurrentMatch = null;
 			SummitGems = new bool[6];
-			RestoreOriginalAssists(SaveData.Instance);
+			RestoreOriginalAssists();
 			Updated();
 		}
 
@@ -351,10 +351,11 @@ namespace Celeste.Mod.Head2Head.Shared {
 			MatchObjective ob = FindObjective(MatchObjectiveType.UnlockChapter, area, false, area.SID);
 			if (ob != null && MarkObjective(ob, area)) Updated();
 		}
-		internal void OnMatchEnded(MatchDefinition def = null, SaveData saveData = null) {
+		internal void OnMatchEnded(MatchDefinition def = null) {
 			if (def == null) def = CurrentMatch;
 			if (def == null || string.IsNullOrEmpty(CurrentMatchID) || def.MatchID != CurrentMatchID) return;
-			RestoreOriginalAssists(saveData ?? SaveData.Instance);
+			Logger.Log(LogLevel.Info, "Head2Head", $"PlayerStatus.OnMatchEnd - {def.MatchID}");
+			RestoreOriginalAssists();
 		}
 
 		// objective help
@@ -463,6 +464,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 				items[area].Add(id);
 				updated |= true;
 			}
+			Logger.Log(LogLevel.Info, "Head2Head", $"Collectable marked found: {ob.ObjectiveType} (ID {id})");
 			if (objectives[stateIndex].CountCollectables() >= ob.CollectableGoal) {
 				updated |= MarkObjectiveComplete(ob);
 			}
@@ -484,6 +486,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 						st.FinalRoom = CurrentRoom;
 						objectives[i] = st;
 						FileTimerAtLastObjectiveComplete = SaveData.Instance.Time;
+						Logger.Log(LogLevel.Info, "Head2Head", $"Objective completed: {ob.ObjectiveType} (ID {st.ObjectiveID})");
 						break;
 					}
 				}
@@ -523,6 +526,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 								return false;
 							}
 							else {
+								Logger.Log(LogLevel.Info, "Head2Head", $"Phase completed: {ph.Title} (ID {ph.ID})");
 								found = true;
 								st.Completed = true;
 								phases[i] = st;
@@ -614,19 +618,32 @@ namespace Celeste.Mod.Head2Head.Shared {
 			return strawbs;
 		}
 
-		public void ApplyMatchDefinedAssists(SaveData saveData) {
-			if (!IsInMatch(true)) return;
-			if (saveData == null) saveData = SaveData.Instance;
-			ActiveAssistsBeforeMatch = saveData.Assists;
-			saveData.Assists = Assists.Default;
+		public void ApplyMatchDefinedAssists(bool evenIfalreadyStored) {
+			Logger.Log(LogLevel.Info, "Head2Head", $"Applying match defined assists...");
+			if (CurrentMatch == null) {
+				Logger.Log(LogLevel.Info, "Head2Head", $"Skipping Apply match defined assists; no current match.");
+				return;
+			}
+			if (ActiveAssistsBeforeMatch != null && !evenIfalreadyStored) {
+				Logger.Log(LogLevel.Info, "Head2Head", $"Skipping Apply match defined assists; already applied.");
+				return;
+			}
+			ActiveAssistsBeforeMatch = SaveData.Instance.Assists;
+			SaveData.Instance.Assists = Assists.Default;
 			MatchDefinition def = CurrentMatch;
-			if (def.Rules.Contains(MatchRule.NoGrabbing)) saveData.Assists.NoGrabbing = true;
+			if (def.Rules.Contains(MatchRule.NoGrabbing)) {
+				Logger.Log(LogLevel.Info, "Head2Head", $"Applying No Grabbing rule");
+				SaveData.Instance.Assists.NoGrabbing = true;
+			}
 		}
 
-		public void RestoreOriginalAssists(SaveData saveData) {
-			if (ActiveAssistsBeforeMatch == null) return;
-			if (saveData == null) saveData = SaveData.Instance;
-			saveData.Assists = ActiveAssistsBeforeMatch.Value;
+		public void RestoreOriginalAssists() {
+			Logger.Log(LogLevel.Info, "Head2Head", $"Restoring original assists...");
+			if (ActiveAssistsBeforeMatch == null) {
+				Logger.Log(LogLevel.Info, "Head2Head", $"Skipping restore original assists; nothing stored.");
+				return;
+			}
+			SaveData.Instance.Assists = ActiveAssistsBeforeMatch.Value;
 			ActiveAssistsBeforeMatch = null;
 		}
 
