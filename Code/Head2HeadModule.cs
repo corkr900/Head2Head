@@ -120,6 +120,7 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.Key.OnPlayer += OnKeyOnPlayer;
 			On.Celeste.Level.Render += OnLevelRender;
 			On.Celeste.Level.Pause += OnGamePause;
+			On.Celeste.Level.LoadLevel += OnLoadLevel;
 			On.Celeste.Level.UpdateTime += OnLevelUpdateTime;
 			On.Celeste.Level.AssistMode += OnLevelAssistModeMenu;
 			On.Celeste.Level.VariantMode += OnLevelVariantModeMenu;
@@ -218,6 +219,7 @@ namespace Celeste.Mod.Head2Head {
 			On.Celeste.Key.OnPlayer -= OnKeyOnPlayer;
 			On.Celeste.Level.Render -= OnLevelRender;
 			On.Celeste.Level.Pause -= OnGamePause;
+			On.Celeste.Level.LoadLevel -= OnLoadLevel;
 			On.Celeste.Level.UpdateTime -= OnLevelUpdateTime;
 			On.Celeste.Level.AssistMode -= OnLevelAssistModeMenu;
 			On.Celeste.Level.VariantMode -= OnLevelVariantModeMenu;
@@ -284,6 +286,12 @@ namespace Celeste.Mod.Head2Head {
 		}
 
 		// ###############################################
+
+		private void OnLoadLevel(On.Celeste.Level.orig_LoadLevel orig, Level self, Player.IntroTypes playerIntro, bool isFromLoader) {
+			orig(self, playerIntro, isFromLoader);
+			if (!PlayerStatus.Current.IsInMatch(false)) return;
+			PlayerStatus.Current.CheckRoomTeleport(self);
+		}
 
 		/// <summary>
 		/// Manipulates entity loading to hide golden berries when not in a head 2 head match
