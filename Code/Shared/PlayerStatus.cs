@@ -657,6 +657,14 @@ namespace Celeste.Mod.Head2Head.Shared {
 			}
 			return min?.Objectives ?? new List<MatchObjective>();
 		}
+
+		internal void CheckRoomTeleport(Level level) {
+			string room = level.Session.Level;
+			if (room != CurrentRoom) {
+				RoomEntered(level, level.Session.LevelData, Vector2.Zero);
+			}
+		}
+
 	}
 
 	public struct H2HMatchPhaseState {
