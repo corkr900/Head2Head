@@ -417,9 +417,11 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 		public string Label {
             get {
-                return Util.TranslatedObjectiveLabel(ObjectiveType);
-            }
-        }
+				return !string.IsNullOrEmpty(CustomDescription)
+                    ? CustomDescription
+                    : Util.TranslatedObjectiveLabel(ObjectiveType);
+			}
+		}
 
 		public long AdjustedTimeLimit(PlayerID id) {
             return TimeLimit + GetAdjustment(id);
