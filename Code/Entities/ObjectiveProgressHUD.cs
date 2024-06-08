@@ -90,15 +90,15 @@ namespace Celeste.Mod.Head2Head.Entities {
 			const float TextScale = 0.5f;
 			const float iconSize = 80f;
 
-			float XSize = Calc.Max(32f, ActiveFont.Measure(text).X * TextScale + (icon == null ? 10f : iconSize + 10f));
+			float XSize = Calc.Max(32f, ActiveFont.Measure(text).X * TextScale + iconSize + 16f);
 			Vector2 bgpos = new Vector2(Calc.LerpClamp(0, XSize, Ease.CubeOut(DrawLerp)), bgposY);
 			bg.DrawJustified(bgpos, new Vector2(1f, 0.5f));
 			Vector2 pos = new Vector2(Calc.LerpClamp(-XSize, 5f, Ease.CubeOut(DrawLerp)), bgpos.Y);
 			if (icon != null) {
 				float iconScale = iconSize / icon.Height;
 				icon.DrawJustified(pos, Vector2.UnitY * 0.5f, Color.White, iconScale);
-				pos.X += iconSize;
 			}
+			pos.X += iconSize;
 			ActiveFont.DrawOutline(text, pos, Vector2.UnitY * 0.5f, Vector2.One * TextScale, Color.White, 2f, Color.Black);
 			if (complete) {
 				Draw.Line(pos, new Vector2(XSize, pos.Y), Color.DarkRed, 4f);
