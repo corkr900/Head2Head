@@ -7,6 +7,7 @@ using System.Linq;
 using System.Net.NetworkInformation;
 using System.Text;
 using System.Threading.Tasks;
+using System.Text.Json.Serialization;
 
 namespace Celeste.Mod.Head2Head.Shared {
 	public struct PlayerID {
@@ -59,6 +60,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 				return new PlayerID(null, uint.MaxValue, "");
 			}
 		}
+		public static string LastKnownName { get; private set; }
 
 		public PlayerID(int? addrHash, uint cnetID, string name) {
 			MacAddressHash = addrHash;
@@ -70,10 +72,17 @@ namespace Celeste.Mod.Head2Head.Shared {
 			CNetID = orig.CNetID;
 			Name = orig.Name;
 		}
+		[JsonIgnore]
 		public int? MacAddressHash { get; private set; }
+		[JsonIgnore]
 		public string Name { get; private set; }
+		[JsonIgnore]
 		public uint CNetID { get; private set; }
-		public static string LastKnownName { get; private set; }
+
+		[JsonInclude]
+		public string DisplayName => Name;
+		[JsonInclude]
+		public string SerializedID =>  $"{MacAddressHash}^{CNetID}^{Name}";
 
 		public bool MatchAndUpdate(PlayerID id) {
 			if (this.Equals(id)) {

@@ -1,0 +1,120 @@
+body {
+	background-color: rgb(45, 45, 51);
+	color: rgb(207, 206, 221);
+	font-family: sans-serif;
+	margin: 0px;
+}
+
+header {
+	background-color: rgb(60, 60, 70);
+}
+
+footer {
+	position: fixed;
+	bottom: 0px;
+	left: 0px;
+	right: 0px;
+	padding: 12px;
+	background-color: rgb(60, 60, 70);
+	text-align: end;
+}
+
+.title {
+	font-size: xx-large;
+	color: rgb(178, 215, 248);
+	text-align: center;
+	font-family: cursive;
+}
+
+.mid {
+	padding: 20px;
+}
+
+.toolbar {
+	margin: 0;
+	padding: 0;
+	width: 100%;
+}
+
+.toolbar td {
+	padding: 0px;
+	width: 16%;
+}
+
+.toolbar a {
+	text-decoration: none;
+}
+
+.toolbarItm {
+	font-size: x-large;
+	color: rgb(207, 206, 221);
+	height: 100%;
+	width: 100%;
+	text-align: center;
+	padding: 8px 0px;
+}
+
+.toolbarItm:hover,
+.toolbarItm:focus {
+	background-color: rgb(94, 94, 104);
+}
+
+textarea {
+	vertical-align: bottom;
+}
+
+#output {
+	overflow: auto;
+	font-family: monospace;
+}
+
+#output>p {
+	overflow-wrap: break-word;
+}
+
+#output span {
+	color: lightblue;
+}
+
+#output span.error {
+	color: red;
+}
+
+.card {
+	border: 2px black;
+	background-color: rgb(60, 60, 70);
+	border-radius: 16px;
+	padding: 12px;
+	margin-bottom: 12px;
+	box-shadow: 0px 0px 6px lightgray;
+}
+
+.card h2 {
+	margin: 0px 0px 20px 0px;
+}
+
+.playerTable tr td {
+	padding: 0px 12px;
+}
+
+.objectiveTd {
+	display: inline-flex;
+	align-items: center;
+}
+
+.objectiveIcon {
+	width: 48px;
+	height: 48px;
+}
+
+.playerName {
+	font-size: large;
+	font-weight: bold;
+}
+
+.playerStatus.DNF {
+	color: rgb(255, 63, 63);
+}
+.playerStatus.Finished {
+	color: rgb(49, 209, 49);
+}

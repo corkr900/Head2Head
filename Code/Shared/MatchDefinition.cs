@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Monocle;
 using MonoMod.Utils;
 using Celeste.Mod.Head2Head.Integration;
+using System.Text.Json.Serialization;
 
 namespace Celeste.Mod.Head2Head.Shared {
 
@@ -35,7 +36,6 @@ namespace Celeste.Mod.Head2Head.Shared {
 
         #region Fullgame Category Flags
 
-        private bool _changeSavefile = false;
 		public bool ChangeSavefile {
             get {
                 return _changeSavefile || HasRandomizerObjective;
@@ -43,14 +43,15 @@ namespace Celeste.Mod.Head2Head.Shared {
             set {
                 _changeSavefile = value;
             }
-        }
-        public bool AllowCheatMode = false;
+		}
+		private bool _changeSavefile = false;
+		public bool AllowCheatMode = false;
 
-        #endregion
+		#endregion
 
-        #region Variable Members / Properties
+		#region Variable Members / Properties
 
-        public MatchState State {
+		public MatchState State {
 			get { return _state; }
 			set {
                 if (value == _state) return;
@@ -62,7 +63,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			}
         }
         private MatchState _state = MatchState.Building;
-        public DateTime BeginInstant = DateTime.MinValue;
+		public DateTime BeginInstant = DateTime.MinValue;
         public MatchResult Result;
 
 		#endregion
@@ -140,7 +141,8 @@ namespace Celeste.Mod.Head2Head.Shared {
                     Result = GetPlayerResultCat(id.Value),
                     SaveFile = SaveData.Instance.FileSlot,
                     FileTimeStart = PlayerStatus.Current.FileTimerAtMatchBegin,
-                });
+					FileTimeEnd = PlayerStatus.Current.FileTimerAtMatchBegin,
+				});
 			}
 			else {
                 res.SaveFile = SaveData.Instance.FileSlot;
@@ -166,9 +168,20 @@ namespace Celeste.Mod.Head2Head.Shared {
 
         public void BroadcastUpdate() {
             CNetComm.Instance.SendMatchUpdate(this);
+            SendControlPanelUpdate();
 		}
 
-        public ResultCategory GetPlayerResultCat(PlayerID id) {
+        public void SendControlPanelUpdate(string targetClientToken = "") {
+			if (PlayerStatus.Current.CurrentMatch == this) {
+				ControlPanel.Commands.Outgoing.CurrentMatchStatus(this, targetClientToken);
+			}
+			else {
+				ControlPanel.Commands.Outgoing.OtherMatchStatus(this, targetClientToken);
+			}
+		}
+
+
+		public ResultCategory GetPlayerResultCat(PlayerID id) {
             if (!Players.Contains(id)) return ResultCategory.NotJoined;
             if (Result != null && Result.players.ContainsKey(id)) {
                 ResultCategory res = Result[id].Result;
@@ -326,8 +339,9 @@ namespace Celeste.Mod.Head2Head.Shared {
             }
             if (isMatchCompletion) {
                 PlayerStatus.Current.OnMatchEnded(this);
-            }
-        }
+			}
+			SendControlPanelUpdate();
+		}
 
         private void MergeObjective(MatchObjective local, MatchObjective update) {
             if (local.TimeLimitAdjustments == null) {
@@ -353,6 +367,17 @@ namespace Celeste.Mod.Head2Head.Shared {
 			}
             return true;
         }
+
+		internal long GetPlayerTimer(PlayerID pla) {
+            return GetPlayerResultCat(pla) switch {
+                ResultCategory.Completed => Result?[pla]?.FileTimeTotal ?? 0,
+				ResultCategory.DNF => 999999999999999,
+                ResultCategory.InMatch => Head2HeadModule.knownPlayers.ContainsKey(pla)
+                    ? Head2HeadModule.knownPlayers[pla].CurrentMatchTimer()
+                    : 0,
+				_ => 0
+            };
+		}
 	}
 
     public class MatchPhase {
@@ -464,9 +489,40 @@ namespace Celeste.Mod.Head2Head.Shared {
             }
             else return MatchObjectiveType.Strawberries;
         }
-    }
 
-    public enum MatchObjectiveType {
+		public MTexture GetIcon() {
+            string path = GetIconPath();
+			return string.IsNullOrEmpty(path) ? null : GFX.Gui.GetOrDefault(path, null);
+		}
+
+        public string GetIconPath() {
+            return ObjectiveType switch {
+				MatchObjectiveType.ChapterComplete => "Head2Head/Categories/Clear",
+				MatchObjectiveType.HeartCollect => "Head2Head/Categories/BlueHeart",
+				MatchObjectiveType.CassetteCollect => "Head2Head/Categories/CassetteGrab",
+				MatchObjectiveType.Strawberries => "Head2Head/Categories/ARB",
+				//MatchObjectiveType.Keys => "Head2Head/Categories/Custom",
+				MatchObjectiveType.MoonBerry => "Head2Head/Categories/MoonBerry",
+				MatchObjectiveType.GoldenStrawberry => "Head2Head/Categories/Golden",
+				MatchObjectiveType.WingedGoldenStrawberry => "Head2Head/Categories/WingedGolden",
+				//MatchObjectiveType.Flag => "Head2Head/Categories/Custom",
+				//MatchObjectiveType.EnterRoom => "Head2Head/Categories/Custom",
+				MatchObjectiveType.TimeLimit => "Head2Head/Categories/TimeLimit",
+				//MatchObjectiveType.CustomCollectable => "Head2Head/Categories/Custom",
+				//MatchObjectiveType.CustomObjective => "Head2Head/Categories/Custom",
+				//MatchObjectiveType.UnlockChapter => "Head2Head/Categories/Custom",
+				MatchObjectiveType.RandomizerClear => "Head2Head/Categories/Clear",
+				_ => null,
+			};
+		}
+
+        public string GetIconURI() {
+            return $"https://github.com/corkr900/Head2Head/blob/main/Graphics/Atlases/Gui/{GetIconPath() ?? "Head2Head/Categories/Custom"}.png?raw=true";
+
+		}
+	}
+
+	public enum MatchObjectiveType {
         // Standard
         ChapterComplete,
         HeartCollect,

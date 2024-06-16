@@ -57,7 +57,7 @@ namespace Celeste.Mod.Head2Head.Control {
 
 		[Command("h2h", "General use command for whatever i'm debugging")]
 		public static void H2HCMD(string arg) {
-			ControlPanelCore.SendImmediate(ControlPanelPacket.CreateOutgoing("TEST", arg));
+			ControlPanel.Commands.Outgoing.CurrentMatchStatus(PlayerStatus.Current.CurrentMatch);
 		}
 	}
 }

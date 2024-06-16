@@ -5,6 +5,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using static Celeste.Mod.CelesteNet.DataTypes.DataInternalBlob;
 
@@ -37,16 +38,12 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 		/// <summary>
 		/// The full set of arguments. Args[0] will be the client's token and Args[1] will be the command
 		/// </summary>
-		public string[] Args { get; private set; }
+		//public string[] Args { get; private set; }
 
 		/// <summary>
-		/// The raw payload as received from the stream
+		/// The raw data payload
 		/// </summary>
-		public string Payload {
-			get => Outgoing ? $"{Command}|{string.Join('|', Args)}" : _payload;
-			set => _payload = value;
-		}
-		private string _payload;  // Only used for incoming
+		public string Payload { get; set; }
 
 		private ControlPanelPacket() { }
 
@@ -61,17 +58,34 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 			packet.Incoming = true;
 			packet.ClientToken = parts[0];
 			packet.Command = parts[1];
-			packet.Args = parts;
+			packet.Payload = text;
 			return packet;
 		}
 
-		internal static ControlPanelPacket CreateOutgoing(string command, params string[] args) {
-			ControlPanelPacket packet = new();
-			packet.Outgoing = true;
-			packet.ClientToken = "";
-			packet.Command = command;
-			packet.Args = args;
-			return packet;
+		internal static ControlPanelPacket CreateOutgoing(string command, object data, string targetToken = "") {
+			try {
+				string doc = JsonSerializer.Serialize(new SerializableCommand(command, data));
+				ControlPanelPacket packet = new();
+				packet.Outgoing = true;
+				packet.ClientToken = targetToken;
+				packet.Command = command;
+				packet.Payload = doc;
+				return packet;
+			}
+			catch (Exception e) {
+				Engine.Commands.Log(e);
+				return null;
+			}
 		}
 	}
+
+	public struct SerializableCommand {
+		public SerializableCommand(string cmd, object data) {
+			Command = cmd;
+			Data = data;
+		}
+		public string Command { get; private set; }
+		public object Data { get; private set; }
+	}
+
 }

@@ -30,8 +30,9 @@ using Celeste.Mod.Head2Head.ControlPanel;
 // TODO Force DNF if a player intentionally closes the game
 // TODO Make the start-match and return-to-lobby sequences more robust
 
-namespace Celeste.Mod.Head2Head {
-	public class Head2HeadModule : EverestModule {
+namespace Celeste.Mod.Head2Head
+{
+    public class Head2HeadModule : EverestModule {
 		// Constants
 		private const int START_TIMER_LEAD_MS = 5000;
 		private const int DEBUG_SAVEFILE = -1;
@@ -183,8 +184,8 @@ namespace Celeste.Mod.Head2Head {
 			CelesteTASIntegration.Load();
 			RandomizerIntegration.Load();
 			SyncedClock.DoClockSync();
+			ControlPanel.Commands.Incoming.Register();
 			ControlPanelCore.TryInitServer();
-			ControlPanelCommands.Register();
 		}
 
 		public override void Unload() {
@@ -269,7 +270,7 @@ namespace Celeste.Mod.Head2Head {
 			SpeedrunToolIntegration.Unload();
 			CelesteTASIntegration.Unload();
 			ControlPanelCore.EndServer();
-			ControlPanelCommands.Unregister();
+			ControlPanel.Commands.Incoming.Unregister();
 		}
 
 		public override void CreateModMenuSection(TextMenu menu, bool inGame, FMOD.Studio.EventInstance snapshot)

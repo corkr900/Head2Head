@@ -573,6 +573,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			CurrentFileTimer = SaveData.Instance?.Time ?? 0;
 			if (this == Current && CNetComm.Instance.IsConnected) {
 				CNetComm.Instance.SendPlayerStatus(this);
+				CurrentMatch?.SendControlPanelUpdate();
 			}
 		}
 
@@ -605,6 +606,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			for (int i = 0; i < Calc.Min(SummitGems?.Length ?? 0, other.SummitGems?.Length ?? 0); i++) {
 				SummitGems[i] |= other.SummitGems[i];
 			}
+			CurrentMatch?.SendControlPanelUpdate();
 		}
 
 		public HashSet<EntityID> GetAllCollectedStrawbs(GlobalAreaKey gak) {
@@ -665,6 +667,9 @@ namespace Celeste.Mod.Head2Head.Shared {
 			}
 		}
 
+		internal long CurrentMatchTimer() {
+			return CurrentFileTimer - FileTimerAtMatchBegin;
+		}
 	}
 
 	public struct H2HMatchPhaseState {

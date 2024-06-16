@@ -80,7 +80,7 @@ namespace Celeste.Mod.Head2Head.Entities {
 				string text = obj.CollectableGoal > 0 ?
 					$"{obj.Label} {state.CountCollectables()}/{obj.CollectableGoal}" :
 					$"{obj.Label}";
-				MTexture icon = GetIcon(obj);
+				MTexture icon = obj.GetIcon();
 				RenderOneWidget(icon, text, bgposY, state.Completed);
 				bgposY += 58f;
 			}
@@ -105,26 +105,6 @@ namespace Celeste.Mod.Head2Head.Entities {
 			}
 		}
 
-		private MTexture GetIcon(MatchObjective obj) {
-			string path = obj.ObjectiveType switch {
-				MatchObjectiveType.ChapterComplete => "Head2Head/Categories/Clear",
-				MatchObjectiveType.HeartCollect => "collectables/heartgem/0/spin00",
-				MatchObjectiveType.CassetteCollect => "collectables/cassette",
-				MatchObjectiveType.Strawberries => "collectables/strawberry",
-				//MatchObjectiveType.Keys => "Head2Head/Categories/Custom",
-				MatchObjectiveType.MoonBerry => "Head2Head/Categories/MoonBerry",
-				MatchObjectiveType.GoldenStrawberry => "Head2Head/Categories/Golden",
-				MatchObjectiveType.WingedGoldenStrawberry => "Head2Head/Categories/WingedGolden",
-				//MatchObjectiveType.Flag => "Head2Head/Categories/Custom",
-				//MatchObjectiveType.EnterRoom => "Head2Head/Categories/Custom",
-				MatchObjectiveType.TimeLimit => "Head2Head/Categories/TimeLimit",
-				//MatchObjectiveType.CustomCollectable => "Head2Head/Categories/Custom",
-				//MatchObjectiveType.CustomObjective => "Head2Head/Categories/Custom",
-				//MatchObjectiveType.UnlockChapter => "Head2Head/Categories/Custom",
-				MatchObjectiveType.RandomizerClear => "Head2Head/Categories/Clear",
-				_ => null,
-			};
-			return string.IsNullOrEmpty(path) ? null : GFX.Gui.GetOrDefault(path, null);
-		}
+		
 	}
 }

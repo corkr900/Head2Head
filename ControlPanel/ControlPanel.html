@@ -1,11 +1,11 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Head 2 Head</title>
-	<link rel="stylesheet" href="ControlPanel/Styles/ControlPanel.css">
+	<title>H2H Control Panel</title>
+	<link rel="stylesheet" href="Styles/ControlPanel.css">
 </head>
 
 <body>
@@ -13,10 +13,10 @@
 		<div class="title">Head 2 Head</div>
 		<table class="toolbar">
 			<tr>
-				<td><a href="index.html">
+				<td><a href="../index.html">
 					<div class="toolbarItm">Home</div>
 				</a></td>
-				<td><a href="ControlPanel/ControlPanel.html">
+				<td><a href="ControlPanel.html">
 					<div class="toolbarItm">Control Panel</div>
 				</a></td>
 				<td><a href="https://gamebanana.com/mods/398723">
@@ -26,23 +26,37 @@
 					<div class="toolbarItm">Wiki</div>
 				</a></td>
 				<td><a href="https://github.com/corkr900/Head2Head">
-						<div class="toolbarItm">Github</div>
-					</a></td>
-				<td><a href="ControlPanel/Tester.html">
+					<div class="toolbarItm">Github</div>
+				</a></td>
+				<td><a href="Tester.html">
 					<div class="toolbarItm">Control Panel Tester</div>
 				</a></td>
 			</tr>
 		</table>
 	</header>
 	<div class="mid">
-		<div>
-			<p>Head 2 Head is a hub for easy, fair head-to-head races on CelesteNet with in-game category selection and results overlay.</p>
-			<p>All vanilla and mod maps are supported. Please contact corkr900 on discord if you find a map that doesn't work right with Head 2 Head.</p>
+		<div class="card">
+			<h2>Control Panel</h2>
+			Status: <span id="rend_status">Not Connected</span>
+		</div>
+		<div class="card">
+			<h2>Current Match</h2>
+			<div id="curMatchBody">There is no current match...</div>
+		</div>
+		<!-- <div class="card">
+			<h2>All Matches</h2>
+			<div id="allMatchesBody">TODO</div>
+		</div> -->
+		<div class="card">
+			<h2>Output</h2>
+			<div id="output"></div>
 		</div>
 	</div>
 	<footer>
 		<div>Copyright 2024 corkr900</div>
 	</footer>
+
+	<script src="Scripts/ControlPanel.js"></script>
 </body>
 
 </html>

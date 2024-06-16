@@ -10,10 +10,17 @@ using System.Threading.Tasks;
 using Monocle;
 using System.Collections.Concurrent;
 using System.IO;
+using System.Text.Json.Nodes;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Text.Json;
+using Celeste.Mod.CelesteNet.Client;
 
 namespace Celeste.Mod.Head2Head.ControlPanel {
 
 	internal class SocketHandler {
+
+		public delegate void OnClientConnectedHandler(string token);
+		public static event OnClientConnectedHandler OnClientConnected;
 
 		internal static List<ClientSocket> clients = new();
 		internal static DateTime LastStop = DateTime.MinValue;
@@ -46,7 +53,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 			}
 		}
 
-		private static async void NewConnections() {
+		private static void NewConnections() {
 			TcpListener tcpListener = new TcpListener(IPAddress.Parse("127.0.0.1"), 8080);
 			try {
 				tcpListener.Start();
@@ -58,11 +65,14 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 							if (task.IsCompletedSuccessfully) {
 								Socket s = task.Result;
 								ClientSocket cs = new(task.Result);
-								if (cs.Connected) clients.Add(cs);
+								if (cs.Connected) {
+									clients.Add(cs);
+									OnClientConnected?.Invoke(cs.Token);
+								}
 								break;
 							}
 							else if (task.IsCompleted) {
-								Engine.Commands?.Log($"Task errored >:[ {task.Status}");
+								Logger.Log(LogLevel.Warn, "Head2Head", $"New connections task errored - {task.Status}");
 								break;
 							}
 							clients.RemoveAll(cs => !cs.Connected);
@@ -71,17 +81,18 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 				}
 			}
 			catch (Exception e) {
-				Engine.Commands?.Log(e?.ToString());
+				Logger.Log(LogLevel.Error, "Head2Head", "An error occurred in websocket new connection listener:\n" + e.ToString());
 			}
 			tcpListener.Server?.Dispose();
 			tcpListener.Stop();
 		}
 
-		internal static void Send(string message) {
+		internal static void Send(string message, string clientToken) {
 			byte[] payload = ClientSocket.EncodeMessage(message);
+			bool allClients = string.IsNullOrEmpty(clientToken);
 			lock (ServerLock) {
 				foreach (var client in clients) {
-					client.Send(payload);
+					if (allClients || client.Token == clientToken) client.Send(payload);
 				}
 			}
 		}
@@ -90,6 +101,9 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 	internal class ClientSocket {
 
 		public bool Connected => socket?.Connected ?? false;
+
+		public string Token { get; private set; }
+
 		private readonly Socket socket;
 		private readonly Thread thread;
 		private DateTime threadStartTime;
@@ -133,14 +147,19 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 							"Connection: Upgrade\r\n" +
 							"Upgrade: websocket\r\n" +
 							"Sec-WebSocket-Accept: " + swkaSha1Base64 + "\r\n\r\n");
-
 						stream.Write(response, 0, response.Length);
-						Engine.Commands?.Log($"New client connected");
+
+						// Allocate a client token and send it up
+						Token = ClientToken.GetNew();
+						byte[] payload = EncodeMessage(JsonSerializer.Serialize(new SerializableCommand("ALLOCATE_TOKEN", Token)));
+						stream.Write(payload, 0, payload.Length);
+
+						Logger.Log(LogLevel.Info, "Head2Head", $"New Control Panel client connected. Allocated token {Token}");
 					}
 					else {
 						var text = DecodeMessage(bytes);
 						if (text.Contains('\u0003')) {
-							Engine.Commands?.Log($"Client disconnected.");
+							Logger.Log(LogLevel.Info, "Head2Head", $"Control Panel client disconnected.");
 							break;
 						}
 						SocketHandler.IncomingCommands.Enqueue(ControlPanelPacket.CreateIncoming(text));
@@ -148,7 +167,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 				}
 			}
 			catch (Exception e) {
-				Engine.Commands?.Log(e?.ToString());
+				Logger.Log(LogLevel.Error, "Head2Head", "An error occurred in websocket client listener:\n" + e.ToString());
 			}
 			stream?.Dispose();
 			if (socket?.Connected == true) socket.Disconnect(false);

@@ -71,7 +71,6 @@ namespace Celeste.Mod.Head2Head.Shared {
 			List<MatchPhase> list = new List<MatchPhase>();
 			foreach (MatchPhaseTemplate tPhase in Phases) {
 				MatchPhase ph = new MatchPhase();
-				ph.category = StandardCategory.Custom;
 				ph.Order = count++;
 				ph.Area = tPhase.Area;
 				ph.ID = NewPhaseOrObjectiveID();
