@@ -15,7 +15,7 @@ namespace Celeste.Mod.Head2Head.Integration {
 		private static Type Manager;
 		private static MethodInfo Manager_EnableRun;
 
-		private static IDetour Hook_Manager_EnableRun;
+		private static Hook Hook_Manager_EnableRun;
 
 		internal static void Load() {
 			try {
@@ -34,7 +34,7 @@ namespace Celeste.Mod.Head2Head.Integration {
 				// Misc
 				IsCelesteTASInstalled = true;
 			}
-			catch (Exception e) {
+			catch (Exception) {
 				IsCelesteTASInstalled = false;
 			}
 		}

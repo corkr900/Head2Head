@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Monocle;
 using MonoMod.Utils;
+using Celeste.Mod.Head2Head.Integration;
 
 namespace Celeste.Mod.Head2Head.Shared {
 
@@ -21,16 +22,28 @@ namespace Celeste.Mod.Head2Head.Shared {
 
         public List<PlayerID> Players = new List<PlayerID>();
         public List<MatchPhase> Phases = new List<MatchPhase>();
+        public List<MatchRule> Rules = new List<MatchRule>();
 
-        public string CategoryDisplayNameOverride = "";
-        public string RequiredRole = "";
-        public DateTime CreationInstant;
+		public string CategoryDisplayNameOverride = "";
+        public List<Role> AllowedRoles = null;
+        public string RequiredRuleset;
+		public DateTime CreationInstant;
 
-		#endregion
+        public RandomizerIntegration.SettingsBuilder RandoSettingsBuilder;
 
-		#region Fullgame Category Flags
+        #endregion
 
-		public bool UseFreshSavefile = false;
+        #region Fullgame Category Flags
+
+        private bool _changeSavefile = false;
+		public bool ChangeSavefile {
+            get {
+                return _changeSavefile || HasRandomizerObjective;
+            }
+            set {
+                _changeSavefile = value;
+            }
+        }
         public bool AllowCheatMode = false;
 
         #endregion
@@ -58,13 +71,13 @@ namespace Celeste.Mod.Head2Head.Shared {
 			get {
                 return Phases.Count == 0 ? CategoryDisplayName :
                     Phases[0].Fullgame ? FullGameDisplayName() :
-                    !Phases[0].Area.ExistsLocal ? string.Format(Dialog.Get("Head2Head_MapNotInstalled"), Phases[0].Area.DisplayName) :
+					(!Phases[0].Area.ExistsLocal && !Phases[0].Area.IsRandomizer) ? string.Format(Dialog.Get("Head2Head_MapNotInstalled"), Phases[0].Area.DisplayName) :
                     string.Format(Dialog.Get("Head2Head_MatchTitle"), Phases[0].Area.DisplayName, CategoryDisplayName);
 
             }
 		}
 
-        private string FullGameDisplayName() {
+		private string FullGameDisplayName() {
             string levelSet = Phases[0].Area.IsVanilla ? "Celeste" : Dialog.Clean(Phases[0].Area.Data.LevelSet);
             return string.Format(Dialog.Get("Head2Head_MatchTitle"), levelSet, CategoryDisplayName);
         }
@@ -77,7 +90,18 @@ namespace Celeste.Mod.Head2Head.Shared {
 			}
 		}
 
-        public GlobalAreaKey? VersionCheck() {
+        public bool HasRandomizerObjective {
+            get {
+                foreach (var ph in Phases) {
+                    foreach (var obj in ph.Objectives) {
+                        if (obj.ObjectiveType == MatchObjectiveType.RandomizerClear) return true;
+                    }
+                }
+                return false;
+            }
+        }
+
+		public GlobalAreaKey? VersionCheck() {
             foreach(MatchPhase ph in Phases) {
                 if (!ph.Area.VersionMatchesLocal) {
                     return ph.Area;
@@ -172,14 +196,14 @@ namespace Celeste.Mod.Head2Head.Shared {
         public bool CanApplyTimeAdjustments() {
             return (State == MatchState.Staged || State == MatchState.InProgress)
                 && Phases.Count > 0
-                && Phases[0].category == StandardCategory.TimeLimit;
+                && Phases[0].Objectives.Any((MatchObjective ob) => ob.ObjectiveType == MatchObjectiveType.TimeLimit);
         }
 
         public void PlayerDNF(DNFReason reason) {
             PlayerID id = PlayerID.MyIDSafe;
 #if DEBUG
             // I need SOME way to test stuff...
-            if (Role.IsDebug && id.Name == "corkr900") return;
+            if (RoleLogic.IsDebug && id.Name == "corkr900") return;
 #endif
             PlayerStatus stat = PlayerStatus.Current;
             ResultCategory cat = GetPlayerResultCat(id);
@@ -236,11 +260,13 @@ namespace Celeste.Mod.Head2Head.Shared {
                 if (GetPlayerResultCat(player) <= ResultCategory.InMatch) return;
             }
             SetState_NoUpdate(MatchState.Completed);
+            PlayerStatus.Current.OnMatchEnded(this);
 		}
 
         public void MergeDynamic(MatchDefinition newer) {
             if (newer == null) return;
             // Merge overall state
+            bool isMatchCompletion = _state < MatchState.Completed && newer._state >= MatchState.Completed;
             _state = (MatchState)Math.Max((int)_state, (int)newer._state);
             BeginInstant = newer.BeginInstant > BeginInstant ? newer.BeginInstant : BeginInstant;
 
@@ -298,6 +324,9 @@ namespace Celeste.Mod.Head2Head.Shared {
                     Result.players.Remove(id);
 				}
             }
+            if (isMatchCompletion) {
+                PlayerStatus.Current.OnMatchEnded(this);
+            }
         }
 
         private void MergeObjective(MatchObjective local, MatchObjective update) {
@@ -320,7 +349,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 
         public bool AllPhasesExistLocal() {
             foreach(MatchPhase p in Phases) {
-                if (!p.Area.ExistsLocal) return false;
+                if (!p.Area.IsValidInstalledMap) return false;
 			}
             return true;
         }
@@ -335,19 +364,19 @@ namespace Celeste.Mod.Head2Head.Shared {
         public GlobalAreaKey Area;
         public List<MatchObjective> Objectives = new List<MatchObjective>();
 
-		public string Title { 
+        public string Title {
             get {
-				switch (category) {
-                    default:
-                        return Util.TranslatedCategoryName(category);
-                    case StandardCategory.OneThirdBerries:
-                    case StandardCategory.OneFifthBerries:
-                        int berries = Objectives.Find((MatchObjective o) => o.ObjectiveType == MatchObjectiveType.Strawberries)?.CollectableGoal ?? 0;
-                        return string.Format(Dialog.Get("Head2Head_MatchTitle_BerryCount"), berries);
-                    case StandardCategory.TimeLimit:
-                        return string.Format(Dialog.Get("Head2Head_MatchTitle_TimeLimit"),
-                            Util.ReadableTimeSpanTitle(Objectives[0].AdjustedTimeLimit(PlayerID.MyIDSafe)));
+                return Util.TranslatedCategoryName(category);
+            }
+        }
+
+        public bool HasTimeLimit {
+            get {
+                if (Objectives == null) return false;
+                foreach (MatchObjective obj in Objectives) {
+                    if (obj.ObjectiveType == MatchObjectiveType.TimeLimit) return true;
                 }
+                return false;
             }
         }
 	}
@@ -374,8 +403,9 @@ namespace Celeste.Mod.Head2Head.Shared {
                         return string.Format(Dialog.Get("Head2Head_ObjectiveDescription_CustomCollectable"),
                             CustomCollectables.GetDisplayName(CustomTypeKey), CollectableGoal);
                     case MatchObjectiveType.Strawberries:
-                    case MatchObjectiveType.MoonBerry:
-                        return string.Format(Dialog.Get("Head2Head_ObjectiveDescription_" + ObjectiveType.ToString()), CollectableGoal);
+					case MatchObjectiveType.MoonBerry:
+					case MatchObjectiveType.Keys:
+						return string.Format(Dialog.Get("Head2Head_ObjectiveDescription_" + ObjectiveType.ToString()), CollectableGoal);
                     case MatchObjectiveType.TimeLimit:
                         return string.Format(Dialog.Get("Head2Head_ObjectiveDescription_TimeLimit"),
                             Dialog.FileTime(AdjustedTimeLimit(PlayerID.MyIDSafe)));
@@ -385,7 +415,15 @@ namespace Celeste.Mod.Head2Head.Shared {
 			}
 		}
 
-        public long AdjustedTimeLimit(PlayerID id) {
+		public string Label {
+            get {
+				return !string.IsNullOrEmpty(CustomDescription)
+                    ? CustomDescription
+                    : Util.TranslatedObjectiveLabel(ObjectiveType);
+			}
+		}
+
+		public long AdjustedTimeLimit(PlayerID id) {
             return TimeLimit + GetAdjustment(id);
 		}
 
@@ -415,7 +453,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 
         public static MatchObjectiveType GetTypeForStrawberry(Strawberry s) {
             if (s.Golden) {
-                DynamicData dd = new DynamicData(s);
+                DynamicData dd = DynamicData.For(s);
                 if (dd.Data.ContainsKey("IsWingedGolden")) {
                     return MatchObjectiveType.WingedGoldenStrawberry;
                 }
@@ -434,6 +472,7 @@ namespace Celeste.Mod.Head2Head.Shared {
         HeartCollect,
         CassetteCollect,
         Strawberries,
+        Keys,
         MoonBerry,
         GoldenStrawberry,
         WingedGoldenStrawberry,
@@ -445,6 +484,8 @@ namespace Celeste.Mod.Head2Head.Shared {
         CustomObjective,
         // Fullgame
         UnlockChapter,
+        // Special
+        RandomizerClear,
     }
 
     /// <summary>
@@ -459,6 +500,13 @@ namespace Celeste.Mod.Head2Head.Shared {
         Completed = 4,
     }
 
+    /// <summary>
+    /// Restrictions that can be placed on a match
+    /// </summary>
+    public enum MatchRule {
+        NoGrabbing,
+    }
+
     public static class MatchExtensions {
         public static MatchDefinition ReadMatch(this CelesteNetBinaryReader reader) {
             if (!reader.ReadBoolean()) return null;
@@ -468,11 +516,22 @@ namespace Celeste.Mod.Head2Head.Shared {
             d.CreationInstant = reader.ReadDateTime();
             d.SetState_NoUpdate((MatchState)Enum.Parse(typeof(MatchState), reader.ReadString()));
             d.CategoryDisplayNameOverride = reader.ReadString();
-            d.RequiredRole = reader.ReadString();
-            d.UseFreshSavefile = reader.ReadBoolean();
+            d.ChangeSavefile = reader.ReadBoolean();
             d.AllowCheatMode = reader.ReadBoolean();
             d.BeginInstant = reader.ReadDateTime();
-            int numPlayers = reader.ReadInt32();
+			d.RequiredRuleset = reader.ReadString();
+
+			int numAllowedRoles = reader.ReadInt32();
+            d.AllowedRoles = new List<Role>(numAllowedRoles);
+            for (int i = 0; i < numAllowedRoles; i++) {
+                d.AllowedRoles.Add((Role)Enum.Parse(typeof(Role), reader.ReadString()));
+            }
+
+			bool hasRandoOptions = reader.ReadBoolean();
+			if (hasRandoOptions) {
+                d.RandoSettingsBuilder = reader.ReadRandoSettings();
+			}
+			int numPlayers = reader.ReadInt32();
             d.Players.Capacity = numPlayers;
             for (int i = 0; i < numPlayers; i++) {
                 d.Players.Add(reader.ReadPlayerID());
@@ -486,7 +545,12 @@ namespace Celeste.Mod.Head2Head.Shared {
             if (hasResult) {
                 d.Result = reader.ReadMatchResult();
 			}
-            return d;
+			int numRules = reader.ReadInt32();
+			d.Rules.Capacity = numRules;
+			for (int i = 0; i < numRules; i++) {
+				d.Rules.Add((MatchRule)Enum.Parse(typeof(MatchRule), reader.ReadString()));
+			}
+			return d;
         }
 
         public static void Write(this CelesteNetBinaryWriter writer, MatchDefinition m) {
@@ -500,10 +564,20 @@ namespace Celeste.Mod.Head2Head.Shared {
             writer.Write(m.CreationInstant);
             writer.Write(m.State.ToString() ?? "");
             writer.Write(m.CategoryDisplayNameOverride ?? "");
-            writer.Write(m.RequiredRole ?? "");
-            writer.Write(m.UseFreshSavefile);
+            writer.Write(m.ChangeSavefile);
             writer.Write(m.AllowCheatMode);
             writer.Write(m.BeginInstant);
+            writer.Write(m.RequiredRuleset ?? "");
+
+            writer.Write(m.AllowedRoles?.Count ?? 0);
+            for (int i = 0; i < (m.AllowedRoles?.Count ?? 0); i++) {
+                writer.Write(m.AllowedRoles[i].ToString());
+            }
+
+            writer.Write(m.RandoSettingsBuilder != null);
+            if (m.RandoSettingsBuilder != null) {
+                writer.Write(m.RandoSettingsBuilder);
+            }
 
             writer.Write(m.Players.Count);
             foreach(PlayerID pid in m.Players) {
@@ -522,6 +596,11 @@ namespace Celeste.Mod.Head2Head.Shared {
                 writer.Write(true);
                 writer.Write(m.Result);
 			}
+
+            writer.Write(m.Rules.Count);
+            for (int i = 0; i < m.Rules.Count; i++) {
+                writer.Write(m.Rules[i].ToString());
+            }
         }
 
         public static MatchPhase ReadMatchPhase(this CelesteNetBinaryReader reader) {

@@ -92,13 +92,12 @@ namespace Celeste.Mod.Head2Head.Entities {
 
 		private int width;
 		private int height;
-		private Vector2 SpritePosition;
+		//private Vector2 SpritePosition;
 		private Sprite sprite;
 		private bool isStart;
 		private bool isFinish;
 		private int checkpointNumber;
 		private Trigger trigger;
-		private bool triggered;
 
 		private Vector2 flagBasePosition { get { return new Vector2(width / 2f, height); } }
 
@@ -155,7 +154,6 @@ namespace Celeste.Mod.Head2Head.Entities {
 			else if (PlayerStatus.Current.RunningLobbyRace) {
 				if (checkpointNumber == PlayerStatus.Current.lobbyCP + 1) {
 					Audio.Play("event:/game/07_summit/checkpoint_confetti", Position);
-					triggered = true;
 					PlayerStatus.Current.lobbyCP = checkpointNumber;
 					if (isFinish) {
 						PlayerStatus.Current.FinishLobbyRace();

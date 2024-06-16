@@ -1,6 +1,7 @@
 ﻿using Celeste.Mod.Head2Head.Entities;
 using Celeste.Mod.Head2Head.Integration;
 using Celeste.Mod.Head2Head.Shared;
+using IL.MonoMod;
 using Microsoft.Xna.Framework;
 using Monocle;
 using System;
@@ -9,24 +10,24 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Celeste.Mod.Head2Head.UI {
 	class OuiRunSelectILCollabMapSelect : Oui {
 
 		public class CollabMap : Entity {
-			internal static float EnterEaseTime { get { return 0.3f; } }
-			internal static float SelectEaseTime { get { return 0.15f; } }
-			internal static float SelectedXOffset { get { return 60f; } }
-			internal static float IconSize { get { return 90f; } }
-			internal static float Margin { get { return 15f; } }
+			internal static readonly float EnterEaseTime = 0.2f;
+			internal static readonly float SelectEaseTime = 0.15f;
+			internal static readonly float SelectedXOffset = 60f;
+			internal static readonly float IconSize = 90f;
+			internal static readonly float Margin = 15f;
+			internal static readonly float LeftSpacing = 40f;
 
-			public static CollabMap Add(Scene scene, int localID, float yPos) {
-				AreaData data = AreaData.Get(localID);
-				string sid = data.SID;
+			public static CollabMap Add(Scene scene, float yPos, RunOptionsILChapter chap) {
 				CollabMap map = new CollabMap() {
-					LocalID = localID,
-					Title = Dialog.Clean(data.Name),
-					Icon = string.IsNullOrEmpty(data.Icon) ? null : GFX.Gui.Has(data.Icon) ? GFX.Gui[data.Icon] : null,
+					ChapterOption = chap,
+					Title = chap.DisplayName,
+					Icon = GFX.Gui[chap.IconSafe],
 					YPosition = yPos,
 					Tag = Tags.HUD,
 				};
@@ -34,7 +35,7 @@ namespace Celeste.Mod.Head2Head.UI {
 				return map;
 			}
 
-			public int LocalID { get; private set; }
+			public RunOptionsILChapter ChapterOption { get; private set; }
 			public string Title { get; private set; }
 			public MTexture Icon { get; private set; }
 			public float YPosition { get; set; }
@@ -57,6 +58,7 @@ namespace Celeste.Mod.Head2Head.UI {
 				}
 			}
 
+
 			public override void Update() {
 				base.Update();
 
@@ -73,7 +75,7 @@ namespace Celeste.Mod.Head2Head.UI {
 				float xmin = -size.X;
 				float xmax = Margin;
 				float xpos = Calc.LerpClamp(xmin, xmax, Ease.CubeIn(EnterEase));
-				xpos += Calc.LerpClamp(0, SelectedXOffset + Margin, Ease.CubeInOut(SelectEase));
+				xpos += Calc.LerpClamp(0, SelectedXOffset + LeftSpacing, Ease.CubeInOut(SelectEase));
 
 				if (Icon != null) {
 					Icon.DrawJustified(new Vector2(xpos + IconSize/2f, YPosition - Scroll), new Vector2(0.5f, 0.5f), Color.White, 0.5f, iconRotation);
@@ -134,9 +136,9 @@ namespace Celeste.Mod.Head2Head.UI {
 			}
 		}
 
-		private static float YPosBase { get { return 135f; } }
-		private static float YPosStep { get { return 90f; } }
-		private static Dictionary<string, List<CollabMap>> maps { get; set; } = new Dictionary<string, List<CollabMap>>();
+		private static readonly float YPosBase = 135f;
+		private static readonly float YPosStep = 90f;
+		private static readonly Dictionary<string, List<CollabMap>> allMaps = new Dictionary<string, List<CollabMap>>();
 
 		private Pointer pointer;
 		private int hovered = 0;
@@ -144,6 +146,10 @@ namespace Celeste.Mod.Head2Head.UI {
 		private float scrollTarget;
 		private float scrollLerp;
 		private float scrollCurrent;
+
+		internal static RunOptionsILChapter UsingLobby;
+
+		private List<CollabMap> lobbyMaps => allMaps[UsingLobby.Data.SID];
 
 		public override bool IsStart(Overworld overworld, Overworld.StartMode start) => false;
 
@@ -159,57 +165,57 @@ namespace Celeste.Mod.Head2Head.UI {
 			scrollLerp = 1;
 
 			// Get all the lobbies
-			maps.Clear();
+			allMaps.Clear();
 			int count = AreaData.Areas.Count;
 			for (int i = 0; i < count; i++) {
 				AreaData data = AreaData.Areas[i];
-				string collabSet = CollabUtils2Integration.GetLobbyLevelSet(data.SID);
+				string collabSet = CollabUtils2Integration.GetLobbyLevelSet?.Invoke(data.SID);
 				if (string.IsNullOrEmpty(collabSet)) continue;  // Not a collab lobby
-				if (!maps.ContainsKey(data.SID)) {
-					maps.Add(data.SID, new List<CollabMap>());
+				if (!allMaps.ContainsKey(data.SID)) {
+					allMaps.Add(data.SID, new List<CollabMap>());
 				}
-			}
-			// Get all the maps
-			for (int i = 0; i < count; i++) {
-				AreaData data = AreaData.Areas[i];
-				string set = data.LevelSet;
-				if (!CollabUtils2Integration.IsCollabLevelSet(set)) continue;  // Not a collab lobby
-				string lobby = CollabUtils2Integration.GetLobbyForLevelSet(set);
-				if (string.IsNullOrEmpty(lobby) || !maps.ContainsKey(lobby)) continue;
-				maps[lobby].Add(CollabMap.Add(scene, i, YPosBase + maps[lobby].Count * YPosStep));
 			}
 		}
 
 		public override IEnumerator Enter(Oui from) {
-			foreach (KeyValuePair<string, List<CollabMap>> kvp in maps) {
+			if (!allMaps.ContainsKey(UsingLobby.Data?.SID)) throw new InvalidOperationException("h2h: entered collab map select UI for a lobby that doesnt seem to be a collab lobby");
+			allMaps[UsingLobby.Data.SID].Clear();
+			foreach (RunOptionsLevelSet set in OuiRunSelectIL.UsingRuleset.LevelSets) {
+				string lobby = CollabUtils2Integration.GetLobbyForLevelSet?.Invoke(set.LevelSet);
+				if (lobby != UsingLobby.Data.SID) continue;
+				for (int i = 0; i < set.Chapters.Count; i++) {
+					allMaps[lobby].Add(CollabMap.Add(Scene, YPosBase + i * YPosStep, set.Chapters[i]));
+				}
+			}
+
+			List <CollabMap> maps = lobbyMaps;
+			foreach (KeyValuePair<string, List<CollabMap>> kvp in allMaps) {
 				foreach (CollabMap map in kvp.Value) {
 					map.Show = false;
 					map.Hovered = false;
-					map.Enabled = kvp.Key == kvp.Key;
+					map.Enabled = false;
 				}
 			}
-			if (maps.ContainsKey(ILSelector.LastArea.SID)) {
-				hovered = Calc.Clamp(hovered, 0, maps[ILSelector.LastArea.SID].Count - 1);
-				foreach (CollabMap map in maps[ILSelector.LastArea.SID]) {
-					map.Enabled = true;
-					map.Show = true;
-					map.Scroll = scrollCurrent;
-					if (maps[ILSelector.LastArea.SID].IndexOf(map) == hovered) {  // TODO this makes an n^2 runtime (bad)
-						SetInitialHover(map);
-					}
-					yield return 0.02f;
+			hovered = Calc.Clamp(hovered, 0, maps.Count - 1);
+			foreach (CollabMap map in maps) {
+				map.Enabled = true;
+				map.Show = true;
+				map.Scroll = scrollCurrent;
+				if (maps.IndexOf(map) == hovered) {
+					SetInitialHover(map);
 				}
+				yield return 0.02f;
 			}
 		}
 
 		public override IEnumerator Leave(Oui next) {
 			pointer.Shown = false;
-			foreach (KeyValuePair<string, List<CollabMap>> kvp in maps) {
+			foreach (KeyValuePair<string, List<CollabMap>> kvp in allMaps) {
 				foreach (CollabMap map in kvp.Value) {
 					map.Enabled = false;
 				}
 			}
-			foreach (KeyValuePair<string, List<CollabMap>> kvp in maps) {
+			foreach (KeyValuePair<string, List<CollabMap>> kvp in allMaps) {
 				foreach (CollabMap map in kvp.Value) {
 					if (!map.Show) continue;
 					map.Show = false;
@@ -225,15 +231,15 @@ namespace Celeste.Mod.Head2Head.UI {
 				scrollLerp = Calc.Approach(scrollLerp, 1, Engine.DeltaTime / CollabMap.SelectEaseTime);
 				scrollCurrent = Calc.LerpClamp(scrollBase, scrollTarget, Ease.CubeInOut(scrollLerp));
 				pointer.Scroll = scrollCurrent;
-				foreach (CollabMap map in maps[ILSelector.LastArea.SID]) {
+				var maps = lobbyMaps;
+				foreach (CollabMap map in maps) {
 					map.Scroll = scrollCurrent;
 				}
-
 				if (Input.MenuUp.Pressed && hovered > 0) {
 					Audio.Play("event:/ui/world_map/chapter/tab_roll_left");
 					SetHover(hovered - 1);
 				}
-				else if (Input.MenuDown.Pressed && hovered < maps[ILSelector.LastArea.SID].Count - 1) {
+				else if (Input.MenuDown.Pressed && hovered < maps.Count - 1) {
 					Audio.Play("event:/ui/world_map/chapter/tab_roll_right");
 					SetHover(hovered + 1);
 				}
@@ -243,7 +249,7 @@ namespace Celeste.Mod.Head2Head.UI {
 				}
 				else if (Input.MenuConfirm.Pressed) {
 					Audio.Play("event:/ui/world_map/icon/select");
-					ILSelector.LastArea = new GlobalAreaKey(maps[ILSelector.LastArea.SID][hovered].LocalID, AreaMode.Normal);
+					OuiRunSelectILChapterPanel.UsingChapter = maps[hovered].ChapterOption;
 					Overworld.Goto<OuiRunSelectILChapterPanel>();
 				}
 			}
@@ -251,36 +257,35 @@ namespace Celeste.Mod.Head2Head.UI {
 
 		private void SetInitialHover(CollabMap map) {
 			map.Hovered = true;
-			pointer.SetInitialTarget(new Vector2(CollabMap.Margin, map.YPosition));
+			pointer.SetInitialTarget(new Vector2(CollabMap.LeftSpacing, map.YPosition));
 			pointer.Shown = true;
 			scrollBase = scrollCurrent = scrollTarget = 0;
-			scrollBase = scrollCurrent = scrollTarget = GetScrollTarget(map);
+			scrollBase = scrollCurrent = scrollTarget = GetScrollTarget();
 			scrollLerp = 1;
 		}
 
 		private void SetHover(int newHover) {
-			List<CollabMap> list = maps[ILSelector.LastArea.SID];
+			List<CollabMap> list = lobbyMaps;
 			list[hovered].Hovered = false;
 			hovered = newHover;
 			list[hovered].Hovered = true;
-			pointer.SetNewTarget(new Vector2(CollabMap.Margin, list[hovered].YPosition));
+			pointer.SetNewTarget(new Vector2(CollabMap.LeftSpacing, list[hovered].YPosition));
 			scrollBase = scrollCurrent;
-			scrollTarget = GetScrollTarget(list[hovered]);
+			scrollTarget = GetScrollTarget();
 			scrollLerp = 0;
 			list[hovered].Wiggle();
 		}
 
-		private float GetScrollTarget(CollabMap map) {
+		private float GetScrollTarget() {
 			const float screenHeight = 1080f;
 			const float deadZoneMin = screenHeight / 3f;
 			const float deadZoneMax = screenHeight * 2f / 3f;
 
 			float currentPtrPos = pointer.PosTarget.Y - scrollTarget;
-			if (currentPtrPos >= deadZoneMin && currentPtrPos <= deadZoneMax) {  // Current targets are with deadzone; this is fine.
+			if (currentPtrPos >= deadZoneMin && currentPtrPos <= deadZoneMax) {
 				return scrollTarget;
 			}
-
-			float regionHeight = YPosBase * 2 + YPosStep * maps[ILSelector.LastArea.SID].Count;
+			float regionHeight = YPosBase * 2 + YPosStep * lobbyMaps.Count;
 			float minScroll = 0;
 			float maxScroll = Calc.Clamp(regionHeight - screenHeight, 0, float.MaxValue);
 

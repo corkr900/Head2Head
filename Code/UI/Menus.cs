@@ -82,8 +82,7 @@ namespace Celeste.Mod.Head2Head.UI
 			public void Close(TextMenu curr)
 			{
 				if (curr != null) curr.RemoveSelf();
-				DynamicData dd = new DynamicData(level);
-				dd.Set("unpauseTimer", 0.15f);
+				level.unpauseTimer = 0.15f;
 				level.Paused = false;
 				Audio.Play("event:/ui/game/unpause");
 			}
@@ -94,10 +93,10 @@ namespace Celeste.Mod.Head2Head.UI
 		private static ButtonExt AddButton(this TextMenu menu, string labelDesc, Action onPress, bool labelIsLiteral = false) {
 			ButtonExt btn = new ButtonExt(labelIsLiteral ? labelDesc : Dialog.Clean(labelDesc));
 			btn.ConfirmSfx = "";
-			DynamicData dd = new DynamicData(btn);
+			DynamicData dd = DynamicData.For(btn);
 			dd.Set("H2H_SoftDisable", false);
 			btn.Pressed(() => {
-				DynamicData dd2 = new DynamicData(btn);
+				DynamicData dd2 = DynamicData.For(btn);
 				if (dd2.Get<bool>("H2H_SoftDisable")) {
 					Audio.Play("event:/ui/main/button_invalid");
 					return;
@@ -111,7 +110,7 @@ namespace Celeste.Mod.Head2Head.UI
 		private static void SoftDisable(this ButtonExt btn, TextMenu menu, string newSubtext, params string[] fmtArgs) {
 			btn.TextColor = btn.TextColorDisabled;
 			btn.AddDescription(menu, string.Format(GetDialogWithLineBreaks(newSubtext), fmtArgs));
-			DynamicData dd = new DynamicData(btn);
+			DynamicData dd = DynamicData.For(btn);
 			dd.Set("H2H_SoftDisable", true);
 		}
 
@@ -149,7 +148,7 @@ namespace Celeste.Mod.Head2Head.UI
 					btn.SoftDisable(menu, "Head2Head_menu_helpdesk_whynocreatematch_notconnected");
 				else if (CNetComm.Instance.CurrentChannelIsMain)
 					btn.SoftDisable(menu, "Head2Head_menu_helpdesk_whynocreatematch_mainchannel");
-				else if (!Role.AllowMatchCreate())
+				else if (!RoleLogic.AllowMatchCreate())
 					btn.SoftDisable(menu, "Head2Head_menu_helpdesk_whynocreatematch_role");
 				else if (!PlayerStatus.Current.CanStageMatch())
 					btn.SoftDisable(menu, "Head2Head_menu_helpdesk_whynocreatematch_playerstatus");
@@ -206,11 +205,12 @@ namespace Celeste.Mod.Head2Head.UI
 				}
 
 				// Force End
-				if (def_menu.State < MatchState.Completed && Role.AllowKillingMatch()) {
+				if (def_menu.State < MatchState.Completed && RoleLogic.AllowKillingMatch()) {
 					btn = menu.AddButton("Head2Head_menu_helpdesk_forceend", () => {
 						MatchDefinition def = PlayerStatus.Current.CurrentMatch;
 						if (def != null && def.State < MatchState.Completed) {
 							def.State = MatchState.Completed;  // Broadcasts update
+							PlayerStatus.Current.OnMatchEnded(def);
 						}
 						cxt.Refresh(menu);
 					});
@@ -222,7 +222,7 @@ namespace Celeste.Mod.Head2Head.UI
 				}
 			}
 
-			if (Role.IsDebug) {
+			if (RoleLogic.IsDebug) {
 				// Purge Data
 				btn = menu.AddButton("Head2Head_menu_helpdesk_purge", () => {
 					Head2HeadModule.Instance.PurgeAllData();
@@ -248,7 +248,7 @@ namespace Celeste.Mod.Head2Head.UI
 			}
 
 			// Role-based additions
-			if (Role.role == "bta-host" || Role.role == "debug") {
+			if (RoleLogic.CanGrantMatchPass()) {
 				btn = menu.AddButton("Head2Head_menu_helpdesk_giveMatchPass", () => {
 					cxt.onPlayerSelection = (PlayerID id) => {
 						CNetComm.Instance.SendMisc(Head2HeadModule.BTA_MATCH_PASS, id);
@@ -386,7 +386,7 @@ namespace Celeste.Mod.Head2Head.UI
 				GlobalAreaKey? k = curmatch?.VersionCheck();
 				if (Util.IsUpdateAvailable())
 					btn.SoftDisable(menu, "Head2Head_menu_match_stage_update");
-				else if (!Role.AllowMatchJoin(cxtMatch))
+				else if (!RoleLogic.AllowMatchJoin(cxtMatch))
 					btn.SoftDisable(menu, "Head2Head_menu_match_join_role");
 				else if (!cxtMatch.AllPhasesExistLocal()) {
 					btn.SoftDisable(menu, "Head2Head_menu_match_join_notinstalled");

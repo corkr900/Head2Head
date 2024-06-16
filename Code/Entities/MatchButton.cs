@@ -45,7 +45,7 @@ namespace Celeste.Mod.Head2Head.Entities {
 		}
 
 		public MatchButton(EntityData data, Vector2 offset)
-			: base(data.Position + new Vector2(-8, -8), 0f, 0f, safe: true)
+			: base(data.Position + offset + new Vector2(-8, -8), 0f, 0f, safe: true)
 		{
 			action = data.Attr("action", "Join");
 			unpressedTarget = Position;

@@ -49,17 +49,20 @@ namespace Celeste.Mod.Head2Head.Shared {
     }
 
     public enum DNFReason {
-        None = 0,
-        MatchCancel = 1,
-        DropOut = 2,
-        ChangeChannel = 3,
-        ChangeFile = 4,
-        DeleteFile = 5,
-        DebugTeleport = 6,
-        Savestate = 7,
-        CheatMode = 8,
-        SpeedrunTools = 9,
-        TAS = 10,
+        None,
+        MatchCancel,
+        DropOut,
+        ChangeChannel,
+        ChangeFile,
+        DeleteFile,
+        DebugTeleport,
+        Savestate,
+        CheatMode,
+        SpeedrunTools,
+        TAS,
+        RandomizerError,
+        EnabledVariant,
+        DisabledRequiredVariant,
     }
 
     public static class MatchResultExtensions {

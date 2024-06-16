@@ -13,6 +13,25 @@ Head2Head_me= Me
 Head2Head_LobbyRecords= Best Lobby Runs
 Head2Head_CountMore= {0} More...
 Head2Head_MapNotInstalled= {0} (Not Installed)
+Head2Head_DefaultRulesetName= Default
+
+Head2Head_MatchTitle= {0} ({1})
+Head2Head_MatchTitle_BerryCount= {0} Berries
+Head2Head_MatchTitle_TimeLimit= {0} Limit
+
+HEAD2HEAD_RANDOMIZER= Randomizer
+Head2Head_Rando_nodash= Dashless
+Head2Head_Rando_onedash= One Dash
+Head2Head_Rando_twodash= Two Dash
+Head2Head_Rando_WeeklySeed= Weekly Seed
+Head2Head_Rando_CatNameFormat= {0} {1}, {2}
+Head2Head_Rando_Dashcount_Zero= Dashless
+Head2Head_Rando_Dashcount_One= One Dash
+Head2Head_Rando_Dashcount_Two= Two Dashes
+
+################
+#   SETTINGS   #
+################
 
 Head2Head_Setting_UseSRCARBRules= Use SRC ARB Categories
 Head2Head_Setting_UseSRCARBRules_Subtext= If turned on, either ARB or ARB + Heart will be hidden
@@ -21,36 +40,46 @@ for base-game chapters according to the rules on SRC for the
 for all mod maps. If turned off, both categories will be
 shown for all chapters.
 Default: On
+
 Head2Head_Setting_Role= Role
-Head2Head_Setting_Role_Subtext= Your role changes the available functionality and the matches you are able to join.
-Default: (blank)
+Head2Head_Setting_Role_Subtext= Your role changes the available functionality
+and the matches you are able to join.
+Default: None
+
 Head2Head_Setting_UseActionLog= Use Action Logging
 Head2Head_Setting_UseActionLog_Subtext= If enabled, the system will keep track of key
 actions taken during a match. The log can be exported from
 the Head 2 Head Helpdesk to be sent to an event organizer
 for additional run verification.
 Default: Off
+
 Head2Head_Setting_LogExportDirectory= Action Log Export Location
 Head2Head_Setting_LogExportDirectory_Subtext= This is the directory action logs will be written to
 if you export them.
 Default: My Documents
+
 Head2Head_Setting_HudScale= HUD Scale
 Head2Head_Setting_HudScale_subtext= Controls the size of the Head 2 Head HUD.
 Default: 1
+
 Head2Head_Setting_HudOpacityBeforeMatch= HUD Opacity (Before/After Match)
 Head2Head_Setting_HudOpacityBeforeMatch_subtext= Changes the opacity of the Head 2 Head HUD
 before & after the match.
 Default: 1
+
 Head2Head_Setting_HudOpacityInMatch= HUD Opacity (During Match)
 Head2Head_Setting_HudOpacityInMatch_subtext= Changes the opacity of the Head 2 Head HUD during the match.
 Default: 0.25
+
 Head2Head_Setting_HudOpacityInOverworld= HUD Opacity (In Overworld)
 Head2Head_Setting_HudOpacityInOverworld_subtext= Changes the opacity of the Head 2 Head HUD in the overworld.
 Default: 0.5
+
 Head2Head_Setting_AutoStage= Auto-Stage New Matches
-Head2Head_Setting_AutoStage_Subtext= When other players create a Head2Head match, this setting controls whether
-it will be automatically set as your current match.
+Head2Head_Setting_AutoStage_Subtext= When other players create a Head2Head match, this setting
+controls whether it will be automatically set as your current match.
 Default: Only in Lobby
+
 Head2Head_Setting_ShowHDInPause= Show Helpdesk in Pause Menu
 Head2Head_Setting_ShowHDInPause_Subtext= Determines when the Head 2 Head Helpdesk should
 be accessible from the pause menu.
@@ -63,9 +92,25 @@ you to start matches out of sync with other players.
 You will need to restart the game to apply changes.
 Default: time.windows.com
 
-Head2Head_MatchTitle= {0} ({1})
-Head2Head_MatchTitle_BerryCount= {0} Berries
-Head2Head_MatchTitle_TimeLimit= {0} Limit
+Head2Head_Setting_ShowObjectivesHUD= Show Objectives HUD
+Head2Head_Setting_ShowObjectivesHUD_Subtext= Determines when to show the objectives progress HUD.
+Default: Lobby and Pause
+
+Head2Head_Setting_TimeServer= Time Server
+Head2Head_Setting_TimeServer_Subtext= Choose the time server to use to synchronize
+match starts. "None" will disable time syncing;
+the game will start a little faster, but may cause
+you to start matches out of sync with other players.
+You will need to restart the game to apply changes.
+Default: time.windows.com
+
+Head2Head_Setting_Ruleset= Ruleset
+Head2Head_Setting_Ruleset_Subtext= Choose which ruleset to use.
+This will typically only be used for special events.
+
+#############################
+#   DISPLAYABLE ENUM VALS   #
+#############################
 
 modoptions_Head2HeadModule_autostagenewmatches_Never= Never
 modoptions_Head2HeadModule_autostagenewmatches_OnlyInLobby= Only in Lobby
@@ -79,6 +124,11 @@ modoptions_Head2HeadModule_showhelpdeskinpause_Always= Always
 modoptions_Head2HeadModule_nstptimeserver_Windows= time.windows.com
 modoptions_Head2HeadModule_nstptimeserver_Pool= pool.ntp.org
 modoptions_Head2HeadModule_nstptimeserver_None= None
+
+modoptions_Head2HeadModule_showobjectives_Never= Never
+modoptions_Head2HeadModule_showobjectives_OnlyInLobby= Only in Lobby
+modoptions_Head2HeadModule_showobjectives_InLobbyOrPause= Lobby and Pause
+modoptions_Head2HeadModule_showobjectives_Always= Always
 
 Head2Head_CategoryName_Clear= Chapter Clear
 Head2Head_CategoryName_HeartCassette= Heart + Cassette
@@ -105,6 +155,7 @@ Head2Head_CategoryName_AllBSides= All B Sides
 Head2Head_CategoryName_AllCSides= All C Sides
 
 Head2Head_ObjectiveDescription_Strawberries= Collect Strawberry (x{0})
+Head2Head_ObjectiveDescription_Keys= Collect Key (x{0})
 Head2Head_ObjectiveDescription_MoonBerry= Collect Moon Berry (x{0})
 Head2Head_ObjectiveDescription_ChapterComplete= Complete the Chapter
 Head2Head_ObjectiveDescription_HeartCollect= Collect the Crystal Heart
@@ -116,6 +167,21 @@ Head2Head_ObjectiveDescription_GoldenStrawberry= Collect the golden strawberry
 Head2Head_ObjectiveDescription_WingedGoldenStrawberry= Collect the winged golden strawberry
 Head2Head_ObjectiveDescription_Flag= Flag objective description unavailable
 Head2Head_ObjectiveDescription_EnterRoom= Enter Room {0}
+
+Head2Head_ObjectiveLabel_Strawberries= Strawberries
+Head2Head_ObjectiveLabel_Keys= Keys
+Head2Head_ObjectiveLabel_MoonBerry= Moon Berry
+Head2Head_ObjectiveLabel_ChapterComplete= Finish Chapter
+Head2Head_ObjectiveLabel_HeartCollect= Heart
+Head2Head_ObjectiveLabel_CassetteCollect= Cassette
+Head2Head_ObjectiveLabel_TimeLimit= Time Limit
+Head2Head_ObjectiveLabel_CustomCollectable= Unknown Collectable
+Head2Head_ObjectiveLabel_CustomObjective= Unknown Objective
+Head2Head_ObjectiveLabel_GoldenStrawberry= Golden Berry
+Head2Head_ObjectiveLabel_WingedGoldenStrawberry= Winged Golden
+Head2Head_ObjectiveLabel_Flag= Unknown Flag
+Head2Head_ObjectiveLabel_EnterRoom= Enter Room
+Head2Head_ObjectiveLabel_RandomizerClear= Randomizer Clear
 
 Head2Head_MatchStatus_None= Unknown
 Head2Head_MatchStatus_Building= Building
@@ -136,16 +202,21 @@ Head2Head_MatchState_InProgress= In Progress
 Head2Head_MatchState_Completed= Completed
 
 Head2Head_DNFReason_None= No Reason
+Head2Head_DNFReason_MatchCancel= Match Cancelled
 Head2Head_DNFReason_DropOut= Dropped Out
-Head2Head_DNFReason_DebugTeleport= Debugged
+Head2Head_DNFReason_ChangeChannel= Changed Channel
 Head2Head_DNFReason_ChangeFile= Changed File
 Head2Head_DNFReason_DeleteFile= Deleted File
-Head2Head_DNFReason_ChangeChannel= Changed Channel
-Head2Head_DNFReason_CheatMode= Cheat Mode
-Head2Head_DNFReason_MatchCancel= Match Cancelled
-Head2Head_DNFReason_TAS= TAS
+Head2Head_DNFReason_DebugTeleport= Debugged
 Head2Head_DNFReason_Savestate= Savestate
+Head2Head_DNFReason_CheatMode= Cheat Mode
 Head2Head_DNFReason_SpeedrunTools= SpeedrunTools
+Head2Head_DNFReason_TAS= TAS
+Head2Head_DNFReason_RandomizerError= Randomizer Error
+Head2Head_DNFReason_EnabledVariant= Variant/Assist Mode
+Head2Head_DNFReason_DisabledRequiredVariant= Disabled Variant/Assist
+
+Head2Head_RuleLabel_NoGrabbing= No Grabbing
 
 Head2Head_UntitledMatch= Untitled Match
 
@@ -250,3 +321,8 @@ Head2Head_menu_helpdesk_playerselect= Select Player
 
 Head2Head_menu_helpdesk_timeadjust= Time Adjustment
 Head2Head_menu_helpdesk_notimeadjust= Time adjustments cannot be applied to this match.
+
+#    MISC MENU    #
+
+Head2Head_menu_override_variants_subtitle= Your current Head 2 Head match does not allow changing variants.
+Head2Head_menu_override_assist_subtitle= Your current Head 2 Head match does not allow changing assist mode options.

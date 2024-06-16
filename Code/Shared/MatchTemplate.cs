@@ -8,12 +8,17 @@ using System.Threading.Tasks;
 
 namespace Celeste.Mod.Head2Head.Shared {
 
-	public class CustomMatchTemplate {
-		internal static Dictionary<GlobalAreaKey, List<CustomMatchTemplate>> ILTemplates = new Dictionary<GlobalAreaKey, List<CustomMatchTemplate>>();
-		internal static Dictionary<string, List<CustomMatchTemplate>> FullgameTemplates = new Dictionary<string, List<CustomMatchTemplate>>();
+	public class MatchTemplate {
+		internal static Dictionary<GlobalAreaKey, List<MatchTemplate>> ILTemplates = new Dictionary<GlobalAreaKey, List<MatchTemplate>>();
+		internal static Dictionary<string, List<MatchTemplate>> FullgameTemplates = new Dictionary<string, List<MatchTemplate>>();
+
+		private static uint _idCounter = 0;
+		private static uint NewPhaseOrObjectiveID() {
+			return ++_idCounter;
+		}
 
 		internal void Register() {
-			if (!ILTemplates.ContainsKey(Area)) ILTemplates.Add(Area, new List<CustomMatchTemplate>());
+			if (!ILTemplates.ContainsKey(Area)) ILTemplates.Add(Area, new List<MatchTemplate>());
 			ILTemplates[Area].Add(this);
 		}
 
@@ -22,26 +27,64 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public string IconPath;
 		public string DisplayName;
 		public bool AllowCheatMode;
-		public List<CustomMatchPhaseTemplate> Phases = new List<CustomMatchPhaseTemplate>();
+		public bool IncludeInDefaultRuleset;
+		public List<MatchPhaseTemplate> Phases = new List<MatchPhaseTemplate>();
+		public RandomizerOptionsTemplate RandoOptions;
+		public List<MatchRule> Rules = new List<MatchRule>();
 
-		public List<MatchPhase> Build() {
+		public MatchDefinition BuildIL() {
+			if (!Head2HeadModule.Instance.CanBuildMatch()) return null;
+			MatchDefinition def = new MatchDefinition() {
+				Owner = PlayerID.MyID ?? PlayerID.Default,
+				CreationInstant = SyncedClock.Now,
+			};
+			def.Phases = BuildILPhases();
+			def.CategoryDisplayNameOverride = DisplayName;
+			def.Rules = new List<MatchRule>(Rules);
+
+			if (RandoOptions != null) {  // TODO move this into the integration file
+				RandomizerIntegration.SettingsBuilder bld = new RandomizerIntegration.SettingsBuilder();
+				bld.LogicType = RandoOptions.LogicType;
+				bld.Difficulty = RandoOptions.Difficulty;
+				bld.NumDashes = RandoOptions.NumDashes;
+				bld.DifficultyEagerness = RandoOptions.DifficultyEagerness;
+				bld.MapLength = RandoOptions.MapLength;
+				bld.ShineLights = RandoOptions.ShineLights;
+				bld.Darkness = RandoOptions.Darkness;
+				bld.StrawberryDensity = RandoOptions.StrawberryDensity;
+				if (RandoOptions.SeedType == "Random") {
+					bld.RandomizeSeed();
+				}
+				else {
+					// Seed changes weekly
+					int numDays = (int)(SyncedClock.Now - DateTime.MinValue).TotalDays;
+					bld.RandomizeSeed(numDays / 7);
+				}
+				def.RandoSettingsBuilder = bld;
+			}
+
+			return def;
+		}
+
+		public List<MatchPhase> BuildILPhases() {
 			int count = 0;
 			List<MatchPhase> list = new List<MatchPhase>();
-			foreach (CustomMatchPhaseTemplate tPhase in Phases) {
+			foreach (MatchPhaseTemplate tPhase in Phases) {
 				MatchPhase ph = new MatchPhase();
 				ph.category = StandardCategory.Custom;
 				ph.Order = count++;
 				ph.Area = tPhase.Area;
+				ph.ID = NewPhaseOrObjectiveID();
 				ph.Objectives = new List<MatchObjective>();
-				foreach (CustomMatchObjectiveTemplate tObj in tPhase.Objectives) {
-
+				foreach (MatchObjectiveTemplate tObj in tPhase.Objectives) {
 					ph.Objectives.Add(new MatchObjective() {
 						ObjectiveType = tObj.ObjectiveType,
 						TimeLimit = tObj.TimeLimit,
 						CollectableGoal = tObj.CollectableCount,
 						CustomTypeKey = tObj.CustomTypeKey,
 						CustomDescription = Util.TranslatedIfAvailable(tObj.Description),
-					});
+						ID = NewPhaseOrObjectiveID(),
+				});
 				}
 				list.Add(ph);
 			}
@@ -52,18 +95,19 @@ namespace Celeste.Mod.Head2Head.Shared {
 			MatchDefinition def = new MatchDefinition() {
 				Owner = PlayerID.MyID ?? PlayerID.Default,
 				CreationInstant = SyncedClock.Now,
-				UseFreshSavefile = true,
+				ChangeSavefile = true,
 				AllowCheatMode = AllowCheatMode,
 				CategoryDisplayNameOverride = Util.TranslatedIfAvailable(DisplayName),
+				Rules = new List<MatchRule>(Rules),
 			};
-			foreach (CustomMatchPhaseTemplate phtem in Phases) {
+			foreach (MatchPhaseTemplate phtem in Phases) {
 				MatchPhase ph = new MatchPhase() {
 					category = StandardCategory.Custom,
 					Area = Area,
 					Fullgame = true,
 					LevelSet = phtem.LevelSet,
 				};
-				foreach (CustomMatchObjectiveTemplate objtem in phtem.Objectives) {
+				foreach (MatchObjectiveTemplate objtem in phtem.Objectives) {
 					MatchObjective ob = new MatchObjective() {
 						ObjectiveType = objtem.ObjectiveType,
 						TimeLimit = objtem.TimeLimit,
@@ -79,17 +123,19 @@ namespace Celeste.Mod.Head2Head.Shared {
 			return def;
 		}
 
-		internal static void AddTemplateFromMeta(FullgameMeta meta) {
+		internal static void AddTemplateFromMeta(FullgameCategoryMeta meta, bool addToDefaultRuleset) {
 			// Basic data
-			CustomMatchTemplate tem = new CustomMatchTemplate();
+			MatchTemplate tem = new MatchTemplate();
 			tem.Key = meta.ID;
 			tem.DisplayName = meta.Name;
 			tem.IconPath = meta.Icon;
 			tem.Area = new GlobalAreaKey(meta.StartingMap);
 			tem.AllowCheatMode = meta.AllowCheatMode ?? false;
+			tem.IncludeInDefaultRuleset = addToDefaultRuleset;
+			tem.Rules = ParseRules(meta.Rules);
 
 			// Misc other handling
-			CustomMatchPhaseTemplate ph = new CustomMatchPhaseTemplate();
+			MatchPhaseTemplate ph = new MatchPhaseTemplate();
 			tem.Phases.Add(ph);
 			ph.LevelSet = meta.LevelSet ?? "";
 
@@ -99,60 +145,64 @@ namespace Celeste.Mod.Head2Head.Shared {
 				return;
 			}
 			foreach (ObjectiveMeta obmeta in meta.Objectives) {
-				CustomMatchObjectiveTemplate obtem = ParseObjectiveMeta(obmeta, meta.ID);
+				MatchObjectiveTemplate obtem = ParseObjectiveMeta(obmeta, meta.ID);
 				if (obtem == null) return;
 				ph.Objectives.Add(obtem);
 			}
 
 			// Add it to the library
-			if (!FullgameTemplates.ContainsKey(meta.LevelSet)) FullgameTemplates.Add(meta.LevelSet, new List<CustomMatchTemplate>());
+			if (!FullgameTemplates.ContainsKey(meta.LevelSet)) FullgameTemplates.Add(meta.LevelSet, new List<MatchTemplate>());
 			FullgameTemplates[meta.LevelSet].Add(tem);
 		}
 
-		public static void AddTemplateFromMeta(CategoryMeta meta, GlobalAreaKey area) {
+		public static MatchTemplate AddTemplateFromMeta(CategoryMeta meta, GlobalAreaKey area, bool includeInDefaultRuleset) {
 			// Process Match data
-			CustomMatchTemplate tem = new CustomMatchTemplate();
+			MatchTemplate tem = new MatchTemplate();
 			tem.Key = meta.ID;
 			tem.Area = area;
 			tem.DisplayName = meta.Name;
+			tem.IncludeInDefaultRuleset = includeInDefaultRuleset;
+			tem.Rules = ParseRules(meta.Rules);
 			if (GFX.Gui.Has(meta.Icon)) {
 				tem.IconPath = meta.Icon;
 			}
 			// Process Phase data
 			if (meta.Phases == null || meta.Phases.Length == 0) {
 				Logger.Log(LogLevel.Warn, "Head2Head", "No phases defined for category: " + meta.ID);
-				return;
+				return null;
 			}
 			foreach (PhaseMeta ph in meta.Phases) {
-				CustomMatchPhaseTemplate phtem = new CustomMatchPhaseTemplate();
+				MatchPhaseTemplate phtem = new MatchPhaseTemplate();
 				GlobalAreaKey phArea = new GlobalAreaKey(ph.Map, GetAreaMode(ph.Side));
 				if (!phArea.ExistsLocal || phArea.IsOverworld || phArea.Equals(GlobalAreaKey.Head2HeadLobby)) {
 					Logger.Log(LogLevel.Warn, "Head2Head", "Phase has invalid area SID (" + ph.Map + ") for category: " + meta.ID);
-					return;
+					return null;
 				}
 				phtem.Area = phArea;
 				// Process Objective data
 				if (ph.Objectives == null || ph.Objectives.Length == 0) {
 					Logger.Log(LogLevel.Warn, "Head2Head", "No objectives defined in phase for category: " + meta.ID);
-					return;
+					return null;
 				}
 				foreach (ObjectiveMeta ob in ph.Objectives) {
-					CustomMatchObjectiveTemplate obtem = ParseObjectiveMeta(ob, meta.ID);
-					if (obtem == null) return;
+					MatchObjectiveTemplate obtem = ParseObjectiveMeta(ob, meta.ID);
+					if (obtem == null) return null;
 					phtem.Objectives.Add(obtem);
 				}
 				tem.Phases.Add(phtem);
 			}
 
 			// Add to the library
-			if (!ILTemplates.ContainsKey(area)) ILTemplates.Add(area, new List<CustomMatchTemplate>());
-			CustomMatchTemplate existing = ILTemplates[area].Find((CustomMatchTemplate cmt) => { return cmt.Key == tem.Key; });
-			if (existing != null) ILTemplates[area].Remove(existing);  // TODO reload stuff more smartly (it won't change very often)
+			if (!ILTemplates.ContainsKey(area)) ILTemplates.Add(area, new List<MatchTemplate>());
+			MatchTemplate existing = ILTemplates[area].Find((MatchTemplate cmt) => { return cmt.Key == tem.Key; });
+			if (existing != null) ILTemplates[area].Remove(existing);
 			ILTemplates[area].Add(tem);
+
+			return tem;
 		}
 
-		private static CustomMatchObjectiveTemplate ParseObjectiveMeta(ObjectiveMeta meta, string catID) {
-			CustomMatchObjectiveTemplate obtem = new CustomMatchObjectiveTemplate();
+		private static MatchObjectiveTemplate ParseObjectiveMeta(ObjectiveMeta meta, string catID) {
+			MatchObjectiveTemplate obtem = new MatchObjectiveTemplate();
 			MatchObjectiveType? t = GetObjectiveType(meta.Type);
 			if (t == null) {
 				Logger.Log(LogLevel.Warn, "Head2Head", "Invalid objective type: " + meta.Type + " for category: " + catID);
@@ -190,6 +240,20 @@ namespace Celeste.Mod.Head2Head.Shared {
 			return obtem;
 		}
 
+		private static List<MatchRule> ParseRules(string[] meta) {
+			if (meta == null) return new List<MatchRule>();
+			List<MatchRule> rules = new List<MatchRule>();
+			foreach (string rule in meta) {
+				if (Enum.TryParse(rule, out MatchRule parsedRule)) {
+					rules.Add(parsedRule);
+				}
+				else {
+					Logger.Log(LogLevel.Warn, "Head2Head", $"Found invalid match rule: {rule ?? "null"}");
+				}
+			}
+			return rules;
+		}
+
 		internal static AreaMode GetAreaMode(string side) {
 			switch (side?.ToLower()) {
 				default:
@@ -219,18 +283,30 @@ namespace Celeste.Mod.Head2Head.Shared {
 		}
 	}
 
-	public class CustomMatchPhaseTemplate {
+	public class MatchPhaseTemplate {
 		public GlobalAreaKey Area;
 		public string LevelSet = "";
-		public List<CustomMatchObjectiveTemplate> Objectives = new List<CustomMatchObjectiveTemplate>();
+		public List<MatchObjectiveTemplate> Objectives = new List<MatchObjectiveTemplate>();
 	}
 
-	public class CustomMatchObjectiveTemplate {
+	public class MatchObjectiveTemplate {
 		public MatchObjectiveType ObjectiveType;
 		public int CollectableCount = -1;
 		public long TimeLimit = 0;
 		public string CustomTypeKey;
 		public string Description;
 		public AreaMode Side;
+	}
+
+	public class RandomizerOptionsTemplate {
+		public string Difficulty;
+		public string SeedType;
+		public string LogicType;
+		public string NumDashes;
+		public string DifficultyEagerness;
+		public string MapLength;
+		public string ShineLights;
+		public string Darkness;
+		public string StrawberryDensity;
 	}
 }

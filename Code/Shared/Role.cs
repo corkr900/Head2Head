@@ -1,14 +1,19 @@
-﻿using Celeste.Mod.Head2Head.UI;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Celeste.Mod.Head2Head.UI;
 
 namespace Celeste.Mod.Head2Head.Shared {
-	public class Role {
-		internal static string role { get { return Head2HeadModule.Settings.Role; } }
+
+	public enum Role {
+		None,
+		Debug,
+		Participant,
+		Practice,
+		Host,
+	}
+
+	public static class RoleLogic {
+		internal static Role ActiveRole => Head2HeadModule.Settings.ActiveRole;
+		internal static string ActiveRulesetID => Head2HeadModule.Settings.Ruleset;
 
 		// Roles that do stuff:
 		// debug
@@ -16,24 +21,23 @@ namespace Celeste.Mod.Head2Head.Shared {
 		// wbta
 		// bta-host
 
-		public static bool hasBTAMatchPass { get; private set; } = false;
+		public static bool HasBTAMatchPass { get; private set; } = false;
 
-		public static bool IsDebug { get { return role.ToLower() == "debug"; } }
+		public static bool IsDebug { get { return ActiveRole == Role.Debug; } }
 
 		internal static void GiveBTAMatchPass() {
-			hasBTAMatchPass = true;
+			HasBTAMatchPass = true;
 		}
 
 		internal static void RemoveBTAPass() {
-			hasBTAMatchPass = false;
+			HasBTAMatchPass = false;
 		}
 
 		#region Role-specific behavior
 
 		public static bool LogMatchActions() {
-			switch (role) {
-				case "bta":
-				case "wbta":
+			switch (ActiveRole) {
+				case Role.Participant:
 					return true;
 				default:
 					return false;
@@ -41,10 +45,10 @@ namespace Celeste.Mod.Head2Head.Shared {
 		}
 
 		public static bool AllowFullgame() {
-			switch (role) {
-				case "bta":
-				case "wbta":
-				case "bta-host":
+			switch (ActiveRole) {
+				case Role.Participant:
+				case Role.Host:
+				case Role.Practice:
 					return false;
 				default:
 					return true;
@@ -52,124 +56,96 @@ namespace Celeste.Mod.Head2Head.Shared {
 		}
 
 		public static bool AllowMatchCreate() {
-			switch (role) {
+			switch (ActiveRole) {
 				default:
 					return true;
-				case "bta":
-					return hasBTAMatchPass;
+				case Role.Participant:
+					return HasBTAMatchPass;
 			}
 		}
 
+		private static bool IsCurrentRoleAllowed(MatchDefinition def) {
+			if (def.AllowedRoles == null || def.AllowedRoles.Count == 0)
+				return ActiveRole == Role.None || ActiveRole == Role.Debug || ActiveRole == Role.Practice;
+			else return def.AllowedRoles.Contains(ActiveRole);
+		}
+
+		private static bool IsCurrentRulesetAllowed(MatchDefinition def) {
+			if (string.IsNullOrEmpty(def.RequiredRuleset)) return true;
+			else return def.RequiredRuleset == ActiveRulesetID;
+		}
+
+		public static bool IsCurrentRoleAndRulesetAllowed(MatchDefinition def)
+			=> IsCurrentRoleAllowed(def) && IsCurrentRulesetAllowed(def);
+
 		public static bool AllowAutoStage(MatchDefinition def) {
-			if (def.UseFreshSavefile && !AllowFullgame()) return false;
-			bool hasReq = !string.IsNullOrEmpty(def.RequiredRole);
-			switch (role) {
-				default:
-					return !hasReq;
-				case "bta":
-				case "wbta":
-				case "bta-host":
-					return def.RequiredRole == "bta";
-			}
+			if (def.ChangeSavefile && !AllowFullgame()) return false;
+			if (ActiveRole == Role.Host) return IsCurrentRulesetAllowed(def);
+			return IsCurrentRoleAndRulesetAllowed(def);
 		}
 
 		public static bool AllowMatchJoin(MatchDefinition def) {
-			if (def.UseFreshSavefile && !AllowFullgame()) return false;
-			bool hasReq = !string.IsNullOrEmpty(def.RequiredRole);
-			switch (role) {
-				default:
-					return !hasReq;
-				case "bta":
-				case "wbta":
-					return def.RequiredRole == "bta";
-				case "bta-host":
-					return false;
-			}
+			if (def.ChangeSavefile && !AllowFullgame()) return false;
+			if (ActiveRole == Role.Host) return false;
+			return IsCurrentRoleAndRulesetAllowed(def);
 		}
 
 		public static bool AllowMatchStart(bool hasJoinedMatch) {
-			switch (role) {
-				default:
-					return hasJoinedMatch;
-				case "bta-host":
-					return true;
-				case "bta":
-					return false;
-			}
+			return ActiveRole switch {
+				Role.Host => true,
+				Role.Participant => false,
+				_ => hasJoinedMatch,
+			};
 		}
 
 		public static void HandleMatchCreation(MatchDefinition def) {
-			switch (role) {
+			switch (ActiveRole) {
 				default:
 					return;
-				case "bta":
-				case "wbta":
-					hasBTAMatchPass = false;
-					def.RequiredRole = "bta";
-					return;
-				case "bta-host":
-					def.RequiredRole = "bta";
+				case Role.Host:
+				case Role.Participant:
+					HasBTAMatchPass = false;
+					def.AllowedRoles = new List<Role>() {
+						Role.Participant,
+					};
+					def.RequiredRuleset = ActiveRulesetID;
 					return;
 			}
 		}
 
 		public static bool LeaveUnjoinedMatchOnStart() {
-			switch (role) {
+			switch (ActiveRole) {
 				default:
 					return true;
-				case "bta-host":
+				case Role.Host:
 					return false;
-			}
-		}
-
-		public static StandardCategory[] GetValidCategories() {
-			switch (role) {
-				default:
-					return new StandardCategory[] {
-						StandardCategory.Clear,
-						StandardCategory.ARB,
-						StandardCategory.ARBHeart,
-						StandardCategory.CassetteGrab,
-						StandardCategory.HeartCassette,
-						StandardCategory.FullClear,
-						StandardCategory.MoonBerry,
-						StandardCategory.FullClearMoonBerry,
-					};
-				case "debug":
-					return (StandardCategory[])Enum.GetValues(typeof(StandardCategory));
-				case "wbta":
-					return new StandardCategory[] {
-						StandardCategory.Clear,
-					};
-				case "bta":
-				case "bta-host":
-				case "bta-practice":
-					return new StandardCategory[] {
-						StandardCategory.Clear,
-						StandardCategory.OneFifthBerries,
-						StandardCategory.OneThirdBerries,
-						StandardCategory.TimeLimit,
-					};
-
 			}
 		}
 
 		public static bool SkipCountdown() {
-			switch (role) {
+			switch (ActiveRole) {
 				default:
 					return false;
-				case "bta-host":
+				case Role.Host:
 					return true;
 			}
 		}
 
 		internal static bool AllowKillingMatch() {
-			switch (role) {
+			switch (ActiveRole) {
 				default:
 					return true;
-				case "bta":
+				case Role.Participant:
 					return false;
 			}
+		}
+
+		internal static bool CanGrantMatchPass() {
+			return ActiveRole switch {
+				Role.Host => true,
+				Role.Debug => true,
+				_ => false
+			};
 		}
 
 		#endregion

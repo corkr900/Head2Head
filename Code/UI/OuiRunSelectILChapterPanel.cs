@@ -2,7 +2,6 @@
 using Celeste.Mod.Head2Head.Integration;
 using Celeste.Mod.Head2Head.Shared;
 using Celeste.Mod.UI;
-using FMOD.Studio;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -10,49 +9,33 @@ using Monocle;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Dynamic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Celeste.Mod.Head2Head.UI {
 	public class OuiRunSelectILChapterPanel : Oui {
+
 		private class Option {
 			public string Label;
-
 			public string ID;
-
 			public MTexture Icon;
-
 			public MTexture Bg = GFX.Gui["areaselect/tab"];
-
 			public Color BgColor = Calc.HexToColor("3c6180");
-
-			public AreaMode Mode = AreaMode.Normal;
-
-			public StandardCategory Category = StandardCategory.Clear;
-
-			public CustomMatchTemplate CustomTemplate = null;
-
+			public RunOptionsILSide OptSide = null;
+			public RunOptionsILCategory OptCategory = null;
 			public float Pop;
-
 			public bool Large = true;
-
 			public int Siblings;
-
 			public float Slide;
-
 			public float Appear = 1f;
-
 			public float IconEase = 1f;
-
 			public bool Appeared;
-
 			public float Faded;
-
 			public float CheckpointSlideOut;
-
 			public float CheckpointRotation;
-
 			public Vector2 CheckpointOffset;
 
 			public float Scale {
@@ -93,90 +76,48 @@ namespace Celeste.Mod.Head2Head.UI {
 				Vector2 renderPosition = GetRenderPosition(center);
 				Color color = Color.Lerp(BgColor, Color.Black, (1f - Pop) * 0.6f);
 				Bg.DrawCentered(renderPosition + new Vector2(0f, 10f), color, (Appeared ? Scale : num) * new Vector2(Large ? 1f : 0.9f, 1f));
-				if (IconEase > 0f) {
+				if (Icon != null && IconEase > 0f) {
 					float num2 = Ease.CubeIn(IconEase);
 					Color color2 = Color.Lerp(Color.White, Color.Black, Faded * 0.6f) * num2;
-					Icon.DrawCentered(renderPosition, color2, (float)(Bg.Width - 50) / (float)Icon.Width * num * (2.5f - num2 * 1.5f));
+					Icon.DrawCentered(renderPosition, color2, (Bg.Width - 50f) / Icon.Width * num * (2.5f - num2 * 1.5f));
 				}
 			}
 		}
-
-		public AreaKey Area;
-
-		public AreaStats RealStats;
-
-		public AreaStats DisplayedStats;
-
-		public AreaData Data;
-
-		public bool EnteringChapter;
 
 		public const int ContentOffsetX = 440;
-
 		public const int PanelHeight = 300;
 
+		internal static RunOptionsILChapter UsingChapter;
+		internal static RunOptionsILSide UsingSide;
+
 		private bool initialized;
-
-		private string chapter = "";
-
-		private bool selectingMode = true;
-
 		private float height;
-
 		private bool resizing;
-
 		private Wiggler wiggler;
-
 		private Wiggler modeAppearWiggler;
-
 		private MTexture card = new MTexture();
-
 		private Vector2 contentOffset;
-
-		private int categoryOption;
-
-		private int modeOption;
-
+		private int hoveredCategoryIdx;
+		private int hoveredModeIdx;
 		private List<Option> modes = new List<Option>();
-
 		private List<Option> categories = new List<Option>();
 
-		private bool instantClose;
-
 		public Vector2 OpenPosition => new Vector2(1070f, 100f);
-
 		public Vector2 ClosePosition => new Vector2(2220f, 100f);
-
 		public Vector2 IconOffset => new Vector2(690f, 86f);
-
 		private Vector2 OptionsRenderPosition => Position + new Vector2(contentOffset.X, 128f + height);
 
-		private int option {
-			get {
-				if (!selectingMode) {
-					return categoryOption;
-				}
-				return modeOption;
-			}
+		private int hoveredIdx {
+			get => selectingMode ? hoveredModeIdx : hoveredCategoryIdx;
 			set {
-				if (selectingMode) {
-					modeOption = value;
-					Area.Mode = options[value].Mode;
-				}
-				else {
-					categoryOption = value;
-				}
+				if (selectingMode) hoveredModeIdx = value;
+				else hoveredCategoryIdx = value;
 			}
 		}
-
-		private List<Option> options {
-			get {
-				if (!selectingMode) {
-					return categories;
-				}
-				return modes;
-			}
-		}
+			
+		internal bool selectingMode => UsingSide == null;
+		private Option hoveredOption => selectingMode ? modes[hoveredModeIdx] : categories[hoveredCategoryIdx];
+		private List<Option> options => selectingMode ? modes : categories;
 
 		public OuiRunSelectILChapterPanel() {
 			Add(wiggler = Wiggler.Create(0.4f, 4f));
@@ -188,83 +129,51 @@ namespace Celeste.Mod.Head2Head.UI {
 		}
 
 		public override IEnumerator Enter(Oui from) {
-			if (instantClose) {
-				GoBack();
-				Visible = false;
-				instantClose = false;
-				yield break;
+			Position = ClosePosition;
+			Visible = true;
+			UsingSide = null;
+			Reset();
+			for (float p = 0f; p < 1f; p += Engine.DeltaTime * 4f) {
+				yield return null;
+				Position = ClosePosition + (OpenPosition - ClosePosition) * Ease.CubeOut(p);
 			}
-			else {
-				Visible = true;
-				Area.Mode = AreaMode.Normal;
-				Reset();
-				for (float p = 0f; p < 1f; p += Engine.DeltaTime * 4f) {
-					yield return null;
-					Position = ClosePosition + (OpenPosition - ClosePosition) * Ease.CubeOut(p);
-				}
-				Position = OpenPosition;
-			}
+			Position = OpenPosition;
 		}
 
 		private void Reset() {
-			Area = ILSelector.LastArea.Local_Safe;
-			Data = AreaData.Areas[Area.ID];
-			RealStats = SaveData.Instance.Areas_Safe[Area.ID];
-			if (SaveData.Instance.CurrentSession_Safe != null && SaveData.Instance.CurrentSession_Safe.OldStats != null && SaveData.Instance.CurrentSession_Safe.Area.ID == Area.ID) {
-				DisplayedStats = SaveData.Instance.CurrentSession_Safe.OldStats;
-				SaveData.Instance.CurrentSession_Safe = null;
-			}
-			else {
-				DisplayedStats = RealStats;
-			}
 			height = GetModeHeight();
 			modes.Clear();
-			if (StandardMatches.HasAnyValidCategory(new GlobalAreaKey(Area.ID, AreaMode.Normal))) {
+			foreach (RunOptionsILSide side in UsingChapter.Sides) {
 				modes.Add(new Option {
-					Label = Dialog.Clean(Data.Interlude ? "FILE_BEGIN" : "overworld_normal").ToUpper(),
-					Icon = GFX.Gui["menu/play"],
-					ID = "A",
-					Mode = AreaMode.Normal,
+					Label = side.Label,
+					Icon = side.Icon,
+					ID = side.ID,
+					OptSide = side,
 				});
 			}
-			if (StandardMatches.HasAnyValidCategory(new GlobalAreaKey(Area.ID, AreaMode.BSide))) {
-				modes.Add(new Option {
-					Label = Dialog.Clean("overworld_remix"),
-					Icon = GFX.Gui["menu/remix"],
-					ID = "B",
-					Mode = AreaMode.BSide,
-				});
-			}
-			if (StandardMatches.HasAnyValidCategory(new GlobalAreaKey(Area.ID, AreaMode.CSide))) {
-				modes.Add(new Option {
-					Label = Dialog.Clean("overworld_remix2"),
-					Icon = GFX.Gui["menu/rmx2"],
-					ID = "C",
-					Mode = AreaMode.CSide,
-				});
-			}
-
-			selectingMode = true;
-			if (options.Count > 0) {
-				option = Calc.Clamp(option, 0, options.Count - 1);
-				for (int i = 0; i < options.Count; i++) {
-					options[i].SlideTowards(i, options.Count, snap: true);
+			UsingSide = null;
+			hoveredCategoryIdx = 0;
+			hoveredModeIdx = 0;
+			if (modes.Count > 0) {
+				for (int i = 0; i < modes.Count; i++) {
+					modes[i].SlideTowards(i, modes.Count, snap: true);
 				}
 			}
-			chapter = Dialog.Get("area_chapter").Replace("{x}", Area.ChapterIndex.ToString().PadLeft(2));
 			contentOffset = new Vector2(440f, 120f);
 			initialized = true;
 		}
 
 		private int GetModeHeight() {
-			AreaModeStats areaModeStats = RealStats.Modes[(int)Area.Mode];
-			bool flag = areaModeStats.Strawberries.Count <= 0;
-			if (!Data.Interlude_Safe && ((areaModeStats.Deaths > 0 && Area.Mode != 0) || areaModeStats.Completed || areaModeStats.HeartGem)) {
-				flag = false;
-			}
-			if (!flag) {
-				return 540;
-			}
+			//var option = OuiRunSelectIL.GetChapterOption(ILSelector.LastLevelSetIndex, ILSelector.LastChapterIndex);
+			//if (option.Data == null || RealStats == null) return 300;
+			//AreaModeStats areaModeStats = RealStats.Modes[(int)Area.Mode];
+			//bool flag = areaModeStats.Strawberries.Count <= 0;
+			//if (!Data.Interlude_Safe && ((areaModeStats.Deaths > 0 && Area.Mode != 0) || areaModeStats.Completed || areaModeStats.HeartGem)) {
+			//	flag = false;
+			//}
+			//if (!flag) {
+			//	return 540;
+			//}
 			return PanelHeight;
 		}
 
@@ -286,12 +195,7 @@ namespace Celeste.Mod.Head2Head.UI {
 		private void Start(Option opt) {
 			Focused = false;
 			Audio.Play("event:/ui/world_map/chapter/checkpoint_start");
-
-			if (ILSelector.ActiveSelector != null) {
-				ILSelector.ActiveSelector.Area = new GlobalAreaKey(Area);
-				ILSelector.ActiveSelector.Category = opt.Category;
-				ILSelector.ActiveSelector.CustomTemplate = opt.CustomTemplate;
-			}
+			ILSelector.ChosenCategory = opt.OptCategory;
 			Overworld.Goto<OuiRunSelectILExit>();
 		}
 
@@ -304,7 +208,6 @@ namespace Celeste.Mod.Head2Head.UI {
 		private IEnumerator SwapRoutine() {
 			// Safeguards against a crash i can't reliably reproduce
 			if (options.Count == 0) yield break;
-			option = Calc.Clamp(option, 0, options.Count - 1);
 			// Now to the normal stuff
 			float fromHeight = height;
 			int toHeight = 730;
@@ -317,39 +220,32 @@ namespace Celeste.Mod.Head2Head.UI {
 				height = MathHelper.Lerp(fromHeight, toHeight, Ease.CubeOut(p2 * 0.5f));
 			}
 			if (selectingMode) {
-				Area.Mode = options[option].Mode;
+				UsingSide = hoveredOption.OptSide;
 			}
-			selectingMode = !selectingMode;
+			else {
+				UsingSide = null;
+			}
 			if (!selectingMode) {
 				categories.Clear();
-
-				List<Tuple<StandardCategory, CustomMatchTemplate>> cats = StandardMatches.GetCategories(new GlobalAreaKey(Area));
-				int siblings = cats.Count;
-				foreach (Tuple<StandardCategory, CustomMatchTemplate> catInfo in cats) {
-					string iconPath = (catInfo.Item1 == StandardCategory.Custom && !string.IsNullOrEmpty(catInfo.Item2.IconPath)) ?
-							catInfo.Item2.IconPath : Shared.Util.CategoryToIcon(catInfo.Item1);
-					string label = StandardMatches.GetCategoryTitle(catInfo.Item1, catInfo.Item2);
+				int siblings = UsingChapter.Sides[hoveredModeIdx].Categories.Count;
+				foreach (RunOptionsILCategory cat in UsingChapter.Sides[hoveredModeIdx].Categories) {
 					categories.Add(new Option {
-						Label = label,
+						Label = Util.TranslatedIfAvailable(cat.Title),
 						BgColor = Calc.HexToColor("eabe26"),
-						Icon = GFX.Gui[iconPath],
-						Mode = Area.Mode,
-						Category = catInfo.Item1,
-						CustomTemplate = catInfo.Item2,
-						CheckpointRotation = (float)Calc.Random.Choose(-1, 1) * Calc.Random.Range(0.05f, 0.2f),
+						Icon = GFX.Gui.GetOrDefault(cat.IconPath, GFX.Gui["menu/play"]),
+						OptCategory = cat,
+						CheckpointRotation = Calc.Random.Choose(-1, 1) * Calc.Random.Range(0.05f, 0.2f),
 						CheckpointOffset = new Vector2(Calc.Random.Range(-16, 16), Calc.Random.Range(-16, 16)),
 						Large = false,
 						Siblings = siblings,
 					});
 				}
-				option = 0;
-				for (int j = 0; j < options.Count; j++) {
-					options[j].SlideTowards(j, options.Count, snap: true);
+				hoveredCategoryIdx = 0;
+				for (int j = 0; j < categories.Count; j++) {
+					categories[j].SlideTowards(j, categories.Count, snap: true);
 				}
 			}
-			if (option >= 0 && option < options.Count) {
-				options[option].Pop = 1f;
-			}
+			hoveredOption.Pop = 1f;
 			for (float p2 = 0f; p2 < 1f; p2 += Engine.DeltaTime * 4f) {
 				yield return null;
 				height = MathHelper.Lerp(fromHeight, toHeight, Ease.CubeOut(Math.Min(1f, 0.5f + p2 * 0.5f)));
@@ -363,123 +259,27 @@ namespace Celeste.Mod.Head2Head.UI {
 
 		public override void Update() {
 			if (Selected && Focused && Input.QuickRestart.Pressed) {
-				string lobby = CollabUtils2Integration.GetLobbyForLevelSet(ILSelector.LastArea.Data.LevelSet);
-				if (!string.IsNullOrEmpty(lobby)) ILSelector.LastArea = new GlobalAreaKey(lobby);
-				Overworld.Goto<OuiRunSelectILCollabMapSelect>();
-				Overworld.Goto<OuiMapSearch>();
+				Overworld.Goto<OuiRunSelectILMapSearch>();
 			}
-			else if (instantClose) {
-				GoBack();
-				Visible = false;
-				instantClose = false;
-			}
-			else {
-				orig_Update();
-			}
-		}
-
-		public override void Render() {
-			if (!initialized) {
-				return;
-			}
-			Vector2 optionsRenderPosition = OptionsRenderPosition;
-			for (int i = 0; i < options.Count; i++) {
-				if (!options[i].OnTopOfUI) {
-					options[i].Render(optionsRenderPosition, option == i, wiggler, modeAppearWiggler);
-				}
-			}
-			bool flag = false;
-			if (RealStats.Modes[(int)Area.Mode].Completed) {
-				int mode = (int)Area.Mode;
-				foreach (EntityData goldenberry in AreaData.Areas[Area.ID].Mode[mode].MapData.Goldenberries) {
-					EntityID item = new EntityID(goldenberry.Level.Name, goldenberry.ID);
-					if (RealStats.Modes[mode].Strawberries.Contains(item)) {
-						flag = true;
-						break;
-					}
-				}
-			}
-			MTexture mTexture = GFX.Gui[(!flag) ? _ModCardTexture("areaselect/cardtop") : _ModCardTexture("areaselect/cardtop_golden")];
-			mTexture.Draw(Position + new Vector2(0f, -32f));
-			MTexture mTexture2 = GFX.Gui[(!flag) ? _ModCardTexture("areaselect/card") : _ModCardTexture("areaselect/card_golden")];
-			card = mTexture2.GetSubtexture(0, mTexture2.Height - (int)height, mTexture2.Width, (int)height, card);
-			card.Draw(Position + new Vector2(0f, -32 + mTexture.Height));
-			for (int j = 0; j < options.Count; j++) {
-				if (options[j].OnTopOfUI) {
-					options[j].Render(optionsRenderPosition, option == j, wiggler, modeAppearWiggler);
-				}
-			}
-			if (option < options.Count) {
-				ActiveFont.Draw(options[option].Label, optionsRenderPosition + new Vector2(0f, -140f), Vector2.One * 0.5f, Vector2.One * (1f + wiggler.Value * 0.1f), Color.Black * 0.8f);
-			}
-			else {
-				ActiveFont.Draw(Dialog.Clean("Head2Head_Selector_NoValidCategories"), optionsRenderPosition + new Vector2(0f, -140f), Vector2.One * 0.5f, Vector2.One * (1f + wiggler.Value * 0.1f), Color.Black * 0.8f);
-			}
-			if (selectingMode) {
-				base.Render();
-			}
-			if (!selectingMode) {
-				Vector2 center = Position + new Vector2(contentOffset.X, 340f);
-				for (int num = options.Count - 1; num >= 0; num--) {
-					DrawCheckpoint(center, options[num], num);
-				}
-			}
-			GFX.Gui["areaselect/title"].Draw(Position + new Vector2(_FixTitleLength(-60f), 0f), Vector2.Zero, Data.TitleBaseColor);
-			GFX.Gui["areaselect/accent"].Draw(Position + new Vector2(_FixTitleLength(-60f), 0f), Vector2.Zero, Data.TitleAccentColor);
-			string text = Dialog.Clean(AreaData.Get(Area).Name);
-			if (Data.Interlude_Safe) {
-				ActiveFont.Draw(text, Position + IconOffset + new Vector2(-100f, 0f), new Vector2(1f, 0.5f), Vector2.One * 1f, Data.TitleTextColor * 0.8f);
-			}
-			else {
-				ActiveFont.Draw(chapter, Position + IconOffset + new Vector2(-100f, -2f), new Vector2(1f, 1f), Vector2.One * 0.6f, Data.TitleAccentColor * 0.8f);
-				ActiveFont.Draw(text, Position + IconOffset + new Vector2(-100f, -18f), new Vector2(1f, 0f), Vector2.One * 1f, Data.TitleTextColor * 0.8f);
-			}
-		}
-
-		private void DrawCheckpoint(Vector2 center, Option option, int checkpointIndex) {
-			
-		}
-
-		private void PlayExpandSfx(float currentHeight, float nextHeight) {
-			if (nextHeight > currentHeight) {
-				Audio.Play("event:/ui/world_map/chapter/pane_expand");
-			}
-			else if (nextHeight < currentHeight) {
-				Audio.Play("event:/ui/world_map/chapter/pane_contract");
-			}
-		}
-
-		public IEnumerator orig_Enter(Oui from) {
-			Visible = true;
-			Area.Mode = AreaMode.Normal;
-			Reset();
-			for (float p = 0f; p < 1f; p += Engine.DeltaTime * 4f) {
-				yield return null;
-				Position = ClosePosition + (OpenPosition - ClosePosition) * Ease.CubeOut(p);
-			}
-			Position = OpenPosition;
-		}
-
-		public void orig_Update() {
 			if (!initialized) {
 				return;
 			}
 			base.Update();
 			for (int i = 0; i < options.Count; i++) {
 				Option option = options[i];
-				option.Pop = Calc.Approach(option.Pop, (this.option == i) ? 1f : 0f, Engine.DeltaTime * 4f);
+				option.Pop = Calc.Approach(option.Pop, (hoveredIdx == i) ? 1f : 0f, Engine.DeltaTime * 4f);
 				option.Appear = Calc.Approach(option.Appear, 1f, Engine.DeltaTime * 3f);
-				option.CheckpointSlideOut = Calc.Approach(option.CheckpointSlideOut, (this.option > i) ? 1 : 0, Engine.DeltaTime * 4f);
-				option.Faded = Calc.Approach(option.Faded, (this.option != i && !option.Appeared) ? 1 : 0, Engine.DeltaTime * 4f);
+				option.CheckpointSlideOut = Calc.Approach(option.CheckpointSlideOut, (hoveredIdx > i) ? 1 : 0, Engine.DeltaTime * 4f);
+				option.Faded = Calc.Approach(option.Faded, (hoveredIdx != i && !option.Appeared) ? 1 : 0, Engine.DeltaTime * 4f);
 				option.SlideTowards(i, options.Count, snap: false);
 			}
 			if (selectingMode && !resizing) {
 				height = Calc.Approach(height, GetModeHeight(), Engine.DeltaTime * 1600f);
 			}
 			if (Selected && Focused) {
-				if (Input.MenuLeft.Pressed && option > 0) {
+				if (Input.MenuLeft.Pressed && hoveredIdx > 0) {
 					Audio.Play("event:/ui/world_map/chapter/tab_roll_left");
-					option--;
+					hoveredIdx--;
 					wiggler.Start();
 					if (selectingMode) {
 						PlayExpandSfx(height, GetModeHeight());
@@ -488,9 +288,9 @@ namespace Celeste.Mod.Head2Head.UI {
 						Audio.Play("event:/ui/world_map/chapter/checkpoint_photo_add");
 					}
 				}
-				else if (Input.MenuRight.Pressed && option + 1 < options.Count) {
+				else if (Input.MenuRight.Pressed && hoveredIdx + 1 < options.Count) {
 					Audio.Play("event:/ui/world_map/chapter/tab_roll_right");
-					option++;
+					hoveredIdx++;
 					wiggler.Start();
 					if (selectingMode) {
 						PlayExpandSfx(height, GetModeHeight());
@@ -505,7 +305,7 @@ namespace Celeste.Mod.Head2Head.UI {
 						Swap();
 					}
 					else {
-						Start(options[option]);
+						Start(hoveredOption);
 					}
 				}
 				else if (Input.MenuCancel.Pressed) {
@@ -521,34 +321,88 @@ namespace Celeste.Mod.Head2Head.UI {
 			}
 		}
 
+		public override void Render() {
+			if (!initialized) {
+				return;
+			}
+
+			Vector2 optionsRenderPosition = OptionsRenderPosition;
+			for (int i = 0; i < options.Count; i++) {
+				if (!options[i].OnTopOfUI) {
+					options[i].Render(optionsRenderPosition, hoveredIdx == i, wiggler, modeAppearWiggler);
+				}
+			}
+
+			MTexture mTexture = GFX.Gui[_ModCardTexture("areaselect/cardtop")];
+			mTexture.Draw(Position + new Vector2(0f, -32f));
+			MTexture mTexture2 = GFX.Gui[_ModCardTexture("areaselect/card")];
+			card = mTexture2.GetSubtexture(0, mTexture2.Height - (int)height, mTexture2.Width, (int)height, card);
+			card.Draw(Position + new Vector2(0f, -32 + mTexture.Height));
+			for (int j = 0; j < options.Count; j++) {
+				if (options[j].OnTopOfUI) {
+					options[j].Render(optionsRenderPosition, hoveredIdx == j, wiggler, modeAppearWiggler);
+				}
+			}
+			if (hoveredIdx >= 0 && hoveredIdx < options.Count) {
+				ActiveFont.Draw(hoveredOption.Label, optionsRenderPosition + new Vector2(0f, -140f), Vector2.One * 0.5f, Vector2.One * (1f + wiggler.Value * 0.1f), Color.Black * 0.8f);
+			}
+			else {
+				ActiveFont.Draw(Dialog.Clean("Head2Head_Selector_NoValidCategories"), optionsRenderPosition + new Vector2(0f, -140f), Vector2.One * 0.5f, Vector2.One * (1f + wiggler.Value * 0.1f), Color.Black * 0.8f);
+			}
+			if (selectingMode) {
+				base.Render();
+			}
+			if (!selectingMode) {
+				Vector2 center = Position + new Vector2(contentOffset.X, 340f);
+				for (int num = options.Count - 1; num >= 0; num--) {
+					DrawCheckpoint(center, options[num], num);
+				}
+			}
+			GFX.Gui["areaselect/title"].Draw(Position + new Vector2(_FixTitleLength(-60f), 0f), Vector2.Zero, UsingChapter.Data?.TitleBaseColor ?? Color.DarkSlateGray);
+			GFX.Gui["areaselect/accent"].Draw(Position + new Vector2(_FixTitleLength(-60f), 0f), Vector2.Zero, UsingChapter.Data?.TitleAccentColor ?? Color.LightBlue);
+			ActiveFont.Draw(UsingChapter.DisplayName, Position + IconOffset + new Vector2(-100f, -18f), new Vector2(1f, 0f), Vector2.One * 1f, (UsingChapter.Data?.TitleTextColor ?? Color.AntiqueWhite) * 0.8f);
+		}
+
+		private void DrawCheckpoint(Vector2 center, Option option, int checkpointIndex) {
+			
+		}
+
+		private void PlayExpandSfx(float currentHeight, float nextHeight) {
+			if (nextHeight > currentHeight) {
+				Audio.Play("event:/ui/world_map/chapter/pane_expand");
+			}
+			else if (nextHeight < currentHeight) {
+				Audio.Play("event:/ui/world_map/chapter/pane_contract");
+			}
+		}
+
 		private string _ModCardTexture(string textureName) {
-			string name = AreaData.Areas[Area.ID].Name;
+			string name = UsingChapter.Data?.Name ?? "";
 			string text = textureName.Replace("areaselect/card", "areaselect/" + name + "_card");
 			if (GFX.Gui.Has(text)) {
 				textureName = text;
 				return textureName;
 			}
-			string text2 = Area.GetLevelSet();
-			string text3 = textureName.Replace("areaselect/", "areaselect/" + text2 + "/");
-			if (GFX.Gui.Has(text3)) {
-				textureName = text3;
+			string levelSet = UsingChapter.Data?.LevelSet ?? "";
+			string levelSetTexture = textureName.Replace("areaselect/", "areaselect/" + levelSet + "/");
+			if (GFX.Gui.Has(levelSetTexture)) {
+				textureName = levelSetTexture;
 				return textureName;
 			}
 			return textureName;
 		}
 
 		private float _FixTitleLength(float vanillaValue) {
-			float x = ActiveFont.Measure(Dialog.Clean(AreaData.Get(Area).Name)).X;
+			float x = ActiveFont.Measure(Dialog.Clean(UsingChapter.Data?.Name)).X;
 			return vanillaValue - Math.Max(0f, x + vanillaValue - 490f);
 		}
 
 		private void GoBack() {
-			string lobby = CollabUtils2Integration.GetLobbyForLevelSet(ILSelector.LastArea.Data.LevelSet);
+			string lobby = UsingChapter.CollabLobby;
 			if (string.IsNullOrEmpty(lobby)) {
 				Overworld.Goto<OuiRunSelectILChapterSelect>();
 			}
 			else {
-				ILSelector.LastArea = new GlobalAreaKey(lobby);
 				Overworld.Goto<OuiRunSelectILCollabMapSelect>();
 			}
 		}

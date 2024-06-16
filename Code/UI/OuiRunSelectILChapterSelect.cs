@@ -1,4 +1,5 @@
-﻿using Celeste.Mod.Head2Head.Entities;
+﻿using Celeste.Mod.CelesteNet;
+using Celeste.Mod.Head2Head.Entities;
 using Celeste.Mod.Head2Head.Integration;
 using Celeste.Mod.Head2Head.Shared;
 using Celeste.Mod.UI;
@@ -14,98 +15,63 @@ using System.Threading.Tasks;
 
 namespace Celeste.Mod.Head2Head.UI {
 	class OuiRunSelectILChapterSelect : Oui {
-
-		private List<OuiChapterSelectIcon> icons = new List<OuiChapterSelectIcon>();
-
-		private int indexToSnap = -1;
-
+		private List<ChapterIcon> icons = new List<ChapterIcon>();
 		private const int scarfSegmentSize = 2;
-
 		private MTexture scarf = GFX.Gui["areas/hover"];
-
 		private MTexture[] scarfSegments;
-
 		private float ease;
-
 		private bool display;
-
 		private float inputDelay;
-
 		private MTexture levelSetScarf;
-
 		private float maplistEase;
-
 		private float searchEase;
-
 		private float levelsetEase;
+		private int hoveredChapterIdx = 0;
 
-		private string currentLevelSet;
+		internal static RunOptionsLevelSet UsingLevelSet;
 
-		private int area {
-			get {
-				return ILSelector.LastArea.Local_Safe.ID;
-			}
-			set {
-				ILSelector.LastArea = new GlobalAreaKey(value);
-			}
-		}
+		private RunOptionsILChapter hoveredOption => UsingLevelSet.Chapters[hoveredChapterIdx];
+		private ChapterIcon hoveredIcon  => icons[hoveredChapterIdx];
 
 		public override void Added(Scene scene) {
 			base.Added(scene);
 
-			int count = AreaData.Areas.Count;
-			for (int i = 0; i < count; i++) {
-				MTexture mTexture = GFX.Gui[AreaData.Areas[i].Icon];
-				MTexture back = (GFX.Gui.Has(AreaData.Areas[i].Icon + "_back") ? GFX.Gui[AreaData.Areas[i].Icon + "_back"] : mTexture);
-				OuiRunSelectILChapterIcon icon = new OuiRunSelectILChapterIcon(i, mTexture, back);
-				icons.Add(icon);
-				Scene.Add(icon);
-			}
+			// Add Scarf things
 			scarfSegments = new MTexture[scarf.Height / scarfSegmentSize];
 			for (int j = 0; j < scarfSegments.Length; j++) {
 				scarfSegments[j] = scarf.GetSubtexture(0, j * scarfSegmentSize, scarf.Width, scarfSegmentSize);
 			}
-			if (indexToSnap >= 0) {
-				area = indexToSnap;
-				icons[indexToSnap].SnapToSelected();
-			}
 			Depth = -20;
 			for (int num = icons.Count - 1; num > -1; num--) {
-				if (!string.IsNullOrEmpty(AreaData.Get(icons[num].Area)?.GetMeta()?.Parent)) {
-					icons[num].Area = -1;
+				if (!string.IsNullOrEmpty(icons[num].ChapterOption.Data?.Meta?.Parent)) {
 					icons[num].Hide();
 				}
 			}
 		}
 
 		public override IEnumerator Enter(Oui from) {
-			GetMinMaxArea(out int areaOffs, out int areaMax);
-			area = Calc.Clamp(area, areaOffs, areaMax);
+			if (UsingLevelSet == null) UsingLevelSet = OuiRunSelectIL.UsingRuleset.LevelSets[0];
 			Visible = true;
-			EaseCamera();
 			display = true;
-			currentLevelSet = ILSelector.LastArea.Local_Safe.LevelSet;
-			OuiChapterSelectIcon unselected = null;
-			if (from is OuiChapterPanel) {
-				(unselected = icons[area]).Unselect();
-				if (area != area) {
-					unselected.Hide();
-				}
-			}
-			levelSetScarf = GFX.Gui.GetOrDefault("areas/" + currentLevelSet + "/hover", GFX.Gui["areas/hover"]);
+			hoveredChapterIdx = Calc.Clamp(hoveredChapterIdx, 0, UsingLevelSet.Chapters.Count - 1);
+			ChapterIcon.CurrentlyHoveredIndex = hoveredChapterIdx;
+			levelSetScarf = GFX.Gui.GetOrDefault("areas/" + UsingLevelSet.LevelSet + "/hover", GFX.Gui["areas/hover"]);
 			updateScarf();
-			LevelSetStats stats = null;
-			foreach (OuiChapterSelectIcon current in icons) {
-				AreaData areaData = AreaData.Get(current.Area);
-				if (areaData != null && areaData.GetLevelSet() == currentLevelSet) {
-					stats = stats ?? Util.GetSetStats(areaData.LevelSet);
-					int id = areaData.ToKey().ID;
-					if ((string.IsNullOrEmpty(currentLevelSet) || id <= Math.Max(1, stats.AreaOffset + stats.MaxArea)) && current != unselected) {
-						current.Position = current.HiddenPosition;
-						current.Show();
-						current.AssistModeUnlockable = false;
-					}
-				}
+			// Remove any old icons
+			foreach (ChapterIcon icon in icons) {
+				icon.RemoveSelf();
+			}
+			icons.Clear();
+			// Add Icons
+			for (int i = 0; i < UsingLevelSet.Chapters.Count; i++) {
+				var opt = UsingLevelSet.Chapters[i];
+				MTexture mTexture = GFX.Gui.GetOrDefault(opt.Icon, GFX.Gui["Head2Head/Categories/Custom"]);
+				MTexture back = mTexture;
+				ChapterIcon icon = new ChapterIcon(opt, mTexture, back, i);
+				icons.Add(icon);
+				Scene.Add(icon);
+				icon.Position = icon.HiddenPosition;
+				icon.Show();
 			}
 			if (from is OuiChapterPanel) {
 				yield return 0.25f;
@@ -118,16 +84,13 @@ namespace Celeste.Mod.Head2Head.UI {
 		}
 
 		private IEnumerator EaseOut(Oui next) {
-			OuiChapterSelectIcon selected = null;
+			ChapterIcon selected = null;
 			if (next is OuiChapterPanel) {
-				(selected = icons[area]).Select();
+				(selected = icons[hoveredChapterIdx]).Select();
 			}
-			foreach (OuiChapterSelectIcon current in icons) {
-				AreaData areaData = AreaData.Get(current.Area);
-				if (areaData != null && !(areaData.GetLevelSet() != currentLevelSet)) {
-					if (selected != current) {
-						current.Hide();
-					}
+			foreach (ChapterIcon current in icons) {
+				if (selected != current) {
+					current.Hide();
 				}
 			}
 			Visible = false;
@@ -137,17 +100,15 @@ namespace Celeste.Mod.Head2Head.UI {
 		public override void Update() {
 			if (Focused && display) {
 				if (Input.Pause.Pressed || Input.ESC.Pressed) {
-					Overworld.Maddy.Hide();
 					Audio.Play("event:/ui/main/button_select");
 					Audio.Play("event:/ui/main/whoosh_large_in");
-					Overworld.Goto<OuiMapList>().OuiIcons = icons;
+					Overworld.Goto<OuiRunSelectILMapList>();
 					return;
 				}
 				if (Input.QuickRestart.Pressed) {
-					Overworld.Maddy.Hide();
 					Audio.Play("event:/ui/main/button_select");
 					Audio.Play("event:/ui/main/whoosh_large_in");
-					Overworld.Goto<OuiMapSearch>().OuiIcons = icons;
+					Overworld.Goto<OuiRunSelectILMapSearch>();
 					return;
 				}
 			}
@@ -164,21 +125,6 @@ namespace Celeste.Mod.Head2Head.UI {
 					Overworld.Goto<OuiRunSelectILLevelSet>().Direction = 1;
 					return;
 				}
-				GetMinMaxArea(out int areaOffs, out int areaMax);
-				if (area < areaOffs) {
-					area = areaOffs;
-				}
-				else {
-					if (area > areaMax) {
-						area = areaMax;
-					}
-					while (area > 0 && icons[area].GetIsHidden()) {
-						area--;
-					}
-				}
-				if ((Input.MenuLeft.Pressed && (area - 1 < 0 || icons[area - 1].GetIsHidden())) || (Input.MenuRight.Pressed && (area + 1 >= icons.Count || icons[area + 1].GetIsHidden()))) {
-					return;
-				}
 			}
 			orig_Update();
 			if (Focused && display) {
@@ -190,7 +136,17 @@ namespace Celeste.Mod.Head2Head.UI {
 		}
 
 		public override void Render() {
-			orig_Render();
+			Vector2 vector = new Vector2(960f, -scarf.Height * Ease.CubeInOut(1f - ease));
+			for (int i = 0; i < scarfSegments.Length; i++) {
+				float wave = Ease.CubeIn(i / (float)scarfSegments.Length);
+				float x = wave * (float)Math.Sin(Scene.RawTimeActive * 4f + (scarfSegments.Length - i) * 0.05f) * 4f - wave * 16f;
+				scarfSegments[i].DrawJustified(vector + new Vector2(x, i * scarfSegmentSize), new Vector2(0.5f, 0f));
+			}
+			if (!string.IsNullOrEmpty(hoveredOption.Title)) {
+				ActiveFont.DrawOutline(hoveredOption.Title, vector + new Vector2(0, scarfSegments.Length * scarfSegmentSize + 5f),
+					new Vector2(0.5f, 0f), Vector2.One * 0.7f,
+					Color.White * Ease.CubeOut(maplistEase), 2f, Color.Black * Ease.CubeOut(maplistEase));
+			}
 			if (maplistEase > 0f) {
 				Vector2 position = new Vector2(128f * Ease.CubeOut(maplistEase), 952f);
 				GFX.Gui["menu/maplist"].DrawCentered(position, Color.White * Ease.CubeOut(maplistEase));
@@ -203,72 +159,56 @@ namespace Celeste.Mod.Head2Head.UI {
 				Input.GuiKey(Input.FirstKey(Input.QuickRestart)).Draw(position2, Vector2.Zero, Color.White * Ease.CubeOut(searchEase));
 			}
 			if (levelsetEase > 0f) {
-				Vector2 vector = new Vector2(1920f - 64f * Ease.CubeOut(maplistEase), 952f);
-				string text = DialogExt.CleanLevelSet(currentLevelSet);
-				ActiveFont.DrawOutline(text, vector, new Vector2(1f, 0.5f), Vector2.One * 0.7f, Color.White * Ease.CubeOut(maplistEase), 2f, Color.Black * Ease.CubeOut(maplistEase));
+				Vector2 vector1 = new Vector2(1920f - 64f * Ease.CubeOut(maplistEase), 952f);
+				string text = Dialog.CleanLevelSet(UsingLevelSet.LevelSet);
+				ActiveFont.DrawOutline(text, vector1, new Vector2(1f, 0.5f), Vector2.One * 0.7f, Color.White * Ease.CubeOut(maplistEase), 2f, Color.Black * Ease.CubeOut(maplistEase));
 				Vector2 vector2 = ActiveFont.Measure(text) * 0.7f;
-				Input.GuiDirection(new Vector2(0f, -1f)).DrawCentered(vector + new Vector2((0f - vector2.X) * 0.5f, (0f - vector2.Y) * 0.5f - 16f), Color.White * Ease.CubeOut(maplistEase), 0.5f);
-				Input.GuiDirection(new Vector2(0f, 1f)).DrawCentered(vector + new Vector2((0f - vector2.X) * 0.5f, vector2.Y * 0.5f + 16f), Color.White * Ease.CubeOut(maplistEase), 0.5f);
+				Input.GuiDirection(new Vector2(0f, -1f)).DrawCentered(vector1 + new Vector2((0f - vector2.X) * 0.5f, (0f - vector2.Y) * 0.5f - 16f), Color.White * Ease.CubeOut(maplistEase), 0.5f);
+				Input.GuiDirection(new Vector2(0f, 1f)).DrawCentered(vector1 + new Vector2((0f - vector2.X) * 0.5f, vector2.Y * 0.5f + 16f), Color.White * Ease.CubeOut(maplistEase), 0.5f);
 			}
 		}
 
-		private void EaseCamera() {
-			AreaData areaData = AreaData.Areas[area];
-			base.Overworld.Mountain.EaseCamera(area, areaData.MountainIdle, null, nearTarget: true, areaData.GetMeta()?.Mountain?.Rotate ?? (areaData.GetLevelSet() == "Celeste" && area == 10));
-			base.Overworld.Mountain.Model.EaseState(areaData.MountainState);
-		}
-
-		private void GetMinMaxArea(out int areaOffs, out int areaMax) {
-			LevelSetStats stats = Util.GetSetStats(ILSelector.LastArea.Local_Safe.LevelSet);
-			areaOffs = stats.AreaOffset;
-			areaMax = areaOffs + stats.MaxArea;
-		}
-
 		public void orig_Update() {
-			LevelSetStats stats = Util.GetSetStats(currentLevelSet);
 			if (Focused) {
 				inputDelay -= Engine.DeltaTime;
-				if (area >= 0 && area < AreaData.Areas.Count) {
-					Input.SetLightbarColor(AreaData.Get(area).TitleBaseColor);
+				if (hoveredOption.Data != null) {
+					Input.SetLightbarColor(hoveredOption.Data.TitleBaseColor);
 				}
 				if (Input.MenuCancel.Pressed) {
 					Audio.Play("event:/ui/world_map/chapter/back");
-					if (ILSelector.ActiveSelector != null) {
-						ILSelector.ActiveSelector.Area = GlobalAreaKey.Overworld;
-						ILSelector.ActiveSelector.Category = StandardCategory.Clear;
-					}
+					ILSelector.ChosenCategory = null;
 					Overworld.Goto<OuiRunSelectILExit>();
-					Overworld.Maddy.Hide();
 				}
 				else if (inputDelay <= 0f) {
-					if (area > stats.AreaOffset && Input.MenuLeft.Pressed) {
-						Audio.Play("event:/ui/world_map/icon/roll_left");
-						inputDelay = 0.15f;
-						area--;
-						icons[area].Hovered(-1);
-						EaseCamera();
-						Overworld.Maddy.Hide();
+					if (Input.MenuLeft.Pressed) {
+						if (hoveredChapterIdx > 0) {
+							Audio.Play("event:/ui/world_map/icon/roll_left");
+							inputDelay = 0.15f;
+							hoveredChapterIdx--;
+							ChapterIcon.CurrentlyHoveredIndex = hoveredChapterIdx;
+							hoveredIcon.Hovered(-1);
+						}
 					}
 					else if (Input.MenuRight.Pressed) {
-						if (area < stats.AreaOffset + stats.MaxArea) {
+						if (hoveredChapterIdx < UsingLevelSet.Chapters.Count - 1) {
 							Audio.Play("event:/ui/world_map/icon/roll_right");
 							inputDelay = 0.15f;
-							area++;
-							icons[area].Hovered(1);
-							if (area <= stats.AreaOffset + stats.MaxArea) {
-								EaseCamera();
-							}
-							Overworld.Maddy.Hide();
+							hoveredChapterIdx++;
+							ChapterIcon.CurrentlyHoveredIndex = hoveredChapterIdx;
+							hoveredIcon.Hovered(1);
 						}
 					}
 					else if (Input.MenuConfirm.Pressed) {
 						Audio.Play("event:/ui/world_map/icon/select");
-						if (string.IsNullOrEmpty(CollabUtils2Integration.GetLobbyLevelSet(ILSelector.LastArea.SID))) {
+						string levelSet = hoveredOption.CollabLevelSetForLobby;
+						if (string.IsNullOrEmpty(levelSet)) {
 							// not a collab lobby
+							OuiRunSelectILChapterPanel.UsingChapter = hoveredOption;
 							Overworld.Goto<OuiRunSelectILChapterPanel>();
 						}
 						else {
 							// is a collab lobby
+							OuiRunSelectILCollabMapSelect.UsingLobby = hoveredOption;
 							Overworld.Goto<OuiRunSelectILCollabMapSelect>();
 						}
 					}
@@ -279,22 +219,13 @@ namespace Celeste.Mod.Head2Head.UI {
 		}
 
 		private void updateScarf() {
-			string text = "areas/" + AreaData.Areas[area].Name.ToLowerInvariant() + "_hover";
+			string text = "areas/" + hoveredOption.Data?.Name?.ToLowerInvariant() ?? "" + "_hover";
 			if (!text.Equals(scarf.AtlasPath)) {
 				scarf = GFX.Gui.GetOrDefault(text, levelSetScarf);
 				scarfSegments = new MTexture[scarf.Height / scarfSegmentSize];
 				for (int i = 0; i < scarfSegments.Length; i++) {
 					scarfSegments[i] = scarf.GetSubtexture(0, i * scarfSegmentSize, scarf.Width, scarfSegmentSize);
 				}
-			}
-		}
-
-		public void orig_Render() {
-			Vector2 vector = new Vector2(960f, (float)(-scarf.Height) * Ease.CubeInOut(1f - ease));
-			for (int i = 0; i < scarfSegments.Length; i++) {
-				float num = Ease.CubeIn((float)i / (float)scarfSegments.Length);
-				float x = num * (float)Math.Sin(base.Scene.RawTimeActive * 4f + (float)i * 0.05f) * 4f - num * 16f;
-				scarfSegments[i].DrawJustified(vector + new Vector2(x, i * scarfSegmentSize), new Vector2(0.5f, 0f));
 			}
 		}
 	}

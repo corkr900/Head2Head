@@ -1,9 +1,9 @@
 - Name: Head2Head
-  Version: 1.1.6
+  Version: 1.2.2
   DLL: Code/Head2Head.dll
   Dependencies:
     - Name: Everest
-      Version: 1.3471.0
+      Version: 1.4465.0
     - Name: CelesteNet.Client
       Version: 2.0.0
   OptionalDependencies:
@@ -13,3 +13,5 @@
       Version: 3.16.5
     - Name: CelesteTAS
       Version: 3.17.2
+    - Name: Randomizer
+      Version: 0.7.18

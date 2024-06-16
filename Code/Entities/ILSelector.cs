@@ -17,12 +17,13 @@ using Celeste.Mod.Head2Head.Shared;
 using FMOD.Studio;
 using Celeste.Mod.Head2Head.IO;
 using Celeste.Mod.Head2Head.Integration;
+using Celeste.Mod.CelesteNet;
 
 namespace Celeste.Mod.Head2Head.Entities {
 	[CustomEntity("Head2Head/ILSelector")]
 	public class ILSelector : Entity {
 
-		public static GlobalAreaKey LastArea = GlobalAreaKey.VanillaPrologue;
+		public static RunOptionsILCategory ChosenCategory = null;
 
 		public static Dictionary<GlobalAreaKey, List<StandardCategory>> SuppressedCategories = new Dictionary<GlobalAreaKey, List<StandardCategory>>();
 		public static void SuppressCategory(GlobalAreaKey area, params StandardCategory[] cats) {
@@ -40,9 +41,6 @@ namespace Celeste.Mod.Head2Head.Entities {
 		private SceneWrappingEntity<Overworld> overworldWrapper;
 
 		public static ILSelector ActiveSelector { get; private set; } = null;
-		public GlobalAreaKey Area;
-		public StandardCategory Category;
-		public CustomMatchTemplate CustomTemplate;
 
 		private Sprite sprite;
 		private TalkComponent talkComponent;
@@ -82,13 +80,7 @@ namespace Celeste.Mod.Head2Head.Entities {
 			Level l = player.Scene as Level;
 			if (l != null) l.PauseLock = true;
 			ActiveSelector = this;
-			Area = GlobalAreaKey.Overworld;
-			Category = StandardCategory.Clear;
-
-			string collabLobby = CollabUtils2Integration.GetLobbyForLevelSet(LastArea.Data.LevelSet);
-			if (!string.IsNullOrEmpty(collabLobby)) {
-				LastArea = new GlobalAreaKey(collabLobby);
-			}
+			ChosenCategory = null;
 
 			player.StateMachine.State = Player.StDummy;
 			OuiRunSelectIL.Start = true;
@@ -166,116 +158,21 @@ namespace Celeste.Mod.Head2Head.Entities {
 				}
 			}
 
-			if (!Area.IsOverworld) {
-				if (Category == StandardCategory.Custom) {
-					foreach (MatchPhase ph in CustomTemplate.Build()) {
-						Head2HeadModule.Instance.AddMatchPhase(ph);
-					}
-					Head2HeadModule.Instance.NameBuildingMatch(CustomTemplate.DisplayName);
+			if (ChosenCategory != null) {
+				MatchDefinition def = ChosenCategory.Template.BuildIL();
+				if (def != null) {
+					Head2HeadModule.Instance.StageMatch(def);
 				}
-				else {
-					Head2HeadModule.Instance.AddMatchPhase(Category, Area);
-				}
-				Area = GlobalAreaKey.Overworld;
-				Category = StandardCategory.Clear;
-				CustomTemplate = null;
-				Head2HeadModule.Instance.StageMatch();
+				ChosenCategory = null;
 			}
 		}
 
 		internal static void OnPause(On.Celeste.Level.orig_Pause orig, Level self, int startIndex, bool minimal, bool quickReset) {
 			if (ActiveSelector != null) {
-				ActiveSelector.Area = GlobalAreaKey.Overworld;
-				ActiveSelector.Category = StandardCategory.Clear;
+				ChosenCategory = null;
 				ActiveSelector.Close(self, true, true);
 			}
 		}
 
-		internal static void OnMapSearchCleanExit(On.Celeste.Mod.UI.OuiMapSearch.orig_cleanExit orig, OuiMapSearch self) {
-			if (ActiveSelector == null) {
-				orig(self);
-			}
-			else {
-				DynamicData dd = new DynamicData(self);
-				dd.Invoke("clearSearch");
-				if (self.FromChapterSelect) {
-					Audio.Play("event:/ui/main/button_back");
-					self.Overworld.Goto<OuiRunSelectILChapterSelect>();
-				}
-				else {
-					self.Overworld.Goto<OuiMapList>();
-				}
-			}
-		}
-
-		internal static void OnMapSearchInspect(On.Celeste.Mod.UI.OuiMapSearch.orig_Inspect orig, OuiMapSearch self, AreaData area, AreaMode mode) {
-			if (ActiveSelector == null) {
-				orig(self, area, mode);
-			}
-			else {
-				self.Focused = false;
-				Audio.Play("event:/ui/world_map/icon/select");
-				GlobalAreaKey areaKey = new GlobalAreaKey(area.ToKey(mode));
-				if (areaKey.Equals(GlobalAreaKey.Head2HeadLobby)) {
-					Audio.Play("event:/ui/main/button_invalid");
-					return;
-				}
-				LastArea = areaKey;
-				if (self.OuiIcons != null && area.ID < self.OuiIcons.Count) {
-					self.OuiIcons[area.ID].Select();
-				}
-				self.Overworld.Mountain.Model.EaseState(area.MountainState);
-				self.Overworld.Goto<OuiRunSelectILChapterSelect>();
-			}
-		}
-
-		internal static void OnMapListUpdate(On.Celeste.Mod.UI.OuiMapList.orig_Update orig, OuiMapList self) {
-			if (ActiveSelector == null) {
-				orig(self);
-				return;
-			}
-			DynamicData dd = new DynamicData(self);
-			TextMenu menu = dd.Get<TextMenu>("menu");
-			bool goingToChapSelect = false;
-			if (menu != null && menu.Focused && self.Selected) {
-				self.Overworld.Maddy.Show = false;
-				if (Input.MenuCancel.Pressed || Input.Pause.Pressed || Input.ESC.Pressed) {
-					Audio.Play("event:/ui/main/button_back");
-					self.Overworld.Goto<OuiRunSelectILChapterSelect>();
-					goingToChapSelect = true;
-				}
-			}
-			if (!goingToChapSelect) {
-				orig(self);
-			}
-		}
-
-		internal static void OnMapListInspect(On.Celeste.Mod.UI.OuiMapList.orig_Inspect orig, OuiMapList self, AreaData area, AreaMode mode) {
-			if (ActiveSelector == null) {
-				orig(self, area, mode);
-				return;
-			}
-			GlobalAreaKey areaKey = new GlobalAreaKey(area.ToKey(mode));
-			if (areaKey.Equals(GlobalAreaKey.Head2HeadLobby)) {
-				Audio.Play("event:/ui/main/button_invalid");
-				return;
-			}
-			DynamicData dd = new DynamicData(self);
-			self.Focused = false;
-			Audio.Play("event:/ui/world_map/icon/select");
-			LastArea = areaKey;
-			if (self.OuiIcons != null && area.ID < self.OuiIcons.Count) {
-				self.OuiIcons[area.ID].Select();
-			}
-			self.Overworld.Mountain.Model.EaseState(area.MountainState);
-			if (string.IsNullOrEmpty(CollabUtils2Integration.GetLobbyLevelSet(LastArea.SID))) {
-				// not a collab lobby
-				self.Overworld.Goto<OuiRunSelectILChapterPanel>();
-			}
-			else {
-				// is a collab lobby
-				self.Overworld.Goto<OuiRunSelectILCollabMapSelect>();
-			}
-		}
 	}
 }

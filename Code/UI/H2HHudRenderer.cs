@@ -222,7 +222,7 @@ namespace Celeste.Mod.Head2Head.UI {
 
 		private string GetPlayerDetail(PlayerID id, ResultCategory cat, MatchDefinition def) {
 			if (cat == ResultCategory.Completed) {
-				if (def.Phases[0].category == StandardCategory.TimeLimit) {
+				if (def.Phases[0].HasTimeLimit) {
 					MatchResultPlayer res = def.Result[id];
 					if (res.FinalRoom != "h2h_chapter_completed") {
 						return res.FinalRoom;
@@ -236,7 +236,7 @@ namespace Celeste.Mod.Head2Head.UI {
 					: Head2HeadModule.knownPlayers.ContainsKey(id) ? Head2HeadModule.knownPlayers[id]
 					: null;
 				if (stat != null) {
-					if (def.Phases[0].category == StandardCategory.TimeLimit) {
+					if (def.Phases[0].HasTimeLimit) {
 						MatchObjective ob = def.Phases[0].Objectives[0];
 						long timeRemaining = Math.Max(stat.FileTimerAtMatchBegin + ob.AdjustedTimeLimit(id) - stat.CurrentFileTimer, 0);
 						return string.Format(Dialog.Get("Head2Head_hud_playerlist_timeremain"), Util.ReadableTimeSpanTitle(timeRemaining));
@@ -252,7 +252,7 @@ namespace Celeste.Mod.Head2Head.UI {
 									strawbsTotal += obj.CollectableGoal;
 									int idx = stat.objectives.FindIndex((H2HMatchObjectiveState s) => s.ObjectiveID == obj.ID);
 									if (idx < 0) continue;
-									strawbsCollected += stat.objectives[idx].CollectedItems?.Count ?? 0;
+									strawbsCollected += stat.objectives[idx].CountCollectables();
 								}
 							}
 						}
@@ -304,7 +304,7 @@ namespace Celeste.Mod.Head2Head.UI {
 		}
 
 		private bool ShouldShowMatchPass(Scene scene, MatchDefinition def) {
-			return Role.hasBTAMatchPass && PlayerStatus.Current.CurrentArea.Equals(GlobalAreaKey.Head2HeadLobby);
+			return RoleLogic.HasBTAMatchPass && PlayerStatus.Current.CurrentArea.Equals(GlobalAreaKey.Head2HeadLobby);
 		}
 
 		private void RenderMatchPass(Scene scene, MatchDefinition def) {
@@ -321,7 +321,7 @@ namespace Celeste.Mod.Head2Head.UI {
 		#region Debug Info
 
 		private bool ShouldShowDebugInfo(Scene scene, MatchDefinition def) {
-			return def != null && Role.IsDebug;
+			return def != null && RoleLogic.IsDebug;
 		}
 
 		private void RenderDebugInfo(Scene scene, MatchDefinition def) {
@@ -346,7 +346,7 @@ namespace Celeste.Mod.Head2Head.UI {
 						(H2HMatchObjectiveState s) => s.ObjectiveID == obj.ID);
 					if (oblist.Count > 0) {
 						H2HMatchObjectiveState state = oblist[0];
-						ststext.Add(string.Format("done={0}; ct={1}; frm={2}", state.Completed, state.CollectedItems?.Count, state.FinalRoom));
+						ststext.Add(string.Format("done={0}; ct={1}; frm={2}", state.Completed, state.CountCollectables(), state.FinalRoom));
 					}
 					else ststext.Add("-");
 				}

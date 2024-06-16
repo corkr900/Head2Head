@@ -18,7 +18,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 					ret = !comm.IsConnected ? null
 						: (PlayerID?)new PlayerID(LocalMACAddressHash, comm.CnetID.Value, comm.CnetClient.PlayerInfo.Name);
 				}
-				catch (Exception e) {
+				catch (Exception) {
 					// If we lose connection at exactly the wrong moment,
 					// comm.IsConnected returns true but comm.CnetID could be null 
 					ret =  null;

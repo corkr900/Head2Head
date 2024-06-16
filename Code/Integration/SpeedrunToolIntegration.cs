@@ -10,24 +10,21 @@ using System.Threading.Tasks;
 namespace Celeste.Mod.Head2Head.Integration {
 	public static class SpeedrunToolIntegration {
 
-		private static bool IsSpeedrunToolInstalled = false;
-
 		private static Type StateManager;
 		private static Type TeleportRoomUtils;
 		private static MethodInfo StateManager_SaveState;
 		private static MethodInfo StateManager_LoadState;
 		private static MethodInfo TeleportRoomUtils_TeleportTo;
 
-		private static IDetour Hook_StateManager_SaveState;
-		private static IDetour Hook_StateManager_LoadState;
-		private static IDetour Hook_TeleportRoomUtils_TeleportTo;
+		private static Hook Hook_StateManager_SaveState;
+		private static Hook Hook_StateManager_LoadState;
+		private static Hook Hook_TeleportRoomUtils_TeleportTo;
 
 		internal static void Load() {
 			try {
 				// Get type info and functions
 				StateManager = Type.GetType("Celeste.Mod.SpeedrunTool.SaveLoad.StateManager,SpeedrunTool");
 				if (StateManager == null) {
-					IsSpeedrunToolInstalled = false;
 					return;
 				}
 				StateManager_SaveState = StateManager.GetMethod(
@@ -48,12 +45,8 @@ namespace Celeste.Mod.Head2Head.Integration {
 				Hook_TeleportRoomUtils_TeleportTo = new Hook(TeleportRoomUtils_TeleportTo,
 					typeof(SpeedrunToolIntegration).GetMethod("OnTeleportTo", BindingFlags.NonPublic | BindingFlags.Static));
 
-				// Misc
-				IsSpeedrunToolInstalled = true;
 			}
-			catch (Exception e) {
-				IsSpeedrunToolInstalled = false;
-			}
+			catch (Exception) { }
 		}
 
 		internal static void Unload() {

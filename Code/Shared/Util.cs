@@ -4,6 +4,7 @@ using Celeste.Mod.Meta;
 using MonoMod.Utils;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -59,10 +60,16 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 		internal static bool HasCassette(GlobalAreaKey area) {
 			if (!area.ExistsLocal) return false;
+			if (area.IsVanilla) return area.SID switch {
+				"Celeste/0-Prologue" => false,
+				"Celeste/8-Epilogue" => false,
+				"Celeste/10-Farewell" => false,
+				_ => area.Mode == AreaMode.Normal
+			};
 			if (area.Data.Mode[(int)area.Mode].MapData.DetectedCassette) return true;
 			MapData md = GetMapDataForMode(area);
 			if (md == null) return false;
-			DynamicData dd = new DynamicData(md);
+			DynamicData dd = DynamicData.For(md);
 			if (!dd.Data.ContainsKey("HasCassette")) return false;
 			return dd.Get<bool>("HasCassette");
 		}
@@ -71,7 +78,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			if (!area.ExistsLocal) return false;
 			MapMetaModeProperties props = area.ModeMetaProperties;
 			if (props?.HeartIsEnd == true) return false;
-			DynamicData dd = new DynamicData(GetMapDataForMode(area));
+			DynamicData dd = DynamicData.For(GetMapDataForMode(area));
 			if (!dd.Data.ContainsKey("DetectedRealHeartGem")) return false;
 			return dd.Get<bool>("DetectedRealHeartGem");
 		}
@@ -82,8 +89,12 @@ namespace Celeste.Mod.Head2Head.Shared {
 		}
 
 		internal static bool HasTrackedBerries(GlobalAreaKey area) {
-			if (!area.ExistsLocal) return false;
-			return area.Data.Mode[(int)area.Mode].MapData.DetectedStrawberries > 0;
+			return TrackedBerryCount(area) > 0;
+		}
+
+		internal static int TrackedBerryCount(GlobalAreaKey area) {
+			if (!area.ExistsLocal) return 0;
+			return area.Data.Mode[(int)area.Mode].MapData.DetectedStrawberries;
 		}
 
 		internal static LevelSetStats GetSetStats(string levelSet) {
@@ -114,6 +125,14 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 		internal static object TranslatedDNFReason(DNFReason reason) {
 			return Dialog.Get(string.Format("Head2Head_DNFReason_{0}", reason.ToString()));
+		}
+
+		internal static string TranslatedRuleLabel(MatchRule rule) {
+			return Dialog.Clean($"Head2Head_RuleLabel_{rule}");
+		}
+
+		internal static string TranslatedObjectiveLabel(MatchObjectiveType objectiveType) {
+			return Dialog.Clean($"Head2Head_ObjectiveLabel_{objectiveType}");
 		}
 
 		internal static bool EntityIsRealHeartGem(BinaryPacker.Element entity) {
@@ -173,9 +192,10 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 		internal static bool IsUpdateAvailable() {
 			SortedDictionary<ModUpdateInfo, EverestModuleMetadata> updates = ModUpdaterHelper.GetAsyncLoadedModUpdates();
-			foreach(EverestModuleMetadata meta in updates.Values) {
-				if (meta.Name == Head2HeadModule.Instance.Metadata.Name
-					&& meta.Version > Head2HeadModule.Instance.Metadata.Version) {
+			if (updates == null) return false;
+			foreach(KeyValuePair<ModUpdateInfo, EverestModuleMetadata> update in updates) {
+				if (update.Value.Name != Head2HeadModule.Instance.Metadata.Name) continue;
+				if (Version.TryParse(update.Key.Version, out Version vers) && vers > Head2HeadModule.Instance.Metadata.Version) {
 					return true;
 				}
 			}
@@ -191,7 +211,11 @@ namespace Celeste.Mod.Head2Head.Shared {
 		}
 
 		internal static bool SafeCreateAndSwitchFile(int slot, bool assist, bool variant) {
-			if (UserIO.Open(UserIO.Mode.Read)) {
+			if (slot == -1) {
+				SaveData.InitializeDebugMode();
+				return true;
+			}
+			else if (UserIO.Open(UserIO.Mode.Read)) {
 				string filepath = SaveData.GetFilename(slot);
 				if (UserIO.Exists(filepath)) {
 					UserIO.Close();

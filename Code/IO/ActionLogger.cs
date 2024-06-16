@@ -17,7 +17,7 @@ namespace Celeste.Mod.Head2Head.IO {
 		private static MatchLog Current;
 
 		private static bool TrackActions(bool skipCurrentCheck = false) {
-			return (skipCurrentCheck || (Current != null && !Current.completedMatchWritten)) && Role.LogMatchActions();
+			return (skipCurrentCheck || (Current != null && !Current.completedMatchWritten)) && RoleLogic.LogMatchActions();
 		}
 
 		public static bool WriteLog() {
@@ -50,6 +50,7 @@ namespace Celeste.Mod.Head2Head.IO {
 		/// <param name="matchID"></param>
 		/// <returns>Returns "" if there is no matching file</returns>
 		private static string GetLogFileName(string matchID) {
+			// Use DynamicData to access SavePath because the implementation of it is different between FNA/XNA
 			DynamicData dd = new DynamicData(typeof(UserIO));
 			string dirpath = dd.Get<string>("SavePath");
 			foreach (string file in Directory.GetFiles(dirpath, "Head2Head*")) {
@@ -68,6 +69,7 @@ namespace Celeste.Mod.Head2Head.IO {
 
 		public static void PurgeOldLogs() {
 			// Delete logs older than today or yesterday
+			// Use DynamicData to access SavePath because the implementation of it is different between FNA/XNA
 			DynamicData dd = new DynamicData(typeof(UserIO));
 			string dirpath = dd.Get<string>("SavePath");
 			DateTime basedate = DateTime.Today;
@@ -151,12 +153,13 @@ namespace Celeste.Mod.Head2Head.IO {
 		}
 
 		public static void EnteringRoom() {
-			if (!TrackActions()) return;
-			LoggableAction la = new LoggableAction(LoggableAction.ActionType.EnterRoom);
-			Current.Log(la);
-			if (!string.IsNullOrEmpty(la.checkpoint)) {
-				WriteLog();
-			}
+			return;  // Logging every room transition is too much noise
+			//if (!TrackActions()) return;
+			//LoggableAction la = new LoggableAction(LoggableAction.ActionType.EnterRoom);
+			//Current.Log(la);
+			//if (!string.IsNullOrEmpty(la.checkpoint)) {
+			//	WriteLog();
+			//}
 		}
 
 		public static void DebugView() {
@@ -257,8 +260,7 @@ namespace Celeste.Mod.Head2Head.IO {
 		/// </summary>
 		/// <returns>Returns "" if there is no appropriate path</returns>
 		private string GetLogPath() {
-			DynamicData dd = new DynamicData(typeof(UserIO));
-			string handle = dd.Invoke("GetHandle", string.Format("Head2Head {0} {1}", matchBeginDate, matchID)) as string;
+			string handle = UserIO.GetHandle(string.Format("Head2Head {0} {1}", matchBeginDate, matchID));
 			return handle ?? "";
 		}
 	}
@@ -299,7 +301,7 @@ namespace Celeste.Mod.Head2Head.IO {
 			areaSID = PlayerStatus.Current.CurrentArea.SID;
 			room = PlayerStatus.Current.CurrentRoom;
 			checkpoint = area.IsOverworld ? "Overworld"
-				: area.ExistsLocal ? AreaData.GetCheckpointName(area.Local_Safe, room)
+				: area.IsValidInstalledMap ? AreaData.GetCheckpointName(area.Local_Safe, room)
 				: "[unknown area]";
 			matchID = PlayerStatus.Current.CurrentMatchID;
 			saveDataIndex = SaveData.Instance?.FileSlot ?? -99;
