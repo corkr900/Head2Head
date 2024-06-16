@@ -25,6 +25,7 @@ using Celeste.Mod.UI;
 using Celeste.Mod.Head2Head.UI;
 using Celeste.Mod.Head2Head.Integration;
 using MonoMod.ModInterop;
+using Celeste.Mod.Head2Head.ControlPanel;
 
 // TODO Force DNF if a player intentionally closes the game
 // TODO Make the start-match and return-to-lobby sequences more robust
@@ -116,6 +117,7 @@ namespace Celeste.Mod.Head2Head {
 			// Monocle + Celeste Hooks
 			On.Monocle.Scene.Begin += OnSceneBegin;
 			On.Monocle.Scene.End += OnSceneEnd;
+			On.Monocle.Scene.Update += OnSceneUpdate;
 
 			On.Celeste.Key.OnPlayer += OnKeyOnPlayer;
 			On.Celeste.Level.Render += OnLevelRender;
@@ -181,20 +183,8 @@ namespace Celeste.Mod.Head2Head {
 			CelesteTASIntegration.Load();
 			RandomizerIntegration.Load();
 			SyncedClock.DoClockSync();
-		}
-
-		private void OnSaveDataAssistModeChecks(On.Celeste.SaveData.orig_AssistModeChecks orig, SaveData self) {
-			if (PlayerStatus.Current.IsInMatch(false)) {
-				Logger.Log(LogLevel.Info, "Head2Head", $"Prevented SaveData.AssistModeChecks from executing; Player is in a match");
-			}
-			else orig(self);
-		}
-
-		private void OnAssistsEnfornceAssistMode(On.Celeste.Assists.orig_EnfornceAssistMode orig, ref Assists self) {
-			if (PlayerStatus.Current.IsInMatch(false)) {
-				Logger.Log(LogLevel.Info, "Head2Head", $"Prevented Assists.EnfornceAssistMode from executing; Player is in a match");
-			}
-			else orig(ref self);
+			ControlPanelCore.TryInitServer();
+			ControlPanelCommands.Register();
 		}
 
 		public override void Unload() {
@@ -215,6 +205,7 @@ namespace Celeste.Mod.Head2Head {
 			// Monocle + Celeste Hooks
 			On.Monocle.Scene.Begin -= OnSceneBegin;
 			On.Monocle.Scene.End -= OnSceneEnd;
+			On.Monocle.Scene.Update -= OnSceneUpdate;
 
 			On.Celeste.Key.OnPlayer -= OnKeyOnPlayer;
 			On.Celeste.Level.Render -= OnLevelRender;
@@ -277,6 +268,8 @@ namespace Celeste.Mod.Head2Head {
 			CollabUtils2Integration.Unload();
 			SpeedrunToolIntegration.Unload();
 			CelesteTASIntegration.Unload();
+			ControlPanelCore.EndServer();
+			ControlPanelCommands.Unregister();
 		}
 
 		public override void CreateModMenuSection(TextMenu menu, bool inGame, FMOD.Studio.EventInstance snapshot)
@@ -286,6 +279,25 @@ namespace Celeste.Mod.Head2Head {
 		}
 
 		// ###############################################
+
+		private void OnSceneUpdate(On.Monocle.Scene.orig_Update orig, Scene self) {
+			ControlPanelCore.FlushIncoming();
+			orig(self);
+		}
+
+		private void OnSaveDataAssistModeChecks(On.Celeste.SaveData.orig_AssistModeChecks orig, SaveData self) {
+			if (PlayerStatus.Current.IsInMatch(false)) {
+				Logger.Log(LogLevel.Info, "Head2Head", $"Prevented SaveData.AssistModeChecks from executing; Player is in a match");
+			}
+			else orig(self);
+		}
+
+		private void OnAssistsEnfornceAssistMode(On.Celeste.Assists.orig_EnfornceAssistMode orig, ref Assists self) {
+			if (PlayerStatus.Current.IsInMatch(false)) {
+				Logger.Log(LogLevel.Info, "Head2Head", $"Prevented Assists.EnfornceAssistMode from executing; Player is in a match");
+			}
+			else orig(ref self);
+		}
 
 		private void OnLoadLevel(On.Celeste.Level.orig_LoadLevel orig, Level self, Player.IntroTypes playerIntro, bool isFromLoader) {
 			orig(self, playerIntro, isFromLoader);
