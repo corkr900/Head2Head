@@ -19,7 +19,7 @@ function TryConnect() {
 		HandleMessage(JSON.parse(e.data));
 	};
 	websocket.onerror = (e) => {
-		writeToScreen(`<span class="error">ERROR:</span> ${JSON.stringify(data, null, 4)}`);
+		writeToScreen(`<span class="error">ERROR:</span> ${JSON.stringify(e, null, 4)}`);
 	};
 }
 
@@ -30,6 +30,7 @@ function HandleMessage(data) {
 	}
 	else if (data.Command == "CURRENT_MATCH") {
 		RenderCurrentMatchInfo(data.Data);
+		RenderOtherMatchInfo(data.Data);
 	}
 }
 
@@ -38,8 +39,8 @@ function doSend(message) {
 	websocket.send(message);
 }
 function writeToScreen(message) {
-	const output = document.querySelector("#output");
-	output.insertAdjacentHTML("afterbegin", `<p>[${new Date().toISOString()}] ${message}</p>`);
+	//const output = document.querySelector("#output");
+	//output.insertAdjacentHTML("afterbegin", `<p>[${new Date().toISOString()}] ${message}</p>`);
 }
 
 function HandleConnectionUpdate(newIsConnected) {
@@ -54,13 +55,54 @@ function RenderCurrentMatchInfo(data) {
 		return;
 	}
 	container.textContent = "";
-
 	// Title
-	let title = document.createElement("h4");
+	let title = document.createElement("h5");
 	title.textContent = `${data.DisplayName} - ${data.StateTitle}`;
 	container.appendChild(title);
+	RenderMatchInfoToContainer(data, container);
+}
+
+function RenderOtherMatchInfo(data) {
+	if (!data || !data.State || data.State == 0) {
+		return;
+	}
+	let matchContainer = document.querySelector(`#allMatchesBody #matchContainer_${data.InternalID}`);
+	if (matchContainer) {
+	}
+	else {
+		matchContainer = document.createElement("div");
+		matchContainer.setAttribute("id", `matchContainer_${data.InternalID}`);
+		matchContainer.className = "collapseContainer";
+		document.querySelector("#allMatchesBody").appendChild(matchContainer);
+	}
+	const prevMaxHeight = matchContainer.querySelector(".collapsibleContent")?.style?.maxHeight;
+	matchContainer.textContent = "";
+	// Collapse header (title)
+	const collapseHeader = document.createElement("button");
+	collapseHeader.setAttribute("type", "button");
+	collapseHeader.className = "collapsibleHeader";
+	collapseHeader.textContent = `${data.DisplayName} - ${data.StateTitle}`;
+	collapseHeader.addEventListener("click", function () {
+		this.classList.toggle("collapsibleActive");
+		var content = this.nextElementSibling;
+		if (content.style.maxHeight) {
+			content.style.maxHeight = null;
+		} else {
+			content.style.maxHeight = content.scrollHeight + "px";
+		}
+	});
+	matchContainer.appendChild(collapseHeader);
+	// Collapse body (the rest)
+	const collapseBody = document.createElement("div");
+	collapseBody.className = "collapsibleContent";
+	collapseBody.style.display = prevMaxHeight;
+	RenderMatchInfoToContainer(data, collapseBody);
+	matchContainer.appendChild(collapseBody);
+}
+
+function RenderMatchInfoToContainer(data, container) {
 	// Players
-	title = document.createElement("h4");
+	title = document.createElement("h5");
 	title.textContent = "Players";
 	container.appendChild(title);
 	const table = document.createElement("table");

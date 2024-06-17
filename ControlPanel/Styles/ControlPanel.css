@@ -93,6 +93,10 @@ textarea {
 	margin: 0px 0px 20px 0px;
 }
 
+.card h5 {
+	margin: 10px 6px;
+}
+
 .playerTable tr td {
 	padding: 0px 12px;
 }
@@ -117,4 +121,46 @@ textarea {
 }
 .playerStatus.Finished {
 	color: rgb(49, 209, 49);
+}
+
+.collapsibleHeader {
+	background-color: rgb(45, 45, 51);
+	color: rgb(207, 206, 221);
+	cursor: pointer;
+	padding: 18px;
+	width: 100%;
+	border: none;
+	text-align: left;
+	outline: none;
+	font-size: 15px;
+}
+
+.collapsibleHeader:hover {
+	background-color: rgb(94, 94, 104);
+}
+
+.collapsibleContent {
+	padding: 0 18px;
+	overflow: hidden;
+	max-height: 0;
+	transition: max-height 0.15s ease-out;
+}
+
+.collapsibleHeader:after {
+	content: '\02795'; /* Unicode character for "plus" sign (+) */
+	font-size: 13px;
+	float: right;
+	margin-left: 5px;
+}
+
+.collapsibleActive:after {
+	content: "\2796"; /* Unicode character for "minus" sign (-) */
+}
+
+.footerSpacer {
+	height: 56px;
+}
+
+.collapseContainer {
+	border: 2px ridge black;
 }

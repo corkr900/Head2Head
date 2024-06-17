@@ -22,6 +22,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 		public string CategoryName => def?.CategoryDisplayName;
 		public bool IsRandomizer => def?.HasRandomizerObjective ?? false;
 		public List<PlayerSerializableInfo> Players => GetPlayerInfo();
+		public List<string> AvailableActions => GetActions();
 
 		private List<PlayerSerializableInfo> GetPlayerInfo() {
 			if (def == null) return new();
@@ -31,6 +32,18 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 			}
 			return ret;
 		}
+
+		private List<string> GetActions() {
+			List<string> ret = new();
+			if (Head2HeadModule.Instance.CanStageMatch() && PlayerStatus.Current.CurrentMatchID != def.MatchID) {
+				ret.Add("STAGE_MATCH");
+			}
+			if (Head2HeadModule.Instance.CanJoinMatch()) {
+				ret.Add("JOIN_MATCH");
+			}
+			return ret;
+		}
+
 	}
 
 	public struct PlayerSerializableInfo {
