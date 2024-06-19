@@ -23,6 +23,9 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 		public bool IsRandomizer => def?.HasRandomizerObjective ?? false;
 		public List<PlayerSerializableInfo> Players => GetPlayerInfo();
 		public List<string> AvailableActions => GetActions();
+		public string PrimaryMap => def.Phases[0]?.Area.SID;
+		public string PrimaryMapName => def.Phases[0]?.Area.DisplayName;
+		public string PrimaryMapIconId => SerializeImage.FromGui(def.CategoryIcon).Id;
 
 		private List<PlayerSerializableInfo> GetPlayerInfo() {
 			if (def == null) return new();

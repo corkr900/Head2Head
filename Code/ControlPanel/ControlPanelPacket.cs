@@ -34,31 +34,44 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 		/// The command to run on the receiver's end
 		/// </summary>
 		public string Command { get; private set; }
-
 		/// <summary>
-		/// The full set of arguments. Args[0] will be the client's token and Args[1] will be the command
+		/// The JSON Data element sent from the client on incoming packets
 		/// </summary>
-		//public string[] Args { get; private set; }
-
+		public JsonElement Json { get; private set; }
 		/// <summary>
-		/// The raw data payload
+		/// The raw data payload for outgoing packets
 		/// </summary>
 		public string Payload { get; set; }
 
 		private ControlPanelPacket() { }
 
-		internal static ControlPanelPacket CreateIncoming(string text) {
-			string[] parts = text.Split('|', StringSplitOptions.TrimEntries);
-			if (parts.Length < 2) {
-				Logger.Log(LogLevel.Error, "Head2Head", $"Received invalid incoming message: {text}");
-				Engine.Commands.Log($"Received invalid incoming message: {text}");
+		internal static ControlPanelPacket CreateIncoming(byte[] data) {
+			JsonElement cmdElem;
+			JsonElement tokenElem;
+			JsonElement dataElem;
+			try {
+				JsonDocument doc = JsonDocument.Parse(data);
+				if (doc.RootElement.ValueKind != JsonValueKind.Object
+					|| !doc.RootElement.TryGetProperty("Command", out cmdElem)
+					|| cmdElem.ValueKind != JsonValueKind.String
+					|| !doc.RootElement.TryGetProperty("Token", out tokenElem)
+					|| tokenElem.ValueKind != JsonValueKind.String
+					|| !doc.RootElement.TryGetProperty("Data", out dataElem))
+				{
+					Logger.Log(LogLevel.Error, "Head2Head", $"An error occurred deserializing an incoming Control Panel message:" +
+						$"The message is not a JSON object containing the properties 'Command' (string), 'Token' (string), and 'Data' (any).");
+					return null;
+				}
+			}
+			catch (Exception e) {
+				Logger.Log(LogLevel.Error, "Head2Head", $"An error occurred deserializing an incoming Control Panel message:\n{e}");
 				return null;
 			}
 			ControlPanelPacket packet = new();
 			packet.Incoming = true;
-			packet.ClientToken = parts[0];
-			packet.Command = parts[1];
-			packet.Payload = text;
+			packet.ClientToken = tokenElem.ToString();
+			packet.Command = cmdElem.ToString();
+			packet.Json = dataElem;
 			return packet;
 		}
 

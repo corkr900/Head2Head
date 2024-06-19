@@ -1,7 +1,9 @@
 // http://www.websocket.org/echo.html
 const wsUri = "ws://127.0.0.1:8080/";
+const placeholderImage = "https://github.com/corkr900/Head2Head/blob/main/Graphics/Atlases/Gui/Head2Head/Categories/Custom.png?raw=true";
 let websocket = {};
 let clientToken = "TOKEN_NOT_PROVISIONED";
+let imageCache = {};
 
 TryConnect();
 
@@ -32,12 +34,24 @@ function HandleMessage(data) {
 		RenderCurrentMatchInfo(data.Data);
 		RenderOtherMatchInfo(data.Data);
 	}
+	else if (data.Command == "IMAGE") {
+		imageCache[data.Data.Id] = `data:image/jpeg;base64,${data.Data.Base64Image}`;
+		for (const elem of document.querySelectorAll(`[h2h_img_src|="${data.Data.Id}"]`)) {
+			elem.setAttribute("src", imageCache[data.Data.Id]);
+		}
+	}
 }
 
-function doSend(message) {
+function doSend(command, data) {
+	const message = JSON.stringify({
+		Command: command,
+		Token: clientToken,
+		Data: data
+	});
 	writeToScreen(`SENT: ${message}`);
 	websocket.send(message);
 }
+
 function writeToScreen(message) {
 	//const output = document.querySelector("#output");
 	//output.insertAdjacentHTML("afterbegin", `<p>[${new Date().toISOString()}] ${message}</p>`);
@@ -46,6 +60,19 @@ function writeToScreen(message) {
 function HandleConnectionUpdate(newIsConnected) {
 	const statusSpan = document.querySelector("#rend_status");
 	statusSpan.textContent = newIsConnected ? "Connected" : "Not Connected";
+}
+
+function GetH2HIcon(Id) {
+	if (imageCache[Id]) return imageCache[Id];
+	doSend("REQUEST_IMAGE", Id);
+	return placeholderImage;
+}
+
+function GetH2HImageElement(Id) {
+	const categoryIcon = document.createElement("img");
+	categoryIcon.setAttribute("h2h_img_src", Id);
+	categoryIcon.setAttribute("src", GetH2HIcon(Id));
+	return categoryIcon
 }
 
 function RenderCurrentMatchInfo(data) {
@@ -58,6 +85,9 @@ function RenderCurrentMatchInfo(data) {
 	// Title
 	let title = document.createElement("h5");
 	title.textContent = `${data.DisplayName} - ${data.StateTitle}`;
+	const categoryIcon = GetH2HImageElement(data.PrimaryMapIconId);
+	categoryIcon.className = "categoryIcon";
+	title.prepend(categoryIcon);
 	container.appendChild(title);
 	RenderMatchInfoToContainer(data, container);
 }
@@ -77,11 +107,14 @@ function RenderOtherMatchInfo(data) {
 	}
 	const prevMaxHeight = matchContainer.querySelector(".collapsibleContent")?.style?.maxHeight;
 	matchContainer.textContent = "";
-	// Collapse header (title)
+	// Collapse header (icon and title)
 	const collapseHeader = document.createElement("button");
 	collapseHeader.setAttribute("type", "button");
 	collapseHeader.className = "collapsibleHeader";
 	collapseHeader.textContent = `${data.DisplayName} - ${data.StateTitle}`;
+	const categoryIcon = GetH2HImageElement(data.PrimaryMapIconId);
+	categoryIcon.className = "categoryIcon";
+	collapseHeader.prepend(categoryIcon);
 	collapseHeader.addEventListener("click", function () {
 		this.classList.toggle("collapsibleActive");
 		var content = this.nextElementSibling;

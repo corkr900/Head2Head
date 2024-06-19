@@ -111,6 +111,11 @@ textarea {
 	height: 48px;
 }
 
+.categoryIcon {
+	width: 48px;
+	height: 48px;
+}
+
 .playerName {
 	font-size: large;
 	font-weight: bold;
@@ -133,6 +138,9 @@ textarea {
 	text-align: left;
 	outline: none;
 	font-size: 15px;
+	display: inline-flex;
+	align-items: center;
+	position: relative;
 }
 
 .collapsibleHeader:hover {
@@ -149,8 +157,8 @@ textarea {
 .collapsibleHeader:after {
 	content: '\02795'; /* Unicode character for "plus" sign (+) */
 	font-size: 13px;
-	float: right;
-	margin-left: 5px;
+	position: absolute;
+	right: 24px;
 }
 
 .collapsibleActive:after {

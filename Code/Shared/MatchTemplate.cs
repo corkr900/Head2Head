@@ -41,6 +41,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			def.Phases = BuildILPhases();
 			def.CategoryDisplayNameOverride = DisplayName;
 			def.Rules = new List<MatchRule>(Rules);
+			def.CategoryIcon = IconPath;
 
 			if (RandoOptions != null) {  // TODO move this into the integration file
 				RandomizerIntegration.SettingsBuilder bld = new RandomizerIntegration.SettingsBuilder();
@@ -98,7 +99,8 @@ namespace Celeste.Mod.Head2Head.Shared {
 				AllowCheatMode = AllowCheatMode,
 				CategoryDisplayNameOverride = Util.TranslatedIfAvailable(DisplayName),
 				Rules = new List<MatchRule>(Rules),
-			};
+				CategoryIcon = IconPath,
+		};
 			foreach (MatchPhaseTemplate phtem in Phases) {
 				MatchPhase ph = new MatchPhase() {
 					category = StandardCategory.Custom,

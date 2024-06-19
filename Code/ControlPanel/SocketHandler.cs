@@ -127,6 +127,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 						continue;
 					}
 
+					// TODO (!!!) this could split packets >:[
 					byte[] bytes = new byte[socket.Available];
 					stream.Read(bytes, 0, bytes.Length);
 					string s = Encoding.UTF8.GetString(bytes);
@@ -157,12 +158,14 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 						Logger.Log(LogLevel.Info, "Head2Head", $"New Control Panel client connected. Allocated token {Token}");
 					}
 					else {
-						var text = DecodeMessage(bytes);
-						if (text.Contains('\u0003')) {
+						byte[] message = DecodeMessage(bytes, out FrameOpCode opCode);
+						if (opCode == FrameOpCode.ConnectionClose) {
 							Logger.Log(LogLevel.Info, "Head2Head", $"Control Panel client disconnected.");
 							break;
 						}
-						SocketHandler.IncomingCommands.Enqueue(ControlPanelPacket.CreateIncoming(text));
+						else if (opCode == FrameOpCode.Text) {
+							SocketHandler.IncomingCommands.Enqueue(ControlPanelPacket.CreateIncoming(message));
+						}
 					}
 				}
 			}
@@ -174,24 +177,70 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 			socket?.Dispose();
 		}
 
-		internal static string DecodeMessage(byte[] bytes) {
-			var secondByte = bytes[1];
-			var dataLength = secondByte & 127;
-			var indexFirstMask = 2;
-			if (dataLength == 126)
-				indexFirstMask = 4;
-			else if (dataLength == 127)
-				indexFirstMask = 10;
+		internal enum FrameOpCode : byte {
+			Continuation = 0x00,
+			Text = 0x01,
+			Binary = 0x02,
+			ConnectionClose = 0x08,
+			Ping = 0x09,
+			Pong = 0x0a,
+		}
 
-			var keys = bytes.Skip(indexFirstMask).Take(4);
-			var indexFirstDataByte = indexFirstMask + 4;
+		/// <summary>
+		/// Decodes a websocket message
+		/// </summary>
+		/// <param name="bytes">The raw encoded message data</param>
+		/// <param name="opCode">The OpCode of the message</param>
+		/// <returns>The byte array of data, and the OpCode via output parameter</returns>
+		internal static byte[] DecodeMessage(byte[] bytes, out FrameOpCode opCode) {
+			// Ignore mask - framework will disconnect client if it sends an unmasked packet. (RFC6455 section 5.1)
+			//bool mask = (bytes[1] & 0x80) != 0x00;
 
-			var decoded = new byte[bytes.Length - indexFirstDataByte];
-			for (int i = indexFirstDataByte, j = 0; i < bytes.Length; i++, j++) {
-				decoded[j] = (byte)(bytes[i] ^ keys.ElementAt(j % 4));
+			//bool FIN = (bytes[0] & 0x80) != 0x00;
+			opCode = (FrameOpCode)(bytes[0] & 0x7f);
+			switch (opCode) {
+				case FrameOpCode.Ping:
+				case FrameOpCode.Pong:
+				case FrameOpCode.ConnectionClose:
+					return Array.Empty<byte>();
+				case FrameOpCode.Text:
+					break;
+				case FrameOpCode.Binary:
+				case FrameOpCode.Continuation:
+					string errMsg = $"H2H Control Panel: received packet with opCode '{opCode}'. H2H websocket currently does not support this.";
+					Logger.Log(LogLevel.Error, "Head2Head", errMsg);
+					return null;
+			}
+			if ((bytes[0] & 0x80) != 0x80) {
+				string errMsg = $"H2H Control Panel: received non-final packet with opCode '{opCode}'. H2H websocket currently does not support multi-packet messages.";
+				Logger.Log(LogLevel.Error, "Head2Head", errMsg);
+				return null;
 			}
 
-			return Encoding.UTF8.GetString(decoded, 0, decoded.Length);
+			// Use the second byte to determine message length
+			ulong dataLength = bytes[1] & 0x7fU;
+			uint indexFirstMask = 2;
+			if (dataLength == 126) {  // Indicates length is stored in the following 16 bits
+				byte[] lengthArr = new byte[] { bytes[3], bytes[2] };
+				if (BitConverter.IsLittleEndian) Array.Reverse(lengthArr);
+				dataLength = Convert.ToUInt16(lengthArr);
+				indexFirstMask = 4;
+			}
+			else if (dataLength == 127) {  // Indicates length is stored in the following 64 bits
+				byte[] lengthArr = new byte[] { bytes[5], bytes[4], bytes[3], bytes[2] };
+				if (BitConverter.IsLittleEndian) Array.Reverse(lengthArr);
+				dataLength = Convert.ToUInt64(lengthArr);
+				indexFirstMask = 10;
+			}
+			// Get the mask value
+			IEnumerable<byte> keys = bytes.Skip((int)indexFirstMask).Take(4);
+			uint indexFirstDataByte = indexFirstMask + 4;
+			// Decode the message
+			byte[] decoded = new byte[dataLength];
+			for (uint i = indexFirstDataByte, j = 0; i < bytes.Length && j < dataLength; i++, j++) {
+				decoded[j] = (byte)(bytes[i] ^ keys.ElementAt((int)j & 0x3));
+			}
+			return decoded;
 		}
 
 		internal static byte[] EncodeMessage(string message) {

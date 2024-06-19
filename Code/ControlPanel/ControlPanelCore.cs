@@ -13,14 +13,12 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 	internal class ControlPanelCore {
 
 		private class CommandData {
-			public CommandData(string cmd, Type dataType, Action<object> handler) {
+			public CommandData(string cmd, Action<ControlPanelPacket> handler) {
 				Command = cmd;
 				Handler = handler;
-				DataType = dataType;
 			}
 			public readonly string Command;
-			public readonly Action<object> Handler;
-			public readonly Type DataType;
+			public readonly Action<ControlPanelPacket> Handler;
 		}
 
 		private static Dictionary<string, CommandData> commands = new();
@@ -42,15 +40,8 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 			SocketHandler.Stop();
 		}
 
-		public static void RegisterCommand<TIncoming>(string command, Action<TIncoming> handler) where TIncoming : class {
-			commands[command.ToLower()] = new CommandData(command, typeof(TIncoming),
-				(object o) => {
-					if (o is not null or TIncoming) {
-						Engine.Commands.Log($"Received unexpected data: {o?.GetType()?.FullName}\nExpected {typeof(TIncoming).FullName}");
-						Logger.Log(LogLevel.Warn, "Head2Head", $"Received unexpected data: {o?.GetType()?.FullName}\nExpected {typeof(TIncoming).FullName}");
-					}
-					else handler(o as TIncoming);
-				});
+		public static void RegisterCommand(string command, Action<ControlPanelPacket> handler) {
+			commands[command.ToLower()] = new CommandData(command, handler);
 		}
 
 		public static void UnregisterCommand(string command) {
@@ -65,12 +56,17 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 		internal static void FlushIncoming() {
 			while (SocketHandler.IncomingCommands.TryDequeue(out ControlPanelPacket command)) {
 				string cmd = command?.Command?.ToLower();
-				if (!commands.ContainsKey(cmd)) {
-					// TODO error message
+				if (string.IsNullOrEmpty(cmd)) continue;
+				if (!commands.TryGetValue(cmd, out CommandData cmdData)) {
+					Logger.Log(LogLevel.Warn, "Head2Head", $"Received unknown incoming Control Panel command '{cmd}'");
 					continue;
 				}
-				CommandData cmdData = commands[cmd];
-				cmdData.Handler(JsonSerializer.Deserialize(command.Payload, cmdData.DataType));
+				try {
+					cmdData.Handler(command);
+				}
+				catch (Exception e) {
+					Logger.Log(LogLevel.Warn, "Head2Head", $"Error occurred deserializing incoming command '{cmd}'\n{e}");
+				}
 			}
 		}
 

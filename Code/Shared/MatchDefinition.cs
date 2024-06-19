@@ -29,6 +29,7 @@ namespace Celeste.Mod.Head2Head.Shared {
         public List<Role> AllowedRoles = null;
         public string RequiredRuleset;
 		public DateTime CreationInstant;
+        public string CategoryIcon;
 
         public RandomizerIntegration.SettingsBuilder RandoSettingsBuilder;
 
@@ -576,6 +577,7 @@ namespace Celeste.Mod.Head2Head.Shared {
             d.AllowCheatMode = reader.ReadBoolean();
             d.BeginInstant = reader.ReadDateTime();
 			d.RequiredRuleset = reader.ReadString();
+            d.CategoryIcon = reader.ReadString();
 
 			int numAllowedRoles = reader.ReadInt32();
             d.AllowedRoles = new List<Role>(numAllowedRoles);
@@ -624,6 +626,7 @@ namespace Celeste.Mod.Head2Head.Shared {
             writer.Write(m.AllowCheatMode);
             writer.Write(m.BeginInstant);
             writer.Write(m.RequiredRuleset ?? "");
+            writer.Write(m.CategoryIcon ?? "");
 
             writer.Write(m.AllowedRoles?.Count ?? 0);
             for (int i = 0; i < (m.AllowedRoles?.Count ?? 0); i++) {
