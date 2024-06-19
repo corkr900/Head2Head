@@ -95,6 +95,8 @@ textarea {
 
 .card h5 {
 	margin: 10px 6px;
+	display: flex;
+	align-items: center;
 }
 
 .playerTable tr td {
