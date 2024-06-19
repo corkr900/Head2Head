@@ -140,6 +140,13 @@ function RenderMatchInfoToContainer(data, container) {
 	container.appendChild(title);
 	const table = document.createElement("table");
 	table.className = "playerTable";
+	if (!(data.Players.length)) {
+		const row = document.createElement("tr");
+		const playerNameTd = document.createElement("td");
+		playerNameTd.textContent = "Nobody has joined this match";
+		row.appendChild(playerNameTd);
+		table.appendChild(row);
+	}
 	for (const player of data.Players) {
 		const row = document.createElement("tr");
 		// Name
