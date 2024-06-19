@@ -23,9 +23,12 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 		public static event OnClientConnectedHandler OnClientConnected;
 
 		internal static List<ClientSocket> clients = new();
-		internal static DateTime LastStop = DateTime.MinValue;
-		internal static DateTime StartTime = DateTime.Now;
+		internal static CancellationToken cancelToken;
 		private static Thread newConnThread;
+		/// <summary>
+		/// An object to use as the lock target when modifying or iterating on the list of clients,
+		/// or other operations that may affect server connectivity
+		/// </summary>
 		private static object ServerLock = new();
 
 		internal static ConcurrentQueue<ControlPanelPacket> IncomingCommands = new();
@@ -33,7 +36,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 		public static void Start() {
 			lock (ServerLock) {
 				if (newConnThread == null) {
-					StartTime = DateTime.Now;
+					cancelToken = new();
 					newConnThread = new(NewConnections);
 					newConnThread.Start();
 				}
@@ -41,50 +44,69 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 		}
 
 		public static void Stop() {
-			lock (ServerLock) {
-				LastStop = DateTime.Now;
-				newConnThread?.Join(5000);
-				foreach (ClientSocket client in clients) {
-					client.Close();
+			cancelToken = new(true);
+			if (newConnThread?.Join(5000) == false) {
+				Logger.Log(LogLevel.Warn, "Head2Head", $"Control Panel connection listener thread join timed out");
+				lock (ServerLock) {
+					foreach (ClientSocket client in clients) {
+						client.Join(100);
+					}
 				}
-				clients.Clear();
-				newConnThread = null;
-				IncomingCommands.Clear();
 			}
+			lock (ServerLock) {
+
+				clients.Clear();
+			}
+			newConnThread = null;
+			IncomingCommands.Clear();
 		}
 
 		private static void NewConnections() {
 			TcpListener tcpListener = new TcpListener(IPAddress.Parse("127.0.0.1"), 8080);
 			try {
 				tcpListener.Start();
-				while (StartTime > LastStop) {
+				while (!cancelToken.IsCancellationRequested) {
+					// Start listening for connection requests
 					Task<Socket> task = tcpListener.AcceptSocketAsync();
-					while (StartTime > LastStop) {
-						task.Wait(50);
-						lock (ServerLock) {
-							if (task.IsCompletedSuccessfully) {
-								Socket s = task.Result;
-								ClientSocket cs = new(task.Result);
+					while (!cancelToken.IsCancellationRequested) {
+						// Every 50 ms, check if we have a new connection or a cancellation request
+						if (task.IsCompletedSuccessfully) {
+							Socket s = task.Result;
+							ClientSocket cs = new(task.Result);
+							lock (ServerLock) {
 								if (cs.Connected) {
 									clients.Add(cs);
 									OnClientConnected?.Invoke(cs.Token);
 								}
-								break;
+								else {
+									Logger.Log(LogLevel.Warn, "Head2Head", $"New Control Panel connection request could not be completed.");
+								}
 							}
-							else if (task.IsCompleted) {
-								Logger.Log(LogLevel.Warn, "Head2Head", $"New connections task errored - {task.Status}");
-								break;
-							}
+							break;
+						}
+						else if (task.IsCompleted) {
+							Logger.Log(LogLevel.Warn, "Head2Head", $"New Control Panel connections task errored - {task.Status}");
+							break;
+						}
+						// Clean up dead connections
+						lock (ServerLock) {
 							clients.RemoveAll(cs => !cs.Connected);
 						}
+						task.Wait(50, cancelToken);
 					}
 				}
 			}
 			catch (Exception e) {
 				Logger.Log(LogLevel.Error, "Head2Head", "An error occurred in websocket new connection listener:\n" + e.ToString());
 			}
+			lock (ServerLock) {
+				clients.ForEach(sock => {
+					sock.Join(100);
+				});
+			}
 			tcpListener.Server?.Dispose();
 			tcpListener.Stop();
+			Logger.Log(LogLevel.Warn, "Head2Head", $"Stopped listening for new Control Panel connections.");
 		}
 
 		internal static void Send(string message, string clientToken) {
@@ -103,25 +125,31 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 		public bool Connected => socket?.Connected ?? false;
 
 		public string Token { get; private set; }
-
+		public CancellationToken CancelToken { get; set; }
 		private readonly Socket socket;
 		private readonly Thread thread;
-		private DateTime threadStartTime;
 		NetworkStream stream;
 
 		internal ClientSocket(Socket socket) {
 			this.socket = socket;
+			CancelToken = new(false);
 			if (socket.Connected) {
 				thread = new Thread(Listener);
 				thread.Start();
 			}
 		}
 
+		public void Join(int timeout) {
+			CancelToken = new(true);
+			if (thread?.Join(timeout) == false) {
+				Logger.Log(LogLevel.Warn, "Head2Head", $"Client thread join timed out for client '{Token}'");
+			}
+		}
+
 		private void Listener() {
 			try {
 				stream = new NetworkStream(socket);
-				threadStartTime = DateTime.Now;
-				while (threadStartTime > SocketHandler.LastStop) {
+				while (!CancelToken.IsCancellationRequested) {
 					if (!stream.DataAvailable || socket.Available < 3) {
 						Thread.Sleep(10);
 						continue;
@@ -160,7 +188,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 					else {
 						byte[] message = DecodeMessage(bytes, out FrameOpCode opCode);
 						if (opCode == FrameOpCode.ConnectionClose) {
-							Logger.Log(LogLevel.Info, "Head2Head", $"Control Panel client disconnected.");
+							Logger.Log(LogLevel.Info, "Head2Head", $"Control Panel client with token '{Token}' disconnected normally.");
 							break;
 						}
 						else if (opCode == FrameOpCode.Text) {
@@ -175,6 +203,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 			stream?.Dispose();
 			if (socket?.Connected == true) socket.Disconnect(false);
 			socket?.Dispose();
+			Logger.Log(LogLevel.Info, "Head2Head", $"Closed connection with Control Panel client with token '{Token}'.");
 		}
 
 		internal enum FrameOpCode : byte {
