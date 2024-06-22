@@ -12,8 +12,11 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 	public struct MatchSerializableInfo {
 		public MatchSerializableInfo(MatchDefinition definition) {
 			def = definition;
+			categoryIcon = SerializeImage.FromGui(def.CategoryIcon);
 		}
 		private readonly MatchDefinition def;
+		private readonly SerializeImage categoryIcon;
+		//private readonly SerializeImage primaryMapIcon;
 
 		public string InternalID => def?.MatchID;
 		public MatchState State => def?.State ?? MatchState.None;
@@ -25,7 +28,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 		public List<string> AvailableActions => GetActions();
 		public string PrimaryMap => def.Phases[0]?.Area.SID;
 		public string PrimaryMapName => def.Phases[0]?.Area.DisplayName;
-		public string PrimaryMapIconId => SerializeImage.FromGui(def.CategoryIcon).Id;
+		public SerializeImage CategoryIcon => categoryIcon;
 
 		private List<PlayerSerializableInfo> GetPlayerInfo() {
 			if (def == null) return new();

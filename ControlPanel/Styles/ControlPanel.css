@@ -174,3 +174,7 @@ textarea {
 .collapseContainer {
 	border: 2px ridge black;
 }
+
+.debugOnly {
+	display: none;
+}

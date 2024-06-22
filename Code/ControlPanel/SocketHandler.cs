@@ -22,7 +22,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 		public delegate void OnClientConnectedHandler(string token);
 		public static event OnClientConnectedHandler OnClientConnected;
 
-		internal static List<ClientSocket> clients = new();
+		internal static Dictionary<string, ClientSocket> clients = new();
 		internal static CancellationToken cancelToken;
 		private static Thread newConnThread;
 		/// <summary>
@@ -48,17 +48,21 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 			if (newConnThread?.Join(5000) == false) {
 				Logger.Log(LogLevel.Warn, "Head2Head", $"Control Panel connection listener thread join timed out");
 				lock (ServerLock) {
-					foreach (ClientSocket client in clients) {
+					foreach (ClientSocket client in clients.Values) {
 						client.Join(100);
 					}
+					clients.Clear();
+					newConnThread = null;
+					IncomingCommands.Clear();
 				}
 			}
-			lock (ServerLock) {
-
-				clients.Clear();
+			else {
+				lock (ServerLock) {
+					clients.Clear();
+					newConnThread = null;
+					IncomingCommands.Clear();
+				}
 			}
-			newConnThread = null;
-			IncomingCommands.Clear();
 		}
 
 		private static void NewConnections() {
@@ -75,7 +79,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 							ClientSocket cs = new(task.Result);
 							lock (ServerLock) {
 								if (cs.Connected) {
-									clients.Add(cs);
+									clients.Add(cs.Token, cs);
 									OnClientConnected?.Invoke(cs.Token);
 								}
 								else {
@@ -90,7 +94,13 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 						}
 						// Clean up dead connections
 						lock (ServerLock) {
-							clients.RemoveAll(cs => !cs.Connected);
+							List<string> disconnectedClients = new();
+							foreach (ClientSocket cs in clients.Values) {
+								if (!cs.Connected) disconnectedClients.Add(cs.Token);
+							}
+							foreach (string token in disconnectedClients) {
+								clients.Remove(token);
+							}
 						}
 						task.Wait(50, cancelToken);
 					}
@@ -100,21 +110,29 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 				Logger.Log(LogLevel.Error, "Head2Head", "An error occurred in websocket new connection listener:\n" + e.ToString());
 			}
 			lock (ServerLock) {
-				clients.ForEach(sock => {
+				foreach (ClientSocket sock in clients.Values) {
 					sock.Join(100);
-				});
+				};
 			}
 			tcpListener.Server?.Dispose();
 			tcpListener.Stop();
 			Logger.Log(LogLevel.Warn, "Head2Head", $"Stopped listening for new Control Panel connections.");
 		}
 
-		internal static void Send(string message, string clientToken) {
+		internal static void Send(string message, string clientToken = "") {
 			byte[] payload = ClientSocket.EncodeMessage(message);
 			bool allClients = string.IsNullOrEmpty(clientToken);
 			lock (ServerLock) {
-				foreach (var client in clients) {
-					if (allClients || client.Token == clientToken) client.Send(payload);
+				if (allClients) {
+					foreach (ClientSocket client in clients.Values) {
+						client.Send(payload);
+					}
+				}
+				else if (clients.TryGetValue(clientToken, out ClientSocket sock) && sock.Connected) {
+					sock.Send(payload);
+				}
+				else {
+					Logger.Log(LogLevel.Warn, "Head2Head", $"Could not send control panel packet to client '{clientToken}': client disconnected or does not exist");
 				}
 			}
 		}
@@ -128,9 +146,10 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 		public CancellationToken CancelToken { get; set; }
 		private readonly Socket socket;
 		private readonly Thread thread;
-		NetworkStream stream;
+		private NetworkStream stream;
 
 		internal ClientSocket(Socket socket) {
+			Token = ClientToken.GetNew();
 			this.socket = socket;
 			CancelToken = new(false);
 			if (socket.Connected) {
@@ -179,7 +198,6 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 						stream.Write(response, 0, response.Length);
 
 						// Allocate a client token and send it up
-						Token = ClientToken.GetNew();
 						byte[] payload = EncodeMessage(JsonSerializer.Serialize(new SerializableCommand("ALLOCATE_TOKEN", Token)));
 						stream.Write(payload, 0, payload.Length);
 

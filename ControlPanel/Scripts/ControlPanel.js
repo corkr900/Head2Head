@@ -5,7 +5,19 @@ let websocket = {};
 let clientToken = "TOKEN_NOT_PROVISIONED";
 let imageCache = {};
 
+HandleParams();
 TryConnect();
+
+function HandleParams() {
+	const queryString = window.location.search;
+	const urlParams = new URLSearchParams(queryString);
+	const debug = urlParams.get('debug');
+	if (debug) {
+		for (const elem of document.querySelectorAll(".debugOnly")) {
+			elem.classList.remove("debugOnly");
+		}
+	}
+}
 
 function TryConnect() {
 	websocket = new WebSocket(wsUri);
@@ -17,7 +29,7 @@ function TryConnect() {
 		setTimeout(TryConnect, 500);
 	};
 	websocket.onmessage = (e) => {
-		//writeToScreen(`RECEIVED: ${e.data}`);
+		writeToScreen(`RECEIVED: ${e.data}`);
 		HandleMessage(JSON.parse(e.data));
 	};
 	websocket.onerror = (e) => {
@@ -35,7 +47,7 @@ function HandleMessage(data) {
 		RenderOtherMatchInfo(data.Data);
 	}
 	else if (data.Command == "IMAGE") {
-		imageCache[data.Data.Id] = `data:image/jpeg;base64,${data.Data.Base64Image}`;
+		imageCache[data.Data.Id] = data.Data.ImgSrc;
 		for (const elem of document.querySelectorAll(`[h2h_img_src|="${data.Data.Id}"]`)) {
 			elem.setAttribute("src", imageCache[data.Data.Id]);
 		}
@@ -53,8 +65,10 @@ function doSend(command, data) {
 }
 
 function writeToScreen(message) {
-	//const output = document.querySelector("#output");
-	//output.insertAdjacentHTML("afterbegin", `<p>[${new Date().toISOString()}] ${message}</p>`);
+	const output = document.querySelector("#output");
+	if (output) {
+		output.insertAdjacentHTML("afterbegin", `<p>[${new Date().toISOString()}] ${message}</p>`);
+	}
 }
 
 function HandleConnectionUpdate(newIsConnected) {
@@ -62,16 +76,19 @@ function HandleConnectionUpdate(newIsConnected) {
 	statusSpan.textContent = newIsConnected ? "Connected" : "Not Connected";
 }
 
-function GetH2HIcon(Id) {
-	if (imageCache[Id]) return imageCache[Id];
-	doSend("REQUEST_IMAGE", Id);
-	return placeholderImage;
-}
-
-function GetH2HImageElement(Id) {
+function GetH2HImageElement(image) {
+	var src = image.ImgSrc;
+	if (!src) {
+		if (imageCache[image.Id]) src = imageCache[image.Id];
+		else {
+			// TODO this can send duplicates if multiple of the same image comes in on the same request
+			doSend("REQUEST_IMAGE", image.Id);
+			src = placeholderImage;
+		}
+	}
 	const categoryIcon = document.createElement("img");
-	categoryIcon.setAttribute("h2h_img_src", Id);
-	categoryIcon.setAttribute("src", GetH2HIcon(Id));
+	categoryIcon.setAttribute("h2h_img_src", image.Id);
+	categoryIcon.setAttribute("src", src);
 	return categoryIcon
 }
 
@@ -85,7 +102,7 @@ function RenderCurrentMatchInfo(data) {
 	// Title
 	let title = document.createElement("h5");
 	title.textContent = `${data.DisplayName} - ${data.StateTitle}`;
-	const categoryIcon = GetH2HImageElement(data.PrimaryMapIconId);
+	const categoryIcon = GetH2HImageElement(data.CategoryIcon);
 	categoryIcon.className = "categoryIcon";
 	title.prepend(categoryIcon);
 	container.appendChild(title);
@@ -112,7 +129,7 @@ function RenderOtherMatchInfo(data) {
 	collapseHeader.setAttribute("type", "button");
 	collapseHeader.className = "collapsibleHeader";
 	collapseHeader.textContent = `${data.DisplayName} - ${data.StateTitle}`;
-	const categoryIcon = GetH2HImageElement(data.PrimaryMapIconId);
+	const categoryIcon = GetH2HImageElement(data.CategoryIcon);
 	categoryIcon.className = "categoryIcon";
 	collapseHeader.prepend(categoryIcon);
 	collapseHeader.addEventListener("click", function () {

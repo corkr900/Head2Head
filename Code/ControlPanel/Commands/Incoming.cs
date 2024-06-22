@@ -36,7 +36,6 @@ namespace Celeste.Mod.Head2Head.ControlPanel.Commands
         }
 
 		private static void RequestImage(ControlPanelPacket pack) {
-			Engine.Commands.Log($"Incoming image request: {pack.Json}");
 			string request = pack.Json.ToString();
 			int pos = request.IndexOf(':');
 			string atlas = request[..pos];
@@ -44,7 +43,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel.Commands
 			ControlPanelPacket outgoing = atlas switch {
 				"gui" => ControlPanelPacket.CreateOutgoing(
 					"IMAGE",
-					SerializeImage.FromGui(path),
+					SerializeImage.FromGui(path, true),
 					pack.ClientToken
 				),
 				_ => null
