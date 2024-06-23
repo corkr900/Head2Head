@@ -182,14 +182,7 @@ namespace Celeste.Mod.Head2Head.UI
 				}
 				else {
 					btn = menu.AddButton("Head2Head_menu_helpdesk_dropout", () => {
-						MatchDefinition def = PlayerStatus.Current.CurrentMatch;
-						if (def == null) return;
-						ResultCategory cat = def.GetPlayerResultCat(PlayerID.MyIDSafe);
-						if (cat == ResultCategory.NotJoined
-							|| cat == ResultCategory.Completed
-							|| cat == ResultCategory.DNF) return;
-						def.PlayerDNF(DNFReason.DropOut);
-						Head2HeadModule.Instance.DoAutolaunchImmediate(GlobalAreaKey.Head2HeadLobby, PlayerStatus.Current.FileSlotBeforeMatchStart); 
+						Head2HeadModule.Instance.DropOutOfCurrentMatch(); 
 						cxt.Close(menu);
 					});
 					ResultCategory? rescatdrop = def_menu?.GetPlayerResultCat(PlayerID.MyIDSafe);
@@ -208,11 +201,7 @@ namespace Celeste.Mod.Head2Head.UI
 				// Force End
 				if (def_menu.State < MatchState.Completed && RoleLogic.AllowKillingMatch()) {
 					btn = menu.AddButton("Head2Head_menu_helpdesk_forceend", () => {
-						MatchDefinition def = PlayerStatus.Current.CurrentMatch;
-						if (def != null && def.State < MatchState.Completed) {
-							def.State = MatchState.Completed;  // Broadcasts update
-							PlayerStatus.Current.OnMatchEnded(def);
-						}
+						Head2HeadModule.Instance.KillMatch(PlayerStatus.Current.CurrentMatch);
 						cxt.Refresh(menu);
 					});
 					if (def_menu == null)

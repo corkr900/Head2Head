@@ -349,7 +349,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 
 		internal void Send(byte[] payload) {
 			if (Connected) {
-				stream.Write(payload, 0, payload.Length);
+				stream?.Write(payload, 0, payload.Length);
 			}
 		}
 	}

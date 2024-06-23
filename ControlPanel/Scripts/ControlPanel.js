@@ -170,8 +170,8 @@ function RenderOtherMatchInfo(data) {
 	collapseHeader.prepend(categoryIcon);
 	// Click
 	collapseHeader.addEventListener("click", function () {
-		this.classList.toggle("collapsibleActive");
-		var content = this.nextElementSibling;
+		collapseHeader.classList.toggle("collapsibleActive");
+		var content = collapseHeader.nextElementSibling;
 		if (content.style.maxHeight && content.style.maxHeight != "0px") {
 			content.style.maxHeight = "0px";
 		} else {
@@ -181,11 +181,13 @@ function RenderOtherMatchInfo(data) {
 	matchContainer.appendChild(collapseHeader);
 	// Collapse body (the rest)
 	const collapseBody = document.createElement("div");
-	collapseBody.className = "collapsibleContent";
-	collapseBody.style.maxHeight = prevMaxHeight;
 	RenderMatchActionButtons(data, collapseBody);
 	RenderMatchInfoToContainer(data, collapseBody);
 	matchContainer.appendChild(collapseBody);
+	if (prevMaxHeight && prevMaxHeight != "0px") {
+		collapseBody.style.maxHeight = collapseBody.scrollHeight + "px";
+	}
+	collapseBody.className = "collapsibleContent";
 }
 
 /**
@@ -207,55 +209,71 @@ function RenderMatchInfoToContainer(data, container) {
 		row.appendChild(playerNameTd);
 		table.appendChild(row);
 	}
-	for (const player of data.Players) {
-		const row = document.createElement("tr");
-		// Name
-		const playerNameTd = document.createElement("td");
-		playerNameTd.className = "playerName";
-		playerNameTd.textContent = player.DisplayName;
-		row.appendChild(playerNameTd);
-		// Status
-		const playerStatusTd = document.createElement("td");
-		playerStatusTd.className = `playerStatus ${player.StatusTitle}`;
-		playerStatusTd.textContent = player.StatusTitle;
-		row.appendChild(playerStatusTd);
-		// Timer
-		const playerTimerTd = document.createElement("td");
-		playerTimerTd.className = `playerTimer`;
-		playerTimerTd.textContent = player.FormattedTimer;
-		row.appendChild(playerTimerTd);
-		// Objectives
-		for (const phase of player.Phases) {
-			for (const objective of phase.Objectives) {
-				// Icon
-				const playerNameTd = document.createElement("td");
-				playerNameTd.className = "objectiveTd";
-				const icon = document.createElement("img");
-				icon.setAttribute("src", objective.Icon);
-				icon.setAttribute("alt", objective.DisplayName);
-				icon.className = "objectiveIcon";
-				playerNameTd.appendChild(icon);
-				// Objective text
-				let objContent = "";
-				if (objective.CollectablesGoal > 0) {
-					objContent = `${objective.CollectablesObtained} / ${objective.CollectablesGoal}`;
-				}
-				else if (objective.Completed) {
-					objContent = "✔";
-				}
-				else {
-					objContent = "✖";
-				}
-				const objectiveContent = document.createElement("span");
-				objectiveContent.textContent = objContent;
-				playerNameTd.appendChild(objectiveContent);
-				row.appendChild(playerNameTd);
+	else {
+		data.Players.sort((a, b) => {
+			if (a.Status != b.Status) {
+				const order = [ 30, 20, 999, 10, 0 ];  // Completed, In Match, DNF, Joined, Not Joined
+				return order.indexOf(a.Status ?? 0) < order.indexOf(b.Status ?? 0);
 			}
+			if (a.Status == 30 && b.Status == 30) {
+				return a.Timer > b.Timer;
+			}
+			return 0;
+		});
+		for (const player of data.Players) {
+			RenderMatchPlayerRow(player, table);
 		}
-
-		table.appendChild(row);
 	}
 	container.appendChild(table);
+}
+
+function RenderMatchPlayerRow(player, table) {
+	const row = document.createElement("tr");
+	// Name
+	const playerNameTd = document.createElement("td");
+	playerNameTd.className = "playerName";
+	playerNameTd.textContent = player.DisplayName;
+	row.appendChild(playerNameTd);
+	// Status
+	const playerStatusTd = document.createElement("td");
+	playerStatusTd.className = `playerStatus ${player.StatusTitle}`;
+	playerStatusTd.textContent = player.StatusTitle;
+	row.appendChild(playerStatusTd);
+	// Timer
+	const playerTimerTd = document.createElement("td");
+	playerTimerTd.className = `playerTimer`;
+	playerTimerTd.textContent = player.FormattedTimer;
+	row.appendChild(playerTimerTd);
+	// Objectives
+	for (const phase of player.Phases) {
+		for (const objective of phase.Objectives) {
+			// Icon
+			const playerNameTd = document.createElement("td");
+			playerNameTd.className = "objectiveTd";
+			const icon = document.createElement("img");
+			icon.setAttribute("src", objective.Icon);
+			icon.setAttribute("alt", objective.DisplayName);
+			icon.className = "objectiveIcon";
+			playerNameTd.appendChild(icon);
+			// Objective text
+			let objContent = "";
+			if (objective.CollectablesGoal > 0) {
+				objContent = `${objective.CollectablesObtained} / ${objective.CollectablesGoal}`;
+			}
+			else if (objective.Completed) {
+				objContent = "✔";
+			}
+			else {
+				objContent = "✖";
+			}
+			const objectiveContent = document.createElement("span");
+			objectiveContent.textContent = objContent;
+			playerNameTd.appendChild(objectiveContent);
+			row.appendChild(playerNameTd);
+		}
+	}
+
+	table.appendChild(row);
 }
 
 /**
@@ -282,7 +300,7 @@ function RenderMatchActionButtons(match, container) {
 	const containerType = "div";
 	const elemType = "span";
 
-	const buttonsContainer = document.createElement("div");
+	const buttonsContainer = document.createElement(containerType);
 	buttonsContainer.className = "actionButtonsContainer";
 
 	if (match.AvailableActions.includes("STAGE_MATCH")) {
@@ -313,6 +331,24 @@ function RenderMatchActionButtons(match, container) {
 		const cell = document.createElement(elemType);
 		cell.appendChild(MakeButton("Get Log", () => {
 			doSend("GET_MY_MATCH_LOG", match.InternalID);
+		}));
+		buttonsContainer.appendChild(cell);
+	}
+
+	if (match.AvailableActions.includes("MATCH_DROP_OUT")) {
+		const cell = document.createElement(elemType);
+		cell.appendChild(MakeButton("Drop Out", () => {
+			doSend("MATCH_DROP_OUT", match.InternalID);
+		}));
+		buttonsContainer.appendChild(cell);
+	}
+
+	if (match.AvailableActions.includes("KILL_MATCH")) {
+		const cell = document.createElement(elemType);
+		cell.appendChild(MakeButton("End Match", () => {
+			if (confirm("The match will be ended for all players. This is a disruptive action. Continue?") == true) {
+				doSend("KILL_MATCH", match.InternalID);
+			}
 		}));
 		buttonsContainer.appendChild(cell);
 	}

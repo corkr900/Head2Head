@@ -149,6 +149,14 @@ namespace Celeste.Mod.Head2Head.Shared {
 			}
 		}
 
+		internal static bool AllowKillingUnjoinedMatch() {
+			return AllowKillingMatch() && ActiveRole switch {
+				Role.Host => true,
+				Role.Debug => true,
+				_ => false,
+			};
+		}
+
 		internal static bool CanGrantMatchPass() {
 			return ActiveRole switch {
 				Role.Host => true,

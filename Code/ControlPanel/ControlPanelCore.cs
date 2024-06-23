@@ -49,6 +49,10 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 			if (commands.ContainsKey(cmd)) commands.Remove(cmd);
 		}
 
+		public static void UnregisterAllCommands() {
+			commands.Clear();
+		}
+
 		internal static void SendImmediate(ControlPanelPacket packet) {
 			SocketHandler.Send(packet.Payload, packet.ClientToken);
 		}

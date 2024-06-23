@@ -22,18 +22,14 @@ namespace Celeste.Mod.Head2Head.ControlPanel.Commands
 			ControlPanelCore.RegisterCommand("start_match", StartMatch);
 			ControlPanelCore.RegisterCommand("get_my_match_log", GetMyMatchLog);
 			ControlPanelCore.RegisterCommand("forget_match", ForgetMatch);
+			ControlPanelCore.RegisterCommand("match_drop_out", DropOutOfMatch);
+			ControlPanelCore.RegisterCommand("kill_match", KillMatch);
 			SocketHandler.OnClientConnected += OnClientConnected;
         }
 
 		public static void Unregister() {
 			SocketHandler.OnClientConnected -= OnClientConnected;
-			ControlPanelCore.UnregisterCommand("test_incoming");
-			ControlPanelCore.UnregisterCommand("request_image");
-			ControlPanelCore.UnregisterCommand("stage_match");
-			ControlPanelCore.UnregisterCommand("join_match");
-			ControlPanelCore.UnregisterCommand("start_match");
-			ControlPanelCore.UnregisterCommand("get_my_match_log");
-			ControlPanelCore.UnregisterCommand("forget_match");
+			ControlPanelCore.UnregisterAllCommands();
 		}
 
 		private static void OnClientConnected(string token) {
@@ -135,6 +131,28 @@ namespace Celeste.Mod.Head2Head.ControlPanel.Commands
 		private static void ForgetMatch(ControlPanelPacket packet) {
 			string id = packet.Json.GetString();
 			Head2HeadModule.Instance.TryForgetMatch(id);
+		}
+
+		private static void DropOutOfMatch(ControlPanelPacket packet) {
+			string id = packet.Json.GetString();
+			if (PlayerStatus.Current.CurrentMatchID != id) {
+				// Not in the match
+				return;
+			}
+			else {
+				Head2HeadModule.Instance.DropOutOfCurrentMatch();
+			}
+		}
+
+		private static void KillMatch(ControlPanelPacket packet) {
+			string id = packet.Json.GetString();
+			if (!Head2HeadModule.knownMatches.TryGetValue(id, out var match)) {
+				// Don't know the match
+				return;
+			}
+			else {
+				Head2HeadModule.Instance.KillMatch(match);
+			}
 		}
 
 	}

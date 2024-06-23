@@ -1334,6 +1334,27 @@ namespace Celeste.Mod.Head2Head
 			}
 		}
 
+		public bool DropOutOfCurrentMatch() {
+			MatchDefinition def = PlayerStatus.Current.CurrentMatch;
+			if (def == null) return false;
+			ResultCategory cat = def.GetPlayerResultCat(PlayerID.MyIDSafe);
+			if (cat == ResultCategory.NotJoined
+				|| cat == ResultCategory.Completed
+				|| cat == ResultCategory.DNF) return false;
+			def.PlayerDNF(DNFReason.DropOut);
+			DoAutolaunchImmediate(GlobalAreaKey.Head2HeadLobby, PlayerStatus.Current.FileSlotBeforeMatchStart);
+			return true;
+		}
+
+		internal bool KillMatch(MatchDefinition def) {
+			if (def == null) return false;
+			if (def == PlayerStatus.Current.CurrentMatch && !RoleLogic.AllowKillingUnjoinedMatch()) return false;
+			if (def.State >= MatchState.Completed) return false;
+			def.State = MatchState.Completed;  // Broadcasts update
+			PlayerStatus.Current.OnMatchEnded(def);
+			return true;
+		}
+
 		internal bool TryForgetMatch(string id) {
 			if (!knownMatches.TryGetValue(id, out var match)) return true;
 			if (id == PlayerStatus.Current.CurrentMatchID) {
