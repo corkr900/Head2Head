@@ -4,6 +4,7 @@ const placeholderImage = "https://github.com/corkr900/Head2Head/blob/main/Graphi
 let websocket = {};
 let clientToken = "TOKEN_NOT_PROVISIONED";
 let imageCache = {};
+let printErrors = false;
 
 HandleParams();
 TryConnect();
@@ -22,9 +23,11 @@ function HandleParams() {
 function TryConnect() {
 	websocket = new WebSocket(wsUri);
 	websocket.onopen = (e) => {
+		printErrors = true;
 		HandleConnectionUpdate(true);
 	};
 	websocket.onclose = (e) => {
+		printErrors = false;
 		HandleConnectionUpdate(false);
 		setTimeout(TryConnect, 500);
 	};
@@ -33,7 +36,7 @@ function TryConnect() {
 		HandleMessage(JSON.parse(e.data));
 	};
 	websocket.onerror = (e) => {
-		writeToScreen(`<span class="error">ERROR:</span> ${JSON.stringify(e, null, 4)}`);
+		if (printErrors) writeToScreen(`<span class="error">ERROR:</span> ${JSON.stringify(e, null, 4)}`);
 	};
 }
 
@@ -46,11 +49,22 @@ function HandleMessage(data) {
 		RenderCurrentMatchInfo(data.Data);
 		RenderOtherMatchInfo(data.Data);
 	}
+	else if (data.Command == "OTHER_MATCH") {
+		RenderOtherMatchInfo(data.Data);
+	}
 	else if (data.Command == "IMAGE") {
 		imageCache[data.Data.Id] = data.Data.ImgSrc;
 		for (const elem of document.querySelectorAll(`[h2h_img_src|="${data.Data.Id}"]`)) {
 			elem.setAttribute("src", imageCache[data.Data.Id]);
 		}
+	}
+	else if (data.Command == "MATCH_NOT_CURRENT") {
+		if (GetCurMatchId() == data.Data) {
+			RenderCurrentMatchInfo(null);
+		}
+	}
+	else if (data.Command == "MATCH_FORGOTTEN") {
+		RemoveMatchInfo(data.Data);
 	}
 }
 
@@ -92,12 +106,27 @@ function GetH2HImageElement(image) {
 	return categoryIcon
 }
 
+function GetCurMatchId() {
+	const container = document.querySelector("#curMatchBody");
+	return container.getAttribute("h2h_match_source");
+}
+
+function RemoveMatchInfo(id) {
+	if (GetCurMatchId() == id) {
+		RenderCurrentMatchInfo(null);
+	}
+	let matchContainer = document.querySelector(`#allMatchesBody #matchContainer_${id}`);
+	if (matchContainer) matchContainer.remove();
+}
+
 function RenderCurrentMatchInfo(data) {
 	const container = document.querySelector("#curMatchBody");
 	if (!data || !data.State || data.State == 0) {  // No current match
 		container.textContent = "There is no current match.";
+		container.removeAttribute("h2h_match_source");
 		return;
 	}
+	container.setAttribute("h2h_match_source", data.InternalID);
 	container.textContent = "";
 	// Title
 	let title = document.createElement("h5");
@@ -106,9 +135,15 @@ function RenderCurrentMatchInfo(data) {
 	categoryIcon.className = "categoryIcon";
 	title.prepend(categoryIcon);
 	container.appendChild(title);
+	RenderMatchActionButtons(data, container);
 	RenderMatchInfoToContainer(data, container);
 }
 
+/**
+ * 
+ * @param {*} data 
+ * @returns 
+ */
 function RenderOtherMatchInfo(data) {
 	if (!data || !data.State || data.State == 0) {
 		return;
@@ -128,15 +163,17 @@ function RenderOtherMatchInfo(data) {
 	const collapseHeader = document.createElement("button");
 	collapseHeader.setAttribute("type", "button");
 	collapseHeader.className = "collapsibleHeader";
+	// Title, icon, buttons
 	collapseHeader.textContent = `${data.DisplayName} - ${data.StateTitle}`;
 	const categoryIcon = GetH2HImageElement(data.CategoryIcon);
 	categoryIcon.className = "categoryIcon";
 	collapseHeader.prepend(categoryIcon);
+	// Click
 	collapseHeader.addEventListener("click", function () {
 		this.classList.toggle("collapsibleActive");
 		var content = this.nextElementSibling;
-		if (content.style.maxHeight) {
-			content.style.maxHeight = null;
+		if (content.style.maxHeight && content.style.maxHeight != "0px") {
+			content.style.maxHeight = "0px";
 		} else {
 			content.style.maxHeight = content.scrollHeight + "px";
 		}
@@ -145,11 +182,17 @@ function RenderOtherMatchInfo(data) {
 	// Collapse body (the rest)
 	const collapseBody = document.createElement("div");
 	collapseBody.className = "collapsibleContent";
-	collapseBody.style.display = prevMaxHeight;
+	collapseBody.style.maxHeight = prevMaxHeight;
+	RenderMatchActionButtons(data, collapseBody);
 	RenderMatchInfoToContainer(data, collapseBody);
 	matchContainer.appendChild(collapseBody);
 }
 
+/**
+ * 
+ * @param {*} data 
+ * @param {*} container 
+ */
 function RenderMatchInfoToContainer(data, container) {
 	// Players
 	title = document.createElement("h5");
@@ -213,4 +256,74 @@ function RenderMatchInfoToContainer(data, container) {
 		table.appendChild(row);
 	}
 	container.appendChild(table);
+}
+
+/**
+ * 
+ * @param {*} label 
+ * @param {*} onClick 
+ * @returns 
+ */
+function MakeButton(label, onClick) {
+	const btn = document.createElement("button");
+	btn.setAttribute("type", "button");
+	btn.className = "actionBtn";
+	btn.textContent = label;
+	btn.addEventListener("click", onClick);
+	return btn;
+}
+
+/**
+ * 
+ * @param {*} actions 
+ * @param {*} tr 
+ */
+function RenderMatchActionButtons(match, container) {
+	const containerType = "div";
+	const elemType = "span";
+
+	const buttonsContainer = document.createElement("div");
+	buttonsContainer.className = "actionButtonsContainer";
+
+	if (match.AvailableActions.includes("STAGE_MATCH")) {
+		const cell = document.createElement(elemType);
+		cell.appendChild(MakeButton("Stage", () => {
+			doSend("STAGE_MATCH", match.InternalID);
+		}));
+		buttonsContainer.appendChild(cell);
+	}
+
+	if (match.AvailableActions.includes("JOIN_MATCH")) {
+		const cell = document.createElement(elemType);
+		cell.appendChild(MakeButton("Join", () => {
+			doSend("JOIN_MATCH", match.InternalID);
+		}));
+		buttonsContainer.appendChild(cell);
+	}
+
+	if (match.AvailableActions.includes("START_MATCH")) {
+		const cell = document.createElement(elemType);
+		cell.appendChild(MakeButton("Start", () => {
+			doSend("START_MATCH", match.InternalID);
+		}));
+		buttonsContainer.appendChild(cell);
+	}
+
+	if (match.AvailableActions.includes("GET_MY_MATCH_LOG")) {
+		const cell = document.createElement(elemType);
+		cell.appendChild(MakeButton("Get Log", () => {
+			doSend("GET_MY_MATCH_LOG", match.InternalID);
+		}));
+		buttonsContainer.appendChild(cell);
+	}
+
+	if (match.AvailableActions.includes("FORGET_MATCH")) {
+		const cell = document.createElement(elemType);
+		cell.appendChild(MakeButton("Forget", () => {
+			doSend("FORGET_MATCH", match.InternalID);
+		}));
+		buttonsContainer.appendChild(cell);
+	}
+
+	container.appendChild(buttonsContainer);
 }

@@ -1,4 +1,6 @@
-﻿using Monocle;
+﻿using Celeste.Mod.Head2Head.IO;
+using Celeste.Mod.Head2Head.Shared;
+using Monocle;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,13 +17,23 @@ namespace Celeste.Mod.Head2Head.ControlPanel.Commands
         {
             ControlPanelCore.RegisterCommand("test_incoming", TestIncoming);
 			ControlPanelCore.RegisterCommand("request_image", RequestImage);
+			ControlPanelCore.RegisterCommand("stage_match", StageMatch);
+			ControlPanelCore.RegisterCommand("join_match", JoinMatch);
+			ControlPanelCore.RegisterCommand("start_match", StartMatch);
+			ControlPanelCore.RegisterCommand("get_my_match_log", GetMyMatchLog);
+			ControlPanelCore.RegisterCommand("forget_match", ForgetMatch);
 			SocketHandler.OnClientConnected += OnClientConnected;
         }
 
-        public static void Unregister() {
+		public static void Unregister() {
 			SocketHandler.OnClientConnected -= OnClientConnected;
 			ControlPanelCore.UnregisterCommand("test_incoming");
 			ControlPanelCore.UnregisterCommand("request_image");
+			ControlPanelCore.UnregisterCommand("stage_match");
+			ControlPanelCore.UnregisterCommand("join_match");
+			ControlPanelCore.UnregisterCommand("start_match");
+			ControlPanelCore.UnregisterCommand("get_my_match_log");
+			ControlPanelCore.UnregisterCommand("forget_match");
 		}
 
 		private static void OnClientConnected(string token) {
@@ -49,6 +61,80 @@ namespace Celeste.Mod.Head2Head.ControlPanel.Commands
 				_ => null
 			};
 			if (outgoing != null) ControlPanelCore.SendImmediate(outgoing);
+		}
+
+		private static void StageMatch(ControlPanelPacket packet) {
+			string id = packet.Json.GetString();
+			if (Head2HeadModule.knownMatches.TryGetValue(id, out var match)) {
+				if (id != PlayerStatus.Current.CurrentMatchID) {
+					Head2HeadModule.Instance.StageMatch(match);
+				}
+			}
+			else {
+				// No longer know the match
+				Outgoing.MatchForgotten(id);
+			}
+		}
+
+		private static void JoinMatch(ControlPanelPacket packet) {
+			string id = packet.Json.GetString();
+			if (Head2HeadModule.knownMatches.TryGetValue(id, out var match)) {
+				if (id != PlayerStatus.Current.CurrentMatchID) {
+					Head2HeadModule.Instance.StageMatch(match);
+				}
+				Head2HeadModule.Instance.JoinStagedMatch();
+			}
+			else {
+				// No longer know the match
+				Outgoing.MatchForgotten(id);
+			}
+		}
+
+		private static void StartMatch(ControlPanelPacket packet) {
+			string id = packet.Json.GetString();
+			if (!Head2HeadModule.knownMatches.TryGetValue(id, out var match)) {
+				// No longer know the match
+				Outgoing.MatchForgotten(id);
+				return;
+			}
+			else if (id != PlayerStatus.Current.CurrentMatchID
+				&& !RoleLogic.AllowStartingUnstagedMatches()
+				&& !Head2HeadModule.Instance.StageMatch(match))
+			{
+				// Cannot stage the match and cannot start without staging
+				return;
+			}
+			else if (!Head2HeadModule.Instance.CanStartMatch()) {
+				// Staged but cannot start... probably because I have to join or my role prevents it
+				return;
+			}
+			else if (id == PlayerStatus.Current.CurrentMatchID) {
+				// is staged, start
+				Head2HeadModule.Instance.BeginStagedMatch();
+			}
+			else if (match.State < MatchState.InProgress && RoleLogic.AllowStartingUnstagedMatches()) {
+				// is not staged, start
+				match.State = MatchState.InProgress;  // sends update
+			}
+		}
+
+		private static void GetMyMatchLog(ControlPanelPacket packet) {
+			string id = packet.Json.GetString();
+			if (!Head2HeadModule.knownMatches.TryGetValue(id, out var match)) {
+				// No longer know the match
+				Outgoing.MatchForgotten(id);
+			}
+			else if (!ActionLogger.LogFileExists(id)) {
+				// TODO no log file
+			}
+			else {
+				// TODO (!!!)
+			}
+		}
+
+		private static void ForgetMatch(ControlPanelPacket packet) {
+			string id = packet.Json.GetString();
+			Head2HeadModule.Instance.TryForgetMatch(id);
 		}
 
 	}

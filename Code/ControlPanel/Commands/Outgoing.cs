@@ -13,7 +13,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel.Commands {
 		public static void CurrentMatchStatus(MatchDefinition def, string targetClientToken = "") {
 			ControlPanelCore.SendImmediate(ControlPanelPacket.CreateOutgoing(
 				"CURRENT_MATCH",
-				new MatchSerializableInfo(def),
+				new SerializeMatch(def),
 				targetClientToken
 			));
 		}
@@ -21,7 +21,23 @@ namespace Celeste.Mod.Head2Head.ControlPanel.Commands {
 		public static void OtherMatchStatus(MatchDefinition def, string targetClientToken = "") {
 			ControlPanelCore.SendImmediate(ControlPanelPacket.CreateOutgoing(
 				"OTHER_MATCH",
-				new MatchSerializableInfo(def),
+				new SerializeMatch(def),
+				targetClientToken
+			));
+		}
+
+		public static void MatchNoLongerCurrent(string id, string targetClientToken = "") {
+			ControlPanelCore.SendImmediate(ControlPanelPacket.CreateOutgoing(
+				"MATCH_NOT_CURRENT",
+				id,
+				targetClientToken
+			));
+		}
+
+		public static void MatchForgotten(string id, string targetClientToken = "") {
+			ControlPanelCore.SendImmediate(ControlPanelPacket.CreateOutgoing(
+				"MATCH_FORGOTTEN",
+				id,
 				targetClientToken
 			));
 		}

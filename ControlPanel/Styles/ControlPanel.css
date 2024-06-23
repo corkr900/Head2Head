@@ -19,6 +19,21 @@ footer {
 	text-align: end;
 }
 
+button {
+	background-color: rgb(45, 45, 51);
+	color: rgb(207, 206, 221);
+	border: 2px outset rgb(45, 45, 51);
+	padding: 5px 10px;
+}
+
+button:hover {
+	background: transparent;
+}
+
+button:active {
+	border-style: inset;
+}
+
 .title {
 	font-size: xx-large;
 	color: rgb(178, 215, 248);
@@ -57,27 +72,6 @@ footer {
 .toolbarItm:hover,
 .toolbarItm:focus {
 	background-color: rgb(94, 94, 104);
-}
-
-textarea {
-	vertical-align: bottom;
-}
-
-#output {
-	overflow: auto;
-	font-family: monospace;
-}
-
-#output>p {
-	overflow-wrap: break-word;
-}
-
-#output span {
-	color: lightblue;
-}
-
-#output span.error {
-	color: red;
 }
 
 .card {
@@ -136,7 +130,6 @@ textarea {
 	cursor: pointer;
 	padding: 18px;
 	width: 100%;
-	border: none;
 	text-align: left;
 	outline: none;
 	font-size: 15px;
@@ -150,7 +143,7 @@ textarea {
 }
 
 .collapsibleContent {
-	padding: 0 18px;
+	padding: 0px 18px;
 	overflow: hidden;
 	max-height: 0;
 	transition: max-height 0.15s ease-out;
@@ -171,10 +164,27 @@ textarea {
 	height: 56px;
 }
 
-.collapseContainer {
-	border: 2px ridge black;
+.actionButtonsContainer {
+	margin: 6px;
 }
 
 .debugOnly {
 	display: none;
+}
+
+#output {
+	overflow: auto;
+	font-family: monospace;
+}
+
+#output>p {
+	overflow-wrap: break-word;
+}
+
+#output span {
+	color: lightblue;
+}
+
+#output span.error {
+	color: red;
 }

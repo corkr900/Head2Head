@@ -93,8 +93,17 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public static bool AllowMatchStart(bool hasJoinedMatch) {
 			return ActiveRole switch {
 				Role.Host => true,
+				Role.Debug => true,
 				Role.Participant => false,
 				_ => hasJoinedMatch,
+			};
+		}
+
+		internal static bool AllowStartingUnstagedMatches() {
+			return ActiveRole switch {
+				Role.Host => true,
+				Role.Debug => true,
+				_ => false,
 			};
 		}
 

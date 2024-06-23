@@ -1,4 +1,5 @@
-﻿using Celeste.Mod.Head2Head.Shared;
+﻿using Celeste.Mod.Head2Head.IO;
+using Celeste.Mod.Head2Head.Shared;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,8 +10,8 @@ using System.Threading.Tasks;
 namespace Celeste.Mod.Head2Head.ControlPanel {
 
 
-	public struct MatchSerializableInfo {
-		public MatchSerializableInfo(MatchDefinition definition) {
+	public struct SerializeMatch {
+		public SerializeMatch(MatchDefinition definition) {
 			def = definition;
 			categoryIcon = SerializeImage.FromGui(def.CategoryIcon);
 		}
@@ -24,36 +25,45 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 		public string DisplayName => def?.MatchDisplayName;
 		public string CategoryName => def?.CategoryDisplayName;
 		public bool IsRandomizer => def?.HasRandomizerObjective ?? false;
-		public List<PlayerSerializableInfo> Players => GetPlayerInfo();
+		public List<SerializeMatchPlayer> Players => GetPlayerInfo();
 		public List<string> AvailableActions => GetActions();
 		public string PrimaryMap => def.Phases[0]?.Area.SID;
 		public string PrimaryMapName => def.Phases[0]?.Area.DisplayName;
 		public SerializeImage CategoryIcon => categoryIcon;
 
-		private List<PlayerSerializableInfo> GetPlayerInfo() {
+		private List<SerializeMatchPlayer> GetPlayerInfo() {
 			if (def == null) return new();
-			List<PlayerSerializableInfo> ret = new(def.Players.Count);
+			List<SerializeMatchPlayer> ret = new(def.Players.Count);
 			foreach (PlayerID pid in def.Players) {
-				ret.Add(new PlayerSerializableInfo(def, pid));
+				ret.Add(new SerializeMatchPlayer(def, pid));
 			}
 			return ret;
 		}
 
 		private List<string> GetActions() {
 			List<string> ret = new();
-			if (Head2HeadModule.Instance.CanStageMatch() && PlayerStatus.Current.CurrentMatchID != def.MatchID) {
-				ret.Add("STAGE_MATCH");
-			}
-			if (Head2HeadModule.Instance.CanJoinMatch()) {
+			ret.Add("STAGE_MATCH");
+			if (!def.Players.Contains(PlayerID.MyIDSafe)) {
 				ret.Add("JOIN_MATCH");
 			}
+			if (def.State <= MatchState.Staged
+				&& def.Players?.Count > 0
+				&& (def.Players.Contains(PlayerID.MyIDSafe)
+					|| RoleLogic.AllowMatchStart(false)))
+			{
+				ret.Add("START_MATCH");
+			}
+			if (def.State >= MatchState.InProgress) {
+				ret.Add("GET_MY_MATCH_LOG");
+			}
+			ret.Add("FORGET_MATCH");
 			return ret;
 		}
 
 	}
 
-	public struct PlayerSerializableInfo {
-		public PlayerSerializableInfo(MatchDefinition definition, PlayerID player) {
+	public struct SerializeMatchPlayer {
+		public SerializeMatchPlayer(MatchDefinition definition, PlayerID player) {
 			def = definition;
 			pla = player;
 		}
@@ -66,19 +76,19 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 		public string StatusTitle => Util.TranslatedMatchResult(Status);
 		public double Timer => new TimeSpan(def.GetPlayerTimer(pla)).TotalMicroseconds;
 		public string FormattedTimer => Dialog.FileTime(def.GetPlayerTimer(pla));
-		public List<PlayerPhaseSerializableInfo> Phases => GetPhases();
+		public List<SerializeMatchPlayerPhase> Phases => GetPhases();
 
-		private List<PlayerPhaseSerializableInfo> GetPhases() {
-			List<PlayerPhaseSerializableInfo> ret = new(def.Phases.Count);
+		private List<SerializeMatchPlayerPhase> GetPhases() {
+			List<SerializeMatchPlayerPhase> ret = new(def.Phases.Count);
 			foreach (MatchPhase ph in def.Phases) {
-				ret.Add(new PlayerPhaseSerializableInfo(def, pla, ph));
+				ret.Add(new SerializeMatchPlayerPhase(def, pla, ph));
 			}
 			return ret;
 		}
 	}
 
-	public struct PlayerPhaseSerializableInfo {
-		public PlayerPhaseSerializableInfo(MatchDefinition definition, PlayerID player, MatchPhase phase) {
+	public struct SerializeMatchPlayerPhase {
+		public SerializeMatchPlayerPhase(MatchDefinition definition, PlayerID player, MatchPhase phase) {
 			def = definition;
 			pla = player;
 			ph = phase;
@@ -89,19 +99,19 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 
 		public uint InternalId => ph.ID;
 		public bool Completed => def.Result?[pla].Result == ResultCategory.Completed;
-		public List<PlayerObjectiveSerializableInfo> Objectives => GetObjectives();
+		public List<SerializeMatchPlayerObjective> Objectives => GetObjectives();
 
-		private List<PlayerObjectiveSerializableInfo> GetObjectives() {
-			List<PlayerObjectiveSerializableInfo> ret = new(def.Phases.Count);
+		private List<SerializeMatchPlayerObjective> GetObjectives() {
+			List<SerializeMatchPlayerObjective> ret = new(def.Phases.Count);
 			foreach (MatchObjective obj in ph.Objectives) {
-				ret.Add(new PlayerObjectiveSerializableInfo(pla, obj));
+				ret.Add(new SerializeMatchPlayerObjective(pla, obj));
 			}
 			return ret;
 		}
 	}
 
-	public struct PlayerObjectiveSerializableInfo {
-		public PlayerObjectiveSerializableInfo(PlayerID player, MatchObjective obj) {
+	public struct SerializeMatchPlayerObjective {
+		public SerializeMatchPlayerObjective(PlayerID player, MatchObjective obj) {
 			pla = player;
 			ob = obj;
 			PlayerStatus stat = pla.Equals(PlayerID.MyID) ? PlayerStatus.Current

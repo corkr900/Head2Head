@@ -26,6 +26,7 @@ using Celeste.Mod.Head2Head.UI;
 using Celeste.Mod.Head2Head.Integration;
 using MonoMod.ModInterop;
 using Celeste.Mod.Head2Head.ControlPanel;
+using System.Text.RegularExpressions;
 
 // TODO Force DNF if a player intentionally closes the game
 // TODO Make the start-match and return-to-lobby sequences more robust
@@ -1167,63 +1168,65 @@ namespace Celeste.Mod.Head2Head
 			buildingMatch.RandoSettingsBuilder = settingsBuilder;
 		}
 
-		public void StageMatch() {
+		public bool StageMatch() {
 			if (Util.IsUpdateAvailable()) {
 				Logger.Log(LogLevel.Info, "Head2Head", "Cannot stage match: you are using an outdated version of Head 2 Head");
-				return;
+				return false;
 			}
 			if (!RoleLogic.AllowMatchCreate()) {
 				Logger.Log(LogLevel.Verbose, "Head2Head", "Your role prevents creating a match");
-				return;
+				return false;
 			}
 			if (buildingMatch == null) {
 				Logger.Log(LogLevel.Verbose, "Head2Head", "You need to build a match before staging");
-				return;
+				return false;
 			}
 			if (buildingMatch.ChangeSavefile && !RoleLogic.AllowFullgame()) {
 				Logger.Log(LogLevel.Verbose, "Head2Head", "Your role prevents creating full-game a match");
-				return;
+				return false;
 			}
 			if (buildingMatch.Phases.Count == 0) {
 				Logger.Log(LogLevel.Verbose, "Head2Head", "You need to add a phase before staging the match");
-				return;
+				return false;
 			}
 			MatchDefinition def = PlayerStatus.Current.CurrentMatch;
 			if (def != null && !def.PlayerCanLeaveFreely(PlayerID.MyIDSafe)) {
 				//Logger.Log(LogLevel.Verbose, "Head2Head", "Drop out of your current match before creating a new one");
-				return;
+				return false;
 			}
 			buildingMatch.AssignIDs();
 			RoleLogic.HandleMatchCreation(buildingMatch);
 			buildingMatch.State = MatchState.Staged;  // Sends update
 			buildingMatch = null;
 			ClearAutoLaunchInfo();
+			return true;
 		}
 
-		public void StageMatch(MatchDefinition def) {
+		public bool StageMatch(MatchDefinition def) {
 			if (Util.IsUpdateAvailable()) {
 				Logger.Log(LogLevel.Warn, "Head2Head", "Cannot stage match: you are using an outdated version of Head 2 Head");
-				return;
+				return false;
 			}
 			if (def == null)
 			{
 				Logger.Log(LogLevel.Verbose, "Head2Head", "You need to build a match before staging a match");
-				return;
+				return false;
 			}
 			if (def.Phases.Count == 0)
 			{
 				Logger.Log(LogLevel.Verbose, "Head2Head", "You need to add a phase before staging a match");
-				return;
+				return false;
 			}
 			if (!PlayerStatus.Current.CanStageMatch())
 			{
 				Logger.Log(LogLevel.Verbose, "Head2Head", "Player status prevents staging a match (are you already in one?)");
-				return;
+				return false;
 			}
 			RoleLogic.HandleMatchCreation(def);
-			def.State = MatchState.Staged;
+			def.State = MatchState.Staged;  // Sends update
 			MatchStaged(def, true);
 			ClearAutoLaunchInfo();
+			return true;
 		}
 
 		private static void MatchStaged(MatchDefinition def, bool overrideSoftChecks) {
@@ -1239,77 +1242,84 @@ namespace Celeste.Mod.Head2Head
 				if (!overrideSoftChecks
 					&& current.State <= MatchState.InProgress
 					&& current.GetPlayerResultCat(PlayerID.MyIDSafe) == ResultCategory.NotJoined) return;
+				ControlPanel.Commands.Outgoing.MatchNoLongerCurrent(current.MatchID);
 			}
 			// Actually stage it locally
 			PlayerStatus.Current.CurrentMatch = def;
 			PlayerStatus.Current.MatchStaged(PlayerStatus.Current.CurrentMatch);
 			OnMatchCurrentMatchUpdated?.Invoke();
+			ControlPanel.Commands.Outgoing.CurrentMatchStatus(def);
 			Instance.ClearAutoLaunchInfo();
 		}
 
-		public void JoinStagedMatch() {
+		public bool JoinStagedMatch() {
 			if (Util.IsUpdateAvailable()) {
 				Logger.Log(LogLevel.Warn, "Head2Head", "Cannot join match: you are using an outdated version of Head 2 Head");
-				return;
+				return false;
 			}
 			MatchDefinition def = PlayerStatus.Current.CurrentMatch;
 			if (def == null) {
 				Logger.Log(LogLevel.Verbose, "Head2Head", "Couldn't join match - there is no staged match");
-				return;
+				return false;
 			}
 			if (PlayerStatus.Current.MatchState != MatchState.Staged) {
 				Logger.Log(LogLevel.Verbose, "Head2Head", "Couldn't join match - current match is not staged status");
-				return;
+				return false;
 			}
 			foreach (MatchPhase ph in def.Phases) {
 				if (!ph.Area.IsValidInstalledMap) {
 					Logger.Log(LogLevel.Info, "Head2Head", string.Format("Couldn't join match - map not installed: {0}", ph.Area.SID));
 					Engine.Commands.Log(string.Format("Couldn't join match - map not installed: {0}", ph.Area.SID));
-					return;
+					return false;
 				}
 				if (!ph.Area.VersionMatchesLocal) {
 					Logger.Log(LogLevel.Info, "Head2Head", string.Format("Couldn't join match - map version mismatch: {0} (match initator has {1}, but {2} is installed)",
 						ph.Area.DisplayName, ph.Area.Version, ph.Area.LocalVersion));
 					Engine.Commands.Log(string.Format("Couldn't join match - map version mismatch: {0} (match initator has {1}, but {2} is installed)",
 						ph.Area.DisplayName, ph.Area.Version, ph.Area.LocalVersion));
-					return;
+					return false;
 				}
 			}
 			if (!RoleLogic.AllowMatchJoin(def)) {
 				Logger.Log(LogLevel.Verbose, "Head2Head", "Your role prevents creating a match");
 				Engine.Commands.Log("Your role prevents joining this match");
-				return;
+				return false;
 			}
 			if (!def.Players.Contains(PlayerID.MyIDSafe)) {
 				def.Players.Add(PlayerID.MyIDSafe);
 				PlayerStatus.Current.MatchJoined();
 				def.BroadcastUpdate();
 				OnMatchCurrentMatchUpdated?.Invoke();
+				return true;
+			}
+			else {
+				return false;
 			}
 		}
 
-		public void BeginStagedMatch() {
+		public bool BeginStagedMatch() {
 			if (Util.IsUpdateAvailable()) {
 				Logger.Log(LogLevel.Warn, "Head2Head", "Cannot begin match: you are using an outdated version of Head 2 Head");
-				return;
+				return false;
 			}
 			MatchDefinition def = PlayerStatus.Current.CurrentMatch;
 			if (def == null) {
 				Logger.Log(LogLevel.Verbose, "Head2Head", "There is no staged match!");
-				return;
+				return false;
 			}
 			if (def.State != MatchState.Staged) {
 				Logger.Log(LogLevel.Verbose, "Head2Head", "Current match is not staged!");
-				return;
+				return false;
 			}
 			bool hasJoined = def.Players.Contains(PlayerID.MyIDSafe);
 			if (!RoleLogic.AllowMatchStart(hasJoined)) {
 				Logger.Log(LogLevel.Verbose, "Head2Head", "Your role prevents starting this match");
-				return;
+				return false;
 			}
 			def.BeginInstant = SyncedClock.Now + new TimeSpan(0, 0, 0, 0, START_TIMER_LEAD_MS);
 			def.State = MatchState.InProgress;
 			MatchStarted(def);  // OnMatchUpdated doesn't detect a status change locally
+			return true;
 		}
 
 		public void ResetCurrentMatch() {
@@ -1324,6 +1334,19 @@ namespace Celeste.Mod.Head2Head
 			}
 		}
 
+		internal bool TryForgetMatch(string id) {
+			if (!knownMatches.TryGetValue(id, out var match)) return true;
+			if (id == PlayerStatus.Current.CurrentMatchID) {
+				ResultCategory cat2 = match.GetPlayerResultCat(PlayerID.MyIDSafe);
+				if (cat2 == ResultCategory.Joined || cat2 == ResultCategory.InMatch) return false;
+				PlayerStatus.Current.CurrentMatch = null;
+				PlayerStatus.Current.Updated();
+			}
+			knownMatches.Remove(id);
+			ControlPanel.Commands.Outgoing.MatchForgotten(id);
+			return true;
+		}
+
 		public void DiscardStaleData()
 		{
 			List<MatchDefinition> defsToRemove = new List<MatchDefinition>();
@@ -1334,7 +1357,10 @@ namespace Celeste.Mod.Head2Head
 					defsToRemove.Add(def);
 				}
 			}
-			foreach (MatchDefinition def in defsToRemove) knownMatches.Remove(def.MatchID);
+			foreach (MatchDefinition def in defsToRemove) {
+				knownMatches.Remove(def.MatchID);
+				ControlPanel.Commands.Outgoing.MatchForgotten(def.MatchID);
+			}
 
 			List<PlayerID> playersToRemove = new List<PlayerID>();
 			foreach (KeyValuePair<PlayerID, PlayerStatus> kvp in knownPlayers)

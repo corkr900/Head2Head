@@ -173,6 +173,7 @@ namespace Celeste.Mod.Head2Head.UI
 			if (def_menu != null) {
 				if (def_menu.PlayerCanLeaveFreely(PlayerID.MyIDSafe)) {
 					btn = menu.AddButton("Head2Head_menu_helpdesk_removeOverlay", () => {
+						ControlPanel.Commands.Outgoing.MatchNoLongerCurrent(def_menu.MatchID);
 						PlayerStatus.Current.CurrentMatch = null;
 						PlayerStatus.Current.Updated();
 						cxt.Close(menu);
@@ -413,13 +414,7 @@ namespace Celeste.Mod.Head2Head.UI
 
 				// Forget
 				btn = menu.AddButton("Head2Head_menu_match_forget", () => {
-					if (cxtMatch.MatchID == PlayerStatus.Current.CurrentMatchID) {
-						ResultCategory cat2 = cxtMatch.GetPlayerResultCat(PlayerID.MyIDSafe);
-						if (cat2 == ResultCategory.Joined || cat2 == ResultCategory.InMatch) return;
-						PlayerStatus.Current.CurrentMatch = null;
-						PlayerStatus.Current.Updated();
-					}
-					Head2HeadModule.knownMatches.Remove(cxt.matchID);
+					Head2HeadModule.Instance.TryForgetMatch(cxtMatch.MatchID);
 					cxt.Back(menu);
 				});
 				ResultCategory cat = cxtMatch.GetPlayerResultCat(PlayerID.MyIDSafe);

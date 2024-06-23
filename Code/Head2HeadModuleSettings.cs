@@ -87,6 +87,9 @@ namespace Celeste.Mod.Head2Head {
 		[SettingIgnore]
 		public bool HidePauseMenuHelpdesk { get; set; } = false;
 
+		[SettingIgnore]
+		public bool AllowDebugRole { get; set; } = false;
+
 		#endregion
 
 		#region Menu Building
@@ -164,8 +167,13 @@ namespace Celeste.Mod.Head2Head {
 
 		private Role[] GetRoleOptions() {
 			Ruleset rset = Shared.Ruleset.Get(Ruleset);
-			if ((rset.Roles?.Count ?? 0) > 0) return rset.Roles.ToArray();
-			return new Role[] { Role.None };
+			Role[] roles = (rset.Roles?.Count ?? 0) > 0
+				? rset.Roles.ToArray()
+				: new Role[] { Role.None };
+			if (Head2HeadModule.Settings.AllowDebugRole && !roles.Contains(Role.Debug)) {
+				roles = roles.Append(Role.Debug).ToArray();
+			}
+			return roles;
 		}
 
 		/// <summary>
@@ -187,7 +195,10 @@ namespace Celeste.Mod.Head2Head {
 		/// </summary>
 		/// <returns>true if role was changed, false if already valid</returns>
 		private bool EnforceRole() {
-			Ruleset rset = Shared.Ruleset.Get(Ruleset);
+            if (ActiveRole == Role.Debug && Head2HeadModule.Settings.AllowDebugRole) {
+				return false;
+            }
+            Ruleset rset = Shared.Ruleset.Get(Ruleset);
 			if ((rset?.Roles?.Count ?? 0) <= 0) {
 				ActiveRole = Role.None;
 				return true;
