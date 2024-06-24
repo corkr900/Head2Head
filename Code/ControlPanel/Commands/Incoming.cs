@@ -114,20 +114,6 @@ namespace Celeste.Mod.Head2Head.ControlPanel.Commands
 			}
 		}
 
-		private static void GetMyMatchLog(ControlPanelPacket packet) {
-			string id = packet.Json.GetString();
-			if (!Head2HeadModule.knownMatches.TryGetValue(id, out var match)) {
-				// No longer know the match
-				Outgoing.MatchForgotten(id);
-			}
-			else if (!ActionLogger.LogFileExists(id)) {
-				// TODO no log file
-			}
-			else {
-				// TODO (!!!)
-			}
-		}
-
 		private static void ForgetMatch(ControlPanelPacket packet) {
 			string id = packet.Json.GetString();
 			Head2HeadModule.Instance.TryForgetMatch(id);
@@ -153,6 +139,20 @@ namespace Celeste.Mod.Head2Head.ControlPanel.Commands
 			else {
 				Head2HeadModule.Instance.KillMatch(match);
 			}
+		}
+
+		private static void GetMyMatchLog(ControlPanelPacket packet) {
+			string id = packet.Json.GetString();
+			if (!ActionLogger.LogFileExists(id)) {
+				// TODO no log file
+			}
+			else {
+				Outgoing.MatchLog(ActionLogger.LoadLog(id), packet.ClientToken);
+			}
+		}
+
+		private static void RequestMatchLog(ControlPanelPacket packet) {
+			// TODO
 		}
 
 	}

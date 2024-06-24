@@ -1,4 +1,5 @@
-﻿using Celeste.Mod.Head2Head.Shared;
+﻿using Celeste.Mod.Head2Head.IO;
+using Celeste.Mod.Head2Head.Shared;
 using Monocle;
 using System;
 using System.Collections.Generic;
@@ -38,6 +39,14 @@ namespace Celeste.Mod.Head2Head.ControlPanel.Commands {
 			ControlPanelCore.SendImmediate(ControlPanelPacket.CreateOutgoing(
 				"MATCH_FORGOTTEN",
 				id,
+				targetClientToken
+			));
+		}
+
+		public static void MatchLog(MatchLog log, string targetClientToken = "") {
+			ControlPanelCore.SendImmediate(ControlPanelPacket.CreateOutgoing(
+				"MATCH_LOG",
+				log,
 				targetClientToken
 			));
 		}

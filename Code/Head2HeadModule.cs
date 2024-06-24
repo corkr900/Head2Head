@@ -27,6 +27,7 @@ using Celeste.Mod.Head2Head.Integration;
 using MonoMod.ModInterop;
 using Celeste.Mod.Head2Head.ControlPanel;
 using System.Text.RegularExpressions;
+using static Celeste.GaussianBlur;
 
 // TODO Force DNF if a player intentionally closes the game
 // TODO Make the start-match and return-to-lobby sequences more robust
@@ -304,7 +305,7 @@ namespace Celeste.Mod.Head2Head
 		private void OnLoadLevel(On.Celeste.Level.orig_LoadLevel orig, Level self, Player.IntroTypes playerIntro, bool isFromLoader) {
 			orig(self, playerIntro, isFromLoader);
 			if (!PlayerStatus.Current.IsInMatch(false)) return;
-			PlayerStatus.Current.CheckRoomTeleport(self);
+			if (!isFromLoader) PlayerStatus.Current.CheckRoomTeleport(self);
 		}
 
 		/// <summary>
@@ -392,6 +393,8 @@ namespace Celeste.Mod.Head2Head
 			currentSession = session;
 			GlobalAreaKey area = new GlobalAreaKey(session.Area);
 			PlayerStatus.Current.ChapterEntered(area, session);
+			LevelData ld = session.MapData?.levelsByName?[session.Level];
+			PlayerStatus.Current.RoomEntered(self.Level, ld, Vector2.Zero);
 			if (area.Equals(GlobalAreaKey.Head2HeadLobby)) {
 				ScanModsForIntegrationMeta();
 			}
@@ -406,7 +409,6 @@ namespace Celeste.Mod.Head2Head
 			if (PlayerEnteredAMap && !(new GlobalAreaKey(level.Session.Area).Equals(GlobalAreaKey.Head2HeadLobby))) {
 				PlayerCompletedARoom = true;
 			}
-			ActionLogger.EnteringRoom();
 		}
 
 		private void onDebugScreenOpened(On.Celeste.Editor.MapEditor.orig_ctor orig, MapEditor self, AreaKey area, bool reloadMapData) {

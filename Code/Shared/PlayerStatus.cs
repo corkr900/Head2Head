@@ -166,6 +166,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		}
 
 		public void RoomEntered(Level level, LevelData next, Vector2 direction) {
+			if (next == null) return;
 			CurrentRoom = next.Name;
 			if (next.HasCheckpoint) {
 				if (IsInMatch(false)) {
@@ -179,9 +180,9 @@ namespace Celeste.Mod.Head2Head.Shared {
 						reachedCheckpoints.Add(new Tuple<GlobalAreaKey, string>(area, LastCheckpoint));
 					}
 				}
-				ActionLogger.EnteringRoom();
 			}
 			if (IsInMatch(false)) {
+				ActionLogger.EnteringRoom();
 				CheckRoomEnterObjective(CurrentRoom, new GlobalAreaKey(level.Session.Area));
 			}
 			Updated();

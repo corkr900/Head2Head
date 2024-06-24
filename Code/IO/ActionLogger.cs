@@ -14,18 +14,23 @@ using System.Xml.Serialization;
 
 namespace Celeste.Mod.Head2Head.IO {
 	public class ActionLogger {
-		private static MatchLog Current;
+		public static MatchLog Current { get; private set; }
+		private static Dictionary<string, MatchLog> allLogs = new();
 
 		private static bool TrackActions(bool skipCurrentCheck = false) {
-			return (skipCurrentCheck || (Current != null && !Current.completedMatchWritten)) && RoleLogic.LogMatchActions();
+			return (skipCurrentCheck || Current != null) && RoleLogic.LogMatchActions();
 		}
 
 		public static bool WriteLog() {
 			if (Current == null) return false;
+			allLogs[Current.MatchID] = Current;
 			return Current.Write();
 		}
 
 		public static MatchLog LoadLog(string matchID) {
+			if (allLogs.TryGetValue(matchID, out MatchLog ret)) {
+				return ret;
+			}
 			string path = GetLogFileName(matchID);
 			if (string.IsNullOrEmpty(path) || !File.Exists(path)) return null;
 			try {
@@ -64,6 +69,7 @@ namespace Celeste.Mod.Head2Head.IO {
 		}
 
 		public static bool LogFileExists(string matchID) {
+			if (allLogs.ContainsKey(matchID)) return true;
 			return File.Exists(GetLogFileName(matchID));
 		}
 
@@ -121,14 +127,15 @@ namespace Celeste.Mod.Head2Head.IO {
 
 		public static void StartingMatch(MatchDefinition def) {
 			if (!TrackActions(true)) return;
-			if (Current == null || Current.matchID != def.MatchID) {
+			if (Current == null || Current.MatchID != def.MatchID) {
 				WriteLog();
 				Current = new MatchLog() {
-					matchBeginDate = def.BeginInstant.ToShortDateString().Replace('/', '-'),
-					matchID = def.MatchID,
-					matchDispName = def.CategoryDisplayName,
-					matchCreator = def.Owner.Name,
+					MatchBeginDate = def.BeginInstant.ToShortDateString().Replace('/', '-'),
+					MatchID = def.MatchID,
+					MatchDispName = def.CategoryDisplayName,
+					MatchCreator = def.Owner.Name,
 				};
+				allLogs[def.MatchID] = Current;
 			}
 			Current.Log(new LoggableAction(LoggableAction.ActionType.MatchStart));
 			WriteLog();
@@ -143,7 +150,7 @@ namespace Celeste.Mod.Head2Head.IO {
 		public static void ExitingArea(LevelExit.Mode _mode) {
 			if (!TrackActions()) return;
 			Current.Log(new LoggableAction(LoggableAction.ActionType.AreaExit) {
-				levelExitMode = _mode.ToString(),
+				LevelExitMode = _mode.ToString(),
 			});
 		}
 
@@ -153,13 +160,12 @@ namespace Celeste.Mod.Head2Head.IO {
 		}
 
 		public static void EnteringRoom() {
-			return;  // Logging every room transition is too much noise
-			//if (!TrackActions()) return;
-			//LoggableAction la = new LoggableAction(LoggableAction.ActionType.EnterRoom);
-			//Current.Log(la);
-			//if (!string.IsNullOrEmpty(la.checkpoint)) {
-			//	WriteLog();
-			//}
+			if (!TrackActions()) return;
+			LoggableAction la = new LoggableAction(LoggableAction.ActionType.EnterRoom);
+			Current.Log(la);
+			if (!string.IsNullOrEmpty(la.Checkpoint)) {
+				WriteLog();
+			}
 		}
 
 		public static void DebugView() {
@@ -192,8 +198,8 @@ namespace Celeste.Mod.Head2Head.IO {
 		public static void CompletedMatch() {
 			if (!TrackActions()) return;
 			Current.Log(new LoggableAction(LoggableAction.ActionType.MatchComplete));
-			Current.completedMatchWritten = true;
 			WriteLog();
+			Current = null;
 		}
 
 		public static void EnteredSavefile() {
@@ -214,6 +220,7 @@ namespace Celeste.Mod.Head2Head.IO {
 			MatchLog log = LoadLog(matchID);
 			if (log != null) {
 				Current = log;
+				allLogs[log.MatchID] = log;
 				Current.Log(new LoggableAction(LoggableAction.ActionType.MatchRejoin));
 				WriteLog();
 			}
@@ -222,17 +229,17 @@ namespace Celeste.Mod.Head2Head.IO {
 
 	[Serializable]
 	public class MatchLog {
-		public string matchBeginDate;
-		public string matchID;
-		public string matchDispName;
-		public string matchCreator;
-		public List<LoggableAction> log = new List<LoggableAction>();
+		public string MatchBeginDate { get; set; }
+		public string MatchID { get; set; }
+		public string MatchDispName { get; set; }
+		public string MatchCreator { get; set; }
+		public List<LoggableAction> Events { get; set; } = new();
 
+		[NonSerialized]
 		private bool dirty = true;
-		public bool completedMatchWritten = false;
 
 		public void Log(LoggableAction a) {
-			log.Add(a);
+			Events.Add(a);
 			dirty = true;
 		}
 
@@ -260,7 +267,7 @@ namespace Celeste.Mod.Head2Head.IO {
 		/// </summary>
 		/// <returns>Returns "" if there is no appropriate path</returns>
 		private string GetLogPath() {
-			string handle = UserIO.GetHandle(string.Format("Head2Head {0} {1}", matchBeginDate, matchID));
+			string handle = UserIO.GetHandle(string.Format("Head2Head {0} {1}", MatchBeginDate, MatchID));
 			return handle ?? "";
 		}
 	}
@@ -295,28 +302,28 @@ namespace Celeste.Mod.Head2Head.IO {
 
 		public LoggableAction(ActionType _type) {
 			GlobalAreaKey area = PlayerStatus.Current.CurrentArea;
-			type = _type;
-			instant = SyncedClock.Now.ToString();
-			fileTimer = Dialog.FileTime(SaveData.Instance.Time);
-			areaSID = PlayerStatus.Current.CurrentArea.SID;
-			room = PlayerStatus.Current.CurrentRoom;
-			checkpoint = area.IsOverworld ? "Overworld"
-				: area.IsValidInstalledMap ? AreaData.GetCheckpointName(area.Local_Safe, room)
-				: "[unknown area]";
-			matchID = PlayerStatus.Current.CurrentMatchID;
-			saveDataIndex = SaveData.Instance?.FileSlot ?? -99;
-			levelExitMode = "";
+			Type = _type;
+			Instant = SyncedClock.Now.ToString();
+			FileTimer = Dialog.FileTime(SaveData.Instance.Time);
+			MatchTimer = Dialog.FileTime(SaveData.Instance.Time - PlayerStatus.Current.FileTimerAtMatchBegin);
+			AreaSID = PlayerStatus.Current.CurrentArea.SID;
+			Room = PlayerStatus.Current.CurrentRoom;
+			Checkpoint = area.IsOverworld ? ""
+				: !area.IsValidInstalledMap ? ""
+				: AreaData.GetCheckpointName(area.Local_Safe, Room) ?? "";
+			SaveDataIndex = SaveData.Instance?.FileSlot ?? -99;
+			LevelExitMode = "";
 		}
 
-		public ActionType type;
-		public string instant;
-		public string fileTimer;
-		public string areaSID;
-		public string room;
-		public string checkpoint;
-		public string matchID;
-		public int saveDataIndex;
-
-		public string levelExitMode;
+		public ActionType Type { get; set; }
+		public string Label => Type.ToString();
+		public string Instant { get; set; }
+		public string FileTimer { get; set; }
+		public string MatchTimer { get; set; }
+		public string AreaSID { get; set; }
+		public string Room { get; set; }
+		public string Checkpoint { get; set; }
+		public int SaveDataIndex { get; set; }
+		public string LevelExitMode { get; set; }
 	}
 }

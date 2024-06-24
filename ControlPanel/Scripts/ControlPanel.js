@@ -66,6 +66,9 @@ function HandleMessage(data) {
 	else if (data.Command == "MATCH_FORGOTTEN") {
 		RemoveMatchInfo(data.Data);
 	}
+	else if (data.Command == "MATCH_LOG") {
+		RenderLog(data.Data);
+	}
 }
 
 function doSend(command, data) {
@@ -362,4 +365,46 @@ function RenderMatchActionButtons(match, container) {
 	}
 
 	container.appendChild(buttonsContainer);
+}
+
+function RenderLog(log) {
+	const container = document.querySelector("#logCardBody");
+	if (!log) {  // No current log
+		container.textContent = "There is no match log loaded.";
+		document.querySelector("#logCard").classList.remove("hasLog");
+		return;
+	}
+	container.textContent = "";
+	
+	let table = document.createElement("table");
+	table.className = "logTable";
+	RenderLogRow(table, {
+		Instant: "Instant",
+		MatchTimer: "Match Timer",
+		FileTimer: "File Timer",
+		Label: "Event",
+		Room: "Room",
+		Checkpoint: "Checkpoint",
+		AreaSID: "Area",
+		LevelExitMode: "Exit Mode",
+		SaveDataIndex: "Save Data Slot",
+		MatchID: "Match ID",
+	});
+	for (const evt of log.Events) {
+		RenderLogRow(table, evt);
+	}
+	container.appendChild(table);
+	document.querySelector("#logCard").classList.add("hasLog");
+}
+
+function RenderLogRow(table, evt) {
+	const template = document.querySelector("#LogRowTemplate");
+	const newRow = template.content.cloneNode(true);
+	for (const key in evt) {
+		const td = newRow.querySelector(`[field|="${key}"]`);
+		if (td) {
+			td.textContent = evt[key];
+		}
+	}
+	table.appendChild(newRow);
 }

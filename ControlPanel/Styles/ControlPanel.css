@@ -168,8 +168,31 @@ button:active {
 	margin: 6px;
 }
 
+.logTable {
+	border-collapse: collapse;
+	width: 100%;
+	font-size: small;
+}
+
+.logTable tr:first-child {
+	font-weight: bolder;
+	color: gray;
+}
+
+.logTable tr:not(:last-child) {
+	border-bottom: 1px solid black;
+}
+
 .debugOnly {
 	display: none;
+}
+
+#logCard {
+	display: none;
+}
+
+#logCard.hasLog {
+	display: revert;
 }
 
 #output {

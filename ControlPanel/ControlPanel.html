@@ -47,6 +47,10 @@
 			<h2>All Matches</h2>
 			<div id="allMatchesBody"></div>
 		</div>
+		<div id="logCard" class="card">
+			<h2>Match Log</h2>
+			<div id="logCardBody"></div>
+		</div>
 		<div class="card debugOnly">
 			<h2>Output</h2>
 			<div id="output"></div>
@@ -56,6 +60,20 @@
 	<footer>
 		<div>Copyright 2024 corkr900</div>
 	</footer>
+
+	<template id="LogRowTemplate">
+		<tr>
+			<td field="Instant"></td>
+			<td field="MatchTimer"></td>
+			<td field="FileTimer"></td>
+			<td field="Label"></td>
+			<td field="Room"></td>
+			<td field="Checkpoint"></td>
+			<td field="AreaSID"></td>
+			<td field="LevelExitMode"></td>
+			<td field="SaveDataIndex"></td>
+		</tr>
+	</template>
 
 	<script src="Scripts/ControlPanel.js"></script>
 </body>
