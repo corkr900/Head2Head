@@ -177,6 +177,7 @@ namespace Celeste.Mod.Head2Head
 			CNetComm.OnReceiveMatchReset += OnMatchReset;
 			CNetComm.OnReceiveScanRequest += OnScanRequest;
 			CNetComm.OnReceiveMisc += OnMiscMessage;
+			CNetComm.OnReceiveMatchLog += OnMatchLogMessage;
 			PlayerStatus.OnMatchPhaseCompleted += OnCompletedMatchPhase;
 			// Misc other setup
 			Celeste.Instance.Components.Add(Comm = new CNetComm(Celeste.Instance));
@@ -264,6 +265,7 @@ namespace Celeste.Mod.Head2Head
 			CNetComm.OnReceiveMatchReset -= OnMatchReset;
 			CNetComm.OnReceiveScanRequest -= OnScanRequest;
 			CNetComm.OnReceiveMisc -= OnMiscMessage;
+			CNetComm.OnReceiveMatchLog -= OnMatchLogMessage;
 			PlayerStatus.OnMatchPhaseCompleted -= OnCompletedMatchPhase;
 			// Misc other cleanup
 			if (Celeste.Instance.Components.Contains(Comm))
@@ -987,6 +989,25 @@ namespace Celeste.Mod.Head2Head
 						OnMatchCurrentMatchUpdated?.Invoke();
 					}
 					return;
+			}
+		}
+
+		private void OnMatchLogMessage(DataH2HMatchLog data) {
+			if (data.IsRequest) {
+				if (data.LogPlayer.Equals(PlayerID.MyID) && ActionLogger.LogFileExists(data.MatchID)) {
+					CNetComm.Instance?.SendMatchLog(
+						ActionLogger.LoadLog(data.MatchID),
+						data.LogPlayer,
+						data.MatchID,
+						data.RequestingPlayer,
+						data.IsControlPanelRequest,
+						data.Client);
+				}
+			}
+			else {
+				if (data.RequestingPlayer.Equals(PlayerID.MyID) && data.IsControlPanelRequest) {
+					ControlPanel.Commands.Outgoing.MatchLog(data.Log, data.Client);
+				}
 			}
 		}
 

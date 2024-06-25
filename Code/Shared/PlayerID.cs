@@ -8,6 +8,7 @@ using System.Net.NetworkInformation;
 using System.Text;
 using System.Threading.Tasks;
 using System.Text.Json.Serialization;
+using System.Reflection.Metadata;
 
 namespace Celeste.Mod.Head2Head.Shared {
 	public struct PlayerID {
@@ -78,11 +79,23 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public string Name { get; private set; }
 		[JsonIgnore]
 		public uint CNetID { get; private set; }
+		[JsonIgnore]
+		public bool IsDefault => MacAddressHash == null && string.IsNullOrEmpty(Name);
 
 		[JsonInclude]
 		public string DisplayName => Name;
 		[JsonInclude]
-		public string SerializedID =>  $"{MacAddressHash}^{CNetID}^{Name}";
+		public string SerializedID =>  $"{MacAddressHash ?? -1}^{CNetID}^{Name}";
+
+		public static PlayerID FromSerialized(string serialized) {
+			if (string.IsNullOrEmpty(serialized)) return Default;
+			string[] split = serialized.Split('^');
+			if (split.Length != 3) return Default;
+			int? addrHash = int.TryParse(split[0], out int _addrHash) ? _addrHash : null;
+			uint cnetID = uint.TryParse(split[1], out cnetID) ? cnetID : uint.MaxValue;
+			string name = split[2];
+			return new(addrHash, cnetID, name);
+		}
 
 		public bool MatchAndUpdate(PlayerID id) {
 			if (this.Equals(id)) {
@@ -90,10 +103,6 @@ namespace Celeste.Mod.Head2Head.Shared {
 				return true;
 			}
 			return false;
-		}
-
-		public bool IsDefault() {
-			return MacAddressHash == null && string.IsNullOrEmpty(Name);
 		}
 
 		public override bool Equals(object obj) {

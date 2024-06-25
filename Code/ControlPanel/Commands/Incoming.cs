@@ -21,6 +21,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel.Commands
 			ControlPanelCore.RegisterCommand("join_match", JoinMatch);
 			ControlPanelCore.RegisterCommand("start_match", StartMatch);
 			ControlPanelCore.RegisterCommand("get_my_match_log", GetMyMatchLog);
+			ControlPanelCore.RegisterCommand("get_other_match_log", RequestMatchLog);
 			ControlPanelCore.RegisterCommand("forget_match", ForgetMatch);
 			ControlPanelCore.RegisterCommand("match_drop_out", DropOutOfMatch);
 			ControlPanelCore.RegisterCommand("kill_match", KillMatch);
@@ -152,7 +153,12 @@ namespace Celeste.Mod.Head2Head.ControlPanel.Commands
 		}
 
 		private static void RequestMatchLog(ControlPanelPacket packet) {
-			// TODO
+			string matchID = packet.Json.GetProperty("matchID").GetString() ?? "";
+			string serialPlayerID = packet.Json.GetProperty("playerID").GetString() ?? "";
+			PlayerID playerID = PlayerID.FromSerialized(serialPlayerID);
+			if (!playerID.IsDefault) {
+				CNetComm.Instance.SendMatchLogRequest(playerID, matchID, true, packet.ClientToken);
+			}
 		}
 
 	}

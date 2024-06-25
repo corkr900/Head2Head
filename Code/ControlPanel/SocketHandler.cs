@@ -269,14 +269,14 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 			uint indexFirstMask = 2;
 			if (dataLength == 126) {  // Indicates length is stored in the following 16 bits
 				byte[] lengthArr = new byte[] { bytes[3], bytes[2] };
-				if (BitConverter.IsLittleEndian) Array.Reverse(lengthArr);
-				dataLength = Convert.ToUInt16(lengthArr);
+				if (!BitConverter.IsLittleEndian) Array.Reverse(lengthArr);
+				dataLength = BitConverter.ToUInt16(lengthArr);
 				indexFirstMask = 4;
 			}
 			else if (dataLength == 127) {  // Indicates length is stored in the following 64 bits
 				byte[] lengthArr = new byte[] { bytes[5], bytes[4], bytes[3], bytes[2] };
-				if (BitConverter.IsLittleEndian) Array.Reverse(lengthArr);
-				dataLength = Convert.ToUInt64(lengthArr);
+				if (!BitConverter.IsLittleEndian) Array.Reverse(lengthArr);
+				dataLength = BitConverter.ToUInt64(lengthArr);
 				indexFirstMask = 10;
 			}
 			// Get the mask value

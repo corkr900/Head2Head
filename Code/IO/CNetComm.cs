@@ -76,6 +76,9 @@ namespace Celeste.Mod.Head2Head.IO {
 		public delegate void OnReceiveMiscHandler(DataH2HMisc data);
 		public static event OnReceiveMiscHandler OnReceiveMisc;
 
+		public delegate void OnReceiveMatchLogHandler(DataH2HMatchLog data);
+		public static event OnReceiveMatchLogHandler OnReceiveMatchLog;
+
 		// #############################################
 
 		private ConcurrentQueue<Action> updateQueue = new ConcurrentQueue<Action>();
@@ -121,6 +124,7 @@ namespace Celeste.Mod.Head2Head.IO {
 		}
 
 		// #############################################
+
 		public void SendTestMessage() {
 			if (!CanSendMessages) {
 				Engine.Commands.Log("Cannot send test message: not connected to CelesteNet.");
@@ -182,6 +186,37 @@ namespace Celeste.Mod.Head2Head.IO {
 			MessageCounter++;
 		}
 
+		internal void SendMatchLogRequest(PlayerID player, string matchID, bool isControlPanelRequest, string client) {
+			if (!CanSendMessages) {
+				return;
+			}
+			CnetClient.SendAndHandle(new DataH2HMatchLog() {
+				Log = null,
+				MatchID = matchID,
+				LogPlayer = player,
+				RequestingPlayer = PlayerID.MyIDSafe,
+				IsControlPanelRequest = isControlPanelRequest,
+				Client = client,
+			});
+			MessageCounter++;
+		}
+
+		internal void SendMatchLog(MatchLog log, PlayerID player, string matchID, PlayerID requestor, bool isControlPanelRequest, string client) {
+			if (!CanSendMessages || log == null) {
+				return;
+			}
+			// TODO match log chunking
+			CnetClient.SendAndHandle(new DataH2HMatchLog() {
+				Log = log,
+				MatchID = matchID,
+				LogPlayer = player,
+				RequestingPlayer = requestor,
+				IsControlPanelRequest = isControlPanelRequest,
+				Client = client,
+			});
+			MessageCounter++;
+		}
+
 		// #############################################
 
 		public void Handle(CelesteNetConnection con, DataH2HTest data) {
@@ -212,6 +247,11 @@ namespace Celeste.Mod.Head2Head.IO {
 			if (data.player == null) data.player = CnetClient.PlayerInfo;  // It's null when handling our own messages
 			updateQueue.Enqueue(() => OnReceiveMisc?.Invoke(data));
 		}
+		public void Handle(CelesteNetConnection con, DataH2HMatchLog data) {
+			if (data.player == null) data.player = CnetClient.PlayerInfo;  // It's null when handling our own messages
+			updateQueue.Enqueue(() => OnReceiveMatchLog?.Invoke(data));
+		}
+
 
 		// #############################################
 

@@ -529,24 +529,24 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 	public enum MatchObjectiveType {
         // Standard
-        ChapterComplete,
-        HeartCollect,
-        CassetteCollect,
-        Strawberries,
-        Keys,
-        MoonBerry,
-        GoldenStrawberry,
-        WingedGoldenStrawberry,
-        Flag,
-        EnterRoom,
-        TimeLimit,
-        // Custom
-        CustomCollectable,
-        CustomObjective,
-        // Fullgame
-        UnlockChapter,
-        // Special
-        RandomizerClear,
+        ChapterComplete = 0,
+        HeartCollect = 1,
+        CassetteCollect = 2,
+        Strawberries = 3,
+        Keys = 4,
+        MoonBerry = 5,
+        GoldenStrawberry = 6,
+        WingedGoldenStrawberry = 7,
+        Flag = 8,
+        EnterRoom = 9,
+        TimeLimit = 10,
+		// Fullgame
+		UnlockChapter = 500,
+		// Special
+		RandomizerClear = 900,
+		// Custom
+		CustomObjective = 1000,
+		CustomCollectable = 1001,
     }
 
     /// <summary>

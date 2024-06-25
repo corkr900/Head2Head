@@ -224,13 +224,13 @@ function RenderMatchInfoToContainer(data, container) {
 			return 0;
 		});
 		for (const player of data.Players) {
-			RenderMatchPlayerRow(player, table);
+			RenderMatchPlayerRow(player, table, data);
 		}
 	}
 	container.appendChild(table);
 }
 
-function RenderMatchPlayerRow(player, table) {
+function RenderMatchPlayerRow(player, table, match) {
 	const row = document.createElement("tr");
 	// Name
 	const playerNameTd = document.createElement("td");
@@ -260,14 +260,17 @@ function RenderMatchPlayerRow(player, table) {
 			playerNameTd.appendChild(icon);
 			// Objective text
 			let objContent = "";
-			if (objective.CollectablesGoal > 0) {
-				objContent = `${objective.CollectablesObtained} / ${objective.CollectablesGoal}`;
-			}
-			else if (objective.Completed) {
-				objContent = "✔";
+			if (objective.Completed) {
+				objContent += "✔";
 			}
 			else {
-				objContent = "✖";
+				objContent += "✖";
+			}
+			if (objective.CollectablesGoal > 0) {
+				objContent += ` ${objective.CollectablesObtained} / ${objective.CollectablesGoal}`;
+			}
+			else if (objective.ObjectiveType == 10) {  // Time Limit
+				objContent += ` ${objective.TimeRemaining} / ${objective.TimeLimit}`
 			}
 			const objectiveContent = document.createElement("span");
 			objectiveContent.textContent = objContent;
@@ -275,7 +278,19 @@ function RenderMatchPlayerRow(player, table) {
 			row.appendChild(playerNameTd);
 		}
 	}
-
+	// Actions
+	const actionsTd = document.createElement("td");
+	if (player.Actions.includes("GET_OTHER_MATCH_LOG")) {
+		const btn = MakeButton("Get Log", () => {
+			doSend("GET_OTHER_MATCH_LOG", {
+				matchID: match.InternalID,
+				playerID: player.Id,
+			});
+		});
+		actionsTd.appendChild(btn);
+	}
+	row.appendChild(actionsTd);
+	// Misc
 	table.appendChild(row);
 }
 
@@ -375,6 +390,21 @@ function RenderLog(log) {
 		return;
 	}
 	container.textContent = "";
+
+	const mainSec = document.createElement("div");
+	let p = document.createElement("p");
+	p.textContent += `${log.MatchDispName}`;
+	mainSec.appendChild(p);
+	p = document.createElement("p");
+	p.textContent += `ID: ${log.MatchID}`;
+	mainSec.appendChild(p);
+	p = document.createElement("p");
+	p.textContent += `Date: ${log.MatchBeginDate}`;
+	mainSec.appendChild(p);
+	p = document.createElement("p");
+	p.textContent += `Creator: ${log.MatchCreator}`;
+	mainSec.appendChild(p);
+	container.appendChild(mainSec);
 	
 	let table = document.createElement("table");
 	table.className = "logTable";

@@ -17,6 +17,7 @@ footer {
 	padding: 12px;
 	background-color: rgb(60, 60, 70);
 	text-align: end;
+	border-top: 1px solid rgb(45, 45, 51);
 }
 
 button {
@@ -93,8 +94,24 @@ button:active {
 	align-items: center;
 }
 
-.playerTable tr td {
+.playerTable {
+	white-space: nowrap;
+}
+
+.playerTable td {
 	padding: 0px 12px;
+}
+
+.playerTable td:last-child {
+	width: 100%;
+}
+
+.playerTable td:last-child button {
+	float: right;
+}
+
+.playerTable tr:not(:last-child) {
+	border-bottom: 1px solid black;
 }
 
 .objectiveTd {

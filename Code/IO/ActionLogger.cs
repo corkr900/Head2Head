@@ -1,4 +1,6 @@
-﻿using Celeste.Mod.Head2Head.Control;
+﻿using Celeste.Mod.CelesteNet;
+using Celeste.Mod.Head2Head.Control;
+using Celeste.Mod.Head2Head.Integration;
 using Celeste.Mod.Head2Head.Shared;
 using Monocle;
 using MonoMod.Utils;
@@ -10,6 +12,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
+using static Celeste.Mod.Head2Head.IO.LoggableAction;
 
 
 namespace Celeste.Mod.Head2Head.IO {
@@ -133,7 +136,7 @@ namespace Celeste.Mod.Head2Head.IO {
 					MatchBeginDate = def.BeginInstant.ToShortDateString().Replace('/', '-'),
 					MatchID = def.MatchID,
 					MatchDispName = def.CategoryDisplayName,
-					MatchCreator = def.Owner.Name,
+					MatchCreator = def.Owner.DisplayName,
 				};
 				allLogs[def.MatchID] = Current;
 			}
@@ -325,5 +328,58 @@ namespace Celeste.Mod.Head2Head.IO {
 		public string Checkpoint { get; set; }
 		public int SaveDataIndex { get; set; }
 		public string LevelExitMode { get; set; }
+	}
+
+	public static class ActionLogExtensions {
+		public static void Write(this CelesteNetBinaryWriter w, MatchLog log) {
+			w.Write(log.MatchBeginDate ?? "");
+			w.Write(log.MatchID ?? "");
+			w.Write(log.MatchDispName ?? "");
+			w.Write(log.MatchCreator ?? "");
+			w.Write(log.Events.Count);
+			foreach (LoggableAction action in log.Events) {
+				w.Write(action);
+			}
+		}
+
+		public static MatchLog ReadMatchLog(this CelesteNetBinaryReader r) {
+			MatchLog log = new();
+			log.MatchBeginDate = r.ReadString();
+			log.MatchID = r.ReadString();
+			log.MatchDispName = r.ReadString();
+			log.MatchCreator = r.ReadString();
+			int numActions = r.ReadInt32();
+			List<LoggableAction> l = new(numActions);
+			for (int i = 0; i < numActions; i++) {
+				l[i] = r.ReadLoggableAction();
+			}
+			return log;
+		}
+
+		public static void Write(this CelesteNetBinaryWriter w, LoggableAction a) {
+			w.Write(a.Type.ToString());
+			w.Write(a.Instant ?? "");
+			w.Write(a.FileTimer ?? "");
+			w.Write(a.MatchTimer ?? "");
+			w.Write(a.AreaSID ?? "");
+			w.Write(a.Room ?? "");
+			w.Write(a.Checkpoint ?? "");
+			w.Write(a.SaveDataIndex);
+			w.Write(a.LevelExitMode ?? "");
+		}
+
+		public static LoggableAction ReadLoggableAction(this CelesteNetBinaryReader r) {
+			LoggableAction act = new();
+			act.Type = Enum.Parse<ActionType>(r.ReadString());
+			act.Instant = r.ReadString();
+			act.FileTimer = r.ReadString();
+			act.MatchTimer = r.ReadString();
+			act.AreaSID = r.ReadString();
+			act.Room = r.ReadString();
+			act.Checkpoint = r.ReadString();
+			act.SaveDataIndex = r.ReadInt32();
+			act.LevelExitMode = r.ReadString();
+			return act;
+		}
 	}
 }

@@ -86,6 +86,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 		public double Timer => new TimeSpan(def.GetPlayerTimer(pla)).TotalMicroseconds;
 		public string FormattedTimer => Dialog.FileTime(def.GetPlayerTimer(pla));
 		public List<SerializeMatchPlayerPhase> Phases => GetPhases();
+		public List<string> Actions => GetActions();
 
 		private List<SerializeMatchPlayerPhase> GetPhases() {
 			List<SerializeMatchPlayerPhase> ret = new(def.Phases.Count);
@@ -94,6 +95,16 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 			}
 			return ret;
 		}
+
+		private List<string> GetActions() {
+			List<string> ret = new();
+			if (def.State >= MatchState.InProgress && !pla.Equals(PlayerID.MyID)) {
+				ret.Add("GET_OTHER_MATCH_LOG");
+			}
+			// TODO "FORCE_DNF",
+			return ret;
+		}
+
 	}
 
 	public struct SerializeMatchPlayerPhase {
@@ -139,8 +150,19 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 		public bool Completed => state.Completed;
 		public int CollectablesGoal => ob.CollectableGoal;
 		public int CollectablesObtained => state.CountCollectables();
-		public double TimeLimit => new TimeSpan(ob.AdjustedTimeLimit(pla)).TotalMilliseconds;
-		public string Icon => ob.GetIconURI();
+		public string TimeLimit => Util.ReadableTimeSpanTitle(ob.AdjustedTimeLimit(pla));
+		public string TimeRemaining => GetTimeRemaining();
+		public string Icon => ob.GetIconURI();  // TODO replace with serializable image
+
+		private string GetTimeRemaining() {
+			PlayerStatus stat = Head2HeadModule.GetPlayerStatus(pla);
+            if (stat == null) {
+				return "??";
+            }
+            long timeRemaining = Math.Max(stat.FileTimerAtMatchBegin + ob.AdjustedTimeLimit(pla) - stat.CurrentFileTimer, 0);
+			return Util.ReadableTimeSpanTitle(timeRemaining);
+		}
+
 	}
 
 }
