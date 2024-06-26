@@ -33,7 +33,7 @@ namespace Celeste.Mod.Head2Head.Entities {
 			hud = new FourInARowHUD();
 			hud.OnClose += CloseUI;
 			Scene.Add(hud);
-			Audio.Play("event:/ui/world_map/icon/select");
+			Audio.Play("event:/classic/pico8_boot");
 		}
 
 		public void CloseUI() {

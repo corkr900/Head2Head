@@ -31,7 +31,7 @@ namespace Celeste.Mod.Head2Head.UI {
 				string set = value < 0 ?
 					"maplist_type_everything" :
 					OuiRunSelectIL.UsingRuleset.LevelSets[value].LevelSet;
-				if (string.IsNullOrEmpty(set)) set = "No Level Set";  // TODO (!) tokenize
+				if (string.IsNullOrEmpty(set)) set = Dialog.Clean("Head2Head_NoLevelSet");
 				return Dialog.CleanLevelSet(set);
 			}, -1, OuiRunSelectIL.UsingRuleset.LevelSets.Count - 1, type).Change(value => {
 				type = value;
@@ -84,7 +84,7 @@ namespace Celeste.Mod.Head2Head.UI {
 			if (levelSet.LevelSet == "Head2Head") return;
 
 			string setname = string.IsNullOrEmpty(levelSet.LevelSet) ?
-				"No Level Set" :  // TODO (!) tokenize
+				Dialog.Clean("Head2Head_NoLevelSet") :
 				Util.TranslatedIfAvailable(levelSet.LevelSet);
 			TextMenuExt.SubHeaderExt levelSetHeader = new TextMenuExt.SubHeaderExt(setname);
 			levelSetHeader.Alpha = 0f;

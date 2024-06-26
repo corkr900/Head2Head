@@ -74,9 +74,5 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 			}
 		}
 
-		internal static void LogError(string message) {
-			// TODO (!!!)
-		}
-
 	}
 }

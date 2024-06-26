@@ -258,7 +258,7 @@ namespace Celeste.Mod.Head2Head.UI {
 				RunOptionsLevelSet set = OuiRunSelectIL.UsingRuleset.LevelSets[i];
 				for (int j = 0; j < set.Chapters.Count; j++) {
 					RunOptionsILChapter chap = set.Chapters[j];
-					string levelSet = set.LevelSet ?? "No Level Set";  // TODO (!) tokenize
+					string levelSet = set.LevelSet ?? Dialog.Clean("Head2Head_NoLevelSet");
 					string name = chap.DisplayName;
 
 					List<string> matchTargets = new List<string> {

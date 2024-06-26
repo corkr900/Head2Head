@@ -157,7 +157,6 @@ namespace Celeste.Mod.Head2Head
 			On.Celeste.UnlockEverythingThingy.EnteredCheat += OnUnlockEverythingThingyEnteredCheat;
 			On.Celeste.Editor.MapEditor.ctor += onDebugScreenOpened;
 			On.Celeste.Editor.MapEditor.LoadLevel += onDebugTeleport;
-			// TODO (!!!) get rid of these hooks if no longer needed
 			On.Celeste.Assists.EnfornceAssistMode += OnAssistsEnfornceAssistMode;
 			On.Celeste.SaveData.AssistModeChecks += OnSaveDataAssistModeChecks;
 
@@ -167,10 +166,12 @@ namespace Celeste.Mod.Head2Head
 			Everest.Events.Level.OnTransitionTo += onRoomTransition;
 			Everest.Events.Level.OnCreatePauseMenuButtons += OnCreatePauseMenuButtons;
 			Everest.Events.Celeste.OnExiting += OnExiting;
+
 			// CelesteNet events
 			CNetComm.OnConnected += OnConnected;
 			CNetComm.OnDisconnected += OnDisconnected;
 			CNetComm.OnReceiveChannelMove += OnChannelMove;
+
 			// Head2Head events
 			CNetComm.OnReceiveMatchUpdate += OnMatchUpdate;
 			CNetComm.OnReceivePlayerStatus += OnPlayerStatusUpdate;
@@ -179,6 +180,7 @@ namespace Celeste.Mod.Head2Head
 			CNetComm.OnReceiveMisc += OnMiscMessage;
 			CNetComm.OnReceiveMatchLog += OnMatchLogMessage;
 			PlayerStatus.OnMatchPhaseCompleted += OnCompletedMatchPhase;
+
 			// Misc other setup
 			Celeste.Instance.Components.Add(Comm = new CNetComm(Celeste.Instance));
 			typeof(Head2HeadAPI).ModInterop();
@@ -246,19 +248,21 @@ namespace Celeste.Mod.Head2Head
 			On.Celeste.UnlockEverythingThingy.EnteredCheat -= OnUnlockEverythingThingyEnteredCheat;
 			On.Celeste.Editor.MapEditor.ctor -= onDebugScreenOpened;
 			On.Celeste.Editor.MapEditor.LoadLevel -= onDebugTeleport;
-
 			On.Celeste.Assists.EnfornceAssistMode -= OnAssistsEnfornceAssistMode;
 			On.Celeste.SaveData.AssistModeChecks -= OnSaveDataAssistModeChecks;
+
 			// Everest Events
 			Everest.Events.Level.OnLoadEntity -= OnLevelLoadEntity;
 			Everest.Events.Level.OnExit -= onLevelExit;
 			Everest.Events.Level.OnTransitionTo -= onRoomTransition;
 			Everest.Events.Level.OnCreatePauseMenuButtons -= OnCreatePauseMenuButtons;
 			Everest.Events.Celeste.OnExiting -= OnExiting;
+
 			// CelesteNet events
 			CNetComm.OnConnected -= OnConnected;
 			CNetComm.OnDisconnected -= OnDisconnected;
 			CNetComm.OnReceiveChannelMove -= OnChannelMove;
+
 			// Head2Head events
 			CNetComm.OnReceiveMatchUpdate -= OnMatchUpdate;
 			CNetComm.OnReceivePlayerStatus -= OnPlayerStatusUpdate;
@@ -267,6 +271,7 @@ namespace Celeste.Mod.Head2Head
 			CNetComm.OnReceiveMisc -= OnMiscMessage;
 			CNetComm.OnReceiveMatchLog -= OnMatchLogMessage;
 			PlayerStatus.OnMatchPhaseCompleted -= OnCompletedMatchPhase;
+
 			// Misc other cleanup
 			if (Celeste.Instance.Components.Contains(Comm))
 				Celeste.Instance.Components.Remove(Comm);
@@ -291,14 +296,14 @@ namespace Celeste.Mod.Head2Head
 		}
 
 		private void OnSaveDataAssistModeChecks(On.Celeste.SaveData.orig_AssistModeChecks orig, SaveData self) {
-			if (PlayerStatus.Current.IsInMatch(false)) {
+			if (PlayerStatus.Current.IsInMatch(false) && !RoleLogic.AllowChangingVariants()) {
 				Logger.Log(LogLevel.Info, "Head2Head", $"Prevented SaveData.AssistModeChecks from executing; Player is in a match");
 			}
 			else orig(self);
 		}
 
 		private void OnAssistsEnfornceAssistMode(On.Celeste.Assists.orig_EnfornceAssistMode orig, ref Assists self) {
-			if (PlayerStatus.Current.IsInMatch(false)) {
+			if (PlayerStatus.Current.IsInMatch(false) && !RoleLogic.AllowChangingVariants()) {
 				Logger.Log(LogLevel.Info, "Head2Head", $"Prevented Assists.EnfornceAssistMode from executing; Player is in a match");
 			}
 			else orig(ref self);

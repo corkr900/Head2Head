@@ -166,6 +166,14 @@ namespace Celeste.Mod.Head2Head.Shared {
 			};
 		}
 
+		internal static bool AllowChangingVariants() {
+			return ActiveRole switch {
+				Role.Host => true,
+				Role.Debug => true,
+				_ => false
+			};
+		}
+
 		#endregion
 	}
 }

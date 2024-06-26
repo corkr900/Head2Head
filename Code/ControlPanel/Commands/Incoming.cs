@@ -144,10 +144,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel.Commands
 
 		private static void GetMyMatchLog(ControlPanelPacket packet) {
 			string id = packet.Json.GetString();
-			if (!ActionLogger.LogFileExists(id)) {
-				// TODO no log file
-			}
-			else {
+			if (ActionLogger.LogFileExists(id)) {
 				Outgoing.MatchLog(ActionLogger.LoadLog(id), packet.ClientToken);
 			}
 		}

@@ -117,7 +117,11 @@ namespace Celeste.Mod.Head2Head.Entities.Arcade {
 
 		private void MakeMove(int col, CellState player, GameState nextState) {
 			if (boardState == null) return;
-			boardState.DropPiece(col, player);
+			if (!boardState.DropPiece(col, player)) {
+				Audio.Play("event:/classic/sfx5");
+				return;
+			}
+			Audio.Play("event:/classic/sfx2");
 			List<GameEndState> wins = boardState.GetWins();
 			if (wins.Count == 0) {
 				if (boardState.IsFull) {
@@ -135,6 +139,8 @@ namespace Celeste.Mod.Head2Head.Entities.Arcade {
 			}
 			else {
 				gameState = CellToEndingGameState(wins[0].Winner);
+				if (gameState == GameState.WinP1) Audio.Play("event:/classic/sfx55");
+				else Audio.Play("event:/classic/sfx37");
 				opponentAI?.RemoveSelf();
 				opponentAI = null;
 				endStates = wins;
@@ -160,12 +166,11 @@ namespace Celeste.Mod.Head2Head.Entities.Arcade {
 
 			if (gameState == GameState.ChoosingDifficulty) {
 				Draw.Rect(center.X - rendSize.X * 0.3f, topleft.Y + 60f + 100f * hoveredColumn, rendSize.X * 0.6f, 80f, ColorP1);
-				// TODO (!!) Tokenize
-				ActiveFont.DrawOutline("Easy", new Vector2(center.X, topleft.Y + 50f),
+				ActiveFont.DrawOutline(Dialog.Clean("Head2Head_Minigame_Difficulty_Easy"), new Vector2(center.X, topleft.Y + 50f),
 					new Vector2(0.5f, 0f), Vector2.One * 1.5f, Color.White, 2f, Color.Black);
-				ActiveFont.DrawOutline("Normal", new Vector2(center.X, topleft.Y + 150f),
+				ActiveFont.DrawOutline(Dialog.Clean("Head2Head_Minigame_Difficulty_Normal"), new Vector2(center.X, topleft.Y + 150f),
 					new Vector2(0.5f, 0f), Vector2.One * 1.5f, Color.White, 2f, Color.Black);
-				ActiveFont.DrawOutline("Hard", new Vector2(center.X, topleft.Y + 250f),
+				ActiveFont.DrawOutline(Dialog.Clean("Head2Head_Minigame_Difficulty_Hard"), new Vector2(center.X, topleft.Y + 250f),
 					new Vector2(0.5f, 0f), Vector2.One * 1.5f, Color.White, 2f, Color.Black);
 			}
 
@@ -194,13 +199,12 @@ namespace Celeste.Mod.Head2Head.Entities.Arcade {
 				}
 
 				string text = gameState switch {
-					GameState.WinP1 => "You Win!",  // TODO (!!) Tokenize
-					GameState.WinP2 => "You Lose!",  // TODO (!!) Tokenize
-					_ => "It's a Tie!",  // TODO (!!) Tokenize
+					GameState.WinP1 => Dialog.Clean("Head2Head_Minigame_Result_Win"),
+					GameState.WinP2 => Dialog.Clean("Head2Head_Minigame_Result_Lose"),
+					_ => Dialog.Clean("Head2Head_Minigame_Result_Tie"),
 				};
 				ActiveFont.DrawOutline(text, new Vector2(center.X, topleft.Y), new Vector2(0.5f, 1f), Vector2.One * 3f, Color.White, 3f, Color.Black);
-				// TODO (!!) Tokenize
-				ActiveFont.DrawOutline("Play Again?", new Vector2(center.X, topleft.Y + 250f),
+				ActiveFont.DrawOutline(Dialog.Clean("Head2Head_Minigame_PlayAgain"), new Vector2(center.X, topleft.Y + 250f),
 					new Vector2(0.5f, 0f), Vector2.One * 1.5f, Color.White, 2f, Color.Black);
 			}
 		}
@@ -247,7 +251,6 @@ namespace Celeste.Mod.Head2Head.Entities.Arcade {
 		}
 
 		private void InitiateOpponentTurn() {
-			// TODO
 			if (opponentAI == null) {
 				gameState = GameState.MyTurn;
 				return;
@@ -297,15 +300,14 @@ namespace Celeste.Mod.Head2Head.Entities.Arcade {
 				return Board[col, BoardHeight - 1] == CellState.Empty;
 			}
 
-			public void DropPiece(int column, CellState newState) {
+			public bool DropPiece(int column, CellState newState) {
 				for (int y = 0; y < BoardHeight; y++) {
 					if (Board[column, y] == CellState.Empty) {
 						Board[column, y] = newState;
-						// TODO SFX
-						return;
+						return true;
 					}
 				}
-				// TODO SFX
+				return false;
 			}
 
 			public List<GameEndState> GetWins(int? needed = null, bool stopAfterAny = false) {

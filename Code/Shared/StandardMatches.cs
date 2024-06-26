@@ -528,7 +528,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		}
 
 		public static bool HasAnyValidCategory(GlobalAreaKey area, bool defaultOnly) {
-			return area.ExistsLocal && area.Data.HasMode(area.Mode) && GetCategories(area, defaultOnly).Count > 0;  // TODO (!) reimplement so its more efficient
+			return area.ExistsLocal && area.Data.HasMode(area.Mode) && GetCategories(area, defaultOnly).Count > 0;
 		}
 
 		private static bool PermittedBySRCARBSetting(int? id, AreaMode areaMode, StandardCategory cat) {
