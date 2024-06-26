@@ -520,11 +520,6 @@ namespace Celeste.Mod.Head2Head.Shared {
 				_ => null,
 			};
 		}
-
-        public string GetIconURI() {
-            return $"https://github.com/corkr900/Head2Head/blob/main/Graphics/Atlases/Gui/{GetIconPath() ?? "Head2Head/Categories/Custom"}.png?raw=true";
-
-		}
 	}
 
 	public enum MatchObjectiveType {

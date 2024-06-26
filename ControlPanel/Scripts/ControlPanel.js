@@ -119,7 +119,18 @@ function RemoveMatchInfo(id) {
 		RenderCurrentMatchInfo(null);
 	}
 	let matchContainer = document.querySelector(`#allMatchesBody #matchContainer_${id}`);
-	if (matchContainer) matchContainer.remove();
+	if (!matchContainer) return;
+	const body = matchContainer.querySelector(".collapsibleContent");
+	const btnContainer = body.querySelector(".actionButtonsContainer");
+	const forgottenMsg = document.createElement("div");
+	forgottenMsg.textContent = "This match was forgotten from Head 2 Head";
+	body.prepend(forgottenMsg);
+	for (const btn of body.querySelectorAll("button:not(.keepAfterForgotten)")) {
+		btn.remove();
+	}
+	btnContainer.appendChild(MakeButton("Remove", () => {
+		matchContainer.remove();
+	}));
 }
 
 function RenderCurrentMatchInfo(data) {
@@ -253,9 +264,7 @@ function RenderMatchPlayerRow(player, table, match) {
 			// Icon
 			const playerNameTd = document.createElement("td");
 			playerNameTd.className = "objectiveTd";
-			const icon = document.createElement("img");
-			icon.setAttribute("src", objective.Icon);
-			icon.setAttribute("alt", objective.DisplayName);
+			const icon = GetH2HImageElement(objective.Icon);
 			icon.className = "objectiveIcon";
 			playerNameTd.appendChild(icon);
 			// Objective text
@@ -287,6 +296,7 @@ function RenderMatchPlayerRow(player, table, match) {
 				playerID: player.Id,
 			});
 		});
+		btn.classList.add("keepAfterForgotten");
 		actionsTd.appendChild(btn);
 	}
 	row.appendChild(actionsTd);
@@ -347,6 +357,7 @@ function RenderMatchActionButtons(match, container) {
 
 	if (match.AvailableActions.includes("GET_MY_MATCH_LOG")) {
 		const cell = document.createElement(elemType);
+		cell.classList.add("keepAfterForgotten");
 		cell.appendChild(MakeButton("Get Log", () => {
 			doSend("GET_MY_MATCH_LOG", match.InternalID);
 		}));

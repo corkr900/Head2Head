@@ -152,7 +152,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 		public int CollectablesObtained => state.CountCollectables();
 		public string TimeLimit => Util.ReadableTimeSpanTitle(ob.AdjustedTimeLimit(pla));
 		public string TimeRemaining => GetTimeRemaining();
-		public string Icon => ob.GetIconURI();  // TODO replace with serializable image
+		public SerializeImage Icon => SerializeImage.FromGui(ob.GetIconPath());
 
 		private string GetTimeRemaining() {
 			PlayerStatus stat = Head2HeadModule.GetPlayerStatus(pla);

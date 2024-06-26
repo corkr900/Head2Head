@@ -174,7 +174,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 						continue;
 					}
 
-					// TODO (!!!) this could split packets >:[
+					// TODO (!!!) this could potentially split packets >:[
 					byte[] bytes = new byte[socket.Available];
 					stream.Read(bytes, 0, bytes.Length);
 					string s = Encoding.UTF8.GetString(bytes);
