@@ -86,7 +86,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 				return packet;
 			}
 			catch (Exception e) {
-				Engine.Commands.Log(e);
+				Engine.Commands?.Log(e);
 				return null;
 			}
 		}

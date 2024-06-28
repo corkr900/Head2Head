@@ -25,11 +25,16 @@ namespace Celeste.Mod.Head2Head.ControlPanel.Commands
 			ControlPanelCore.RegisterCommand("forget_match", ForgetMatch);
 			ControlPanelCore.RegisterCommand("match_drop_out", DropOutOfMatch);
 			ControlPanelCore.RegisterCommand("kill_match", KillMatch);
-			SocketHandler.OnClientConnected += OnClientConnected;
+			ControlPanelCore.RegisterCommand("unstage_match", UnstageMatch);
+			ControlPanelCore.RegisterCommand("dbg_purge_data", PurgeData);
+			ControlPanelCore.RegisterCommand("dbg_pull_data", PullData) ;
+			ControlPanelCore.RegisterCommand("give_match_pass", GiveMatchPass);
+			ControlPanelCore.RegisterCommand("go_to_Lobby", GoToLobby);
+			ClientSocket.OnClientConnected += OnClientConnected;
         }
 
 		public static void Unregister() {
-			SocketHandler.OnClientConnected -= OnClientConnected;
+			ClientSocket.OnClientConnected -= OnClientConnected;
 			ControlPanelCore.UnregisterAllCommands();
 		}
 
@@ -37,6 +42,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel.Commands
 			foreach (var match in Head2HeadModule.knownMatches.Values) {
                 match.SendControlPanelUpdate(token);
             }
+			Outgoing.ControlPanelActionsUpdate(token);
 		}
 
 		private static void TestIncoming(ControlPanelPacket pack)
@@ -155,6 +161,36 @@ namespace Celeste.Mod.Head2Head.ControlPanel.Commands
 			PlayerID playerID = PlayerID.FromSerialized(serialPlayerID);
 			if (!playerID.IsDefault) {
 				CNetComm.Instance.SendMatchLogRequest(playerID, matchID, true, packet.ClientToken);
+			}
+		}
+
+		private static void PurgeData(ControlPanelPacket packet) {
+			Head2HeadModule.Instance.PurgeAllData();
+		}
+
+		private static void PullData(ControlPanelPacket packet) {
+			CNetComm.Instance.SendScanRequest(false);
+		}
+
+		private static void GiveMatchPass(ControlPanelPacket packet) {
+			if (packet.Json.TryGetProperty("playerID", out JsonElement prop)) {
+				PlayerID playerID = PlayerID.FromSerialized(prop.GetString() ?? "");
+				CNetComm.Instance.SendMisc(Head2HeadModule.BTA_MATCH_PASS, playerID);
+			}
+		}
+
+		private static void GoToLobby(ControlPanelPacket packet) {
+			new FadeWipe(Engine.Scene, false, () => {
+				LevelEnter.Go(new Session(GlobalAreaKey.Head2HeadLobby.Local.Value), false);
+			});
+			Head2HeadModule.Instance.ClearAutoLaunchInfo();
+		}
+
+		private static void UnstageMatch(ControlPanelPacket packet) {
+			if (PlayerStatus.Current.CurrentMatch?.PlayerCanLeaveFreely(PlayerID.MyIDSafe) ?? false) {
+				Outgoing.MatchNoLongerCurrent(PlayerStatus.Current.CurrentMatchID);
+				PlayerStatus.Current.CurrentMatch = null;
+				PlayerStatus.Current.Updated();
 			}
 		}
 

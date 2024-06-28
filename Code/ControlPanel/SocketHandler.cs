@@ -19,9 +19,6 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 
 	internal class SocketHandler {
 
-		public delegate void OnClientConnectedHandler(string token);
-		public static event OnClientConnectedHandler OnClientConnected;
-
 		internal static Dictionary<string, ClientSocket> clients = new();
 		internal static CancellationToken cancelToken;
 		private static Thread newConnThread;
@@ -80,7 +77,6 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 							lock (ServerLock) {
 								if (cs.Connected) {
 									clients.Add(cs.Token, cs);
-									OnClientConnected?.Invoke(cs.Token);
 								}
 								else {
 									Logger.Log(LogLevel.Warn, "Head2Head", $"New Control Panel connection request could not be completed.");
@@ -139,6 +135,9 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 	}
 
 	internal class ClientSocket {
+
+		public delegate void OnClientConnectedHandler(string token);
+		public static event OnClientConnectedHandler OnClientConnected;
 
 		public bool Connected => socket?.Connected ?? false;
 
@@ -202,6 +201,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 						stream.Write(payload, 0, payload.Length);
 
 						Logger.Log(LogLevel.Info, "Head2Head", $"New Control Panel client connected. Allocated token {Token}");
+						OnClientConnected?.Invoke(Token);
 					}
 					else {
 						byte[] message = DecodeMessage(bytes, out FrameOpCode opCode);

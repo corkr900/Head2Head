@@ -51,5 +51,13 @@ namespace Celeste.Mod.Head2Head.ControlPanel.Commands {
 			));
 		}
 
+		public static void ControlPanelActionsUpdate(string targetClientToken = "") {
+			ControlPanelCore.SendImmediate(ControlPanelPacket.CreateOutgoing(
+				"UPDATE_ACTIONS",
+				new SerializeControlPanelActions(),
+				targetClientToken
+			));
+		}
+
 	}
 }

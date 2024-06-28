@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Monocle;
 using Celeste.Mod.Head2Head.Control;
+using Celeste.Mod.Head2Head.ControlPanel.Commands;
 
 namespace Celeste.Mod.Head2Head.Shared {
 	public class PlayerStatus {
@@ -25,7 +26,10 @@ namespace Celeste.Mod.Head2Head.Shared {
 				}
 				return _current;
 			}
-			set { _current = value; }
+			set {
+				_current = value;
+				Outgoing.ControlPanelActionsUpdate();
+			}
 		}
 		private static PlayerStatus _current;
 
@@ -70,7 +74,16 @@ namespace Celeste.Mod.Head2Head.Shared {
 			return cat == ResultCategory.InMatch || (includeJoined && cat == ResultCategory.Joined);
 		}
 
-		public string CurrentMatchID { get; internal set; }
+		private string _currentMatchID = null;
+		public string CurrentMatchID {
+			get => _currentMatchID;
+			internal set {
+				if (value != _currentMatchID) {
+					_currentMatchID = value;
+					Outgoing.ControlPanelActionsUpdate();
+				}
+			}
+		}
 		public GlobalAreaKey CurrentArea { get; internal set; }
 		public GlobalAreaKey? RandomizerArea { get; internal set; } = null;
 		public string CurrentRoom { get; internal set; }
@@ -220,6 +233,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 				phases.Clear();
 				objectives.Clear();
 				Updated();
+				Outgoing.ControlPanelActionsUpdate();
 			}
 		}
 

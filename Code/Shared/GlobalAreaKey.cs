@@ -22,8 +22,8 @@ namespace Celeste.Mod.Head2Head.Shared {
         public static string Head2HeadLobbySID {
 			get {
                 if (_lobbySID == null) {
-                    foreach (AreaData data in AreaData.Areas) {
-                        if (data.Name == "Head2Head/00_Head2HeadLobby") _lobbySID = data.SID;
+                    foreach (AreaData data in AreaData.Areas ?? new()) {
+                        if (data?.Name == "Head2Head/00_Head2HeadLobby") _lobbySID = data?.SID ?? "";
                     }
                 }
                 return _lobbySID ?? "Celeste/Head2Head/00_Head2HeadLobby";

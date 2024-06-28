@@ -10,6 +10,7 @@ using Monocle;
 using MonoMod.Utils;
 using Celeste.Mod.Head2Head.Integration;
 using System.Text.Json.Serialization;
+using Celeste.Mod.Head2Head.ControlPanel.Commands;
 
 namespace Celeste.Mod.Head2Head.Shared {
 
@@ -59,8 +60,11 @@ namespace Celeste.Mod.Head2Head.Shared {
                 _state = value;
                 if (value != MatchState.Staged && PlayerStatus.Current.CurrentMatch != this) return;
                 if (value == MatchState.None || value == MatchState.Building) return;
-                if (!CNetComm.Instance.IsConnected) return;
-                CNetComm.Instance.SendMatchUpdate(this);
+
+                Outgoing.ControlPanelActionsUpdate();
+                if (CNetComm.Instance.IsConnected) {
+                    CNetComm.Instance.SendMatchUpdate(this);
+                }
 			}
         }
         private MatchState _state = MatchState.Building;

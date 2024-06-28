@@ -69,13 +69,16 @@ function HandleMessage(data) {
 	else if (data.Command == "MATCH_LOG") {
 		RenderLog(data.Data);
 	}
+	else if (data.Command == "UPDATE_ACTIONS") {
+		UpdateActions(data.Data);
+	}
 }
 
 function doSend(command, data) {
 	const message = JSON.stringify({
 		Command: command,
 		Token: clientToken,
-		Data: data
+		Data: data ?? {}
 	});
 	writeToScreen(`SENT: ${message}`);
 	websocket.send(message);
@@ -91,6 +94,7 @@ function writeToScreen(message) {
 function HandleConnectionUpdate(newIsConnected) {
 	const statusSpan = document.querySelector("#rend_status");
 	statusSpan.textContent = newIsConnected ? "Connected" : "Not Connected";
+	UpdateActions({AvailableActions: []});
 }
 
 function GetH2HImageElement(image) {
@@ -107,6 +111,48 @@ function GetH2HImageElement(image) {
 	categoryIcon.setAttribute("h2h_img_src", image.Id);
 	categoryIcon.setAttribute("src", src);
 	return categoryIcon
+}
+
+// ==========================================================
+
+function UpdateActions(data) {
+	const mainActionsDiv = document.querySelector("#mainActionsDiv");
+	mainActionsDiv.textContent = "";
+	if (data.AvailableActions.includes("UNSTAGE_MATCH")) {
+		const btn = MakeButton("Remove Overlay", () => {
+			doSend("UNSTAGE_MATCH");
+		});
+		mainActionsDiv.appendChild(btn);
+	}
+	if (data.AvailableActions.includes("DBG_PURGE_DATA")) {
+		const btn = MakeButton("(Debug) Purge Data)", () => {
+			doSend("DBG_PURGE_DATA");
+		});
+		mainActionsDiv.appendChild(btn);
+
+	}
+	if (data.AvailableActions.includes("DBG_PULL_DATA")) {
+		const btn = MakeButton("(Debug) Pull Data", () => {
+			doSend("DBG_PULL_DATA");
+		});
+		mainActionsDiv.appendChild(btn);
+
+	}
+	if (data.AvailableActions.includes("GIVE_MATCH_PASS")) {
+		const btn = MakeButton("Give Match Pass", () => {
+			//doSend("GIVE_MATCH_PASS");
+			alert("This has not been implemented yet.");
+		});
+		mainActionsDiv.appendChild(btn);
+
+	}
+	if (data.AvailableActions.includes("GO_TO_LOBBY")) {
+		const btn = MakeButton("Go To H2H Lobby", () => {
+			doSend("GO_TO_LOBBY");
+		});
+		mainActionsDiv.appendChild(btn);
+
+	}
 }
 
 function GetCurMatchId() {

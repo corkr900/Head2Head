@@ -28,6 +28,7 @@ using MonoMod.ModInterop;
 using Celeste.Mod.Head2Head.ControlPanel;
 using System.Text.RegularExpressions;
 using static Celeste.GaussianBlur;
+using Celeste.Mod.Head2Head.ControlPanel.Commands;
 
 // TODO Force DNF if a player intentionally closes the game
 // TODO Make the start-match and return-to-lobby sequences more robust
@@ -409,6 +410,7 @@ namespace Celeste.Mod.Head2Head
 				PlayerEnteredAMap = true;
 			}
 			ActionLogger.EnteringArea();
+			Outgoing.ControlPanelActionsUpdate();
 		}
 
 		private void onRoomTransition(Level level, LevelData next, Vector2 direction) {
@@ -1318,6 +1320,7 @@ namespace Celeste.Mod.Head2Head
 				PlayerStatus.Current.MatchJoined();
 				def.BroadcastUpdate();
 				OnMatchCurrentMatchUpdated?.Invoke();
+				Outgoing.ControlPanelActionsUpdate();
 				return true;
 			}
 			else {

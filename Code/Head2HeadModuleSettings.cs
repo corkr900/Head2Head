@@ -1,4 +1,5 @@
-﻿using Celeste.Mod.Head2Head.Shared;
+﻿using Celeste.Mod.Head2Head.ControlPanel.Commands;
+using Celeste.Mod.Head2Head.Shared;
 using Celeste.Mod.UI;
 using FMOD.Studio;
 using System;
@@ -71,7 +72,16 @@ namespace Celeste.Mod.Head2Head {
 
 		// Settings with manual handling
 		[SettingIgnore]
-		public Role ActiveRole { get; set; } = Role.None;
+		public Role ActiveRole {
+			get => _activeRole;
+			set {
+				if (_activeRole != value) {
+					_activeRole = value;
+					Outgoing.ControlPanelActionsUpdate();
+				}
+			}
+		}
+		private Role _activeRole = Role.None;
 		[SettingIgnore]
 		public string Ruleset { get; set; } = "default";
 		[SettingIgnore]
