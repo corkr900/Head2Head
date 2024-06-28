@@ -1041,13 +1041,13 @@ namespace Celeste.Mod.Head2Head
 			else {
 				DiscardStaleData();
 			}
-			CNetComm.Instance.SendScanRequest(false);
+			CNetComm.Instance.SendScanRequest();
 			OnMatchCurrentMatchUpdated?.Invoke();
 		}
 
 		private void OnConnected(CelesteNetClientContext cxt) {
 			OnMatchCurrentMatchUpdated?.Invoke();
-			CNetComm.Instance.SendScanRequest(false);
+			CNetComm.Instance.SendScanRequest();
 		}
 
 		private void OnDisconnected(CelesteNetConnection con) {
@@ -1411,7 +1411,7 @@ namespace Celeste.Mod.Head2Head
 			}
 			foreach (MatchDefinition def in defsToRemove) {
 				knownMatches.Remove(def.MatchID);
-				ControlPanel.Commands.Outgoing.MatchForgotten(def.MatchID);
+				Outgoing.MatchForgotten(def.MatchID);
 			}
 
 			List<PlayerID> playersToRemove = new List<PlayerID>();
@@ -1446,10 +1446,12 @@ namespace Celeste.Mod.Head2Head
 			if (def == null) return false;
 			if (!knownMatches.ContainsKey(def.MatchID)) return false;
 			if (def.MatchID == PlayerStatus.Current.CurrentMatchID) return false;
+			double creationAge = (SyncedClock.Now - def.CreationInstant).TotalMinutes;
+			double completionAge = (SyncedClock.Now - def.CompletedInstant).TotalMinutes;
 			if (def.State == MatchState.None) return true;
-			if (def.State == MatchState.Completed) return true;
 			if (def.State == MatchState.Building && buildingMatch.MatchID != def.MatchID) return true;
-			if (def.State == MatchState.Staged && (SyncedClock.Now - def.CreationInstant).TotalMinutes > 20) return true;
+			if (def.State == MatchState.Staged && creationAge > 20) return true;
+			if (def.State == MatchState.Completed && completionAge > 20) return true;
 			return false;
 		}
 

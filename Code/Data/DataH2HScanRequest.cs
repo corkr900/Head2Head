@@ -13,16 +13,12 @@ namespace Celeste.Mod.Head2Head.Data {
 
         protected override bool UseBoundRef { get { return false; } }
 
-        public bool AutoRejoin;
-
         protected override void Read(CelesteNetBinaryReader reader) {
             base.Read(reader);
-            AutoRejoin = reader.ReadBoolean();
         }
 
         protected override void Write(CelesteNetBinaryWriter writer) {
             base.Write(writer);
-            writer.Write(AutoRejoin);
         }
     }
 }

@@ -169,7 +169,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel.Commands
 		}
 
 		private static void PullData(ControlPanelPacket packet) {
-			CNetComm.Instance.SendScanRequest(false);
+			CNetComm.Instance.SendScanRequest();
 		}
 
 		private static void GiveMatchPass(ControlPanelPacket packet) {

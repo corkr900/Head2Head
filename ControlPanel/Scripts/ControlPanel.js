@@ -167,9 +167,11 @@ function RemoveMatchInfo(id) {
 	let matchContainer = document.querySelector(`#allMatchesBody #matchContainer_${id}`);
 	if (!matchContainer) return;
 	const body = matchContainer.querySelector(".collapsibleContent");
+	const prevMaxHeight = body?.style?.maxHeight;
 	const btnContainer = body.querySelector(".actionButtonsContainer");
 	const forgottenMsg = document.createElement("div");
 	forgottenMsg.textContent = "This match was forgotten from Head 2 Head";
+	forgottenMsg.className = "margin6";
 	body.prepend(forgottenMsg);
 	for (const btn of body.querySelectorAll("button:not(.keepAfterForgotten)")) {
 		btn.remove();
@@ -177,6 +179,9 @@ function RemoveMatchInfo(id) {
 	btnContainer.appendChild(MakeButton("Remove", () => {
 		matchContainer.remove();
 	}));
+	if (prevMaxHeight && prevMaxHeight != "0px") {
+		body.style.maxHeight = body.scrollHeight + "px";
+	}
 }
 
 function RenderCurrentMatchInfo(data) {

@@ -165,13 +165,11 @@ namespace Celeste.Mod.Head2Head.IO {
 			MessageCounter++;
 		}
 
-		internal void SendScanRequest(bool autoRejoin) {
+		internal void SendScanRequest() {
 			if (!CanSendMessages) {
 				return;
 			}
-			CnetClient.SendAndHandle(new DataH2HScanRequest() {
-				AutoRejoin = autoRejoin,
-			});
+			CnetClient.SendAndHandle(new DataH2HScanRequest());
 			MessageCounter++;
 		}
 

@@ -222,19 +222,10 @@ namespace Celeste.Mod.Head2Head.UI
 
 				// Pull Data
 				btn = menu.AddButton("Head2Head_menu_helpdesk_pulldata", () => {
-					CNetComm.Instance.SendScanRequest(false);
+					CNetComm.Instance.SendScanRequest();
 					cxt.Refresh(menu);
 				});
 				btn.AddDescription(menu, Dialog.Clean("Head2Head_menu_helpdesk_pulldata_subtext"));
-			}
-
-			// Scan & Rejoin
-			if (!Head2HeadModule.Instance.PlayerCompletedARoom && def_menu == null) {
-				btn = menu.AddButton("Head2Head_menu_helpdesk_rejoin", () => {
-					CNetComm.Instance.SendScanRequest(true);
-					cxt.Close(menu);
-				});
-				btn.AddDescription(menu, Dialog.Clean("Head2Head_menu_helpdesk_rejoin_subtext"));
 			}
 
 			// Role-based additions

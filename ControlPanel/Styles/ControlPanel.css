@@ -166,6 +166,10 @@ button:active {
 	transition: max-height 0.15s ease-out;
 }
 
+.margin6 {
+	margin: 6px;
+}
+
 .collapsibleHeader:after {
 	content: '\02795'; /* Unicode character for "plus" sign (+) */
 	font-size: 13px;

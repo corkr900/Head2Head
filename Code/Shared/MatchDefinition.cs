@@ -58,7 +58,8 @@ namespace Celeste.Mod.Head2Head.Shared {
 			set {
                 if (value == _state) return;
                 _state = value;
-                if (value != MatchState.Staged && PlayerStatus.Current.CurrentMatch != this) return;
+				if (value == MatchState.Completed) CompletedInstant = SyncedClock.Now;
+				if (value != MatchState.Staged && PlayerStatus.Current.CurrentMatch != this) return;
                 if (value == MatchState.None || value == MatchState.Building) return;
 
                 Outgoing.ControlPanelActionsUpdate();
@@ -69,7 +70,9 @@ namespace Celeste.Mod.Head2Head.Shared {
         }
         private MatchState _state = MatchState.Building;
 		public DateTime BeginInstant = DateTime.MinValue;
-        public MatchResult Result;
+
+        public DateTime CompletedInstant = DateTime.MinValue;
+		public MatchResult Result;
 
 		#endregion
 
@@ -121,7 +124,8 @@ namespace Celeste.Mod.Head2Head.Shared {
 		}
 
         public void SetState_NoUpdate(MatchState newState) {
-            _state = newState;
+			_state = newState;
+			if (newState == MatchState.Completed) CompletedInstant = SyncedClock.Now;
 		}
 
         public void AssignIDs() {
@@ -289,7 +293,7 @@ namespace Celeste.Mod.Head2Head.Shared {
             if (newer == null) return;
             // Merge overall state
             bool isMatchCompletion = _state < MatchState.Completed && newer._state >= MatchState.Completed;
-            _state = (MatchState)Math.Max((int)_state, (int)newer._state);
+            SetState_NoUpdate((MatchState)Math.Max((int)_state, (int)newer._state));
             BeginInstant = newer.BeginInstant > BeginInstant ? newer.BeginInstant : BeginInstant;
 
             // Merge player list
@@ -579,6 +583,7 @@ namespace Celeste.Mod.Head2Head.Shared {
             d.ChangeSavefile = reader.ReadBoolean();
             d.AllowCheatMode = reader.ReadBoolean();
             d.BeginInstant = reader.ReadDateTime();
+			d.CompletedInstant = reader.ReadDateTime();
 			d.RequiredRuleset = reader.ReadString();
             d.CategoryIcon = reader.ReadString();
 
@@ -628,7 +633,8 @@ namespace Celeste.Mod.Head2Head.Shared {
             writer.Write(m.ChangeSavefile);
             writer.Write(m.AllowCheatMode);
             writer.Write(m.BeginInstant);
-            writer.Write(m.RequiredRuleset ?? "");
+			writer.Write(m.CompletedInstant);
+			writer.Write(m.RequiredRuleset ?? "");
             writer.Write(m.CategoryIcon ?? "");
 
             writer.Write(m.AllowedRoles?.Count ?? 0);
