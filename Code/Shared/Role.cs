@@ -37,6 +37,8 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 		public static bool LogMatchActions() {
 			switch (ActiveRole) {
+				case Role.None:
+					return Head2HeadModule.Settings.EnableMatchLogs;
 				case Role.Participant:
 				case Role.Debug:
 					return true;

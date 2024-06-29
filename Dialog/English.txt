@@ -119,6 +119,19 @@ Head2Head_Setting_Ruleset= Ruleset
 Head2Head_Setting_Ruleset_Subtext= Choose which ruleset to use.
 This will typically only be used for special events.
 
+Head2Head_Setting_EnableControlPanel= Control Panel
+Head2Head_Setting_EnableControlPanel_subtext= Enables/disables the Control Panel.
+Enabling allows you to use the Head 2 Head Control Panel.
+https://corkr900.github.io/Head2Head/ControlPanel/ControlPanel.html
+
+Head2Head_Setting_EnableMatchLogs= Match Logging
+Head2Head_Setting_EnableMatchLogs_subtext= Enables/disables match logging.
+Match logging allows you to get a log of all important events that
+happened during the match.
+Certain roles may override this.
+Logs can be accessed in the Head 2 Head Control Panel.
+https://corkr900.github.io/Head2Head/ControlPanel/ControlPanel.html
+
 #############################
 #   DISPLAYABLE ENUM VALS   #
 #############################

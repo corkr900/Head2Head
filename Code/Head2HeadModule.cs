@@ -135,7 +135,6 @@ namespace Celeste.Mod.Head2Head
 			On.Celeste.Player.Update += OnPlayerUpdate;
 			On.Celeste.MapData.ctor += OnMapDataCtor;
 			On.Celeste.Session.SetFlag += OnSessionSetFlag;
-			On.Celeste.Celeste.CriticalFailureHandler += OnCelesteCriticalFailure;
 			On.Celeste.Postcard.DisplayRoutine += OnPostcardDisplayRoutine;
 			On.Celeste.SaveData.RegisterCassette += OnCassetteCollected;
 			On.Celeste.SaveData.RegisterHeartGem += OnHeartCollected;
@@ -226,7 +225,6 @@ namespace Celeste.Mod.Head2Head
 			On.Celeste.Player.Update -= OnPlayerUpdate;
 			On.Celeste.MapData.ctor -= OnMapDataCtor;
 			On.Celeste.Session.SetFlag -= OnSessionSetFlag;
-			On.Celeste.Celeste.CriticalFailureHandler -= OnCelesteCriticalFailure;
 			On.Celeste.Postcard.DisplayRoutine -= OnPostcardDisplayRoutine;
 			On.Celeste.SaveData.RegisterCassette -= OnCassetteCollected;
 			On.Celeste.SaveData.RegisterHeartGem -= OnHeartCollected;
@@ -340,11 +338,6 @@ namespace Celeste.Mod.Head2Head
 			orig(self);
 		}
 
-		private void OnCelesteCriticalFailure(On.Celeste.Celeste.orig_CriticalFailureHandler orig, Exception e) {
-			orig(e);
-			// TODO (!) Cache off recovery data locally instead of relying on peers' info
-		}
-
 		private static void Level_LoadingThread(ILContext il) {
 			ILCursor cursor = new ILCursor(il);
 			cursor.GotoNext(instr => instr.MatchRet());
@@ -410,6 +403,7 @@ namespace Celeste.Mod.Head2Head
 				PlayerEnteredAMap = true;
 			}
 			ActionLogger.EnteringArea();
+			ActionLogger.PurgeOldLogs();
 			Outgoing.ControlPanelActionsUpdate();
 		}
 
@@ -1013,7 +1007,7 @@ namespace Celeste.Mod.Head2Head
 			}
 			else {
 				if (data.RequestingPlayer.Equals(PlayerID.MyID) && data.IsControlPanelRequest) {
-					ControlPanel.Commands.Outgoing.MatchLog(data.Log, data.Client);
+					Outgoing.MatchLog(data.Log, data.Client);
 				}
 			}
 		}

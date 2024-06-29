@@ -10,6 +10,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 using static Celeste.Mod.Head2Head.IO.LoggableAction;
@@ -77,7 +78,18 @@ namespace Celeste.Mod.Head2Head.IO {
 		}
 
 		public static void PurgeOldLogs() {
-			// Delete logs older than today or yesterday
+			// Clean up logs for matches completed more than 20 minutes ago
+			List<string> logsToRemove = new();
+			foreach (MatchLog log in allLogs.Values) {
+				if (log.CompletionInstant != null && (SyncedClock.Now - log.CompletionInstant.Value).TotalMinutes > 20) {
+					log.Write();
+					logsToRemove.Add(log.MatchID);
+				}
+			}
+			foreach (string s in logsToRemove) {
+				allLogs.Remove(s);
+			}
+			// Delete log files older than today or yesterday
 			// Use DynamicData to access SavePath because the implementation of it is different between FNA/XNA
 			DynamicData dd = new DynamicData(typeof(UserIO));
 			string dirpath = dd.Get<string>("SavePath");
@@ -137,34 +149,35 @@ namespace Celeste.Mod.Head2Head.IO {
 					MatchID = def.MatchID,
 					MatchDispName = def.CategoryDisplayName,
 					MatchCreator = def.Owner.DisplayName,
+					SerializedRunnerID = PlayerID.MyIDSafe.SerializedID,
 				};
 				allLogs[def.MatchID] = Current;
 			}
-			Current.Log(new LoggableAction(LoggableAction.ActionType.MatchStart));
+			Current.Log(new LoggableAction(ActionType.MatchStart));
 			WriteLog();
 		}
 
 		public static void EnteringArea() {
 			if (!TrackActions()) return;
-			Current.Log(new LoggableAction(LoggableAction.ActionType.AreaEnter));
+			Current.Log(new LoggableAction(ActionType.AreaEnter));
 			Current.Write();
 		}
 
 		public static void ExitingArea(LevelExit.Mode _mode) {
 			if (!TrackActions()) return;
-			Current.Log(new LoggableAction(LoggableAction.ActionType.AreaExit) {
+			Current.Log(new LoggableAction(ActionType.AreaExit) {
 				LevelExitMode = _mode.ToString(),
 			});
 		}
 
 		public static void AreaCompleted() {
 			if (!TrackActions()) return;
-			Current.Log(new LoggableAction(LoggableAction.ActionType.AreaComplete));
+			Current.Log(new LoggableAction(ActionType.AreaComplete));
 		}
 
 		public static void EnteringRoom() {
 			if (!TrackActions()) return;
-			LoggableAction la = new LoggableAction(LoggableAction.ActionType.EnterRoom);
+			LoggableAction la = new LoggableAction(ActionType.EnterRoom);
 			Current.Log(la);
 			if (!string.IsNullOrEmpty(la.Checkpoint)) {
 				WriteLog();
@@ -173,46 +186,46 @@ namespace Celeste.Mod.Head2Head.IO {
 
 		public static void DebugView() {
 			if (!TrackActions()) return;
-			Current.Log(new LoggableAction(LoggableAction.ActionType.DebugView));
+			Current.Log(new LoggableAction(ActionType.DebugView));
 		}
 
 		public static void DebugTeleport() {
 			if (!TrackActions()) return;
-			Current.Log(new LoggableAction(LoggableAction.ActionType.DebugTeleport));
+			Current.Log(new LoggableAction(ActionType.DebugTeleport));
 		}
 
 		public static void ClosingApplication() {
 			if (!TrackActions()) return;
-			Current.Log(new LoggableAction(LoggableAction.ActionType.IntentionalCloseApplication));
+			Current.Log(new LoggableAction(ActionType.IntentionalCloseApplication));
 			WriteLog();
 		}
 
 		public static void CompletedObjective() {
 			if (!TrackActions()) return;
-			Current.Log(new LoggableAction(LoggableAction.ActionType.ObjectiveComplete));
+			Current.Log(new LoggableAction(ActionType.ObjectiveComplete));
 		}
 
 		public static void CompletedPhase() {
 			if (!TrackActions()) return;
-			Current.Log(new LoggableAction(LoggableAction.ActionType.PhaseComplete));
+			Current.Log(new LoggableAction(ActionType.PhaseComplete));
 			WriteLog();
 		}
 
 		public static void CompletedMatch() {
 			if (!TrackActions()) return;
-			Current.Log(new LoggableAction(LoggableAction.ActionType.MatchComplete));
+			Current.Log(new LoggableAction(ActionType.MatchComplete));
 			WriteLog();
 			Current = null;
 		}
 
 		public static void EnteredSavefile() {
 			if (!TrackActions()) return;
-			Current.Log(new LoggableAction(LoggableAction.ActionType.EnterSavefile));
+			Current.Log(new LoggableAction(ActionType.EnterSavefile));
 		}
 
 		public static void DeletedSavefile() {
 			if (!TrackActions()) return;
-			Current.Log(new LoggableAction(LoggableAction.ActionType.DeletedSavefile));
+			Current.Log(new LoggableAction(ActionType.DeletedSavefile));
 		}
 
 		public static void RejoinMatch(string matchID) {
@@ -224,7 +237,7 @@ namespace Celeste.Mod.Head2Head.IO {
 			if (log != null) {
 				Current = log;
 				allLogs[log.MatchID] = log;
-				Current.Log(new LoggableAction(LoggableAction.ActionType.MatchRejoin));
+				Current.Log(new LoggableAction(ActionType.MatchRejoin));
 				WriteLog();
 			}
 		}
@@ -236,13 +249,22 @@ namespace Celeste.Mod.Head2Head.IO {
 		public string MatchID { get; set; }
 		public string MatchDispName { get; set; }
 		public string MatchCreator { get; set; }
+		[JsonIgnore]
+		public string SerializedRunnerID { get; set; }
+		public PlayerID RunnerID => PlayerID.FromSerialized(SerializedRunnerID);
 		public List<LoggableAction> Events { get; set; } = new();
+		[JsonIgnore]
+		public DateTime? CompletionInstant { get; set; } = null;
+		public string CompletionTime => CompletionInstant?.ToString() ?? "";
 
 		[NonSerialized]
 		private bool dirty = true;
 
 		public void Log(LoggableAction a) {
 			Events.Add(a);
+			if (a.Type == ActionType.MatchComplete) {
+				CompletionInstant = SyncedClock.Now;
+			}
 			dirty = true;
 		}
 
@@ -297,18 +319,15 @@ namespace Celeste.Mod.Head2Head.IO {
 			ErrorType = 999,
 		}
 
-		public LoggableAction()
-			: this(ActionType.ErrorType)
-		{
-
-		}
+		public LoggableAction() : this(ActionType.ErrorType) { }
 
 		public LoggableAction(ActionType _type) {
 			GlobalAreaKey area = PlayerStatus.Current.CurrentArea;
 			Type = _type;
 			Instant = SyncedClock.Now.ToString();
-			FileTimer = Dialog.FileTime(SaveData.Instance.Time);
-			MatchTimer = Dialog.FileTime(SaveData.Instance.Time - PlayerStatus.Current.FileTimerAtMatchBegin);
+			long saveTime = SaveData.Instance?.Time ?? 0;
+			FileTimer = Dialog.FileTime(saveTime);
+			MatchTimer = Dialog.FileTime(saveTime - PlayerStatus.Current.FileTimerAtMatchBegin);
 			AreaSID = PlayerStatus.Current.CurrentArea.SID;
 			Room = PlayerStatus.Current.CurrentRoom;
 			Checkpoint = area.IsOverworld ? ""
@@ -331,13 +350,16 @@ namespace Celeste.Mod.Head2Head.IO {
 	}
 
 	public static class ActionLogExtensions {
-		public static void Write(this CelesteNetBinaryWriter w, MatchLog log) {
+		public static void Write(this CelesteNetBinaryWriter w, MatchLog log, int actionStartIdx = 0, int numActions = 9999999) {
 			w.Write(log.MatchBeginDate ?? "");
 			w.Write(log.MatchID ?? "");
 			w.Write(log.MatchDispName ?? "");
 			w.Write(log.MatchCreator ?? "");
-			w.Write(log.Events.Count);
-			foreach (LoggableAction action in log.Events) {
+			w.Write(log.SerializedRunnerID ?? "");
+			int actualActionsWritten = Math.Min(log.Events.Count, actionStartIdx + numActions) - actionStartIdx;
+			w.Write(actualActionsWritten);
+			for (int i = actionStartIdx; i < log.Events.Count && i < actionStartIdx + numActions; i++) {
+				LoggableAction action = log.Events[i];
 				w.Write(action);
 			}
 		}
@@ -348,9 +370,10 @@ namespace Celeste.Mod.Head2Head.IO {
 			log.MatchID = r.ReadString();
 			log.MatchDispName = r.ReadString();
 			log.MatchCreator = r.ReadString();
-			int numActions = r.ReadInt32();
-			List<LoggableAction> l = new(numActions);
-			for (int i = 0; i < numActions; i++) {
+			log.SerializedRunnerID = r.ReadString();
+			int numActionsSent = r.ReadInt32();
+			List<LoggableAction> l = new(numActionsSent);
+			for (int i = 0; i < numActionsSent; i++) {
 				l[i] = r.ReadLoggableAction();
 			}
 			return log;

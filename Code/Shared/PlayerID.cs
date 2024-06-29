@@ -11,6 +11,7 @@ using System.Text.Json.Serialization;
 using System.Reflection.Metadata;
 
 namespace Celeste.Mod.Head2Head.Shared {
+	[Serializable]
 	public struct PlayerID {
 		public static PlayerID? MyID {
 			get {
@@ -43,7 +44,8 @@ namespace Celeste.Mod.Head2Head.Shared {
 				return _localMACHash ?? 0;
 			}
 		}
-		private static int? _localMACHash = null;
+		private int? _macAddressHash;
+
 		private static void SearchMACAddress() {
 			try {
 				_localMACHash = (
@@ -73,28 +75,69 @@ namespace Celeste.Mod.Head2Head.Shared {
 			CNetID = orig.CNetID;
 			Name = orig.Name;
 		}
+
 		[JsonIgnore]
-		public int? MacAddressHash { get; private set; }
+		public int? MacAddressHash {
+			get => _macAddressHash;
+			private set { _localMACHash = value; }
+		}
+		[NonSerialized]
+		private static int? _localMACHash = null;
+
 		[JsonIgnore]
-		public string Name { get; private set; }
+		public string Name {
+			get => _name;
+			private set { _name = value; }
+		}
+		[NonSerialized]
+		private static string _name = "";
+
 		[JsonIgnore]
-		public uint CNetID { get; private set; }
+		public uint CNetID {
+			get => _cnetId;
+			private set { _cnetId = value; }
+		}
+		[NonSerialized]
+		private static uint _cnetId = uint.MaxValue;
+
 		[JsonIgnore]
 		public bool IsDefault => MacAddressHash == null && string.IsNullOrEmpty(Name);
 
 		[JsonInclude]
-		public string DisplayName => Name;
+		public string DisplayName {
+			get => Name;
+			set { Name = value; }
+		}
+
 		[JsonInclude]
-		public string SerializedID =>  $"{MacAddressHash ?? -1}^{CNetID}^{Name}";
+		public string SerializedID {
+			get => $"{MacAddressHash ?? -1}^{CNetID}^{Name}";
+			set {
+				if (TryDeserializeID(value, out int? addrHash, out string name, out uint cnetID)) {
+					MacAddressHash = addrHash;
+					Name = name;
+					CNetID = cnetID;
+				}
+			}
+		}
 
 		public static PlayerID FromSerialized(string serialized) {
-			if (string.IsNullOrEmpty(serialized)) return Default;
-			string[] split = serialized.Split('^');
-			if (split.Length != 3) return Default;
-			int? addrHash = int.TryParse(split[0], out int _addrHash) ? _addrHash : null;
-			uint cnetID = uint.TryParse(split[1], out cnetID) ? cnetID : uint.MaxValue;
-			string name = split[2];
-			return new(addrHash, cnetID, name);
+			if (TryDeserializeID(serialized, out int? addrHash, out string name, out uint cnetID)) return new(addrHash, cnetID, name); 
+			return Default;
+			
+		}
+
+		private static bool TryDeserializeID(string serID, out int? addrHash, out string name, out uint cnetID) {
+			addrHash = null;
+			cnetID = uint.MaxValue;
+			name = "";
+			if (string.IsNullOrEmpty(serID)) return false;
+			string[] split = serID.Split('^');
+			if (split.Length != 3) return false;
+			addrHash = int.TryParse(split[0], out int _addrHash) ? _addrHash : null;
+			cnetID = uint.TryParse(split[1], out cnetID) ? cnetID : uint.MaxValue;
+			name = split[2];
+			return true;
 		}
 
 		public bool MatchAndUpdate(PlayerID id) {

@@ -20,6 +20,13 @@ namespace Celeste.Mod.Head2Head.Data {
 		public PlayerID RequestingPlayer;
 		public bool IsControlPanelRequest;
 		public string Client;
+		public int ChunkNumber;
+		public int ChunksTotal;
+
+		/// <summary>
+		/// This field does not get serialized
+		/// </summary>
+		public int ActionsPerChunk;
 
 		protected override void Read(CelesteNetBinaryReader reader) {
 			base.Read(reader);
@@ -27,6 +34,8 @@ namespace Celeste.Mod.Head2Head.Data {
 			LogPlayer = reader.ReadPlayerID();
 			RequestingPlayer = reader.ReadPlayerID();
 			Client = reader.ReadString();
+			ChunkNumber = reader.ReadInt32();
+			ChunksTotal = reader.ReadInt32();
 			bool isRequest = reader.ReadBoolean();
 			if (!isRequest) {
 				Log = reader.ReadMatchLog();
@@ -38,10 +47,12 @@ namespace Celeste.Mod.Head2Head.Data {
 			writer.Write(MatchID);
 			writer.Write(LogPlayer);
 			writer.Write(RequestingPlayer);
-			writer.Write(IsRequest);
 			writer.Write(Client);
+			writer.Write(ChunkNumber);
+			writer.Write(ChunksTotal);
+			writer.Write(IsRequest);
 			if (!IsRequest) {
-				writer.Write(Log);
+				writer.Write(Log, ChunkNumber * ActionsPerChunk, ActionsPerChunk);
 			}
 		}
 	}

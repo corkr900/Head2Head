@@ -93,7 +93,7 @@ function writeToScreen(message) {
 
 function HandleConnectionUpdate(newIsConnected) {
 	const statusSpan = document.querySelector("#rend_status");
-	statusSpan.textContent = newIsConnected ? "Connected" : "Not Connected";
+	statusSpan.textContent = newIsConnected ? "Connected" : "Not Connected. Is the game running, Head 2 Head enabled, and Control Panel enabled in Head 2 Head mod settings?";
 	UpdateActions({AvailableActions: []});
 }
 
@@ -173,7 +173,7 @@ function RemoveMatchInfo(id) {
 	forgottenMsg.textContent = "This match was forgotten from Head 2 Head";
 	forgottenMsg.className = "margin6";
 	body.prepend(forgottenMsg);
-	for (const btn of body.querySelectorAll("button:not(.keepAfterForgotten)")) {
+	for (const btn of body.querySelectorAll("button:not(.keepAfterForgotten):not(.keepAfterForgotten *)")) {
 		btn.remove();
 	}
 	btnContainer.appendChild(MakeButton("Remove", () => {
@@ -454,17 +454,20 @@ function RenderLog(log) {
 	container.textContent = "";
 
 	const mainSec = document.createElement("div");
-	let p = document.createElement("p");
+	let p = document.createElement("div");
 	p.textContent += `${log.MatchDispName}`;
 	mainSec.appendChild(p);
-	p = document.createElement("p");
+	p = document.createElement("div");
 	p.textContent += `ID: ${log.MatchID}`;
 	mainSec.appendChild(p);
-	p = document.createElement("p");
+	p = document.createElement("div");
 	p.textContent += `Date: ${log.MatchBeginDate}`;
 	mainSec.appendChild(p);
-	p = document.createElement("p");
-	p.textContent += `Creator: ${log.MatchCreator}`;
+	p = document.createElement("div");
+	p.textContent += `Match Creator: ${log.MatchCreator}`;
+	mainSec.appendChild(p);
+	p = document.createElement("div");
+	p.textContent += `Runner: ${log.RunnerID?.DisplayName}`;
 	mainSec.appendChild(p);
 	container.appendChild(mainSec);
 	

@@ -14,6 +14,19 @@ using System.Threading.Tasks;
 using Celeste.Mod.CelesteNet.Client.Components;
 
 namespace Celeste.Mod.Head2Head.IO {
+	public class H2HGameComponent : CelesteNetGameComponent {
+		public H2HGameComponent(CelesteNetClientContext context, Game game)
+			: base(context, game) {
+
+		}
+
+		private ulong tickCounter = 0;
+
+		public override void Tick() {
+			CNetComm.Instance?.Tick(++tickCounter);
+		}
+	}
+
 	public class CNetComm : GameComponent {
 		public static CNetComm Instance { get; private set; }
 
@@ -83,6 +96,10 @@ namespace Celeste.Mod.Head2Head.IO {
 
 		private ConcurrentQueue<Action> updateQueue = new ConcurrentQueue<Action>();
 
+		private ConcurrentQueue<DataH2HMatchLog> outgoingMatchLogChunks = new();
+		private List<DataH2HMatchLog> incomingLogChunks = new();
+		private static object incomingChunksLock = new();
+
 		public CNetComm(Game game)
 			: base (game)
 		{
@@ -113,6 +130,8 @@ namespace Celeste.Mod.Head2Head.IO {
 
 		private void OnDisconnect(CelesteNetConnection con) {
 			updateQueue.Enqueue(() => OnDisconnected?.Invoke(con));
+			outgoingMatchLogChunks.Clear();
+			incomingLogChunks.Clear();
 		}
 
 		public override void Update(GameTime gameTime) {
@@ -121,6 +140,12 @@ namespace Celeste.Mod.Head2Head.IO {
 			foreach (Action act in queue) act();
 
 			base.Update(gameTime);
+		}
+
+		internal void Tick(ulong v) {
+			if (outgoingMatchLogChunks.TryDequeue(out DataH2HMatchLog chunk)) {
+				CnetClient.SendAndHandle(chunk);
+			}
 		}
 
 		// #############################################
@@ -203,15 +228,21 @@ namespace Celeste.Mod.Head2Head.IO {
 			if (!CanSendMessages || log == null) {
 				return;
 			}
-			// TODO match log chunking
-			CnetClient.SendAndHandle(new DataH2HMatchLog() {
-				Log = log,
-				MatchID = matchID,
-				LogPlayer = player,
-				RequestingPlayer = requestor,
-				IsControlPanelRequest = isControlPanelRequest,
-				Client = client,
-			});
+			const int EventsPerChunk = 20;
+			int chunks = (int)Math.Ceiling(log.Events.Count / (float)EventsPerChunk);
+            for (int i = 0; i < chunks; i++) {
+				outgoingMatchLogChunks.Enqueue(new DataH2HMatchLog() {
+					Log = log,
+					MatchID = matchID,
+					LogPlayer = player,
+					RequestingPlayer = requestor,
+					IsControlPanelRequest = isControlPanelRequest,
+					Client = client,
+					ChunkNumber = i,
+					ChunksTotal = chunks,
+					ActionsPerChunk = EventsPerChunk,
+				});
+			}
 			MessageCounter++;
 		}
 
@@ -247,7 +278,32 @@ namespace Celeste.Mod.Head2Head.IO {
 		}
 		public void Handle(CelesteNetConnection con, DataH2HMatchLog data) {
 			if (data.player == null) data.player = CnetClient.PlayerInfo;  // It's null when handling our own messages
-			updateQueue.Enqueue(() => OnReceiveMatchLog?.Invoke(data));
+			if (data.IsRequest) {
+				updateQueue.Enqueue(() => OnReceiveMatchLog?.Invoke(data));
+				return;
+			}
+			if (!data.RequestingPlayer.Equals(PlayerID.MyID)) return;
+            //lock (incomingChunksLock) {
+				incomingLogChunks.Add(data);
+				DataH2HMatchLog[] arr = new DataH2HMatchLog[data.ChunksTotal];
+				foreach (var chunk in incomingLogChunks) {
+					if (chunk.MatchID == data.MatchID && chunk.LogPlayer.Equals(data.LogPlayer) && chunk.RequestingPlayer.Equals(data.RequestingPlayer)) {
+						arr[chunk.ChunkNumber] = chunk;
+					}
+				}
+				for (int i = 0; i < arr.Length; i++) {
+					if (arr[i] == null) return;  // Don't have all chunks yet
+				}
+				for (int i = 0; i < arr.Length; i++) {
+					incomingLogChunks.Remove(arr[i]);
+					if (arr[0].Log.Events != arr[i].Log.Events) {  // they're the same when i == 0 and when handling own packets
+						for (int j = 0; j < arr[i].Log.Events.Count && j < 1000; j++) {  // the 1000 is just a safeguard
+							arr[0].Log.Events.Add(arr[i].Log.Events[j]);
+						}
+					}
+				}
+				updateQueue.Enqueue(() => OnReceiveMatchLog?.Invoke(arr[0]));
+			//}
 		}
 
 
@@ -265,5 +321,6 @@ namespace Celeste.Mod.Head2Head.IO {
 			Logger.Log(LogLevel.Verbose, "Head2Head", "Full Name: " + data.player.FullName);
 			Logger.Log(LogLevel.Verbose, "Head2Head", "Display Name: " + data.player.DisplayName);
 		}
+
 	}
 }
