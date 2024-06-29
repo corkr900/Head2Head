@@ -182,10 +182,10 @@ namespace Celeste.Mod.Head2Head.Shared {
 
         public void SendControlPanelUpdate(string targetClientToken = "") {
 			if (PlayerStatus.Current.CurrentMatch == this) {
-				ControlPanel.Commands.Outgoing.CurrentMatchStatus(this, targetClientToken);
+				Outgoing.CurrentMatchStatus(this, targetClientToken);
 			}
 			else {
-				ControlPanel.Commands.Outgoing.OtherMatchStatus(this, targetClientToken);
+				Outgoing.OtherMatchStatus(this, targetClientToken);
 			}
 		}
 
