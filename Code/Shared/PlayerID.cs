@@ -82,7 +82,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			private set { _macAddressHash = value; }
 		}
 		[NonSerialized]
-		private static int? _macAddressHash = null;
+		private int? _macAddressHash = null;
 
 		[JsonIgnore]
 		public string Name {
@@ -90,7 +90,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			private set { _name = value; }
 		}
 		[NonSerialized]
-		private static string _name = "";
+		private string _name = "";
 
 		[JsonIgnore]
 		public uint CNetID {
@@ -98,7 +98,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			private set { _cnetId = value; }
 		}
 		[NonSerialized]
-		private static uint _cnetId = uint.MaxValue;
+		private uint _cnetId = uint.MaxValue;
 
 		[JsonIgnore]
 		public bool IsDefault => MacAddressHash == null && string.IsNullOrEmpty(Name);
