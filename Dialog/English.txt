@@ -107,14 +107,6 @@ Head2Head_Setting_ShowObjectivesHUD= Show Objectives HUD
 Head2Head_Setting_ShowObjectivesHUD_Subtext= Determines when to show the objectives progress HUD.
 Default: Lobby and Pause
 
-Head2Head_Setting_TimeServer= Time Server
-Head2Head_Setting_TimeServer_Subtext= Choose the time server to use to synchronize
-match starts. "None" will disable time syncing;
-the game will start a little faster, but may cause
-you to start matches out of sync with other players.
-You will need to restart the game to apply changes.
-Default: time.windows.com
-
 Head2Head_Setting_Ruleset= Ruleset
 Head2Head_Setting_Ruleset_Subtext= Choose which ruleset to use.
 This will typically only be used for special events.
