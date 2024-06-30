@@ -14,7 +14,7 @@ namespace Celeste.Mod.Head2Head.Data {
 		}
 
 		public bool IsRequest => Log == null;
-		public MatchLog Log;
+
 		public string MatchID;
 		public PlayerID LogPlayer;
 		public PlayerID RequestingPlayer;
@@ -22,6 +22,7 @@ namespace Celeste.Mod.Head2Head.Data {
 		public string Client;
 		public int ChunkNumber;
 		public int ChunksTotal;
+		public MatchLog Log;
 
 		/// <summary>
 		/// This field does not get serialized
@@ -33,6 +34,7 @@ namespace Celeste.Mod.Head2Head.Data {
 			MatchID = reader.ReadString();
 			LogPlayer = reader.ReadPlayerID();
 			RequestingPlayer = reader.ReadPlayerID();
+			IsControlPanelRequest = reader.ReadBoolean();
 			Client = reader.ReadString();
 			ChunkNumber = reader.ReadInt32();
 			ChunksTotal = reader.ReadInt32();
@@ -47,6 +49,7 @@ namespace Celeste.Mod.Head2Head.Data {
 			writer.Write(MatchID);
 			writer.Write(LogPlayer);
 			writer.Write(RequestingPlayer);
+			writer.Write(IsControlPanelRequest);
 			writer.Write(Client);
 			writer.Write(ChunkNumber);
 			writer.Write(ChunksTotal);
