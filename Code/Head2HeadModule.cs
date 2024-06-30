@@ -1292,21 +1292,17 @@ namespace Celeste.Mod.Head2Head
 			}
 			foreach (MatchPhase ph in def.Phases) {
 				if (!ph.Area.IsValidInstalledMap) {
-					Logger.Log(LogLevel.Info, "Head2Head", string.Format("Couldn't join match - map not installed: {0}", ph.Area.SID));
-					Engine.Commands.Log(string.Format("Couldn't join match - map not installed: {0}", ph.Area.SID));
+					Logger.Log(LogLevel.Info, "Head2Head", $"Couldn't join match - map not installed: {ph.Area.SID}");
 					return false;
 				}
 				if (!ph.Area.VersionMatchesLocal) {
-					Logger.Log(LogLevel.Info, "Head2Head", string.Format("Couldn't join match - map version mismatch: {0} (match initator has {1}, but {2} is installed)",
-						ph.Area.DisplayName, ph.Area.Version, ph.Area.LocalVersion));
-					Engine.Commands.Log(string.Format("Couldn't join match - map version mismatch: {0} (match initator has {1}, but {2} is installed)",
-						ph.Area.DisplayName, ph.Area.Version, ph.Area.LocalVersion));
+					Logger.Log(LogLevel.Info, "Head2Head",
+						$"Couldn't join match - map version mismatch: {ph.Area.DisplayName} (match initator has {ph.Area.Version}, but {ph.Area.LocalVersion} is installed)");
 					return false;
 				}
 			}
 			if (!RoleLogic.AllowMatchJoin(def)) {
 				Logger.Log(LogLevel.Verbose, "Head2Head", "Your role prevents creating a match");
-				Engine.Commands.Log("Your role prevents joining this match");
 				return false;
 			}
 			if (!def.Players.Contains(PlayerID.MyIDSafe)) {
@@ -1625,7 +1621,6 @@ namespace Celeste.Mod.Head2Head
 			if (randoSettings != null) {
 				object settings = randoSettings.Build();
 				if (settings == null) {
-					Engine.Commands.Log("Failed to build Randomizer settings. :(");
 					Logger.Log(LogLevel.Warn, "Head2Head", "Failed to build Randomizer settings");
 					yield break;
 				}

@@ -86,7 +86,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 				return packet;
 			}
 			catch (Exception e) {
-				Engine.Commands?.Log(e);
+				Logger.Log(LogLevel.Warn, "Head2Head", $"Error occurred in outgoing packet serialization:\n{e}\n----- WITH PAYLOAD OBJECT -----\n{data}");
 				return null;
 			}
 		}

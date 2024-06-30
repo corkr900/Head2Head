@@ -500,7 +500,7 @@ namespace Celeste.Mod.Head2Head.Entities.Arcade {
 					result = Random.Shared.Choose(choices);
 				}
 				else {
-					Engine.Commands.Log($"That's weird... no valid moves???");
+					// That's weird... no valid moves???
 					result = 0;
 				}
 			}
