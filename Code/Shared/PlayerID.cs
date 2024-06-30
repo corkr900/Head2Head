@@ -48,16 +48,40 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 		private static void SearchMACAddress() {
 			try {
-				_localMACHash = (
-					from nic in NetworkInterface.GetAllNetworkInterfaces()
-					where nic.OperationalStatus == OperationalStatus.Up
-					select nic.GetPhysicalAddress().ToString()
-				)?.FirstOrDefault()?.GetHashCode();
+				//_localMACHash = (
+				//	from nic in NetworkInterface.GetAllNetworkInterfaces()
+				//	where nic.OperationalStatus == OperationalStatus.Up
+				//	select nic.GetPhysicalAddress().ToString()
+				//)?.FirstOrDefault()?.GetHashCode();
+				IEnumerable<NetworkInterface> interfaces = (NetworkInterface.GetAllNetworkInterfaces())
+					.Where(i => i.OperationalStatus == OperationalStatus.Up);
+				NetworkInterface nic = interfaces
+					.OrderBy((NetworkInterface i) => i.Id)
+					.FirstOrDefault();
+				_localMACHash = GetDeterministicHashCode(nic);
 			}
 			catch (Exception e) {
 				Logger.Log(LogLevel.Error, "Head2Head", "Could not get MAC address: " + e.Message);
 			}
 		}
+		private static int? GetDeterministicHashCode(NetworkInterface nic) {
+			string mac = nic?.GetPhysicalAddress()?.ToString();
+			if (string.IsNullOrEmpty(mac)) return null;
+            unchecked {
+				int hash1 = (5381 << 16) + 5381;
+				int hash2 = hash1;
+
+				for (int i = 0; i < mac.Length; i += 2) {
+					hash1 = ((hash1 << 5) + hash1) ^ mac[i];
+					if (i == mac.Length - 1)
+						break;
+					hash2 = ((hash2 << 5) + hash2) ^ mac[i + 1];
+				}
+
+				return hash1 + (hash2 * 1566083941);
+			}
+		}
+
 		public static PlayerID Default {
 			get {
 				return new PlayerID(null, uint.MaxValue, "");
