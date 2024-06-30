@@ -1258,22 +1258,31 @@ namespace Celeste.Mod.Head2Head
 				if (Settings.AutoStageNewMatches == Head2HeadModuleSettings.AutoStageSetting.Never) return;
 				if (Settings.AutoStageNewMatches == Head2HeadModuleSettings.AutoStageSetting.OnlyInLobby
 					&& !PlayerStatus.Current.CurrentArea.Equals(GlobalAreaKey.Head2HeadLobby)) return;
-				if (!RoleLogic.AllowAutoStage(def)) return;
+				if (!RoleLogic.AllowAutoStage(def)) {
+					def.SendControlPanelUpdate();
+					return;
+				}
 			}
 			MatchDefinition current = PlayerStatus.Current.CurrentMatch;
 			if (current != null) {
-				if (!current.PlayerCanLeaveFreely(PlayerID.MyIDSafe)) return;
+				if (!current.PlayerCanLeaveFreely(PlayerID.MyIDSafe)) {
+					def.SendControlPanelUpdate();
+					return;
+				}
 				if (!overrideSoftChecks
 					&& current.State <= MatchState.InProgress
-					&& current.GetPlayerResultCat(PlayerID.MyIDSafe) == ResultCategory.NotJoined) return;
-				ControlPanel.Commands.Outgoing.MatchNoLongerCurrent(current.MatchID);
+					&& current.GetPlayerResultCat(PlayerID.MyIDSafe) == ResultCategory.NotJoined) {
+					def.SendControlPanelUpdate();
+					return;
+				}
+				Outgoing.MatchNoLongerCurrent(current.MatchID);
 			}
 			// Actually stage it locally
 			PlayerStatus.Current.CurrentMatch = def;
 			PlayerStatus.Current.MatchStaged(PlayerStatus.Current.CurrentMatch);
 			OnMatchCurrentMatchUpdated?.Invoke();
-			ControlPanel.Commands.Outgoing.CurrentMatchStatus(def);
 			Instance.ClearAutoLaunchInfo();
+			def.SendControlPanelUpdate();
 		}
 
 		public bool JoinStagedMatch() {
@@ -1534,11 +1543,11 @@ namespace Celeste.Mod.Head2Head
 			if (level == null) return;
 			level.unpauseTimer = 0.15f;
 			level.Paused = false;
+			level.PauseLock = true;
 			foreach (Entity e in level.Entities) {
 				if (e is TextMenu menu) {
 					menu.RemoveSelf();
 				}
-
 			}
 		}
 

@@ -171,7 +171,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			}
 			else {
 				w.Write(true);
-				w.Write(id.MacAddressHash ?? 0);
+				w.Write(id.MacAddressHash.Value);
 			}
 			w.Write(id.Name);
 			w.Write(id.CNetID);

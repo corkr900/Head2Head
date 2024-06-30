@@ -35,7 +35,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 			if (def == null) return new();
 			List<SerializeMatchPlayer> ret = new(def.Players.Count);
 			foreach (PlayerID pid in def.Players) {
-				ret.Add(new SerializeMatchPlayer(def, pid));
+				if (!pid.IsDefault) ret.Add(new SerializeMatchPlayer(def, pid));
 			}
 			return ret;
 		}
