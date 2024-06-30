@@ -62,7 +62,7 @@ namespace Celeste.Mod.Head2Head.Control {
 
 		[Command("h2h_myID", "Display my PlayerID")]
 		public static void H2HMyID(string arg) {
-			Engine.Commands.Log(PlayerID.MyID?.SerializedID);
+			Engine.Commands.Log(PlayerID.MyID?.SerializedID ?? "null");
 		}
 	}
 }
