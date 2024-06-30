@@ -53,19 +53,18 @@ namespace Celeste.Mod.Head2Head.Shared {
 				//	where nic.OperationalStatus == OperationalStatus.Up
 				//	select nic.GetPhysicalAddress().ToString()
 				//)?.FirstOrDefault()?.GetHashCode();
-				IEnumerable<NetworkInterface> interfaces = (NetworkInterface.GetAllNetworkInterfaces())
-					.Where(i => i.OperationalStatus == OperationalStatus.Up);
-				NetworkInterface nic = interfaces
-					.OrderBy((NetworkInterface i) => i.Id)
-					.FirstOrDefault();
-				_localMACHash = GetDeterministicHashCode(nic);
+				string macAddr = NetworkInterface.GetAllNetworkInterfaces()
+					.Where(i => i.OperationalStatus == OperationalStatus.Up)
+					.Select(i => i.GetPhysicalAddress().ToString())
+					.Where(s => !string.IsNullOrEmpty(s))
+					.Order().FirstOrDefault();
+				_localMACHash = GetDeterministicHashCode(macAddr);
 			}
 			catch (Exception e) {
 				Logger.Log(LogLevel.Error, "Head2Head", "Could not get MAC address: " + e.Message);
 			}
 		}
-		private static int? GetDeterministicHashCode(NetworkInterface nic) {
-			string mac = nic?.GetPhysicalAddress()?.ToString();
+		private static int? GetDeterministicHashCode(string mac) {
 			if (string.IsNullOrEmpty(mac)) return null;
             unchecked {
 				int hash1 = (5381 << 16) + 5381;
