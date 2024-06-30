@@ -139,19 +139,19 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 			PlayerStatus stat = pla.Equals(PlayerID.MyID) ? PlayerStatus.Current
 				: Head2HeadModule.knownPlayers.ContainsKey(pla) ? Head2HeadModule.knownPlayers[pla]
 				: null;
-			state = stat.Objectives.FirstOrDefault((H2HMatchObjectiveState _st) => _st.ObjectiveID == obj.ID);
+			state = stat.Objectives?.FirstOrDefault((H2HMatchObjectiveState _st) => _st.ObjectiveID == obj.ID);
 		}
 		private readonly PlayerID pla;
 		private readonly MatchObjective ob;
-		private readonly H2HMatchObjectiveState state;
+		private readonly H2HMatchObjectiveState? state;
 
 		public uint InternalId => ob.ID;
 		public string DisplayName => ob.Label;
 		public MatchObjectiveType ObjectiveType => ob.ObjectiveType;
 		public string ObjectiveTypeTitle => Util.TranslatedObjectiveLabel(ObjectiveType);
-		public bool Completed => state.Completed;
+		public bool Completed => state?.Completed ?? false;
 		public int CollectablesGoal => ob.CollectableGoal;
-		public int CollectablesObtained => state.CountCollectables();
+		public int CollectablesObtained => state?.CountCollectables() ?? 0;
 		public string TimeLimit => Util.ReadableTimeSpanTitle(ob.AdjustedTimeLimit(pla));
 		public string TimeRemaining => GetTimeRemaining();
 		public SerializeImage Icon => SerializeImage.FromGui(ob.GetIconPath());
