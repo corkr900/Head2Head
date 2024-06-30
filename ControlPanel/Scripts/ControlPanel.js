@@ -5,6 +5,7 @@ let websocket = {};
 let clientToken = "TOKEN_NOT_PROVISIONED";
 let imageCache = {};
 let printErrors = false;
+let isDebugMode = false;
 
 HandleParams();
 TryConnect();
@@ -12,8 +13,8 @@ TryConnect();
 function HandleParams() {
 	const queryString = window.location.search;
 	const urlParams = new URLSearchParams(queryString);
-	const debug = urlParams.get('debug');
-	if (debug) {
+	isDebugMode = urlParams.get('debug');
+	if (isDebugMode) {
 		for (const elem of document.querySelectorAll(".debugOnly")) {
 			elem.classList.remove("debugOnly");
 		}
@@ -299,6 +300,12 @@ function RenderMatchPlayerRow(player, table, match) {
 	playerNameTd.className = "playerName";
 	playerNameTd.textContent = player.DisplayName;
 	row.appendChild(playerNameTd);
+	// full ID
+	if (isDebugMode) {
+		const playerIdTd = document.createElement("td");
+		playerIdTd.textContent = player.Id;
+		row.appendChild(playerIdTd);
+	}
 	// Status
 	const playerStatusTd = document.createElement("td");
 	playerStatusTd.className = `playerStatus ${player.StatusTitle}`;
