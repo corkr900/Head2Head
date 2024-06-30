@@ -59,5 +59,10 @@ namespace Celeste.Mod.Head2Head.Control {
 		public static void H2HCMD(string arg) {
 			ControlPanel.Commands.Outgoing.CurrentMatchStatus(PlayerStatus.Current.CurrentMatch);
 		}
+
+		[Command("h2h_myID", "Display my PlayerID")]
+		public static void H2HMyID(string arg) {
+			Engine.Commands.Log(PlayerID.MyID?.SerializedID);
+		}
 	}
 }

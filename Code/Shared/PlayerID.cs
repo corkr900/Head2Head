@@ -160,7 +160,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 	public static class PlayerIDExt {
 		public static PlayerID ReadPlayerID(this CelesteNetBinaryReader r) {
 			bool hasmac = r.ReadBoolean();
-			int? mac = hasmac ? (int?)r.ReadInt32() : null;
+			int? mac = hasmac ? r.ReadInt32() : null;
 			string name = r.ReadString();
 			uint cnetid = r.ReadUInt32();
 			return new PlayerID(mac, cnetid, name);
