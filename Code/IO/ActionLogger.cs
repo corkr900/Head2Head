@@ -374,7 +374,7 @@ namespace Celeste.Mod.Head2Head.IO {
 			int numActionsSent = r.ReadInt32();
 			List<LoggableAction> l = new(numActionsSent);
 			for (int i = 0; i < numActionsSent; i++) {
-				l[i] = r.ReadLoggableAction();
+				l.Add(r.ReadLoggableAction());
 			}
 			return log;
 		}
