@@ -356,10 +356,10 @@ namespace Celeste.Mod.Head2Head.IO {
 			w.Write(log.MatchDispName ?? "");
 			w.Write(log.MatchCreator ?? "");
 			w.Write(log.SerializedRunnerID ?? "");
-			int actualActionsWritten = Math.Min(log.Events.Count, actionStartIdx + numActions) - actionStartIdx;
+			int actualActionsWritten = Math.Min(log.Events.Count - actionStartIdx, numActions);
 			w.Write(actualActionsWritten);
-			for (int i = actionStartIdx; i < log.Events.Count && i < actionStartIdx + numActions; i++) {
-				LoggableAction action = log.Events[i];
+			for (int i = 0; i < actualActionsWritten; i++) {
+				LoggableAction action = log.Events[actionStartIdx + i];
 				w.Write(action);
 			}
 		}
@@ -376,6 +376,7 @@ namespace Celeste.Mod.Head2Head.IO {
 			for (int i = 0; i < numActionsSent; i++) {
 				l.Add(r.ReadLoggableAction());
 			}
+			log.Events = l;
 			return log;
 		}
 
