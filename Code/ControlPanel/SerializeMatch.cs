@@ -120,7 +120,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 		private readonly MatchPhase ph;
 
 		public uint InternalId => ph.ID;
-		public bool Completed => def.Result?[pla].Result == ResultCategory.Completed;
+		public bool Completed => def.Result?[pla]?.Result == ResultCategory.Completed;
 		public List<SerializeMatchPlayerObjective> Objectives => GetObjectives();
 
 		private List<SerializeMatchPlayerObjective> GetObjectives() {
