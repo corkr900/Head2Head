@@ -94,9 +94,9 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public long FileTimerAtMatchBegin { get; internal set; }
 		public long FileTimerAtLastCheckpoint { get; internal set; }
 		public long FileTimerAtLastObjectiveComplete { get; internal set; }
-		public List<H2HMatchPhaseState> phases { get; internal set; } = new List<H2HMatchPhaseState>();
-		public List<H2HMatchObjectiveState> objectives { get; internal set; } = new List<H2HMatchObjectiveState>();
-		public List<Tuple<GlobalAreaKey, string>> reachedCheckpoints { get; internal set; } = new List<Tuple<GlobalAreaKey, string>>();
+		public List<H2HMatchPhaseState> Phases { get; internal set; } = new List<H2HMatchPhaseState>();
+		public List<H2HMatchObjectiveState> Objectives { get; internal set; } = new List<H2HMatchObjectiveState>();
+		public List<Tuple<GlobalAreaKey, string>> ReachedCheckpoints { get; internal set; } = new List<Tuple<GlobalAreaKey, string>>();
 
 		#region Non-synchronized data
 
@@ -186,11 +186,11 @@ namespace Celeste.Mod.Head2Head.Shared {
 					LastCheckpoint = next.Name;
 					FileTimerAtLastCheckpoint = SaveData.Instance?.Time ?? FileTimerAtLastCheckpoint;
 					GlobalAreaKey area = new GlobalAreaKey(level.Session.Area);
-					int index = reachedCheckpoints.FindIndex((Tuple<GlobalAreaKey, string> tpred) => {
+					int index = ReachedCheckpoints.FindIndex((Tuple<GlobalAreaKey, string> tpred) => {
 						return tpred.Item1.Equals(area) && tpred.Item2 == LastCheckpoint;
 					});
-					if (index < 0 || index >= reachedCheckpoints.Count) {
-						reachedCheckpoints.Add(new Tuple<GlobalAreaKey, string>(area, LastCheckpoint));
+					if (index < 0 || index >= ReachedCheckpoints.Count) {
+						ReachedCheckpoints.Add(new Tuple<GlobalAreaKey, string>(area, LastCheckpoint));
 					}
 				}
 			}
@@ -230,24 +230,24 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public void MatchStaged(MatchDefinition def) {
 			if (CurrentMatch?.MatchID != def.MatchID) {
 				CurrentMatch = def;
-				phases.Clear();
-				objectives.Clear();
+				Phases.Clear();
+				Objectives.Clear();
 				Updated();
 				Outgoing.ControlPanelActionsUpdate();
 			}
 		}
 
 		public void MatchJoined() {
-			phases.Clear();
-			objectives.Clear();
+			Phases.Clear();
+			Objectives.Clear();
 			SummitGems = new bool[6];
 			Updated();
 		}
 
 		public void MatchStarted() {
-			phases.Clear();
-			objectives.Clear();
-			reachedCheckpoints.Clear();
+			Phases.Clear();
+			Objectives.Clear();
+			ReachedCheckpoints.Clear();
 			FileTimerAtMatchBegin = SaveData.Instance.Time;
 			FileTimerAtLastCheckpoint = SaveData.Instance.Time;
 			SummitGems = new bool[6];
@@ -255,8 +255,8 @@ namespace Celeste.Mod.Head2Head.Shared {
 		}
 
 		public void MatchReset() {
-			phases.Clear();
-			objectives.Clear();
+			Phases.Clear();
+			Objectives.Clear();
 			CurrentMatch = null;
 			SummitGems = new bool[6];
 			RestoreOriginalAssists();
@@ -264,8 +264,8 @@ namespace Celeste.Mod.Head2Head.Shared {
 		}
 
 		public void Cleanup() {
-			phases.Clear();
-			objectives.Clear();
+			Phases.Clear();
+			Objectives.Clear();
 			CurrentMatch = null;
 			SummitGems = new bool[6];
 			RestoreOriginalAssists();
@@ -379,7 +379,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			if (CurrentMatch == null) return -1;
 			if (!IsInMatch(false, id)) return -1;
 			int max = -1;
-			foreach (H2HMatchPhaseState s in phases) {
+			foreach (H2HMatchPhaseState s in Phases) {
 				MatchPhase ph = CurrentMatch.GetPhase(s.PhaseID);
 				if (ph == null) continue;
 				if (s.Completed && ph.Order > max) {
@@ -432,14 +432,14 @@ namespace Celeste.Mod.Head2Head.Shared {
 		}
 
 		public bool IsObjectiveComplete(uint objid) {
-			foreach (H2HMatchObjectiveState st in objectives) {
+			foreach (H2HMatchObjectiveState st in Objectives) {
 				if (st.ObjectiveID == objid) return st.Completed;
 			}
 			return false;
 		}
 
 		public bool IsPhaseComplete(uint phid) {
-			foreach (H2HMatchPhaseState st in phases) {
+			foreach (H2HMatchPhaseState st in Phases) {
 				if (st.PhaseID == phid) return st.Completed;
 			}
 			return false;
@@ -455,24 +455,24 @@ namespace Celeste.Mod.Head2Head.Shared {
 			if (!IsInMatch(false)) return false;
 			if (ob == null) return false;
 			bool updated = false;
-			int stateIndex = objectives.FindIndex((H2HMatchObjectiveState s) => s.ObjectiveID == ob.ID);
+			int stateIndex = Objectives.FindIndex((H2HMatchObjectiveState s) => s.ObjectiveID == ob.ID);
 			if (stateIndex < 0) {
 				Dictionary<GlobalAreaKey, List<EntityID>> itmDict = new Dictionary<GlobalAreaKey, List<EntityID>>();
 				itmDict.Add(area, new List<EntityID>() { id });
-				objectives.Add(new H2HMatchObjectiveState() {
+				Objectives.Add(new H2HMatchObjectiveState() {
 					ObjectiveID = ob.ID,
 					CollectedItems = itmDict,
 				});
-				stateIndex = objectives.Count - 1;
+				stateIndex = Objectives.Count - 1;
 				updated |= true;
 			}
 			else {
-				if (objectives[stateIndex].CollectedItems == null) {
-					H2HMatchObjectiveState objst = objectives[stateIndex];
+				if (Objectives[stateIndex].CollectedItems == null) {
+					H2HMatchObjectiveState objst = Objectives[stateIndex];
 					objst.CollectedItems = new Dictionary<GlobalAreaKey, List<EntityID>>();
-					objectives[stateIndex] = objst;
+					Objectives[stateIndex] = objst;
 				}
-				Dictionary<GlobalAreaKey, List<EntityID>> items = objectives[stateIndex].CollectedItems;
+				Dictionary<GlobalAreaKey, List<EntityID>> items = Objectives[stateIndex].CollectedItems;
 				if (items.ContainsKey(area) && items[area].Contains(id)) return false;  // Already collected
 				// Add it to collected items
 				if (!items.ContainsKey(area)) items.Add(area, new List<EntityID>());
@@ -480,7 +480,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 				updated |= true;
 			}
 			Logger.Log(LogLevel.Info, "Head2Head", $"Collectable marked found: {ob.ObjectiveType} (ID {id})");
-			if (objectives[stateIndex].CountCollectables() >= ob.CollectableGoal) {
+			if (Objectives[stateIndex].CountCollectables() >= ob.CollectableGoal) {
 				updated |= MarkObjectiveComplete(ob);
 			}
 			return updated;
@@ -489,8 +489,8 @@ namespace Celeste.Mod.Head2Head.Shared {
 		private bool MarkObjectiveComplete(MatchObjective ob) {
 			if (!IsInMatch(false)) return false;
 			bool found = false;
-			for (int i = 0; i < objectives.Count; i++) {
-				H2HMatchObjectiveState st = objectives[i];
+			for (int i = 0; i < Objectives.Count; i++) {
+				H2HMatchObjectiveState st = Objectives[i];
 				if (st.ObjectiveID == ob.ID) {
 					if (st.Completed) {
 						return false;
@@ -499,7 +499,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 						found = true;
 						st.Completed = true;
 						st.FinalRoom = CurrentRoom;
-						objectives[i] = st;
+						Objectives[i] = st;
 						FileTimerAtLastObjectiveComplete = SaveData.Instance.Time;
 						Logger.Log(LogLevel.Info, "Head2Head", $"Objective completed: {ob.ObjectiveType} (ID {st.ObjectiveID})");
 						break;
@@ -507,7 +507,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 				}
 			}
 			if (!found) {
-				objectives.Add(new H2HMatchObjectiveState() {
+				Objectives.Add(new H2HMatchObjectiveState() {
 					ObjectiveID = ob.ID,
 					Completed = true,
 					FinalRoom = CurrentRoom,
@@ -534,8 +534,8 @@ namespace Celeste.Mod.Head2Head.Shared {
 					anychanges = true;
 					lastPhase = ph;
 					bool found = false;
-					for (int i = 0; i < phases.Count; i++) {
-						H2HMatchPhaseState st = phases[i];
+					for (int i = 0; i < Phases.Count; i++) {
+						H2HMatchPhaseState st = Phases[i];
 						if (st.PhaseID == ph.ID) {
 							if (st.Completed) {
 								return false;
@@ -544,13 +544,13 @@ namespace Celeste.Mod.Head2Head.Shared {
 								Logger.Log(LogLevel.Info, "Head2Head", $"Phase completed: {ph.Title} (ID {ph.ID})");
 								found = true;
 								st.Completed = true;
-								phases[i] = st;
+								Phases[i] = st;
 								break;
 							}
 						}
 					}
 					if (!found) {
-						phases.Add(new H2HMatchPhaseState() {
+						Phases.Add(new H2HMatchPhaseState() {
 							PhaseID = ph.ID,
 							Completed = true,
 						});
@@ -611,12 +611,12 @@ namespace Celeste.Mod.Head2Head.Shared {
 		}
 
 		public void Merge(PlayerStatus other) {
-			phases = other.phases;
-			objectives = other.objectives;
+			Phases = other.Phases;
+			Objectives = other.Objectives;
 			CurrentFileTimer = other.CurrentFileTimer;
 			FileTimerAtMatchBegin = other.FileTimerAtMatchBegin;
 			FileTimerAtLastObjectiveComplete = other.FileTimerAtLastObjectiveComplete;
-			reachedCheckpoints = other.reachedCheckpoints;
+			ReachedCheckpoints = other.ReachedCheckpoints;
 			FileSlotBeforeMatchStart = other.FileSlotBeforeMatchStart;
 			for (int i = 0; i < Calc.Min(SummitGems?.Length ?? 0, other.SummitGems?.Length ?? 0); i++) {
 				SummitGems[i] |= other.SummitGems[i];
@@ -626,7 +626,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 		public HashSet<EntityID> GetAllCollectedStrawbs(GlobalAreaKey gak) {
 			HashSet<EntityID> strawbs = new HashSet<EntityID>();
-			foreach (H2HMatchObjectiveState ob in objectives) {
+			foreach (H2HMatchObjectiveState ob in Objectives) {
 				if (ob.CollectedItems?.ContainsKey(gak) != true) continue;
 				foreach (EntityID x in ob.CollectedItems[gak]) {
 					strawbs.Add(x);
@@ -734,11 +734,11 @@ namespace Celeste.Mod.Head2Head.Shared {
 			pms.RecordLobbyTime = r.ReadInt64();
 			int numPhases = r.ReadInt32();
 			for (int i = 0; i < numPhases; i++) {
-				pms.phases.Add(r.ReadMatchPhaseState());
+				pms.Phases.Add(r.ReadMatchPhaseState());
 			}
 			int numObjectives = r.ReadInt32();
 			for (int i = 0; i < numObjectives; i++) {
-				pms.objectives.Add(r.ReadMatchObjectiveState());
+				pms.Objectives.Add(r.ReadMatchObjectiveState());
 			}
 			return pms;
 		}
@@ -760,12 +760,12 @@ namespace Celeste.Mod.Head2Head.Shared {
 			w.Write(s.FileTimerAtLastCheckpoint);
 			w.Write(s.FileTimerAtLastObjectiveComplete);
 			w.Write(s.RecordLobbyTime);
-			w.Write(s.phases.Count);
-			foreach (H2HMatchPhaseState st in s.phases) {
+			w.Write(s.Phases.Count);
+			foreach (H2HMatchPhaseState st in s.Phases) {
 				w.Write(st);
 			}
-			w.Write(s.objectives.Count);
-			foreach (H2HMatchObjectiveState st in s.objectives) {
+			w.Write(s.Objectives.Count);
+			foreach (H2HMatchObjectiveState st in s.Objectives) {
 				w.Write(st);
 			}
 		}

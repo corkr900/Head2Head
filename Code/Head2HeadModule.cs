@@ -637,7 +637,7 @@ namespace Celeste.Mod.Head2Head
 			// This might interact weirdly with CollabUtils. Shouldn't be an issue though because you won't use a lobby in a match.
 			MatchDefinition def = PlayerStatus.Current.CurrentMatch;
 			if (def != null && def.GetPlayerResultCat(PlayerID.MyIDSafe) == ResultCategory.InMatch) {
-				return PlayerStatus.Current.reachedCheckpoints.Any((Tuple<GlobalAreaKey, string> t) => t.Item1.Equals(new GlobalAreaKey(area)));
+				return PlayerStatus.Current.ReachedCheckpoints.Any((Tuple<GlobalAreaKey, string> t) => t.Item1.Equals(new GlobalAreaKey(area)));
 			}
 			else return orig(self, area);
 		}
@@ -648,7 +648,7 @@ namespace Celeste.Mod.Head2Head
 			if (def != null && def.GetPlayerResultCat(PlayerID.MyIDSafe) == ResultCategory.InMatch) {
 				HashSet<string> set = new HashSet<string>();
 				GlobalAreaKey gak = new GlobalAreaKey(area);
-				foreach (Tuple<GlobalAreaKey, string> t in PlayerStatus.Current.reachedCheckpoints) {
+				foreach (Tuple<GlobalAreaKey, string> t in PlayerStatus.Current.ReachedCheckpoints) {
 					if (t.Item1.Equals(gak)) set.Add(t.Item2);
 				}
 				return set;

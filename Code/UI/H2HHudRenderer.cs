@@ -250,9 +250,9 @@ namespace Celeste.Mod.Head2Head.UI {
 							foreach (MatchObjective obj in ph.Objectives) {
 								if (obj.CollectableGoal > 0) {
 									strawbsTotal += obj.CollectableGoal;
-									int idx = stat.objectives.FindIndex((H2HMatchObjectiveState s) => s.ObjectiveID == obj.ID);
+									int idx = stat.Objectives.FindIndex((H2HMatchObjectiveState s) => s.ObjectiveID == obj.ID);
 									if (idx < 0) continue;
-									strawbsCollected += stat.objectives[idx].CountCollectables();
+									strawbsCollected += stat.Objectives[idx].CountCollectables();
 								}
 							}
 						}
@@ -333,7 +333,7 @@ namespace Celeste.Mod.Head2Head.UI {
 			ststext.Add(string.Format("{0}", def.GetPlayerResultCat(PlayerID.MyIDSafe)));
 			foreach (MatchPhase ph in def.Phases) {
 				deftext.Add(string.Format("> {0}; cat={1}; area={2}; fg={3}, ord={4}", ph.Title, ph.category, ph.Area.SID, ph.Fullgame, ph.Order));
-				List<H2HMatchPhaseState> statelist = PlayerStatus.Current.phases.FindAll(
+				List<H2HMatchPhaseState> statelist = PlayerStatus.Current.Phases.FindAll(
 					(H2HMatchPhaseState s) => s.PhaseID == ph.ID);
 				if (statelist.Count > 0) {
 					H2HMatchPhaseState state = statelist[0];
@@ -342,7 +342,7 @@ namespace Celeste.Mod.Head2Head.UI {
 				else ststext.Add("-");
 				foreach (MatchObjective obj in ph.Objectives) {
 					deftext.Add(string.Format(">> {0}; ct={1}; key={2}; side={3}; tl={4}", obj.ObjectiveType, obj.CollectableGoal, obj.CustomTypeKey, obj.Side, obj.TimeLimit));
-					List<H2HMatchObjectiveState> oblist = PlayerStatus.Current.objectives.FindAll(
+					List<H2HMatchObjectiveState> oblist = PlayerStatus.Current.Objectives.FindAll(
 						(H2HMatchObjectiveState s) => s.ObjectiveID == obj.ID);
 					if (oblist.Count > 0) {
 						H2HMatchObjectiveState state = oblist[0];

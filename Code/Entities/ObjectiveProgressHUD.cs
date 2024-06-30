@@ -76,7 +76,7 @@ namespace Celeste.Mod.Head2Head.Entities {
 				bgposY += 58f;
 			}
 			foreach (MatchObjective obj in PlayerStatus.Current.CurrentObjectives()) {
-				H2HMatchObjectiveState state = PlayerStatus.Current.objectives.FirstOrDefault((H2HMatchObjectiveState s) => s.ObjectiveID == obj.ID );
+				H2HMatchObjectiveState state = PlayerStatus.Current.Objectives.FirstOrDefault((H2HMatchObjectiveState s) => s.ObjectiveID == obj.ID );
 				string text = obj.CollectableGoal > 0 ?
 					$"{obj.Label} {state.CountCollectables()}/{obj.CollectableGoal}" :
 					$"{obj.Label}";

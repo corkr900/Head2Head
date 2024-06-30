@@ -139,7 +139,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 			PlayerStatus stat = pla.Equals(PlayerID.MyID) ? PlayerStatus.Current
 				: Head2HeadModule.knownPlayers.ContainsKey(pla) ? Head2HeadModule.knownPlayers[pla]
 				: null;
-			state = stat.objectives.FirstOrDefault((H2HMatchObjectiveState _st) => _st.ObjectiveID == obj.ID);
+			state = stat.Objectives.FirstOrDefault((H2HMatchObjectiveState _st) => _st.ObjectiveID == obj.ID);
 		}
 		private readonly PlayerID pla;
 		private readonly MatchObjective ob;
