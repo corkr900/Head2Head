@@ -44,7 +44,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 				return _localMACHash ?? 0;
 			}
 		}
-		private int? _macAddressHash;
+		private static int? _localMACHash;
 
 		private static void SearchMACAddress() {
 			try {
@@ -79,10 +79,10 @@ namespace Celeste.Mod.Head2Head.Shared {
 		[JsonIgnore]
 		public int? MacAddressHash {
 			get => _macAddressHash;
-			private set { _localMACHash = value; }
+			private set { _macAddressHash = value; }
 		}
 		[NonSerialized]
-		private static int? _localMACHash = null;
+		private static int? _macAddressHash = null;
 
 		[JsonIgnore]
 		public string Name {
