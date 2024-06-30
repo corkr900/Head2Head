@@ -279,11 +279,11 @@ function RenderMatchInfoToContainer(data, container) {
 	else {
 		data.Players.sort((a, b) => {
 			if (a.Status != b.Status) {
-				const order = [ 30, 20, 999, 10, 0 ];  // Completed, In Match, DNF, Joined, Not Joined
-				return order.indexOf(a.Status ?? 0) < order.indexOf(b.Status ?? 0);
+				const order = [30, 20, 999, 10, 0];  // Completed, In Match, DNF, Joined, Not Joined
+				return order.indexOf(a.Status ?? 0) < order.indexOf(b.Status ?? 0) ? -1 : 1;
 			}
 			if (a.Status == 30 && b.Status == 30) {
-				return a.Timer > b.Timer;
+				return a.Timer > b.Timer ? 1 : -1;
 			}
 			return 0;
 		});
