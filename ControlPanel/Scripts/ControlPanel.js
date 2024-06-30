@@ -24,10 +24,12 @@ function HandleParams() {
 function TryConnect() {
 	websocket = new WebSocket(wsUri);
 	websocket.onopen = (e) => {
+		writeToScreen(`CONNECTED: ${JSON.stringify(e, null, 4)}`);
 		printErrors = true;
 		HandleConnectionUpdate(true);
 	};
 	websocket.onclose = (e) => {
+		if (printErrors) writeToScreen(`DISCONNECTED: ${JSON.stringify(e, null, 4)}`);
 		printErrors = false;
 		HandleConnectionUpdate(false);
 		setTimeout(TryConnect, 500);
@@ -42,7 +44,6 @@ function TryConnect() {
 }
 
 function HandleMessage(data) {
-	writeToScreen(`Command triggered: ${data.Command}`);
 	if (data.Command == "ALLOCATE_TOKEN") {
 		clientToken = data.Data;
 	}
