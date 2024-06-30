@@ -27,8 +27,8 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 		public bool IsRandomizer => def?.HasRandomizerObjective ?? false;
 		public List<SerializeMatchPlayer> Players => GetPlayerInfo();
 		public List<string> AvailableActions => GetActions();
-		public string PrimaryMap => def.Phases[0]?.Area.SID;
-		public string PrimaryMapName => def.Phases[0]?.Area.DisplayName;
+		public string PrimaryMap => def?.Phases[0]?.Area.SID;
+		public string PrimaryMapName => def?.Phases[0]?.Area.DisplayName;
 		public SerializeImage CategoryIcon => categoryIcon;
 
 		private List<SerializeMatchPlayer> GetPlayerInfo() {
@@ -42,6 +42,8 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 
 		private List<string> GetActions() {
 			List<string> ret = new();
+			if (def == null) return ret;
+
 			ret.Add("STAGE_MATCH");
 			if (!def.Players.Contains(PlayerID.MyIDSafe)) {
 				ret.Add("JOIN_MATCH");

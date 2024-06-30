@@ -54,7 +54,11 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 		}
 
 		internal static void SendImmediate(ControlPanelPacket packet) {
-			SocketHandler.Send(packet.Payload, packet.ClientToken);
+			if (packet == null) {
+				System.Diagnostics.StackTrace t = new System.Diagnostics.StackTrace();
+				Logger.Log(LogLevel.Warn, "Head2Head", $"Tried to send a null packet.\n{t}");
+			}
+			else SocketHandler.Send(packet.Payload, packet.ClientToken);
 		}
 
 		internal static void FlushIncoming() {
