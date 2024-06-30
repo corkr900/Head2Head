@@ -40,7 +40,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel.Commands
 
 		private static void OnClientConnected(string token) {
 			foreach (var match in Head2HeadModule.knownMatches.Values) {
-                match.SendControlPanelUpdate(token);
+                match?.SendControlPanelUpdate(token);
             }
 			Outgoing.ControlPanelActionsUpdate(token);
 		}

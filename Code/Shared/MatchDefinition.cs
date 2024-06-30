@@ -181,7 +181,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		}
 
         public void SendControlPanelUpdate(string targetClientToken = "") {
-			if (PlayerStatus.Current.CurrentMatch == this) {
+			if (PlayerStatus.Current.CurrentMatchID == MatchID) {
 				Outgoing.CurrentMatchStatus(this, targetClientToken);
 			}
 			else {
