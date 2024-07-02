@@ -1502,34 +1502,6 @@ namespace Celeste.Mod.Head2Head
 			return true;
 		}
 
-		internal bool RejoinMatch(MatchDefinition def, PlayerStatus requestorStatus) {
-			ResultCategory cat = def.GetPlayerResultCat(PlayerID.MyIDSafe);
-			if (cat == ResultCategory.InMatch
-					&& def.Result[PlayerID.MyIDSafe]?.SaveFile == global::Celeste.SaveData.Instance.FileSlot
-					&& !def.HasRandomizerObjective)
-			{
-				PlayerStatus.Current.CurrentMatch = def;
-				PlayerStatus.Current.Merge(requestorStatus);
-				PlayerStatus.Current.Updated();
-
-				if (global::Celeste.SaveData.Instance.Time < requestorStatus.FileTimerAtLastCheckpoint) {
-					global::Celeste.SaveData.Instance.Time = requestorStatus.FileTimerAtLastCheckpoint;
-				}
-				Level level = GetLevelForCoroutine();
-				ForceUnpause(level);
-				Entity wrapper = new Entity();
-				wrapper.AddTag(Tags.Persistent | Tags.Global);
-				level?.Add(wrapper);
-				GlobalAreaKey key;
-				string cp;
-				GetLastAreaCP(requestorStatus, def, out key, out cp);
-				ActionLogger.RejoinMatch(def.MatchID);
-				wrapper.Add(new Coroutine(StartMatchCoroutine(key, true, cp)));
-				return true;
-			}
-			return false;
-		}
-
 		private Level GetLevelForCoroutine() {
 			for (int i = currentScenes.Count - 1; i >= 0; i--) {
 				Scene s = currentScenes[i];

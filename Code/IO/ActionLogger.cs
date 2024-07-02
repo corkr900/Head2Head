@@ -200,6 +200,34 @@ namespace Celeste.Mod.Head2Head.IO {
 			WriteLog();
 		}
 
+		public static void CollectedStrawberry() {
+			// TODO (!!!)
+		}
+
+		public static void CollectedMoonBerry() {
+			// TODO (!!!)
+		}
+
+		public static void CollectedGoldenStrawberry() {
+			// TODO (!!!)
+		}
+
+		public static void CollectedWingedGoldenStrawberry() {
+			// TODO (!!!)
+		}
+
+		public static void CollectedCassette() {
+			// TODO (!!!)
+		}
+
+		public static void CollectedHeart() {
+			// TODO (!!!)
+		}
+
+		internal static void CollectedCustomCollectable() {
+			// TODO (!!!)
+		}
+
 		public static void CompletedObjective() {
 			if (!TrackActions()) return;
 			Current.Log(new LoggableAction(ActionType.ObjectiveComplete));
@@ -228,19 +256,6 @@ namespace Celeste.Mod.Head2Head.IO {
 			Current.Log(new LoggableAction(ActionType.DeletedSavefile));
 		}
 
-		public static void RejoinMatch(string matchID) {
-			if (Current != null) {
-				WriteLog();
-				Current = null;
-			}
-			MatchLog log = LoadLog(matchID);
-			if (log != null) {
-				Current = log;
-				allLogs[log.MatchID] = log;
-				Current.Log(new LoggableAction(ActionType.MatchRejoin));
-				WriteLog();
-			}
-		}
 	}
 
 	[Serializable]
