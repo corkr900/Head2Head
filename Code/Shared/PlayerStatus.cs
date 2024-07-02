@@ -457,8 +457,9 @@ namespace Celeste.Mod.Head2Head.Shared {
 			bool updated = false;
 			int stateIndex = Objectives.FindIndex((H2HMatchObjectiveState s) => s.ObjectiveID == ob.ID);
 			if (stateIndex < 0) {
-				Dictionary<GlobalAreaKey, List<EntityID>> itmDict = new Dictionary<GlobalAreaKey, List<EntityID>>();
-				itmDict.Add(area, new List<EntityID>() { id });
+				Dictionary<GlobalAreaKey, List<EntityID>> itmDict = new() {
+					{ area, new List<EntityID>() { id } }
+				};
 				Objectives.Add(new H2HMatchObjectiveState() {
 					ObjectiveID = ob.ID,
 					CollectedItems = itmDict,
@@ -479,7 +480,15 @@ namespace Celeste.Mod.Head2Head.Shared {
 				items[area].Add(id);
 				updated |= true;
 			}
+
 			Logger.Log(LogLevel.Info, "Head2Head", $"Collectable marked found: {ob.ObjectiveType} (ID {id})");
+			if (ob.ObjectiveType == MatchObjectiveType.Strawberries) ActionLogger.CollectedStrawberry();
+			else if (ob.ObjectiveType == MatchObjectiveType.MoonBerry) ActionLogger.CollectedMoonBerry();
+			else if (ob.ObjectiveType == MatchObjectiveType.GoldenStrawberry) ActionLogger.CollectedGoldenStrawberry();
+			else if (ob.ObjectiveType == MatchObjectiveType.WingedGoldenStrawberry) ActionLogger.CollectedWingedGoldenStrawberry();
+			else if (ob.ObjectiveType == MatchObjectiveType.CassetteCollect) ActionLogger.CollectedCassette();
+			else if (ob.ObjectiveType == MatchObjectiveType.HeartCollect) ActionLogger.CollectedHeart();
+			else if (ob.ObjectiveType == MatchObjectiveType.CustomCollectable) ActionLogger.CollectedCustomCollectable();
 			if (Objectives[stateIndex].CountCollectables() >= ob.CollectableGoal) {
 				updated |= MarkObjectiveComplete(ob);
 			}
@@ -502,6 +511,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 						Objectives[i] = st;
 						FileTimerAtLastObjectiveComplete = SaveData.Instance.Time;
 						Logger.Log(LogLevel.Info, "Head2Head", $"Objective completed: {ob.ObjectiveType} (ID {st.ObjectiveID})");
+						ActionLogger.CompletedObjective();
 						break;
 					}
 				}
@@ -513,6 +523,8 @@ namespace Celeste.Mod.Head2Head.Shared {
 					FinalRoom = CurrentRoom,
 				});
 				FileTimerAtLastObjectiveComplete = SaveData.Instance.Time;
+				Logger.Log(LogLevel.Info, "Head2Head", $"Objective completed: {ob.ObjectiveType} (ID {ob.ID})");
+				ActionLogger.CompletedObjective();
 			}
 			TryMarkPhaseComplete(ob);
 			return true;
@@ -545,6 +557,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 								found = true;
 								st.Completed = true;
 								Phases[i] = st;
+								ActionLogger.CompletedPhase();
 								break;
 							}
 						}
@@ -554,6 +567,8 @@ namespace Celeste.Mod.Head2Head.Shared {
 							PhaseID = ph.ID,
 							Completed = true,
 						});
+						Logger.Log(LogLevel.Info, "Head2Head", $"Phase completed: {ph.Title} (ID {ph.ID})");
+						ActionLogger.CompletedPhase();
 					}
 
 				}
