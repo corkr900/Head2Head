@@ -384,8 +384,10 @@ namespace Celeste.Mod.Head2Head.Shared {
 		internal long GetPlayerTimer(PlayerID pla) {
             return GetPlayerResultCat(pla) switch {
                 ResultCategory.Completed => Result?[pla]?.FileTimeTotal ?? 0,
-				ResultCategory.DNF => 999999999999999,
-                ResultCategory.InMatch => Head2HeadModule.knownPlayers.ContainsKey(pla)
+				ResultCategory.DNF => 0,
+                ResultCategory.InMatch => pla.Equals(PlayerID.MyID)
+                    ? PlayerStatus.Current.CurrentMatchTimer()
+                    : Head2HeadModule.knownPlayers.ContainsKey(pla)
                     ? Head2HeadModule.knownPlayers[pla].CurrentMatchTimer()
                     : 0,
 				_ => 0
