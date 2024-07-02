@@ -42,7 +42,7 @@ namespace Celeste.Mod.Head2Head
 		internal const string BTA_MATCH_PASS = "BTAMatchPass";
 
 		// Constants that might change in the future
-		public static readonly string ProtocolVersion = "1_2_3";
+		public static readonly string ProtocolVersion = "1_2_4";
 
 		// Other static stuff
 		public static Head2HeadModule Instance { get; private set; }
