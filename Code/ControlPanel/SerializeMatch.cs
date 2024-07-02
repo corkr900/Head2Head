@@ -46,7 +46,9 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 
 			ret.Add("STAGE_MATCH");
 			if (!def.Players.Contains(PlayerID.MyIDSafe)) {
-				ret.Add("JOIN_MATCH");
+				if (def.State <= MatchState.Staged) {
+					ret.Add("JOIN_MATCH");
+				}
 				if (RoleLogic.AllowKillingUnjoinedMatch()) {
 					ret.Add("KILL_MATCH");
 				}
