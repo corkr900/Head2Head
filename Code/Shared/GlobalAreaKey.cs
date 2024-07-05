@@ -133,10 +133,13 @@ namespace Celeste.Mod.Head2Head.Shared {
             _versionString = version;
             _originalDisplayName = origDisplayName;
             if (SID != "Overworld" && AreaData.Areas != null) {
-                foreach (AreaData d in AreaData.Areas) {
-                    if (d.GetSID() == SID) {
-                        _areaData = d;
-                        _localKey = new AreaKey(d.ID, mode);
+                // TODO This runs OFTEN. really bad for performance
+                lock (AssetReloadHelper.AreaReloadLock) {
+                    foreach (AreaData d in AreaData.Areas) {
+                        if (d.SID == SID) {
+                            _areaData = d;
+                            _localKey = new AreaKey(d.ID, mode);
+                        }
                     }
                 }
             }
