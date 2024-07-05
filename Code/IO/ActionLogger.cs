@@ -201,31 +201,43 @@ namespace Celeste.Mod.Head2Head.IO {
 		}
 
 		public static void CollectedStrawberry() {
-			// TODO (!!!)
+			if (!TrackActions()) return;
+			Current.Log(new LoggableAction(ActionType.CollectedStrawberry));
 		}
 
 		public static void CollectedMoonBerry() {
-			// TODO (!!!)
+			if (!TrackActions()) return;
+			Current.Log(new LoggableAction(ActionType.CollectedMoonBerry));
 		}
 
 		public static void CollectedGoldenStrawberry() {
-			// TODO (!!!)
+			if (!TrackActions()) return;
+			Current.Log(new LoggableAction(ActionType.CollectedGoldenStrawberry));
 		}
 
 		public static void CollectedWingedGoldenStrawberry() {
-			// TODO (!!!)
+			if (!TrackActions()) return;
+			Current.Log(new LoggableAction(ActionType.CollectedWingedGoldenStrawberry));
 		}
 
 		public static void CollectedCassette() {
-			// TODO (!!!)
+			if (!TrackActions()) return;
+			Current.Log(new LoggableAction(ActionType.CollectedCassette));
 		}
 
 		public static void CollectedHeart() {
-			// TODO (!!!)
+			if (!TrackActions()) return;
+			Current.Log(new LoggableAction(ActionType.CollectedHeart));
+		}
+
+		internal static void CollectedSummitGem(int gid) {
+			if (!TrackActions()) return;
+			Current.Log(new LoggableAction(ActionType.CollectedSummitGem));
 		}
 
 		internal static void CollectedCustomCollectable() {
-			// TODO (!!!)
+			if (!TrackActions()) return;
+			Current.Log(new LoggableAction(ActionType.CollectedCustomCollectable));
 		}
 
 		public static void CompletedObjective() {
@@ -255,7 +267,6 @@ namespace Celeste.Mod.Head2Head.IO {
 			if (!TrackActions()) return;
 			Current.Log(new LoggableAction(ActionType.DeletedSavefile));
 		}
-
 	}
 
 	[Serializable]
@@ -327,6 +338,14 @@ namespace Celeste.Mod.Head2Head.IO {
 			DeletedSavefile = 10,
 			ObjectiveComplete = 11,
 			PhaseComplete = 12,
+			CollectedStrawberry = 13,
+			CollectedMoonBerry = 14,
+			CollectedGoldenStrawberry = 15,
+			CollectedWingedGoldenStrawberry = 16,
+			CollectedCassette = 17,
+			CollectedHeart = 18,
+			CollectedSummitGem = 19,
+			CollectedCustomCollectable = 20,
 
 			MatchRejoin = 98,
 			IntentionalCloseApplication = 99,

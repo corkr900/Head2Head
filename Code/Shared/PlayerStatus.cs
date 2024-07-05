@@ -360,6 +360,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 				SummitGems = new bool[(int)Calc.Max(6, gid)];
 			}
 			SummitGems[gid] = true;
+			ActionLogger.CollectedSummitGem(gid);
 		}
 		internal void ChapterUnlocked(GlobalAreaKey area) {
 			if (!IsInMatch(false)) return;
@@ -488,7 +489,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			else if (ob.ObjectiveType == MatchObjectiveType.WingedGoldenStrawberry) ActionLogger.CollectedWingedGoldenStrawberry();
 			else if (ob.ObjectiveType == MatchObjectiveType.CassetteCollect) ActionLogger.CollectedCassette();
 			else if (ob.ObjectiveType == MatchObjectiveType.HeartCollect) ActionLogger.CollectedHeart();
-			else if (ob.ObjectiveType == MatchObjectiveType.CustomCollectable) ActionLogger.CollectedCustomCollectable();
+			else ActionLogger.CollectedCustomCollectable();
 			if (Objectives[stateIndex].CountCollectables() >= ob.CollectableGoal) {
 				updated |= MarkObjectiveComplete(ob);
 			}
