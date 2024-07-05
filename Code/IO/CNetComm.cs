@@ -34,6 +34,15 @@ namespace Celeste.Mod.Head2Head.IO {
 		public CelesteNetClient CnetClient { get { return CelesteNetClientModule.Instance?.Client; } }
 		public bool IsConnected { get { return CnetClient?.Con?.IsConnected ?? false; } }
 		public uint? CnetID { get { return IsConnected ? (uint?)CnetClient?.PlayerInfo?.ID : null; } }
+		public long MaxPacketSize 
+			=> CnetClient?.Con is CelesteNetTCPUDPConnection connection
+			? (connection.ConnectionSettings?.MaxPacketSize ?? 2048)
+			: 2048;
+		/// <summary>
+		/// IDK exactly how much overhead i need to leave, but 256 bytes should be plenty for whatever headers cnet adds.
+		/// The H2H format's header is at most 25 bytes plus the length of the sender's name
+		/// </summary>
+		public long MaxPacketChunkSize => MaxPacketSize - 25L - (PlayerID.LastKnownName?.Length ?? 100) - 256L;
 
 		public DataChannelList.Channel CurrentChannel {
 			get {
@@ -96,8 +105,8 @@ namespace Celeste.Mod.Head2Head.IO {
 
 		private ConcurrentQueue<Action> updateQueue = new ConcurrentQueue<Action>();
 
-		private ConcurrentQueue<DataH2HMatchLog> outgoingMatchLogChunks = new();
-		private List<DataH2HMatchLog> incomingLogChunks = new();
+		private ConcurrentQueue<DataType> outgoingExtraPacketChunks = new();
+		private List<DataType> incomingExtraPacketChunks = new();
 		private static object incomingChunksLock = new();
 
 		public CNetComm(Game game)
@@ -130,8 +139,8 @@ namespace Celeste.Mod.Head2Head.IO {
 
 		private void OnDisconnect(CelesteNetConnection con) {
 			updateQueue.Enqueue(() => OnDisconnected?.Invoke(con));
-			outgoingMatchLogChunks.Clear();
-			incomingLogChunks.Clear();
+			outgoingExtraPacketChunks.Clear();
+			incomingExtraPacketChunks.Clear();
 		}
 
 		public override void Update(GameTime gameTime) {
@@ -143,7 +152,7 @@ namespace Celeste.Mod.Head2Head.IO {
 		}
 
 		internal void Tick(ulong v) {
-			if (outgoingMatchLogChunks.TryDequeue(out DataH2HMatchLog chunk)) {
+			if (outgoingExtraPacketChunks.TryDequeue(out DataType chunk)) {
 				CnetClient.SendAndHandle(chunk);
 			}
 		}
@@ -231,25 +240,66 @@ namespace Celeste.Mod.Head2Head.IO {
 			const int EventsPerChunk = 20;
 			int chunks = (int)Math.Ceiling(log.Events.Count / (float)EventsPerChunk);
             for (int i = 0; i < chunks; i++) {
-				outgoingMatchLogChunks.Enqueue(new DataH2HMatchLog() {
-					Log = log,
-					MatchID = matchID,
-					LogPlayer = player,
-					RequestingPlayer = requestor,
-					IsControlPanelRequest = isControlPanelRequest,
-					Client = client,
-					ChunkNumber = i,
-					ChunksTotal = chunks,
-					ActionsPerChunk = EventsPerChunk,
-				});
+				//outgoingExtraPacketChunks.Enqueue(new DataH2HMatchLog() {
+				//	Log = log,
+				//	MatchID = matchID,
+				//	LogPlayer = player,
+				//	RequestingPlayer = requestor,
+				//	IsControlPanelRequest = isControlPanelRequest,
+				//	Client = client,
+				//	ChunkNumber = i,
+				//	ChunksTotal = chunks,
+				//	ActionsPerChunk = EventsPerChunk,
+				//});
 			}
 			MessageCounter++;
 		}
 
 		// #############################################
 
-		public void Handle(CelesteNetConnection con, DataH2HTest data) {
+		internal void EnqueueSubsequentChunk<T>(DataH2HBase<T> data) where T : DataH2HBase<T>, new() {
+			outgoingExtraPacketChunks.Enqueue(data);
+		}
+
+		// #############################################
+
+		private T PreHandle<T>(T data) where T : DataH2HBase<T>, new() {
 			if (data.player == null) data.player = CnetClient.PlayerInfo;  // It's null when handling our own messages
+			if (data.chunksInPacket <= 1) {  // Packet does not have subsequent chunks and can be processed immediately
+				return data;
+			}
+			
+			// record the incoming chunk and then check if we have all of them
+			lock (incomingChunksLock) {
+				incomingExtraPacketChunks.Add(data);
+				T[] arr = new T[data.chunksInPacket];
+				Type t = data.GetType();
+				// Sort the chunks for this packet into an array
+				foreach (T chunk in incomingExtraPacketChunks) {
+					if (chunk.playerID.Equals(data.playerID) && chunk.packetID == data.packetID) {
+						if (!chunk.GetType().Equals(t)) {
+							Logger.Log(LogLevel.Error, "Head2Head", $"Received packets of different types from the same sender with the same ID.");
+							throw new InvalidOperationException($"Received packets of different types from the same sender with the same ID.");
+						}
+						arr[chunk.chunkNumber] = chunk;
+					}
+				}
+				// Check whether we've received all the chunks
+				for (int i = 0; i < arr.Length; i++) {
+					if (arr[i] == null) return null;  // Don't have all chunks yet
+				}
+				// Compose the chunks into the same object and return it to be sent to the correct event
+				for (int i = 0; i < arr.Length; i++) {
+					incomingExtraPacketChunks.Remove(arr[i]);
+				}
+				arr[0].Compose(arr);
+				return arr[0];
+			}
+		}
+
+		public void Handle(CelesteNetConnection con, DataH2HTest data) {
+			DataH2HTest packet = PreHandle(data);
+			if (packet == null) return;  // Waiting on more chunks
 			updateQueue.Enqueue(() => OnReceiveTest?.Invoke(data));
 		}
 		public void Handle(CelesteNetConnection con, DataChannelMove data) {
@@ -257,53 +307,36 @@ namespace Celeste.Mod.Head2Head.IO {
 			updateQueue.Enqueue(() => OnReceiveChannelMove?.Invoke(data));
 		}
 		public void Handle(CelesteNetConnection con, DataH2HPlayerStatus data) {
-			if (data.player == null) data.player = CnetClient.PlayerInfo;  // It's null when handling our own messages
+			DataH2HPlayerStatus packet = PreHandle(data);
+			if (packet == null) return;  // Waiting on more chunks
 			updateQueue.Enqueue(() => OnReceivePlayerStatus?.Invoke(data));
 		}
 		public void Handle(CelesteNetConnection con, DataH2HMatchReset data) {
-			if (data.player == null) data.player = CnetClient.PlayerInfo;  // It's null when handling our own messages
+			DataH2HMatchReset packet = PreHandle(data);
+			if (packet == null) return;  // Waiting on more chunks
 			updateQueue.Enqueue(() => OnReceiveMatchReset?.Invoke(data));
 		}
 		public void Handle(CelesteNetConnection con, DataH2HMatchUpdate data) {
-			if (data.player == null) data.player = CnetClient.PlayerInfo;  // It's null when handling our own messages
+			DataH2HMatchUpdate packet = PreHandle(data);
+			if (packet == null) return;  // Waiting on more chunks
 			updateQueue.Enqueue(() => OnReceiveMatchUpdate?.Invoke(data));
 		}
 		public void Handle(CelesteNetConnection con, DataH2HScanRequest data) {
-			if (data.player == null) data.player = CnetClient.PlayerInfo;  // It's null when handling our own messages
+			DataH2HScanRequest packet = PreHandle(data);
+			if (packet == null) return;  // Waiting on more chunks
 			updateQueue.Enqueue(() => OnReceiveScanRequest?.Invoke(data));
 		}
 		public void Handle(CelesteNetConnection con, DataH2HMisc data) {
-			if (data.player == null) data.player = CnetClient.PlayerInfo;  // It's null when handling our own messages
+			DataH2HMisc packet = PreHandle(data);
+			if (packet == null) return;  // Waiting on more chunks
 			updateQueue.Enqueue(() => OnReceiveMisc?.Invoke(data));
 		}
 		public void Handle(CelesteNetConnection con, DataH2HMatchLog data) {
-			if (data.player == null) data.player = CnetClient.PlayerInfo;  // It's null when handling our own messages
-			if (data.IsRequest) {
-				updateQueue.Enqueue(() => OnReceiveMatchLog?.Invoke(data));
-				return;
-			}
-			if (!data.RequestingPlayer.Equals(PlayerID.MyID)) return;
-            //lock (incomingChunksLock) {
-				incomingLogChunks.Add(data);
-				DataH2HMatchLog[] arr = new DataH2HMatchLog[data.ChunksTotal];
-				foreach (var chunk in incomingLogChunks) {
-					if (chunk.MatchID == data.MatchID && chunk.LogPlayer.Equals(data.LogPlayer) && chunk.RequestingPlayer.Equals(data.RequestingPlayer)) {
-						arr[chunk.ChunkNumber] = chunk;
-					}
-				}
-				for (int i = 0; i < arr.Length; i++) {
-					if (arr[i] == null) return;  // Don't have all chunks yet
-				}
-				for (int i = 0; i < arr.Length; i++) {
-					incomingLogChunks.Remove(arr[i]);
-					if (arr[0].Log.Events != arr[i].Log.Events) {  // they're the same when i == 0 and when handling own packets
-						for (int j = 0; j < arr[i].Log.Events.Count && j < 1000; j++) {  // the 1000 is just a safeguard
-							arr[0].Log.Events.Add(arr[i].Log.Events[j]);
-						}
-					}
-				}
-				updateQueue.Enqueue(() => OnReceiveMatchLog?.Invoke(arr[0]));
-			//}
+			DataH2HMatchLog packet = PreHandle(data);
+			if (packet == null) return;  // Waiting on more chunks
+			if (data.IsRequest && !data.LogPlayer.Equals(PlayerID.MyID)) return;
+			if (!data.IsRequest && !data.RequestingPlayer.Equals(PlayerID.MyID)) return;
+			updateQueue.Enqueue(() => OnReceiveMatchLog?.Invoke(data));
 		}
 
 
