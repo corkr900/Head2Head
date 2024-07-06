@@ -328,9 +328,9 @@ namespace Celeste.Mod.Head2Head.IO {
 		public void Handle(CelesteNetConnection con, DataH2HMatchLog data) {
 			DataH2HMatchLog packet = PreHandle(data);
 			if (packet == null) return;  // Waiting on more chunks
-			if (data.IsRequest && !data.LogPlayer.Equals(PlayerID.MyID)) return;
-			if (!data.IsRequest && !data.RequestingPlayer.Equals(PlayerID.MyID)) return;
-			updateQueue.Enqueue(() => OnReceiveMatchLog?.Invoke(data));
+			if (packet.IsRequest && !packet.LogPlayer.Equals(PlayerID.MyID)) return;
+			if (!packet.IsRequest && !packet.RequestingPlayer.Equals(PlayerID.MyID)) return;
+			updateQueue.Enqueue(() => OnReceiveMatchLog?.Invoke(packet));
 		}
 
 
