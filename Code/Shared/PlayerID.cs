@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Text.Json.Serialization;
 using System.Reflection.Metadata;
+using System.IO;
 
 namespace Celeste.Mod.Head2Head.Shared {
 	[Serializable]
@@ -189,6 +190,24 @@ namespace Celeste.Mod.Head2Head.Shared {
 			return new PlayerID(mac, cnetid, name);
 		}
 		public static void Write(this CelesteNetBinaryWriter w, PlayerID id) {
+			if (id.MacAddressHash == null) {
+				w.Write(false);
+			}
+			else {
+				w.Write(true);
+				w.Write(id.MacAddressHash.Value);
+			}
+			w.Write(id.Name);
+			w.Write(id.CNetID);
+		}
+		public static PlayerID ReadPlayerID(this MemoryStream r) {
+			bool hasmac = r.ReadBoolean();
+			int? mac = hasmac ? r.ReadInt32() : null;
+			string name = r.ReadString();
+			uint cnetid = r.ReadUInt32();
+			return new PlayerID(mac, cnetid, name);
+		}
+		public static void Write(this MemoryStream w, PlayerID id) {
 			if (id.MacAddressHash == null) {
 				w.Write(false);
 			}
