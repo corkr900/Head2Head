@@ -384,16 +384,15 @@ namespace Celeste.Mod.Head2Head.IO {
 	}
 
 	public static class ActionLogExtensions {
-		public static void Write(this MemoryStream w, MatchLog log, int actionStartIdx = 0, int numActions = 9999999) {
+		public static void Write(this MemoryStream w, MatchLog log) {
 			w.Write(log.MatchBeginDate ?? "");
 			w.Write(log.MatchID ?? "");
 			w.Write(log.MatchDispName ?? "");
 			w.Write(log.MatchCreator ?? "");
 			w.Write(log.SerializedRunnerID ?? "");
-			int actualActionsWritten = Math.Min(log.Events.Count - actionStartIdx, numActions);
-			w.Write(actualActionsWritten);
-			for (int i = 0; i < actualActionsWritten; i++) {
-				LoggableAction action = log.Events[actionStartIdx + i];
+			w.Write(log.Events.Count);
+			for (int i = 0; i < log.Events.Count; i++) {
+				LoggableAction action = log.Events[i];
 				w.Write(action);
 			}
 		}

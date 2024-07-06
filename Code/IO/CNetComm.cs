@@ -153,7 +153,8 @@ namespace Celeste.Mod.Head2Head.IO {
 
 		internal void Tick(ulong v) {
 			if (outgoingExtraPacketChunks.TryDequeue(out DataType chunk)) {
-				CnetClient.SendAndHandle(chunk);
+				// Not calling SendAndHandle because the first one already has all the data when sending to ourself
+				CnetClient.Send(chunk);
 			}
 		}
 
@@ -237,21 +238,14 @@ namespace Celeste.Mod.Head2Head.IO {
 			if (!CanSendMessages || log == null) {
 				return;
 			}
-			const int EventsPerChunk = 20;
-			int chunks = (int)Math.Ceiling(log.Events.Count / (float)EventsPerChunk);
-            for (int i = 0; i < chunks; i++) {
-				//outgoingExtraPacketChunks.Enqueue(new DataH2HMatchLog() {
-				//	Log = log,
-				//	MatchID = matchID,
-				//	LogPlayer = player,
-				//	RequestingPlayer = requestor,
-				//	IsControlPanelRequest = isControlPanelRequest,
-				//	Client = client,
-				//	ChunkNumber = i,
-				//	ChunksTotal = chunks,
-				//	ActionsPerChunk = EventsPerChunk,
-				//});
-			}
+			CnetClient.SendAndHandle(new DataH2HMatchLog() {
+				Log = log,
+				MatchID = matchID,
+				LogPlayer = player,
+				RequestingPlayer = requestor,
+				IsControlPanelRequest = isControlPanelRequest,
+				Client = client,
+			});
 			MessageCounter++;
 		}
 

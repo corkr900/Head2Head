@@ -41,6 +41,7 @@ namespace Celeste.Mod.Head2Head.Data {
 
         public DataH2HBase() {
             playerID = PlayerID.MyID ?? PlayerID.Default;
+			packetID = NewPacketID();
 		}
 
         public override MetaType[] GenerateMeta(DataContext ctx) {
@@ -110,15 +111,15 @@ namespace Celeste.Mod.Head2Head.Data {
 				writer.Write(0);
 				return;
 			}
+
+			s.Position = 0;
 			long maxChunkSize = CNetComm.Instance.MaxPacketChunkSize;
-			long streamPos = 0;
 			List<byte[]> chunks = new();
-			while (streamPos < totalSize) {
-				long chunkSize = Math.Min(totalSize - streamPos, maxChunkSize);
+			while (s.Position < totalSize) {
+				long chunkSize = Math.Min(totalSize - s.Position, maxChunkSize);
 				byte[] chunk = new byte[chunkSize];
 				int read = s.Read(chunk, 0, chunk.Length);
 				if (read <= 0) break;  // Shouldn't happen, but just in case
-				streamPos += read;
 				if (read < chunkSize) {  // Shouldn't happen, but just in case
 					byte[] newBuf = new byte[read];
 					Array.Copy(chunk, newBuf, read);
@@ -136,7 +137,6 @@ namespace Celeste.Mod.Head2Head.Data {
 			else if (chunksInPacket > 1) {
 				Logger.Log(LogLevel.Info, "Head2Head", $"Chunking large packet of type {DataID} into {chunksInPacket} chunks. Packet length {totalSize}, limit is {maxChunkSize}");
 			}
-			packetID = NewPacketID();
 			data = chunks[0];
 			chunkNumber = 0;
 			for (int i = 1; i < chunksInPacket; i++) {
