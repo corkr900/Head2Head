@@ -78,6 +78,7 @@ namespace Celeste.Mod.Head2Head.Data {
 				data = reader.ReadBytes(length);
 				MemoryStream ms = new MemoryStream();
 				ms.Write(data);
+				ms.Position = 0;
 				Read(ms);
 			}
 			else {
@@ -175,6 +176,7 @@ namespace Celeste.Mod.Head2Head.Data {
 			foreach (DataH2HBase<TChunk> chunk in arr) {
 				ms.Write(chunk.data);
 			}
+			ms.Position = 0;
 			Read(ms);
 		}
 
