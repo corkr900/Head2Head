@@ -3,6 +3,7 @@ using Celeste.Mod.Head2Head.IO;
 using Celeste.Mod.Head2Head.Shared;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -29,7 +30,7 @@ namespace Celeste.Mod.Head2Head.Data {
 		/// </summary>
 		public int ActionsPerChunk;
 
-		protected override void Read(CelesteNetBinaryReader reader) {
+		protected override void Read(MemoryStream reader) {
 			base.Read(reader);
 			MatchID = reader.ReadString();
 			LogPlayer = reader.ReadPlayerID();
@@ -44,7 +45,7 @@ namespace Celeste.Mod.Head2Head.Data {
 			}
 		}
 
-		protected override void Write(CelesteNetBinaryWriter writer) {
+		protected override void Write(MemoryStream writer) {
 			base.Write(writer);
 			writer.Write(MatchID);
 			writer.Write(LogPlayer);

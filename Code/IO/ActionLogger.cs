@@ -384,7 +384,7 @@ namespace Celeste.Mod.Head2Head.IO {
 	}
 
 	public static class ActionLogExtensions {
-		public static void Write(this CelesteNetBinaryWriter w, MatchLog log, int actionStartIdx = 0, int numActions = 9999999) {
+		public static void Write(this MemoryStream w, MatchLog log, int actionStartIdx = 0, int numActions = 9999999) {
 			w.Write(log.MatchBeginDate ?? "");
 			w.Write(log.MatchID ?? "");
 			w.Write(log.MatchDispName ?? "");
@@ -398,7 +398,7 @@ namespace Celeste.Mod.Head2Head.IO {
 			}
 		}
 
-		public static MatchLog ReadMatchLog(this CelesteNetBinaryReader r) {
+		public static MatchLog ReadMatchLog(this MemoryStream r) {
 			MatchLog log = new();
 			log.MatchBeginDate = r.ReadString();
 			log.MatchID = r.ReadString();
@@ -414,7 +414,7 @@ namespace Celeste.Mod.Head2Head.IO {
 			return log;
 		}
 
-		public static void Write(this CelesteNetBinaryWriter w, LoggableAction a) {
+		public static void Write(this MemoryStream w, LoggableAction a) {
 			w.Write(a.Type.ToString());
 			w.Write(a.Instant ?? "");
 			w.Write(a.FileTimer ?? "");
@@ -426,7 +426,7 @@ namespace Celeste.Mod.Head2Head.IO {
 			w.Write(a.LevelExitMode ?? "");
 		}
 
-		public static LoggableAction ReadLoggableAction(this CelesteNetBinaryReader r) {
+		public static LoggableAction ReadLoggableAction(this MemoryStream r) {
 			LoggableAction act = new();
 			act.Type = Enum.Parse<ActionType>(r.ReadString());
 			act.Instant = r.ReadString();
