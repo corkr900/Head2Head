@@ -348,7 +348,7 @@ function RenderMatchPlayerRow(player, table, match) {
 	}
 	// Actions
 	const actionsTd = document.createElement("td");
-	if (player.Actions.includes("GET_OTHER_MATCH_LOG")) {
+	if (isDebugMode || player.Actions.includes("GET_OTHER_MATCH_LOG")) {
 		const btn = MakeButton("Get Log", () => {
 			doSend("GET_OTHER_MATCH_LOG", {
 				matchID: match.InternalID,
