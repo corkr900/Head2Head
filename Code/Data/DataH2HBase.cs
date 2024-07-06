@@ -5,6 +5,7 @@ using Celeste.Mod.Head2Head.Shared;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 
 namespace Celeste.Mod.Head2Head.Data {
 
@@ -177,9 +178,20 @@ namespace Celeste.Mod.Head2Head.Data {
 			Read(ms);
 		}
 
-		protected virtual void Write(MemoryStream w) { }  // TODO
+		/// <summary>
+		/// Write to a memorystream buffer. Overriding this instead of Write(CelesteNetBinaryWriter)
+		/// allows h2h to chunk the packet if it's too large
+		/// </summary>
+		/// <param name="w">The memory stream to write to</param>
+		protected virtual void Write(MemoryStream w) { }
 
-		protected virtual void Read(MemoryStream r) { }  // TODO
+		/// <summary>
+		/// Write to a memorystream buffer. Overriding this instead of Read(CelesteNetBinaryReader)
+		/// allows h2h to chunk the packet if it's too large
+		/// </summary>
+		/// <param name="r">The memory stream to read from</param>
+		protected virtual void Read(MemoryStream r) { }
 
 	}
+
 }
