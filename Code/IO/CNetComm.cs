@@ -257,6 +257,11 @@ namespace Celeste.Mod.Head2Head.IO {
 
 		// #############################################
 
+		public void Handle(CelesteNetConnection con, DataChannelMove data) {
+			if (data.Player == null) data.Player = CnetClient.PlayerInfo;  // It's null when handling our own messages
+			updateQueue.Enqueue(() => OnReceiveChannelMove?.Invoke(data));
+		}
+
 		private T PreHandle<T>(T data) where T : DataH2HBase<T>, new() {
 			if (data.player == null) data.player = CnetClient.PlayerInfo;  // It's null when handling our own messages
 			if (data.chunksInPacket <= 1) {  // Packet does not have subsequent chunks and can be processed immediately
@@ -294,36 +299,32 @@ namespace Celeste.Mod.Head2Head.IO {
 		public void Handle(CelesteNetConnection con, DataH2HTest data) {
 			DataH2HTest packet = PreHandle(data);
 			if (packet == null) return;  // Waiting on more chunks
-			updateQueue.Enqueue(() => OnReceiveTest?.Invoke(data));
-		}
-		public void Handle(CelesteNetConnection con, DataChannelMove data) {
-			if (data.Player == null) data.Player = CnetClient.PlayerInfo;  // It's null when handling our own messages
-			updateQueue.Enqueue(() => OnReceiveChannelMove?.Invoke(data));
+			updateQueue.Enqueue(() => OnReceiveTest?.Invoke(packet));
 		}
 		public void Handle(CelesteNetConnection con, DataH2HPlayerStatus data) {
 			DataH2HPlayerStatus packet = PreHandle(data);
 			if (packet == null) return;  // Waiting on more chunks
-			updateQueue.Enqueue(() => OnReceivePlayerStatus?.Invoke(data));
+			updateQueue.Enqueue(() => OnReceivePlayerStatus?.Invoke(packet));
 		}
 		public void Handle(CelesteNetConnection con, DataH2HMatchReset data) {
 			DataH2HMatchReset packet = PreHandle(data);
 			if (packet == null) return;  // Waiting on more chunks
-			updateQueue.Enqueue(() => OnReceiveMatchReset?.Invoke(data));
+			updateQueue.Enqueue(() => OnReceiveMatchReset?.Invoke(packet));
 		}
 		public void Handle(CelesteNetConnection con, DataH2HMatchUpdate data) {
 			DataH2HMatchUpdate packet = PreHandle(data);
 			if (packet == null) return;  // Waiting on more chunks
-			updateQueue.Enqueue(() => OnReceiveMatchUpdate?.Invoke(data));
+			updateQueue.Enqueue(() => OnReceiveMatchUpdate?.Invoke(packet));
 		}
 		public void Handle(CelesteNetConnection con, DataH2HScanRequest data) {
 			DataH2HScanRequest packet = PreHandle(data);
 			if (packet == null) return;  // Waiting on more chunks
-			updateQueue.Enqueue(() => OnReceiveScanRequest?.Invoke(data));
+			updateQueue.Enqueue(() => OnReceiveScanRequest?.Invoke(packet));
 		}
 		public void Handle(CelesteNetConnection con, DataH2HMisc data) {
 			DataH2HMisc packet = PreHandle(data);
 			if (packet == null) return;  // Waiting on more chunks
-			updateQueue.Enqueue(() => OnReceiveMisc?.Invoke(data));
+			updateQueue.Enqueue(() => OnReceiveMisc?.Invoke(packet));
 		}
 		public void Handle(CelesteNetConnection con, DataH2HMatchLog data) {
 			DataH2HMatchLog packet = PreHandle(data);
