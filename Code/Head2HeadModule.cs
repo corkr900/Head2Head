@@ -1385,7 +1385,7 @@ namespace Celeste.Mod.Head2Head
 			return true;
 		}
 
-		internal bool TryForgetMatch(string id) {
+		internal bool TryForgetMatch(string id, bool skipControlPanel = false) {
 			if (!knownMatches.TryGetValue(id, out var match)) return true;
 			if (id == PlayerStatus.Current.CurrentMatchID) {
 				ResultCategory cat2 = match.GetPlayerResultCat(PlayerID.MyIDSafe);
@@ -1394,7 +1394,9 @@ namespace Celeste.Mod.Head2Head
 				PlayerStatus.Current.Updated();
 			}
 			knownMatches.Remove(id);
-			ControlPanel.Commands.Outgoing.MatchForgotten(id);
+			if (!skipControlPanel) {
+				Outgoing.MatchForgotten(id);
+			}
 			return true;
 		}
 

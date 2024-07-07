@@ -449,7 +449,10 @@ namespace Celeste.Mod.Head2Head.Shared {
 		internal bool MarkObjective(MatchObjective ob, GlobalAreaKey area, EntityID? id = null) {
 			id = id ?? EntityID.None;
 			if (ob.CollectableGoal > 0) return MarkCountableObjective(ob, area, id.Value);
-			else return MarkObjectiveComplete(ob);
+			else {
+				LogObjective(ob.ObjectiveType);
+				return MarkObjectiveComplete(ob);
+			}
 		}
 
 		internal bool MarkCountableObjective(MatchObjective ob, GlobalAreaKey area, EntityID id) {
@@ -482,18 +485,21 @@ namespace Celeste.Mod.Head2Head.Shared {
 				updated |= true;
 			}
 
-			Logger.Log(LogLevel.Info, "Head2Head", $"Collectable marked found: {ob.ObjectiveType} (ID {id})");
-			if (ob.ObjectiveType == MatchObjectiveType.Strawberries) ActionLogger.CollectedStrawberry();
-			else if (ob.ObjectiveType == MatchObjectiveType.MoonBerry) ActionLogger.CollectedMoonBerry();
-			else if (ob.ObjectiveType == MatchObjectiveType.GoldenStrawberry) ActionLogger.CollectedGoldenStrawberry();
-			else if (ob.ObjectiveType == MatchObjectiveType.WingedGoldenStrawberry) ActionLogger.CollectedWingedGoldenStrawberry();
-			else if (ob.ObjectiveType == MatchObjectiveType.CassetteCollect) ActionLogger.CollectedCassette();
-			else if (ob.ObjectiveType == MatchObjectiveType.HeartCollect) ActionLogger.CollectedHeart();
-			else ActionLogger.CollectedCustomCollectable();
+			LogObjective(ob.ObjectiveType);
 			if (Objectives[stateIndex].CountCollectables() >= ob.CollectableGoal) {
 				updated |= MarkObjectiveComplete(ob);
 			}
 			return updated;
+		}
+
+		private void LogObjective(MatchObjectiveType t) {
+			if (t == MatchObjectiveType.Strawberries) ActionLogger.CollectedStrawberry();
+			else if (t == MatchObjectiveType.MoonBerry) ActionLogger.CollectedMoonBerry();
+			else if (t == MatchObjectiveType.GoldenStrawberry) ActionLogger.CollectedGoldenStrawberry();
+			else if (t == MatchObjectiveType.WingedGoldenStrawberry) ActionLogger.CollectedWingedGoldenStrawberry();
+			else if (t == MatchObjectiveType.CassetteCollect) ActionLogger.CollectedCassette();
+			else if (t == MatchObjectiveType.HeartCollect) ActionLogger.CollectedHeart();
+			else if (t == MatchObjectiveType.HeartCollect) ActionLogger.CollectedCustomCollectable();
 		}
 
 		private bool MarkObjectiveComplete(MatchObjective ob) {

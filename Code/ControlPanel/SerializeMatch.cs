@@ -61,8 +61,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 			}
 			if (def.State <= MatchState.Staged
 				&& def.Players?.Count > 0
-				&& (def.Players.Contains(PlayerID.MyIDSafe)
-					|| RoleLogic.AllowMatchStart(false)))
+				&& RoleLogic.AllowMatchStart(def.Players.Contains(PlayerID.MyIDSafe)))
 			{
 				ret.Add("START_MATCH");
 			}

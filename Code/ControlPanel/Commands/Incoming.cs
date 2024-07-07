@@ -123,7 +123,9 @@ namespace Celeste.Mod.Head2Head.ControlPanel.Commands
 
 		private static void ForgetMatch(ControlPanelPacket packet) {
 			string id = packet.Json.GetString();
-			Head2HeadModule.Instance.TryForgetMatch(id);
+			if (Head2HeadModule.Instance.TryForgetMatch(id, true)) {
+				Outgoing.MatchForgotten(id);
+			}
 		}
 
 		private static void DropOutOfMatch(ControlPanelPacket packet) {
