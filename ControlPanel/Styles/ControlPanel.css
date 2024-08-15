@@ -204,10 +204,6 @@ button:active {
 	border-bottom: 1px solid black;
 }
 
-.debugOnly {
-	display: none;
-}
-
 #logCard {
 	display: none;
 }

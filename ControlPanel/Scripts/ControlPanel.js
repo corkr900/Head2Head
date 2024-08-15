@@ -1,28 +1,44 @@
 // http://www.websocket.org/echo.html
-const wsUri = "ws://127.0.0.1:8080/";
+let socketIP = "127.0.0.1";
 const placeholderImage = "https://github.com/corkr900/Head2Head/blob/main/Graphics/Atlases/Gui/Head2Head/Categories/Custom.png?raw=true";
 let websocket = {};
 let clientToken = "TOKEN_NOT_PROVISIONED";
 let imageCache = {};
 let printErrors = false;
 let isDebugMode = false;
+let immediateTryReconnect = false;
+let enableIpEntry = false;
 
 HandleParams();
 TryConnect();
 
+function GetConnectionUri() {
+	return `ws://${socketIP}:8080/`;
+}
+
 function HandleParams() {
 	const queryString = window.location.search;
 	const urlParams = new URLSearchParams(queryString);
+
 	isDebugMode = urlParams.get('debug');
-	if (isDebugMode) {
+	enableIpEntry = urlParams.get('enableipentry');
+	const paramIP = urlParams.get('ip');
+
+	if (paramIP) socketIP = paramIP;
+	if (!isDebugMode) {
 		for (const elem of document.querySelectorAll(".debugOnly")) {
-			elem.classList.remove("debugOnly");
+			elem.remove();
+		}
+	}
+	if (!enableIpEntry) {
+		for (const elem of document.querySelectorAll(".ipEntryEnabled")) {
+			elem.remove();
 		}
 	}
 }
 
 function TryConnect() {
-	websocket = new WebSocket(wsUri);
+	websocket = new WebSocket(GetConnectionUri());
 	websocket.onopen = (e) => {
 		writeToScreen(`CONNECTED: ${JSON.stringify(e, null, 4)}`);
 		printErrors = true;
@@ -32,7 +48,13 @@ function TryConnect() {
 		if (printErrors) writeToScreen(`DISCONNECTED: ${JSON.stringify(e, null, 4)}`);
 		printErrors = false;
 		HandleConnectionUpdate(false);
-		setTimeout(TryConnect, 500);
+		if (immediateTryReconnect) {
+			immediateTryReconnect = false;
+			TryConnect();
+		}
+		else {
+			setTimeout(TryConnect, 500);
+		}
 	};
 	websocket.onmessage = (e) => {
 		writeToScreen(`RECEIVED: ${e.data}`);
@@ -116,6 +138,12 @@ function GetH2HImageElement(image) {
 }
 
 // ==========================================================
+
+function onConnectToIpClick() {
+	socketIP = document.getElementById("ipInput")?.value ?? socketIP;
+	immediateTryReconnect = true;
+	websocket.close();
+}
 
 function UpdateActions(data) {
 	const mainActionsDiv = document.querySelector("#mainActionsDiv");
