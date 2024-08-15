@@ -63,7 +63,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 		}
 
 		private static void NewConnections() {
-			TcpListener tcpListener = new TcpListener(IPAddress.Parse("127.0.0.1"), 8080);
+			TcpListener tcpListener = new TcpListener(IPAddress.Any, 8080);
 			try {
 				tcpListener.Start();
 				while (!cancelToken.IsCancellationRequested) {
