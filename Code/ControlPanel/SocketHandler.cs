@@ -206,7 +206,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 					else {
 						byte[] message = DecodeMessage(bytes, out FrameOpCode opCode);
 						if (opCode == FrameOpCode.ConnectionClose) {
-							Logger.Log(LogLevel.Info, "Head2Head", $"Control Panel client with token '{Token}' disconnected normally.");
+							Logger.Log(LogLevel.Info, "Head2Head", $"Control Panel client with token '{Token}' disconnected.");
 							break;
 						}
 						else if (opCode == FrameOpCode.Text) {
@@ -256,6 +256,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 				case FrameOpCode.Continuation:
 					string errMsg = $"H2H Control Panel: received packet with opCode '{opCode}'. H2H websocket currently does not support this.";
 					Logger.Log(LogLevel.Error, "Head2Head", errMsg);
+					opCode = FrameOpCode.ConnectionClose;  // Act like a disconnection event
 					return null;
 			}
 			if ((bytes[0] & 0x80) != 0x80) {
