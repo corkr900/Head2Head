@@ -4,6 +4,7 @@ using Monocle;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -39,6 +40,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel.Commands
 		}
 
 		private static void OnClientConnected(string token) {
+			Outgoing.SendControlPanelVersion(token);
 			foreach (var match in Head2HeadModule.knownMatches.Values) {
                 match?.SendControlPanelUpdate(token);
             }

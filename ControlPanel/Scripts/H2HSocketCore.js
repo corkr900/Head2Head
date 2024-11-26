@@ -11,8 +11,11 @@ class H2HSocket {
 	_websocket = {};
 	_clientToken = "TOKEN_NOT_PROVISIONED";
 	_isConnected = false;
+	_cpVersion = -1;
+	_retryConnectionImmediately = false;
 
-	constructor() {
+	constructor(targetIP) {
+		if (targetIP) this._socketIP = targetIP;
 		this.TryConnect();
 	}
 
@@ -21,6 +24,7 @@ class H2HSocket {
 	OnOpen(e) { }
 	OnClose(e) { }
 	OnError(err) { }
+	OnReady() { }
 
 	Send(command, data) {
 		if (!this._isConnected) return;
@@ -42,8 +46,8 @@ class H2HSocket {
 		this._websocket.onclose = (e) => {
 			this._isConnected = false;
 			this.OnClose(e);
-			if (this.immediateTryReconnect) {
-				this.immediateTryReconnect = false;
+			if (this._retryConnectionImmediately) {
+				this._retryConnectionImmediately = false;
 				this.TryConnect();
 			}
 			else {
@@ -54,6 +58,11 @@ class H2HSocket {
 			const data = JSON.parse(e.data);
 			if (data.Command == "ALLOCATE_TOKEN") {
 				this._clientToken = data.Data;
+				if (this.IsReady(1)) this.OnReady();
+			}
+			else if (data.Command == "CONTROL_PANEL_VERSION") {
+				this._cpVersion = data.Data
+				if (this.IsReady(1)) this.OnReady();
 			}
 			else {
 				this.OnMessage(data);
@@ -64,11 +73,27 @@ class H2HSocket {
 		};
 	}
 
+	ChangeConnection(ipToConnect) {
+		this._socketIP = ipToConnect;
+		this._retryConnectionImmediately = true;
+		this._websocket.close();
+	}
+
 	GetConnectionUri() {
 		return `ws://${this._socketIP}:8080/`;
 	}
 
 	IsConnected() {
 		return this._isConnected;
+	}
+
+	IsReady(requireVersion) {
+		return this._isConnected
+			&& this._clientToken !== "TOKEN_NOT_PROVISIONED"
+			&& (!requireVersion || this._cpVersion >= requireVersion);
+	}
+
+	Version() {
+		return this._cpVersion;
 	}
 }

@@ -11,6 +11,14 @@ using System.Threading.Tasks;
 namespace Celeste.Mod.Head2Head.ControlPanel.Commands {
 	internal class Outgoing {
 
+		internal static void SendControlPanelVersion(string targetClientToken) {
+			ControlPanelCore.SendImmediate(ControlPanelPacket.CreateOutgoing(
+				"CONTROL_PANEL_VERSION",
+				ControlPanelCore.VERSION,
+				targetClientToken
+			));
+		}
+
 		public static void CurrentMatchStatus(MatchDefinition def, string targetClientToken = "") {
 			ControlPanelCore.SendImmediate(ControlPanelPacket.CreateOutgoing(
 				"CURRENT_MATCH",

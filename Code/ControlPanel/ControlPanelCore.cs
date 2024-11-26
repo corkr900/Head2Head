@@ -12,6 +12,8 @@ using System.Threading.Tasks;
 namespace Celeste.Mod.Head2Head.ControlPanel {
 	internal class ControlPanelCore {
 
+		public static int VERSION => 2;
+
 		private class CommandData {
 			public CommandData(string cmd, Action<ControlPanelPacket> handler) {
 				Command = cmd;
