@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>H2H Control Panel</title>
+	<link rel="stylesheet" href="Styles/ControlPanel.css">
+</head>
+
+<body>
+	<header>
+		<div class="title">Head 2 Head</div>
+		<table class="toolbar">
+			<tr>
+				<td><a href="../index.html">
+					<div class="toolbarItm">Home</div>
+				</a></td>
+				<td><a href="ControlPanel.html">
+					<div class="toolbarItm">Control Panel</div>
+				</a></td>
+				<td><a href="RandoCategoryBuilder.html">
+					<div class="toolbarItm">Rando Builder</div>
+				</a></td>
+				<td><a href="https://gamebanana.com/mods/398723">
+					<div class="toolbarItm">Gamebanana</div>
+				</a></td>
+				<td><a href="https://github.com/corkr900/Head2Head/wiki">
+						<div class="toolbarItm">Wiki</div>
+					</a></td>
+				<td><a href="https://github.com/corkr900/Head2Head">
+					<div class="toolbarItm">Github</div>
+				</a></td>
+				<td class="debugOnly"><a href="Tester.html">
+					<div class="toolbarItm">Control Panel Tester</div>
+				</a></td>
+			</tr>
+		</table>
+	</header>
+	<div class="mid">
+		<div class="card">
+			<h2>Randomizer Category Builder</h2>
+			<div id="rend_status">Connecting...</div>
+		</div>
+		<div class="card">
+			<h2>Randomizer Settings</h2>
+			<div class="options">
+				<label for="radio_logictype">Logic Type</label>
+				<span class="radiobutton">
+					<input type="radio" id="logictype_a" name="radio_logictype" />
+					<label class="btn btn-default" for="logictype_a">Pathway</label>
+				</span>
+				<span class="radiobutton">
+					<input type="radio" id="logictype_b" name="radio_logictype" />
+					<label class="btn btn-default" for="logictype_b">Labyrinth</label>
+				</span>
+			</div>
+			<div class="options">
+				<label for="radio_difficulty">Difficulty</label>
+				<span class="radiobutton">
+					<input type="radio" id="difficulty_a" name="radio_difficulty" />
+					<label class="btn btn-default" for="difficulty_a">Easy</label>
+				</span>
+				<span class="radiobutton">
+					<input type="radio" id="difficulty_b" name="radio_difficulty" />
+					<label class="btn btn-default" for="difficulty_b">Normal</label>
+				</span>
+				<span class="radiobutton">
+					<input type="radio" id="logictype_c" name="radio_difficulty" />
+					<label class="btn btn-default" for="logictype_c">Hard</label>
+				</span>
+				<span class="radiobutton">
+					<input type="radio" id="logictype_d" name="radio_difficulty" />
+					<label class="btn btn-default" for="logictype_d">Expert</label>
+				</span>
+				<span class="radiobutton">
+					<input type="radio" id="logictype_e" name="radio_difficulty" />
+					<label class="btn btn-default" for="logictype_e">Master</label>
+				</span>
+				<span class="radiobutton">
+					<input type="radio" id="logictype_f" name="radio_difficulty" />
+					<label class="btn btn-default" for="logictype_f">Perfect</label>
+				</span>
+			</div>
+			<div class="options">
+				<label for="radio_dashes">Dashes</label>
+				<span class="radiobutton">
+					<input type="radio" id="dashes_a" name="radio_dashes" />
+					<label class="btn btn-default" for="dashes_a">None</label>
+				</span>
+				<span class="radiobutton">
+					<input type="radio" id="dashes_b" name="radio_dashes" />
+					<label class="btn btn-default" for="dashes_b">One</label>
+				</span>
+				<span class="radiobutton">
+					<input type="radio" id="dashes_c" name="radio_dashes" />
+					<label class="btn btn-default" for="dashes_c">Two</label>
+				</span>
+			</div>
+			<div class="options">
+				<label for="radio_eagerness">Difficulty Eagerness</label>
+				<span class="radiobutton">
+					<input type="radio" id="eagerness_a" name="radio_eagerness" />
+					<label class="btn btn-default" for="eagerness_a">None</label>
+				</span>
+				<span class="radiobutton">
+					<input type="radio" id="eagerness_b" name="radio_eagerness" />
+					<label class="btn btn-default" for="eagerness_b">Low</label>
+				</span>
+				<span class="radiobutton">
+					<input type="radio" id="eagerness_c" name="radio_eagerness" />
+					<label class="btn btn-default" for="eagerness_c">Medium</label>
+				</span>
+				<span class="radiobutton">
+					<input type="radio" id="eagerness_d" name="radio_eagerness" />
+					<label class="btn btn-default" for="eagerness_d">High</label>
+				</span>
+			</div>
+			<div class="options">
+				<label for="radio_length">Map Length</label>
+				<span class="radiobutton">
+					<input type="radio" id="length_a" name="radio_length" />
+					<label class="btn btn-default" for="length_a">Short</label>
+				</span>
+				<span class="radiobutton">
+					<input type="radio" id="length_b" name="radio_length" />
+					<label class="btn btn-default" for="length_b">Medium</label>
+				</span>
+				<span class="radiobutton">
+					<input type="radio" id="length_c" name="radio_length" />
+					<label class="btn btn-default" for="length_c">Long</label>
+				</span>
+				<span class="radiobutton">
+					<input type="radio" id="length_d" name="radio_length" />
+					<label class="btn btn-default" for="length_d">Enormous</label>
+				</span>
+			</div>
+			<div class="options">
+				<label for="radio_shine">Shine Lights</label>
+				<span class="radiobutton">
+					<input type="radio" id="shine_a" name="radio_shine" />
+					<label class="btn btn-default" for="shine_a">Off</label>
+				</span>
+				<span class="radiobutton">
+					<input type="radio" id="shine_b" name="radio_shine" />
+					<label class="btn btn-default" for="shine_b">Hubs</label>
+				</span>
+				<span class="radiobutton">
+					<input type="radio" id="shine_c" name="radio_shine" />
+					<label class="btn btn-default" for="shine_c">On</label>
+				</span>
+			</div>
+			<div class="options">
+				<label for="radio_darkness">Darkness</label>
+				<span class="radiobutton">
+					<input type="radio" id="darkness_a" name="radio_darkness" />
+					<label class="btn btn-default" for="darkness_a">Never</label>
+				</span>
+				<span class="radiobutton">
+					<input type="radio" id="darkness_b" name="radio_darkness" />
+					<label class="btn btn-default" for="darkness_b">Vanilla</label>
+				</span>
+				<span class="radiobutton">
+					<input type="radio" id="darkness_c" name="radio_darkness" />
+					<label class="btn btn-default" for="darkness_c">Always</label>
+				</span>
+			</div>
+			<div class="options">
+				<label for="radio_berries">Strawberry Density</label>
+				<span class="radiobutton">
+					<input type="radio" id="berries_a" name="radio_berries" />
+					<label class="btn btn-default" for="berries_a">None</label>
+				</span>
+				<span class="radiobutton">
+					<input type="radio" id="berries_b" name="radio_berries" />
+					<label class="btn btn-default" for="berries_b">Low</label>
+				</span>
+				<span class="radiobutton">
+					<input type="radio" id="berries_c" name="radio_berries" />
+					<label class="btn btn-default" for="berries_c">High</label>
+				</span>
+			</div>
+			<!-- 
+			RepeatRooms (bool)
+			EnterUnknown (bool)
+			(??) SpawnGolden (bool)
+			(??) Variants (bool)
+			RandomDecorations (bool)
+			RandomColors (bool)
+			RandomBackgrounds (bool)
+			(??) EndlessLives
+			Included Maps
+			-->
+		</div>
+		<div class="card">
+			<h2>Included Maps</h2>
+			Currently, only vanilla maps are supported.
+		</div>
+		<div class="card">
+			<h2>Save to Head 2 Head</h2>
+			Name: <input type="text" /> <button>Go!</button>
+		</div>
+	</div>
+	<footer>
+		<div>Copyright 2024 corkr900</div>
+	</footer>
+	<script src="Scripts/H2HSocketCore.js"></script>
+	<script src="Scripts/RandoCategoryBuilder.js"></script>
+	</body>
+	
+	</html>

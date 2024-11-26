@@ -20,19 +20,37 @@ footer {
 	border-top: 1px solid rgb(45, 45, 51);
 }
 
-button {
+button,
+.radiobutton {
 	background-color: rgb(45, 45, 51);
 	color: rgb(207, 206, 221);
 	border: 2px outset rgb(45, 45, 51);
 	padding: 5px 10px;
 }
 
-button:hover {
+button:hover,
+.radiobutton:hover {
 	background: transparent;
 }
 
-button:active {
+button:active,
+.radiobutton:active,
+.radiobutton:has(>input[type="radio"]:checked) {
 	border-style: inset;
+}
+
+.radiobutton input[type="radio"] {
+	display: none;
+}
+
+.radiobutton label {
+	cursor: pointer;
+	z-index: 90;
+	line-height: 1.8em;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
 }
 
 .title {
@@ -92,6 +110,10 @@ button:active {
 	margin: 10px 6px;
 	display: flex;
 	align-items: center;
+}
+
+.options {
+	margin-bottom: 10px;
 }
 
 .playerTable {
