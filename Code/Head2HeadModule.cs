@@ -1094,7 +1094,7 @@ namespace Celeste.Mod.Head2Head
 					// Handle IL additions
 					if (il.AddCategories != null) {
 						foreach (CategoryMeta newcat in il.AddCategories) {
-							MatchTemplate.AddTemplateFromMeta(newcat, area, true);
+							MatchTemplate.MakeTemplateFromMeta(newcat, area, true);
 						}
 					}
 				}

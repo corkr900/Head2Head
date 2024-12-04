@@ -1,4 +1,5 @@
 ﻿using Celeste.Mod.CelesteNet;
+using Celeste.Mod.Head2Head.IO;
 using Celeste.Mod.Head2Head.Shared;
 using Celeste.Mod.Head2Head.UI;
 using Monocle;
@@ -7,13 +8,17 @@ using MonoMod.Utils;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml.Serialization;
 using static Celeste.Mod.Head2Head.Integration.RandomizerIntegration;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Celeste.Mod.Head2Head.Integration {
 
@@ -319,6 +324,40 @@ namespace Celeste.Mod.Head2Head.Integration {
 					string.Format(Dialog.Get("Head2Head_Rando_WeeklyCatName"), RandoStrings.TypeLabyrinth, Dialog.Clean("Head2Head_Rando_Dashcount_Zero")),
 					"Labyrinth", "Normal", "Custom", "None"),
 			});
+
+
+			//////////////////////////////////////////////////////////////////////
+
+			// Custom Randomizer Categories
+			RunOptionsILChapter customs = new RunOptionsILChapter();
+			customs.Title = "TODO - CUSTOM CATEGORIES TITLE (1)";
+			customs.Icon = "Head2Head/Categories/Custom";
+			// only 1 side (?)
+			side = new RunOptionsILSide() {
+				Label = "TODO - CUSTOM CATEGORIES TITLE (2)",
+				Icon = GFX.Gui["menu/play"],
+				ID = "A",
+				Mode = AreaMode.Normal,
+			};
+			customs.Sides.Add(side);
+			bool customCategoryAdded = false;
+			foreach (MatchTemplate cat in GetCustomRandoCategories()) {
+				if (cat == null) continue;
+				side.Categories.Add(new RunOptionsILCategory() {
+					Title = cat.DisplayName,
+					IconPath = cat.IconPath,
+					Template = cat,
+				});
+				customCategoryAdded = true;
+			}
+			if (customCategoryAdded) setOption.Chapters.Add(customs);
+		}
+
+		private static IEnumerable<MatchTemplate> GetCustomRandoCategories() {
+			RandomizerCustomOptionsFile data = RandomizerCustomOptionsFile.Load();
+			foreach (var category in data.Categories) {
+				yield return RandomizerTemplate(category.Name, category.Options);
+			}
 		}
 
 		private static void AddAllDifficulties(RunOptionsILSide side, string type, string dashes) {
@@ -365,20 +404,10 @@ namespace Celeste.Mod.Head2Head.Integration {
 				Dialog.Get(numDashesDialogKey));
 		}
 
-		private static MatchTemplate RandomizerTemplate(string name, string logicType, string difficulty, string seedType = "Random", string numDashes = "One") {
+		private static MatchTemplate RandomizerTemplate(string name, RandomizerOptionsTemplate opts) {
 			MatchTemplate template = new MatchTemplate() {
 				DisplayName = name,
-				RandoOptions = new RandomizerOptionsTemplate {
-					SeedType = seedType,
-					LogicType = logicType,
-					Difficulty = difficulty,
-					NumDashes = numDashes,
-					MapLength = "Short",
-					DifficultyEagerness = "Medium",
-					ShineLights = "On",
-					Darkness = "Never",
-					StrawberryDensity = "None",
-				},
+				RandoOptions = opts,
 			};
 			MatchPhaseTemplate phase = new MatchPhaseTemplate() {
 				LevelSet = "Randomizer",
@@ -393,6 +422,68 @@ namespace Celeste.Mod.Head2Head.Integration {
 			return template;
 		}
 
+		private static MatchTemplate RandomizerTemplate(string name, string logicType, string difficulty, string seedType = "Random", string numDashes = "One") {
+			return RandomizerTemplate(name, new RandomizerOptionsTemplate {
+				SeedType = seedType,
+				LogicType = logicType,
+				Difficulty = difficulty,
+				NumDashes = numDashes,
+				MapLength = "Short",
+				DifficultyEagerness = "Medium",
+				ShineLights = "On",
+				Darkness = "Never",
+				StrawberryDensity = "None",
+			});
+		}
+
 	}
 
+	[Serializable]
+	public class RandomizerCustomOptionsFile {
+
+		private static string GetCustomRandoCatsFileName() {
+			// Use DynamicData to access SavePath because the implementation of it is different between FNA/XNA
+			DynamicData dd = new DynamicData(typeof(UserIO));
+			string dirpath = dd.Get<string>("SavePath");
+			return Path.Combine(dirpath, "Head2Head_CustomRandomizerCategories.celeste");
+		}
+
+		public static RandomizerCustomOptionsFile Load() {
+			string path = GetCustomRandoCatsFileName();
+			if (string.IsNullOrEmpty(path) || !File.Exists(path)) return new();
+			try {
+				using FileStream fs = new FileStream(path, FileMode.Open);
+				XmlSerializer ser = new XmlSerializer(typeof(RandomizerCustomOptionsFile));
+				object ob = ser.Deserialize(fs);
+				return ob is RandomizerCustomOptionsFile log ? log : new();
+			}
+			catch (Exception e) {
+				Logger.Log(LogLevel.Error, "Head2Head", "Failed to load custom randomizer options file: " + e.Message);
+			}
+			return new();
+		}
+
+		public bool Save() {
+			try {
+				using (FileStream fs = new FileStream(GetCustomRandoCatsFileName(), FileMode.Create)) {
+					XmlSerializer ser = new XmlSerializer(typeof(RandomizerCustomOptionsFile));
+					ser.Serialize(fs, this);
+				}
+				return true;
+			}
+			catch (Exception e) {
+				Logger.Log(LogLevel.Warn, "Head2Head", "Failed to write custom randomizer options file: " + e.Message);
+			}
+			return false;
+		}
+
+		public List<RandomizerCustomOptionsCategory> Categories = new();
+
+	}
+
+	[Serializable]
+	public class RandomizerCustomOptionsCategory {
+		public string Name { get; set; }
+		public RandomizerOptionsTemplate Options { get; set; }
+	}
 }

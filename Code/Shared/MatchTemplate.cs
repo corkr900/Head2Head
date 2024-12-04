@@ -156,7 +156,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 			FullgameTemplates[meta.LevelSet].Add(tem);
 		}
 
-		public static MatchTemplate AddTemplateFromMeta(CategoryMeta meta, GlobalAreaKey area, bool includeInDefaultRuleset) {
+		public static MatchTemplate MakeTemplateFromMeta(CategoryMeta meta, GlobalAreaKey area, bool includeInDefaultRuleset) {
 			// Process Match data
 			MatchTemplate tem = new MatchTemplate();
 			tem.Key = meta.ID;
@@ -299,6 +299,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public AreaMode Side;
 	}
 
+	[Serializable]
 	public class RandomizerOptionsTemplate {
 		public string Difficulty;
 		public string SeedType;

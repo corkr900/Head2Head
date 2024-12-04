@@ -88,7 +88,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 						RunOptionsILCategory cat = new RunOptionsILCategory();
 						cat.Title = catMeta.Name;
 						cat.IconPath = catMeta.Icon;
-						cat.Template = MatchTemplate.AddTemplateFromMeta(catMeta, GlobalAreaKey.Overworld, false);
+						cat.Template = MatchTemplate.MakeTemplateFromMeta(catMeta, GlobalAreaKey.Overworld, false);
 						if (cat.Template != null) side.Categories.Add(cat);
 					}
 					chap.Sides.Add(side);
@@ -206,7 +206,6 @@ namespace Celeste.Mod.Head2Head.Shared {
 				"C");
 			return addedOptions;
 		}
-
 
 		private static bool BuildOptions_Side(RunOptionsILChapter chapter, GlobalAreaKey area, string label, MTexture icon, string id) {
 			if (!area.IsValidInstalledMap || !area.IsValidMode) return false;

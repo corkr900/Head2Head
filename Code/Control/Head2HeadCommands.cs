@@ -55,14 +55,30 @@ namespace Celeste.Mod.Head2Head.Control {
 			}
 		}
 
-		[Command("h2h", "General use command for whatever i'm debugging")]
-		public static void H2HCMD(string arg) {
-			ControlPanel.Commands.Outgoing.CurrentMatchStatus(PlayerStatus.Current.CurrentMatch);
-		}
-
 		[Command("h2h_myID", "Display my PlayerID")]
 		public static void H2HMyID(string arg) {
 			Engine.Commands.Log(PlayerID.MyID?.SerializedID ?? "null");
 		}
+
+		[Command("h2h", "IF YOU'RE NOT corkr900, DON'T USE THIS. General use command for whatever i'm debugging.")]
+		public static void H2HCMD(string arg) {
+			//RandomizerCustomOptionsFile fi = RandomizerCustomOptionsFile.Load();
+			//fi.Categories.Add(new RandomizerCustomOptionsCategory() {
+			//	Name = "Test Custom Category 01",
+			//	Options = new RandomizerOptionsTemplate() {
+			//		Darkness = "None",
+			//		Difficulty = "Normal",
+			//		DifficultyEagerness = "High",
+			//		LogicType = "Pathway",
+			//		MapLength = "Medium",
+			//		NumDashes = "Two",
+			//		SeedType = "Random",
+			//		ShineLights = "None",
+			//		StrawberryDensity = "High",
+			//	}
+			//});
+			//fi.Save();
+		}
+
 	}
 }
