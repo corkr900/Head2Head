@@ -90,6 +90,10 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 				return null;
 			}
 		}
+
+		internal string GetString(string propertyName, string dflt = "") {
+			return Json.TryGetProperty(propertyName, out JsonElement elem) ? elem.GetString() ?? dflt : dflt;
+		}
 	}
 
 	public struct SerializableCommand {

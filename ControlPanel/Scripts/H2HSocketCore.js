@@ -33,7 +33,7 @@ class H2HSocket {
 			Token: this._clientToken,
 			Data: data ?? {}
 		});
-		_websocket.send(message);
+		this._websocket.send(message);
 	}
 
 	// Internals

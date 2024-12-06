@@ -51,8 +51,49 @@ function OnMessage(data) {
 
 // Page-specific functions!
 
-function TODO() {
+function GetRadioSelection(name) {
+	return document.querySelector(`input[name="${name}"]:checked`)?.value;
+}
 
+function AddSelectionToPayload(radioName, payload, propName) {
+	const val = GetRadioSelection(radioName);
+	if (!val) {
+		return false;
+	}
+	payload[propName] = val;
+	return true;
+}
+
+function StageCustomRando() {
+	const payload = BuildCategoryDef();
+	if (payload) {
+		socket.Send("stage_custom_rando", payload);
+		return;
+	}
+	else {
+		alert("An issue happened :[");
+	}
+}
+
+function BuildCategoryDef() {
+	const payload = {
+		name: document.getElementById("categoryNameEntry").value ?? "Custom Randomizer Match",
+	};
+	if (!AddSelectionToPayload("radio_darkness", payload, "darkness")) return null;
+	if (!AddSelectionToPayload("radio_difficulty", payload, "difficulty")) return null;
+	if (!AddSelectionToPayload("radio_eagerness", payload, "difficultyEagerness")) return null;
+	if (!AddSelectionToPayload("radio_logictype", payload, "logicType")) return null;
+	if (!AddSelectionToPayload("radio_length", payload, "mapLength")) return null;
+	if (!AddSelectionToPayload("radio_dashes", payload, "numDashes")) return null;
+	//if (!AddSelectionToPayload("", payload, "seedType")) return null;
+	if (!AddSelectionToPayload("radio_shine", payload, "shineLights")) return null;
+	if (!AddSelectionToPayload("radio_berries", payload, "strawberryDensity")) return null;
+
+	return payload;
+}
+
+function SaveCustomRando() {
+	alert(JSON.stringify(BuildCategoryDef(), null, 4));
 }
 
 

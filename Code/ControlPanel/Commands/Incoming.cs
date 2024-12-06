@@ -1,4 +1,5 @@
-﻿using Celeste.Mod.Head2Head.IO;
+﻿using Celeste.Mod.Head2Head.Integration;
+using Celeste.Mod.Head2Head.IO;
 using Celeste.Mod.Head2Head.Shared;
 using Monocle;
 using System;
@@ -7,6 +8,7 @@ using System.Linq;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Celeste.Mod.Head2Head.ControlPanel.Commands
@@ -31,6 +33,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel.Commands
 			ControlPanelCore.RegisterCommand("dbg_pull_data", PullData) ;
 			ControlPanelCore.RegisterCommand("give_match_pass", GiveMatchPass);
 			ControlPanelCore.RegisterCommand("go_to_Lobby", GoToLobby);
+			ControlPanelCore.RegisterCommand("stage_custom_rando", StageCustomRandomizerMatch);
 			ClientSocket.OnClientConnected += OnClientConnected;
         }
 
@@ -160,8 +163,8 @@ namespace Celeste.Mod.Head2Head.ControlPanel.Commands
 		}
 
 		private static void RequestMatchLog(ControlPanelPacket packet) {
-			string matchID = packet.Json.GetProperty("matchID").GetString() ?? "";
-			string serialPlayerID = packet.Json.GetProperty("playerID").GetString() ?? "";
+			string matchID = packet.GetString("matchID");
+			string serialPlayerID = packet.GetString("playerID");
 			PlayerID playerID = PlayerID.FromSerialized(serialPlayerID);
 			if (!playerID.IsDefault) {
 				CNetComm.Instance.SendMatchLogRequest(playerID, matchID, true, packet.ClientToken);
@@ -195,6 +198,54 @@ namespace Celeste.Mod.Head2Head.ControlPanel.Commands
 				Outgoing.MatchNoLongerCurrent(PlayerStatus.Current.CurrentMatchID);
 				PlayerStatus.Current.CurrentMatch = null;
 				PlayerStatus.Current.Updated();
+			}
+		}
+
+		private static void CreateCustomRandomizerCategory(ControlPanelPacket packet) {
+			string name = packet.GetString("Name");
+			if (string.IsNullOrEmpty(name)) {
+				// TODO(!!!)
+				//Outgoing.RandoCreationError("Name is required");
+			}
+		}
+
+		private static void StageCustomRandomizerMatch(ControlPanelPacket packet) {
+			//Darkness = "None",
+			//Difficulty = "Normal",
+			//DifficultyEagerness = "High",
+			//LogicType = "Pathway",
+			//MapLength = "Medium",
+			//NumDashes = "Two",
+			//SeedType = "Random",
+			//ShineLights = "None",
+			//StrawberryDensity = "High",
+			string name = packet.GetString("name");
+			string darkness = packet.GetString("darkness");
+			string difficulty = packet.GetString("difficulty");
+			string difficultyEagerness = packet.GetString("difficultyEagerness");
+			string logicType = packet.GetString("logicType");
+			string mapLength = packet.GetString("mapLength");
+			string numDashes = packet.GetString("numDashes");
+			string seedType = packet.GetString("seedType", "Random");
+			string shineLights = packet.GetString("shineLights");
+			string strawberryDensity = packet.GetString("strawberryDensity");
+
+			MatchTemplate matchTemplate = RandomizerCategories.RandomizerTemplate(name, new RandomizerOptionsTemplate() {
+				Darkness = darkness,
+				Difficulty = difficulty,
+				DifficultyEagerness = difficultyEagerness,
+				LogicType = logicType,
+				MapLength = mapLength,
+				NumDashes = numDashes,
+				SeedType = seedType,
+				ShineLights = shineLights,
+				StrawberryDensity = strawberryDensity,
+			});
+			if (Head2HeadModule.Instance.StageMatch(matchTemplate.BuildIL())) {
+				// success
+			}
+			else {
+				// there was an issue
 			}
 		}
 

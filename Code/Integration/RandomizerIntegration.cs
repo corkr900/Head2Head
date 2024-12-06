@@ -404,7 +404,7 @@ namespace Celeste.Mod.Head2Head.Integration {
 				Dialog.Get(numDashesDialogKey));
 		}
 
-		private static MatchTemplate RandomizerTemplate(string name, RandomizerOptionsTemplate opts) {
+		internal static MatchTemplate RandomizerTemplate(string name, RandomizerOptionsTemplate opts) {
 			MatchTemplate template = new MatchTemplate() {
 				DisplayName = name,
 				RandoOptions = opts,
@@ -422,7 +422,7 @@ namespace Celeste.Mod.Head2Head.Integration {
 			return template;
 		}
 
-		private static MatchTemplate RandomizerTemplate(string name, string logicType, string difficulty, string seedType = "Random", string numDashes = "One") {
+		internal static MatchTemplate RandomizerTemplate(string name, string logicType, string difficulty, string seedType = "Random", string numDashes = "One") {
 			return RandomizerTemplate(name, new RandomizerOptionsTemplate {
 				SeedType = seedType,
 				LogicType = logicType,
