@@ -45,8 +45,10 @@ function OnReady() {
 	}
 }
 
-function OnMessage(data) {
-
+function OnMessage(msg) {
+	if (msg.Command == "RESULT") {
+		OnCommandResult(msg.Data);
+	}
 }
 
 // Page-specific functions!
@@ -68,10 +70,11 @@ function StageCustomRando() {
 	const payload = BuildCategoryDef();
 	if (payload) {
 		socket.Send("stage_custom_rando", payload);
+		SetResultText("Message sent to Head 2 Head");
 		return;
 	}
 	else {
-		alert("An issue happened :[");
+		SetResultText("Could not send: missing required information");
 	}
 }
 
@@ -93,9 +96,23 @@ function BuildCategoryDef() {
 }
 
 function SaveCustomRando() {
-	alert(JSON.stringify(BuildCategoryDef(), null, 4));
+	const payload = BuildCategoryDef();
+	if (payload) {
+		socket.Send("save_custom_rando", payload);
+		SetResultText("Message sent to Head 2 Head");
+		return;
+	}
+	else {
+		SetResultText("Could not send: missing required information");
+	}
 }
 
+function SetResultText(txt) {
+	document.querySelector("#resultDisplay").textContent = txt;
+}
 
+function OnCommandResult(data) {
+	SetResultText((data.Result ? "Success! " : "Failed. ") + data.Info);
+}
 
 

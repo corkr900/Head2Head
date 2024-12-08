@@ -13,6 +13,7 @@ class H2HSocket {
 	_isConnected = false;
 	_cpVersion = -1;
 	_retryConnectionImmediately = false;
+	_reqIDCounter = 1;
 
 	constructor(targetIP) {
 		if (targetIP) this._socketIP = targetIP;
@@ -26,11 +27,16 @@ class H2HSocket {
 	OnError(err) { }
 	OnReady() { }
 
+	NewRequestID() {
+		return (++this._reqIDCounter).toString();
+	}
+
 	Send(command, data) {
 		if (!this._isConnected) return;
 		const message = JSON.stringify({
 			Command: command,
 			Token: this._clientToken,
+			RequestID: this.NewRequestID(),
 			Data: data ?? {}
 		});
 		this._websocket.send(message);
@@ -96,4 +102,5 @@ class H2HSocket {
 	Version() {
 		return this._cpVersion;
 	}
+
 }

@@ -67,5 +67,17 @@ namespace Celeste.Mod.Head2Head.ControlPanel.Commands {
 			));
 		}
 
+		public static void CommandResult(bool result, string targetClientToken, string requestID, string info = "") {
+			ControlPanelCore.SendImmediate(ControlPanelPacket.CreateOutgoing(
+				"RESULT",
+				new SerializeCommandResult() {
+					Result = result,
+					Info = info
+				},
+				targetClientToken,
+				requestID
+			));
+		}
+
 	}
 }

@@ -354,8 +354,7 @@ namespace Celeste.Mod.Head2Head.Integration {
 		}
 
 		private static IEnumerable<MatchTemplate> GetCustomRandoCategories() {
-			RandomizerCustomOptionsFile data = RandomizerCustomOptionsFile.Load();
-			foreach (var category in data.Categories) {
+			foreach (var category in RandomizerCustomOptionsFile.Instance.Categories) {
 				yield return RandomizerTemplate(category.Name, category.Options);
 			}
 		}
@@ -445,10 +444,10 @@ namespace Celeste.Mod.Head2Head.Integration {
 			// Use DynamicData to access SavePath because the implementation of it is different between FNA/XNA
 			DynamicData dd = new DynamicData(typeof(UserIO));
 			string dirpath = dd.Get<string>("SavePath");
-			return Path.Combine(dirpath, "Head2Head_CustomRandomizerCategories.celeste");
+			return Path.Combine(dirpath, "Head2Head_CustomRandomizerCategories_v1.celeste");
 		}
 
-		public static RandomizerCustomOptionsFile Load() {
+		private static RandomizerCustomOptionsFile Load() {
 			string path = GetCustomRandoCatsFileName();
 			if (string.IsNullOrEmpty(path) || !File.Exists(path)) return new();
 			try {
@@ -463,11 +462,15 @@ namespace Celeste.Mod.Head2Head.Integration {
 			return new();
 		}
 
-		public bool Save() {
+		private static RandomizerCustomOptionsFile _instance;
+		public static RandomizerCustomOptionsFile Instance => _instance ?? (_instance = Load());
+
+		public static bool Save() {
+			if (_instance == null) return false;
 			try {
 				using (FileStream fs = new FileStream(GetCustomRandoCatsFileName(), FileMode.Create)) {
 					XmlSerializer ser = new XmlSerializer(typeof(RandomizerCustomOptionsFile));
-					ser.Serialize(fs, this);
+					ser.Serialize(fs, Instance);
 				}
 				return true;
 			}

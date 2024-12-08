@@ -42,6 +42,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 		/// The raw data payload for outgoing packets
 		/// </summary>
 		public string Payload { get; set; }
+		public string RequestID { get; private set; }
 
 		private ControlPanelPacket() { }
 
@@ -49,6 +50,8 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 			JsonElement cmdElem;
 			JsonElement tokenElem;
 			JsonElement dataElem;
+			JsonElement reqElem;
+			bool hasReqElem;
 			try {
 				JsonDocument doc = JsonDocument.Parse(data);
 				if (doc.RootElement.ValueKind != JsonValueKind.Object
@@ -62,6 +65,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 						$"The message is not a JSON object containing the properties 'Command' (string), 'Token' (string), and 'Data' (any).");
 					return null;
 				}
+				hasReqElem = doc.RootElement.TryGetProperty("RequestID", out reqElem);
 			}
 			catch (Exception e) {
 				Logger.Log(LogLevel.Error, "Head2Head", $"An error occurred deserializing an incoming Control Panel message:\n{e}");
@@ -72,10 +76,11 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 			packet.ClientToken = tokenElem.ToString();
 			packet.Command = cmdElem.ToString();
 			packet.Json = dataElem;
+			packet.RequestID = hasReqElem ? reqElem.ToString() : "";
 			return packet;
 		}
 
-		internal static ControlPanelPacket CreateOutgoing(string command, object data, string targetToken = "") {
+		internal static ControlPanelPacket CreateOutgoing(string command, object data, string targetToken = "", string requestID = "") {
 			try {
 				string doc = JsonSerializer.Serialize(new SerializableCommand(command, data));
 				ControlPanelPacket packet = new();
@@ -83,6 +88,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 				packet.ClientToken = targetToken;
 				packet.Command = command;
 				packet.Payload = doc;
+				packet.RequestID = requestID;
 				return packet;
 			}
 			catch (Exception e) {

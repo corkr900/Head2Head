@@ -34,6 +34,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel.Commands
 			ControlPanelCore.RegisterCommand("give_match_pass", GiveMatchPass);
 			ControlPanelCore.RegisterCommand("go_to_Lobby", GoToLobby);
 			ControlPanelCore.RegisterCommand("stage_custom_rando", StageCustomRandomizerMatch);
+			ControlPanelCore.RegisterCommand("save_custom_rando", SaveCustomRandomizerCategory);
 			ClientSocket.OnClientConnected += OnClientConnected;
         }
 
@@ -201,24 +202,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel.Commands
 			}
 		}
 
-		private static void CreateCustomRandomizerCategory(ControlPanelPacket packet) {
-			string name = packet.GetString("Name");
-			if (string.IsNullOrEmpty(name)) {
-				// TODO(!!!)
-				//Outgoing.RandoCreationError("Name is required");
-			}
-		}
-
-		private static void StageCustomRandomizerMatch(ControlPanelPacket packet) {
-			//Darkness = "None",
-			//Difficulty = "Normal",
-			//DifficultyEagerness = "High",
-			//LogicType = "Pathway",
-			//MapLength = "Medium",
-			//NumDashes = "Two",
-			//SeedType = "Random",
-			//ShineLights = "None",
-			//StrawberryDensity = "High",
+		private static RandomizerOptionsTemplate MakeRandoOptions(ControlPanelPacket packet) {
 			string name = packet.GetString("name");
 			string darkness = packet.GetString("darkness");
 			string difficulty = packet.GetString("difficulty");
@@ -229,8 +213,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel.Commands
 			string seedType = packet.GetString("seedType", "Random");
 			string shineLights = packet.GetString("shineLights");
 			string strawberryDensity = packet.GetString("strawberryDensity");
-
-			MatchTemplate matchTemplate = RandomizerCategories.RandomizerTemplate(name, new RandomizerOptionsTemplate() {
+			return new RandomizerOptionsTemplate() {
 				Darkness = darkness,
 				Difficulty = difficulty,
 				DifficultyEagerness = difficultyEagerness,
@@ -240,12 +223,41 @@ namespace Celeste.Mod.Head2Head.ControlPanel.Commands
 				SeedType = seedType,
 				ShineLights = shineLights,
 				StrawberryDensity = strawberryDensity,
-			});
+			};
+		}
+
+		private static void StageCustomRandomizerMatch(ControlPanelPacket packet) {
+			string name = packet.GetString("name");
+			MatchTemplate matchTemplate = RandomizerCategories.RandomizerTemplate(name, MakeRandoOptions(packet));
 			if (Head2HeadModule.Instance.StageMatch(matchTemplate.BuildIL())) {
-				// success
+				Outgoing.CommandResult(true, packet.ClientToken, packet.RequestID, Dialog.Clean("Head2Head_ControlPanel_MatchWasStaged"));
 			}
 			else {
-				// there was an issue
+				Outgoing.CommandResult(false, packet.ClientToken, packet.RequestID, Dialog.Clean("Head2Head_ControlPanel_CouldntStageMatch"));
+			}
+
+		}
+
+		private static void SaveCustomRandomizerCategory(ControlPanelPacket packet) {
+			string name = packet.GetString("name");
+			RandomizerOptionsTemplate options = MakeRandoOptions(packet);
+			RandomizerCustomOptionsFile file = RandomizerCustomOptionsFile.Instance;
+			if (string.IsNullOrEmpty(name)) {
+				Outgoing.CommandResult(false, packet.ClientToken, packet.RequestID, Dialog.Clean("Head2Head_ControlPanel_NameNotProvided"));
+			}
+			else if (options == null) {
+				Outgoing.CommandResult(false, packet.ClientToken, packet.RequestID, Dialog.Clean("Head2Head_ControlPanel_CouldntBuildOptions"));
+			}
+			else if (file.Categories.Any(cat => cat.Name.ToLower() == name.ToLower())) {
+				Outgoing.CommandResult(false, packet.ClientToken, packet.RequestID, Dialog.Clean("Head2Head_ControlPanel_NameAlreadyExists"));
+			}
+			else {
+				file.Categories.Add(new RandomizerCustomOptionsCategory() {
+					Name = name,
+					Options = options
+				});
+				RandomizerCustomOptionsFile.Save();
+				Outgoing.CommandResult(true, packet.ClientToken, packet.RequestID, Dialog.Clean("Head2Head_ControlPanel_CategorySaved"));
 			}
 		}
 

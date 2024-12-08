@@ -772,7 +772,7 @@ namespace Celeste.Mod.Head2Head.UI
 			menu.Add(new TextMenu.Header(Dialog.Clean("Head2Head_SettingsManager_ManageCustomCategories")));
 
 			// Loop over known matches
-			cxt.RandoOptionsFile ??= RandomizerCustomOptionsFile.Load();
+			cxt.RandoOptionsFile = RandomizerCustomOptionsFile.Instance;
 			if (cxt.RandoOptionsFile.Categories.Count == 0) {
 				menu.Add(new TextMenu.SubHeader(Dialog.Clean("Head2Head_SettingsManager_NoCustomRandoCategories")));
 			}
@@ -812,7 +812,7 @@ namespace Celeste.Mod.Head2Head.UI
 			// Delete
 			btn = menu.AddButton("Head2Head_SettingsManager_Delete", () => {
 				cxt.RandoOptionsFile.Categories.Remove(cxt.CustomRandoCategory);
-				cxt.RandoOptionsFile.Save();
+				RandomizerCustomOptionsFile.Save();
 				menu.OnCancel();
 			});
 

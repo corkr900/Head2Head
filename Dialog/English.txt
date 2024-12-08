@@ -369,3 +369,14 @@ Head2Head_SettingsManager_ManageCustomCategories= Manage Custom Categories
 Head2Head_SettingsManager_NoCustomRandoCategories= You have no custom Randomizer categories saved.
 Head2Head_SettingsManager_CustomRandoCategories= Custom Randomizer Categories
 Head2Head_SettingsManager_Delete= Delete
+
+#########################
+#     Control Panel     #
+#########################
+
+Head2Head_ControlPanel_MatchWasStaged= Match was staged.
+Head2Head_ControlPanel_CouldntStageMatch= Could not stage match.
+Head2Head_ControlPanel_NameNotProvided= Name is required.
+Head2Head_ControlPanel_CouldntBuildOptions= Missing required information.
+Head2Head_ControlPanel_NameAlreadyExists= A custom category with that name already exists.
+Head2Head_ControlPanel_CategorySaved= New custom category saved!
