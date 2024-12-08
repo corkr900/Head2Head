@@ -343,3 +343,29 @@ Head2Head_menu_helpdesk_notimeadjust= Time adjustments cannot be applied to this
 
 Head2Head_menu_override_variants_subtitle= Your current Head 2 Head match does not allow changing variants.
 Head2Head_menu_override_assist_subtitle= Your current Head 2 Head match does not allow changing assist mode options.
+
+############################
+#     Settings Manager     #
+############################
+
+Head2Head_SettingsManager_Title= Settings Manager
+Head2Head_SettingsManager_Settings= Mod Options
+Head2Head_SettingsManager_OpenControlPanel= Open Control Panel
+Head2Head_SettingsManager_OpenRandoBuilder= Open Randomizer Category Builder
+Head2Head_SettingsManager_CantOpenURLs= There was an error opening the URL. Your operating system may not be supported.
+You can still open a web browser and go to this URL: {1}
+Head2Head_SettingsManager_OpenedURL= Page was opened in a web browser.
+Head2Head_SettingsManager_ConnectToCnet= Connect to CelesteNet
+Head2Head_SettingsManager_ConnectToCnet_Sub= You need to be connected to CelesteNet to use Head 2 Head
+Head2Head_SettingsManager_ConnectionStarted= Started CelesteNet connection.
+Head2Head_SettingsManager_AlreadyConnected= You are already connected to CelesteNet.
+Head2Head_SettingsManager_JoinChannel_h2h= Join Head 2 Head CelesteNet Channel
+Head2Head_SettingsManager_JoinChannel_h2h_Sub= Head 2 Head is disabled in the main CelesteNet channel to avoid spam.
+Use another channel such as 'h2h' to play Head 2 Head
+Head2Head_SettingsManager_JoinChannel_main= Return to Main CelesteNet Channel
+Head2Head_SettingsManager_SentCnetCommand= Sent CelesteNet Command.
+Head2Head_SettingsManager_JoinChannel_AlreadyInThisChannel= You are already in this CelesteNet channel.
+Head2Head_SettingsManager_ManageCustomCategories= Manage Custom Categories
+Head2Head_SettingsManager_NoCustomRandoCategories= You have no custom Randomizer categories saved.
+Head2Head_SettingsManager_CustomRandoCategories= Custom Randomizer Categories
+Head2Head_SettingsManager_Delete= Delete

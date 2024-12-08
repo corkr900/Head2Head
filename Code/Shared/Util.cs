@@ -5,7 +5,9 @@ using MonoMod.Utils;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -279,6 +281,30 @@ namespace Celeste.Mod.Head2Head.Shared {
 			name = PlayerID.LastKnownName;
 			if (!string.IsNullOrEmpty(name)) return name;
 			return Dialog.Clean("Head2Head_me");
+		}
+
+		internal static bool OpenUrl(string url) {
+			try {
+				Process.Start(url);
+				return true;
+			}
+			catch {
+				// hack because of this: https://github.com/dotnet/corefx/issues/10361
+				if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
+					url = url.Replace("&", "^&");
+					Process.Start(new ProcessStartInfo() { FileName = url, UseShellExecute = true });
+				}
+				else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) {
+					Process.Start("xdg-open", url);
+				}
+				else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
+					Process.Start("open", url);
+				}
+				else {
+					return false;
+				}
+				return true;
+			}
 		}
 	}
 }

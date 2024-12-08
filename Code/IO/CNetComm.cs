@@ -46,11 +46,12 @@ namespace Celeste.Mod.Head2Head.IO {
 
 		public DataChannelList.Channel CurrentChannel {
 			get {
-				KeyValuePair<Type, CelesteNetGameComponent> listComp = CnetContext.Components.FirstOrDefault((KeyValuePair<Type, CelesteNetGameComponent> kvp) => {
+				KeyValuePair<Type, CelesteNetGameComponent>? listComp = CnetContext?.Components?.FirstOrDefault((KeyValuePair<Type, CelesteNetGameComponent> kvp) => {
 					return kvp.Key == typeof(CelesteNetPlayerListComponent);
 				});
-				if (listComp.Equals(default(KeyValuePair<Type, CelesteNetGameComponent>))) return null;
-				CelesteNetPlayerListComponent comp = listComp.Value as CelesteNetPlayerListComponent;
+				if (listComp == null) return null;
+				if (listComp.Value.Equals(default(KeyValuePair<Type, CelesteNetGameComponent>))) return null;
+				CelesteNetPlayerListComponent comp = listComp.Value.Value as CelesteNetPlayerListComponent;
 				DataChannelList.Channel[] list = comp.Channels?.List;
 				return list?.FirstOrDefault(c => c.Players.Contains(CnetClient.PlayerInfo.ID));
 			}

@@ -1,4 +1,8 @@
-﻿using Celeste.Mod.Head2Head.IO;
+﻿using Celeste.Mod.CelesteNet;
+using Celeste.Mod.CelesteNet.Client;
+using Celeste.Mod.CelesteNet.Client.Components;
+using Celeste.Mod.Head2Head.Integration;
+using Celeste.Mod.Head2Head.IO;
 using Celeste.Mod.Head2Head.Shared;
 using Microsoft.Xna.Framework;
 using Monocle;
@@ -35,9 +39,14 @@ namespace Celeste.Mod.Head2Head.UI
 					return Head2HeadModule.knownMatches[matchID];
 				}
 			}
+			internal RandomizerCustomOptionsFile RandoOptionsFile;
+			public RandomizerCustomOptionsCategory CustomRandoCategory;
+
 			public PlayerID player;
 
 			public Action<PlayerID> onPlayerSelection;
+
+			public Action OnLeave;
 
 			public void GoTo(Action<HelpdeskMenuContext> target, TextMenu current)
 			{
@@ -47,6 +56,8 @@ namespace Celeste.Mod.Head2Head.UI
 				else {
 					Audio.Play("event:/ui/main/button_select");
 				}
+				OnLeave?.Invoke();
+				OnLeave = null;
 				returnToIndex.Push(current == null ? 0 : current.IndexOf(current.Current));
 				menus.Push(target);
 				current?.RemoveSelf();
@@ -56,6 +67,8 @@ namespace Celeste.Mod.Head2Head.UI
 			public void Back(TextMenu current)
 			{
 				Audio.Play("event:/ui/main/button_back");
+				OnLeave?.Invoke();
+				OnLeave = null;
 				current.RemoveSelf();
 				menus.Pop();
 				int index = returnToIndex.Pop();
@@ -75,16 +88,19 @@ namespace Celeste.Mod.Head2Head.UI
 
 			public void Refresh(TextMenu current) {
 				Audio.Play("event:/ui/main/button_lowkey");
+				OnLeave?.Invoke();
+				OnLeave = null;
 				current.RemoveSelf();
 				menus.Peek().Invoke(this);
 			}
 
-			public void Close(TextMenu curr)
-			{
+			public void Close(TextMenu curr) {
+				Audio.Play("event:/ui/game/unpause");
+				OnLeave?.Invoke();
+				OnLeave = null;
 				if (curr != null) curr.RemoveSelf();
 				level.unpauseTimer = 0.15f;
 				level.Paused = false;
-				Audio.Play("event:/ui/game/unpause");
 			}
 		}
 
@@ -109,13 +125,39 @@ namespace Celeste.Mod.Head2Head.UI
 
 		private static void SoftDisable(this ButtonExt btn, TextMenu menu, string newSubtext, params string[] fmtArgs) {
 			btn.TextColor = btn.TextColorDisabled;
-			btn.AddDescription(menu, string.Format(GetDialogWithLineBreaks(newSubtext), fmtArgs));
+			btn.SetSubtext(menu, string.Format(GetDialogWithLineBreaks(newSubtext), fmtArgs));
 			DynamicData dd = DynamicData.For(btn);
 			dd.Set("H2H_SoftDisable", true);
+			if (menu.IndexOf(btn) == menu.Selection) {
+				btn.OnEnter();
+			}
+		}
+
+		private static void SetSubtext(this ButtonExt btn, TextMenu menu, string newSubtext, params string[] fmtArgs) {
+			if (!menu.Items.Contains(btn)) return;
+			int idx = menu.IndexOf(btn);
+			if (menu.Items.Count >= menu.IndexOf(btn) + 2 && menu.Items[idx + 1] is EaseInSubHeaderExt oldDescription) {
+				menu.Remove(oldDescription);
+			}
+			btn.AddDescription(menu, string.Format(GetDialogWithLineBreaks(newSubtext), fmtArgs));
+			if (menu.IndexOf(btn) == menu.Selection) {
+				btn.OnEnter();
+			}
+		}
+
+		public static void Enable(this ButtonExt btn, TextMenu menu, string newSubtext) {
+			btn.Enable();
+			btn.SetSubtext(menu, newSubtext);
+		}
+
+		private static void Enable(this  ButtonExt btn) {
+			btn.TextColor = Color.White;
+			DynamicData dd = DynamicData.For(btn);
+			dd.Set("H2H_SoftDisable", false);
 		}
 
 		private static string GetDialogWithLineBreaks(string key) {
-			return Dialog.Get(key).Replace("{n}", "\n").Replace("{break}", "\n");
+			return (Dialog.Has(key) ? Dialog.Get(key) : key ?? "").Replace("{n}", "\n").Replace("{break}", "\n");
 		}
 
 		#endregion
@@ -256,6 +298,11 @@ namespace Celeste.Mod.Head2Head.UI
 					cxt.Close(menu);
 				});
 			}
+
+			// Settings Manager
+			btn = menu.AddButton("Head2Head_SettingsManager_Title", () => {
+				cxt.GoTo(SettingsManager, menu);
+			});
 
 			// handle Cancel button
 			menu.OnCancel = () => {
@@ -521,6 +568,255 @@ namespace Celeste.Mod.Head2Head.UI
 			}
 
 			// Cancel
+			btn = menu.AddButton("Head2Head_menu_back", () => {
+				menu.OnCancel();
+			});
+
+			// handle Cancel button
+			menu.OnCancel = () => {
+				cxt.Back(menu);
+			};
+			menu.Selection = menu.FirstPossibleSelection;
+			cxt.level.Add(menu);
+		}
+
+		#endregion
+
+		#region Settings Menus
+
+		public static void SettingsManager(HelpdeskMenuContext cxt) {
+			cxt.level.Paused = true;
+			TextMenu menu = new TextMenu();
+			menu.AutoScroll = false;
+			menu.Position = new Vector2((float)Engine.Width / 2f, (float)Engine.Height / 2f - 100f);
+			ButtonExt btn;
+			ButtonExt connectCnetBtn = null;
+			ButtonExt ctrlPanelBtn = null;
+			ButtonExt randoBldrBtn = null;
+			ButtonExt joinChnlH2HBtn = null;
+			ButtonExt joinChnlMainBtn = null;
+
+			// Header
+			menu.Add(new TextMenu.Header(Dialog.Clean("Head2Head_SettingsManager_Title")));
+
+			// Settings
+			btn = menu.AddButton("menu_modoptions", () => {
+				cxt.GoTo(ModOptionsStandalone, menu);
+			});
+
+			// Settings
+			if (CNetComm.Instance?.IsConnected != true) {
+				connectCnetBtn = menu.AddButton("Head2Head_SettingsManager_ConnectToCnet", () => {
+					CelesteNetClientModule.Settings.Connected = true;
+					connectCnetBtn.SoftDisable(menu, "Head2Head_SettingsManager_ConnectionStarted");
+				});
+				if (CNetComm.Instance.IsConnected) {
+					connectCnetBtn.SoftDisable(menu, "Head2Head_SettingsManager_AlreadyConnected");
+				}
+				else {
+					connectCnetBtn.SetSubtext(menu, "Head2Head_SettingsManager_ConnectToCnet_Sub");
+				}
+			}
+
+			// Channel (h2h)
+			joinChnlH2HBtn = menu.AddButton("Head2Head_SettingsManager_JoinChannel_h2h", () => {
+				CelesteNetChatComponent chat = CNetComm.Instance?.CnetContext?.Chat;
+				if (chat == null) {
+					joinChnlH2HBtn.SetSubtext(menu, "Head2Head_SettingsManager_SentCnetCommand");
+				}
+				else {
+					chat?.Send("/join h2h");
+					joinChnlH2HBtn.SetSubtext(menu, "Head2Head_SettingsManager_SentCnetCommand");
+				}
+			});
+			if (CNetComm.Instance?.IsConnected != true) {
+				joinChnlH2HBtn.SoftDisable(menu, "Head2Head_menu_helpdesk_whynocreatematch_notconnected");
+			}
+			else if (CNetComm.Instance?.CurrentChannel?.Name == "h2h") {
+				joinChnlH2HBtn.SoftDisable(menu, "Head2Head_SettingsManager_JoinChannel_AlreadyInThisChannel");
+			}
+			else {
+				joinChnlH2HBtn.SetSubtext(menu, "Head2Head_SettingsManager_JoinChannel_h2h_Sub");
+			}
+
+			// Channel (main)
+			joinChnlMainBtn = menu.AddButton("Head2Head_SettingsManager_JoinChannel_main", () => {
+				CelesteNetChatComponent chat = CNetComm.Instance?.CnetContext?.Chat;
+				if (chat == null) {
+					joinChnlMainBtn.SetSubtext(menu, "Head2Head_SettingsManager_SentCnetCommand");
+				}
+				else {
+					chat?.Send("/join main");
+					joinChnlMainBtn.SetSubtext(menu, "Head2Head_SettingsManager_SentCnetCommand");
+				}
+			});
+			if (CNetComm.Instance?.IsConnected != true) {
+				joinChnlMainBtn.SoftDisable(menu, "Head2Head_menu_helpdesk_whynocreatematch_notconnected");
+			}
+			else if (CNetComm.Instance?.CurrentChannel?.Name == "main") {
+				joinChnlMainBtn.SoftDisable(menu, "Head2Head_SettingsManager_JoinChannel_AlreadyInThisChannel");
+			}
+
+			// Control Panel
+			ctrlPanelBtn = menu.AddButton("Head2Head_SettingsManager_OpenControlPanel", () => {
+				string url = "https://corkr900.github.io/Head2Head/ControlPanel/ControlPanel.html";
+				if (!Util.OpenUrl(url)) {
+					ctrlPanelBtn.SoftDisable(menu, "Head2Head_SettingsManager_CantOpenURLs", url);
+				}
+				else {
+					ctrlPanelBtn.SetSubtext(menu, "Head2Head_SettingsManager_OpenedURL");
+				}
+			});
+
+			// Randomizer Category Builder
+			randoBldrBtn = menu.AddButton("Head2Head_SettingsManager_OpenRandoBuilder", () => {
+				string url = "https://corkr900.github.io/Head2Head/ControlPanel/RandoCategoryBuilder.html";
+				if (!Util.OpenUrl(url)) {
+					randoBldrBtn.SoftDisable(menu, "Head2Head_SettingsManager_CantOpenURLs", url);
+				}
+				else {
+					randoBldrBtn.SetSubtext(menu, "Head2Head_SettingsManager_OpenedURL");
+				}
+			});
+
+			// Manage Custom Categories
+			btn = menu.AddButton("Head2Head_SettingsManager_ManageCustomCategories", () => {
+				cxt.GoTo(ManageCustomCategories, menu);
+			});
+
+			// Back
+			btn = menu.AddButton("Head2Head_menu_back", () => {
+				menu.OnCancel();
+			});
+
+			// Handle live updates to connection status and channel
+			CNetComm.OnConnectedHandler onConn = (cxt) => {
+				connectCnetBtn?.SoftDisable(menu, "Head2Head_SettingsManager_AlreadyConnected");
+				string newChannel = CNetComm.Instance.CurrentChannel?.Name;
+				if (newChannel == "main") {
+					joinChnlMainBtn?.SoftDisable(menu, "Head2Head_SettingsManager_JoinChannel_AlreadyInThisChannel");
+					joinChnlH2HBtn?.Enable(menu, "Head2Head_SettingsManager_JoinChannel_h2h_Sub");
+				}
+				else if (newChannel == "h2h") {
+					joinChnlMainBtn?.Enable(menu, "");
+					joinChnlH2HBtn?.SoftDisable(menu, "Head2Head_SettingsManager_JoinChannel_AlreadyInThisChannel");
+				}
+			};
+			CNetComm.OnDisonnectedHandler onDiscon = (conn) => {
+				connectCnetBtn?.Enable(menu, "");
+				joinChnlH2HBtn?.SoftDisable(menu, "Head2Head_menu_helpdesk_whynocreatematch_notconnected");
+				joinChnlMainBtn?.SoftDisable(menu, "Head2Head_menu_helpdesk_whynocreatematch_notconnected");
+			};
+			CNetComm.OnReceiveChannelMoveHandler onChan = (data) => {
+				string newChannel = CNetComm.Instance.CurrentChannel?.Name;
+				if (newChannel == "main") {
+					joinChnlMainBtn?.SoftDisable(menu, "Head2Head_SettingsManager_JoinChannel_AlreadyInThisChannel");
+					joinChnlH2HBtn?.Enable(menu, "");
+				}
+				else if (newChannel == "h2h") {
+					joinChnlMainBtn?.Enable(menu, "");
+					joinChnlH2HBtn?.SoftDisable(menu, "Head2Head_SettingsManager_JoinChannel_AlreadyInThisChannel");
+				}
+			};
+
+			CNetComm.OnConnected += onConn;
+			CNetComm.OnDisconnected += onDiscon;
+			CNetComm.OnReceiveChannelMove += onChan;
+			cxt.OnLeave = () => {
+				CNetComm.OnConnected -= onConn;
+				CNetComm.OnDisconnected -= onDiscon;
+				CNetComm.OnReceiveChannelMove -= onChan;
+			};
+
+			// handle Cancel button
+			menu.OnCancel = () => {
+				cxt.Back(menu);
+			};
+			menu.Selection = menu.FirstPossibleSelection;
+			cxt.level.Add(menu);
+		}
+
+		public static void ModOptionsStandalone(HelpdeskMenuContext cxt) {
+			cxt.level.Paused = true;
+			TextMenu menu = new TextMenu();
+			menu.AutoScroll = false;
+			menu.Position = new Vector2((float)Engine.Width / 2f, (float)Engine.Height / 2f - 100f);
+
+			// Header
+			menu.Add(new TextMenu.Header(Dialog.Clean("menu_modoptions")));
+
+			// Options
+			Head2HeadModule.Instance.CreateModMenuSection(menu, false, null);
+
+			// Back
+			ButtonExt btn = menu.AddButton("Head2Head_menu_back", () => {
+				menu.OnCancel();
+			});
+
+			// handle Cancel button
+			menu.OnCancel = () => {
+				cxt.Back(menu);
+			};
+			menu.Selection = menu.FirstPossibleSelection;
+			cxt.level.Add(menu);
+		}
+
+		public static void ManageCustomCategories(HelpdeskMenuContext cxt) {
+			cxt.level.Paused = true;
+			TextMenu menu = new TextMenu();
+			menu.AutoScroll = false;
+			menu.Position = new Vector2((float)Engine.Width / 2f, (float)Engine.Height / 2f - 100f);
+			ButtonExt btn;
+
+			// Title
+			menu.Add(new TextMenu.Header(Dialog.Clean("Head2Head_SettingsManager_ManageCustomCategories")));
+
+			// Loop over known matches
+			cxt.RandoOptionsFile ??= RandomizerCustomOptionsFile.Load();
+			if (cxt.RandoOptionsFile.Categories.Count == 0) {
+				menu.Add(new TextMenu.SubHeader(Dialog.Clean("Head2Head_SettingsManager_NoCustomRandoCategories")));
+			}
+			else {
+				menu.Add(new TextMenu.SubHeader(Dialog.Clean("Head2Head_SettingsManager_CustomRandoCategories")));
+				foreach (RandomizerCustomOptionsCategory cat in cxt.RandoOptionsFile.Categories) {
+					btn = menu.AddButton(cat.Name, () => {
+						cxt.CustomRandoCategory = cat;
+						cxt.GoTo(CustomRandoCategoryOptions, menu);
+					}, true);
+				}
+			}
+
+			// Back
+			btn = menu.AddButton("Head2Head_menu_back", () => {
+				menu.OnCancel();
+			});
+
+			// handle Cancel button
+			menu.OnCancel = () => {
+				cxt.Back(menu);
+			};
+			menu.Selection = menu.FirstPossibleSelection;
+			cxt.level.Add(menu);
+		}
+
+		private static void CustomRandoCategoryOptions(HelpdeskMenuContext cxt) {
+			cxt.level.Paused = true;
+			TextMenu menu = new TextMenu();
+			menu.AutoScroll = false;
+			menu.Position = new Vector2((float)Engine.Width / 2f, (float)Engine.Height / 2f - 100f);
+			ButtonExt btn;
+
+			// Title
+			menu.Add(new TextMenu.Header(cxt.CustomRandoCategory.Name));
+
+			// Delete
+			btn = menu.AddButton("Head2Head_SettingsManager_Delete", () => {
+				cxt.RandoOptionsFile.Categories.Remove(cxt.CustomRandoCategory);
+				cxt.RandoOptionsFile.Save();
+				menu.OnCancel();
+			});
+
+			// Back
 			btn = menu.AddButton("Head2Head_menu_back", () => {
 				menu.OnCancel();
 			});
