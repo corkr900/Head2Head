@@ -193,7 +193,7 @@ namespace Celeste.Mod.Head2Head.Integration {
 
 			// Pathway "chapter"
 			RunOptionsILChapter pathway = new RunOptionsILChapter();
-			pathway.Title = string.Format(Dialog.Get(""), RandoStrings.TypePathway, RandoStrings.Title);
+			pathway.Title = string.Format(Dialog.Get("Head2Head_Rando_MapNameFormat"), RandoStrings.TypePathway, RandoStrings.Title);
 			pathway.Icon = "menu/pathway_icon";
 			setOption.Chapters.Add(pathway);
 
@@ -240,28 +240,28 @@ namespace Celeste.Mod.Head2Head.Integration {
 				IconPath = "menu/skulls/skullBlue",
 				Template = RandomizerTemplate(
 					string.Format(Dialog.Get("Head2Head_Rando_WeeklyCatName"), RandoStrings.TypePathway, RandoStrings.DiffNormal),
-					"Pathway", "Normal", "Custom"),
+					"Pathway", "Normal", "Weekly"),
 			});
 			side.Categories.Add(new RunOptionsILCategory() {
 				Title = "MODOPTIONS_RANDOMIZER_DIFFICULTY_EXPERT",
 				IconPath = "menu/skulls/skullGold",
 				Template = RandomizerTemplate(
 					string.Format(Dialog.Get("Head2Head_Rando_WeeklyCatName"), RandoStrings.TypePathway, RandoStrings.DiffExpert),
-					"Pathway", "Expert", "Custom"),
+					"Pathway", "Expert", "Weekly"),
 			});
 			side.Categories.Add(new RunOptionsILCategory() {
 				Title = Dialog.Clean("Head2Head_Rando_Dashcount_Zero"),
 				IconPath = "menu/skulls/skullRed",
 				Template = RandomizerTemplate(
 					string.Format(Dialog.Get("Head2Head_Rando_WeeklyCatName"), RandoStrings.TypePathway, Dialog.Clean("Head2Head_Rando_Dashcount_Zero")),
-					"Pathway", "Normal", "Custom", "None"),
+					"Pathway", "Normal", "Weekly", "None"),
 			});
 
 			//////////////////////////////////////////////////////////////////////
 
 			// Labyrinth "chapter"
 			RunOptionsILChapter labyrinth = new RunOptionsILChapter();
-			labyrinth.Title = string.Format(Dialog.Get(""), RandoStrings.TypeLabyrinth, RandoStrings.Title);
+			labyrinth.Title = string.Format(Dialog.Get("Head2Head_Rando_MapNameFormat"), RandoStrings.TypeLabyrinth, RandoStrings.Title);
 			labyrinth.Icon = "menu/labyrinth_icon";
 			setOption.Chapters.Add(labyrinth);
 			side = new RunOptionsILSide() {
@@ -307,7 +307,7 @@ namespace Celeste.Mod.Head2Head.Integration {
 				Template = RandomizerTemplate(
 					string.Format(Dialog.Get("Head2Head_Rando_WeeklyCatName"), RandoStrings.TypeLabyrinth, RandoStrings.DiffNormal),
 					"Weekly Labyrinth - Normal",
-					"Labyrinth", "Normal", "Custom"),
+					"Labyrinth", "Normal", "Weekly"),
 			});
 			side.Categories.Add(new RunOptionsILCategory() {
 				Title = "MODOPTIONS_RANDOMIZER_DIFFICULTY_EXPERT",
@@ -315,14 +315,14 @@ namespace Celeste.Mod.Head2Head.Integration {
 				Template = RandomizerTemplate(
 					string.Format(Dialog.Get("Head2Head_Rando_WeeklyCatName"), RandoStrings.TypeLabyrinth, RandoStrings.DiffExpert),
 					"Weekly Labyrinth - Expert",
-					"Labyrinth", "Expert", "Custom"),
+					"Labyrinth", "Expert", "Weekly"),
 			});
 			side.Categories.Add(new RunOptionsILCategory() {
 				Title = Dialog.Clean("Head2Head_Rando_Dashcount_Zero"),
 				IconPath = "menu/skulls/skullRed",
 				Template = RandomizerTemplate(
 					string.Format(Dialog.Get("Head2Head_Rando_WeeklyCatName"), RandoStrings.TypeLabyrinth, Dialog.Clean("Head2Head_Rando_Dashcount_Zero")),
-					"Labyrinth", "Normal", "Custom", "None"),
+					"Labyrinth", "Normal", "Weekly", "None"),
 			});
 
 
@@ -330,11 +330,11 @@ namespace Celeste.Mod.Head2Head.Integration {
 
 			// Custom Randomizer Categories
 			RunOptionsILChapter customs = new RunOptionsILChapter();
-			customs.Title = "TODO - CUSTOM CATEGORIES TITLE (1)";
+			customs.Title = Dialog.Clean("Head2Head_CustomCategories");
 			customs.Icon = "Head2Head/Categories/Custom";
 			// only 1 side (?)
 			side = new RunOptionsILSide() {
-				Label = "TODO - CUSTOM CATEGORIES TITLE (2)",
+				Label = Dialog.Clean("Head2Head_CustomCategories"),
 				Icon = GFX.Gui["menu/play"],
 				ID = "A",
 				Mode = AreaMode.Normal,

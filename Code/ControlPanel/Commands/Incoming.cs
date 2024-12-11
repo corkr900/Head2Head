@@ -213,6 +213,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel.Commands
 			string seedType = packet.GetString("seedType", "Random");
 			string shineLights = packet.GetString("shineLights");
 			string strawberryDensity = packet.GetString("strawberryDensity");
+			string seed = packet.GetString("seed");
 			return new RandomizerOptionsTemplate() {
 				Darkness = darkness,
 				Difficulty = difficulty,
@@ -223,6 +224,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel.Commands
 				SeedType = seedType,
 				ShineLights = shineLights,
 				StrawberryDensity = strawberryDensity,
+				Seed = seed,
 			};
 		}
 
@@ -257,6 +259,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel.Commands
 					Options = options
 				});
 				RandomizerCustomOptionsFile.Save();
+				Ruleset.DefaultRulesetStale = true;
 				Outgoing.CommandResult(true, packet.ClientToken, packet.RequestID, Dialog.Clean("Head2Head_ControlPanel_CategorySaved"));
 			}
 		}

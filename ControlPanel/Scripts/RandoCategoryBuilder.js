@@ -80,7 +80,7 @@ function StageCustomRando() {
 
 function BuildCategoryDef() {
 	const payload = {
-		name: document.getElementById("categoryNameEntry").value ?? "Custom Randomizer Match",
+		name: document.getElementById("categoryNameEntry").value ?? "Custom Match",
 	};
 	if (!AddSelectionToPayload("radio_darkness", payload, "darkness")) return null;
 	if (!AddSelectionToPayload("radio_difficulty", payload, "difficulty")) return null;
@@ -91,7 +91,8 @@ function BuildCategoryDef() {
 	//if (!AddSelectionToPayload("", payload, "seedType")) return null;
 	if (!AddSelectionToPayload("radio_shine", payload, "shineLights")) return null;
 	if (!AddSelectionToPayload("radio_berries", payload, "strawberryDensity")) return null;
-
+	if (!AddSelectionToPayload("radio_seed", payload, "seedType")) return null;
+	payload.seed = document.getElementById("seedEntry").value ?? "";
 	return payload;
 }
 

@@ -53,13 +53,19 @@ namespace Celeste.Mod.Head2Head.Shared {
 				bld.ShineLights = RandoOptions.ShineLights;
 				bld.Darkness = RandoOptions.Darkness;
 				bld.StrawberryDensity = RandoOptions.StrawberryDensity;
-				if (RandoOptions.SeedType == "Random") {
+				if (RandoOptions.SeedType == "Random") {  // Random
 					bld.RandomizeSeed();
 				}
-				else {
-					// Seed changes weekly
+				else if (RandoOptions.SeedType == "Weekly") {
 					int numDays = (int)(SyncedClock.Now - DateTime.MinValue).TotalDays;
 					bld.RandomizeSeed(numDays / 7);
+				}
+				else if (RandoOptions.SeedType == "Specific") {
+					bld.Seed = RandoOptions.Seed;
+				}
+				else {
+					Logger.Log(LogLevel.Error, "Head2Head", $"Encountered unexpected seed type '{RandoOptions.SeedType}'");
+					bld.RandomizeSeed();
 				}
 				def.RandoSettingsBuilder = bld;
 			}
@@ -302,7 +308,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 	[Serializable]
 	public class RandomizerOptionsTemplate {
 		public string Difficulty;
-		public string SeedType;
+		public string SeedType;  // "Random", "Specific", or "Weekly"
 		public string LogicType;
 		public string NumDashes;
 		public string DifficultyEagerness;
@@ -310,5 +316,6 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public string ShineLights;
 		public string Darkness;
 		public string StrawberryDensity;
+		public string Seed;  // Only used if SeedType == "Specific"
 	}
 }

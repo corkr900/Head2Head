@@ -17,7 +17,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 		private static readonly string RepositoryURI = "https://github.com/corkr900/Head2Head";
 		private static SerializeImage Default => new SerializeImage {
 			atlas = "gui",
-			path = "Head2Head/Categories/Custom",
+			path = "Head2Head/Categories/Unknown",
 		};
 
 		public static void ClearCache() {
@@ -99,7 +99,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 				return value;
 			}
 			if (!GFX.Gui.Has(path)) {
-				path = "Head2Head/Categories/Custom";
+				path = "Head2Head/Categories/Unknown";
 				if (_guiCache.TryGetValue(path, out value)) {
 					return value;
 				}

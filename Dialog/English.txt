@@ -15,6 +15,7 @@ Head2Head_CountMore= {0} More...
 Head2Head_MapNotInstalled= {0} (Not Installed)
 Head2Head_DefaultRulesetName= Default
 Head2Head_NoLevelSet= No Level Set
+Head2Head_CustomCategories= Custom Categories
 
 Head2Head_MatchTitle= {0} ({1})
 Head2Head_MatchTitle_BerryCount= {0} Berries

@@ -65,7 +65,7 @@ namespace Celeste.Mod.Head2Head.UI {
 			// Add Icons
 			for (int i = 0; i < UsingLevelSet.Chapters.Count; i++) {
 				var opt = UsingLevelSet.Chapters[i];
-				MTexture mTexture = GFX.Gui.GetOrDefault(opt.Icon, GFX.Gui["Head2Head/Categories/Custom"]);
+				MTexture mTexture = GFX.Gui.GetOrDefault(opt.Icon, GFX.Gui["Head2Head/Categories/Unknown"]);
 				MTexture back = mTexture;
 				ChapterIcon icon = new ChapterIcon(opt, mTexture, back, i);
 				icons.Add(icon);

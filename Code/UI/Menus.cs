@@ -711,7 +711,7 @@ namespace Celeste.Mod.Head2Head.UI
 				string newChannel = CNetComm.Instance.CurrentChannel?.Name;
 				if (newChannel == "main") {
 					joinChnlMainBtn?.SoftDisable(menu, "Head2Head_SettingsManager_JoinChannel_AlreadyInThisChannel");
-					joinChnlH2HBtn?.Enable(menu, "");
+					joinChnlH2HBtn?.Enable(menu, "Head2Head_SettingsManager_JoinChannel_h2h_Sub");
 				}
 				else if (newChannel == "h2h") {
 					joinChnlMainBtn?.Enable(menu, "");
@@ -813,6 +813,7 @@ namespace Celeste.Mod.Head2Head.UI
 			btn = menu.AddButton("Head2Head_SettingsManager_Delete", () => {
 				cxt.RandoOptionsFile.Categories.Remove(cxt.CustomRandoCategory);
 				RandomizerCustomOptionsFile.Save();
+				Ruleset.DefaultRulesetStale = true;
 				menu.OnCancel();
 			});
 
