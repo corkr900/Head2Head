@@ -44,7 +44,6 @@ namespace Celeste.Mod.Head2Head.ControlPanel.Commands
 		}
 
 		private static void OnClientConnected(string token) {
-			Outgoing.SendControlPanelVersion(token);
 			foreach (var match in Head2HeadModule.knownMatches.Values) {
                 match?.SendControlPanelUpdate(token);
             }

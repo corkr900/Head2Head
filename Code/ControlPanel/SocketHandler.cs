@@ -197,7 +197,14 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 						stream.Write(response, 0, response.Length);
 
 						// Allocate a client token and send it up
-						byte[] payload = EncodeMessage(JsonSerializer.Serialize(new SerializableCommand("ALLOCATE_TOKEN", Token)));
+						byte[] payload = EncodeMessage(JsonSerializer.Serialize(new SerializableCommand(
+							"WELCOME",
+							new SerializeWelcomeArgs() {
+								Token = Token,
+								Version = ControlPanelCore.VERSION,
+								RandomizerInstalled = Integration.RandomizerIntegration.RandomizerLoaded,
+							}
+						)));
 						stream.Write(payload, 0, payload.Length);
 
 						Logger.Log(LogLevel.Info, "Head2Head", $"New Control Panel client connected. Allocated token {Token}");

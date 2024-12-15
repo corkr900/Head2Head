@@ -49,11 +49,6 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 		private static void SearchMACAddress() {
 			try {
-				//_localMACHash = (
-				//	from nic in NetworkInterface.GetAllNetworkInterfaces()
-				//	where nic.OperationalStatus == OperationalStatus.Up
-				//	select nic.GetPhysicalAddress().ToString()
-				//)?.FirstOrDefault()?.GetHashCode();
 				string macAddr = NetworkInterface.GetAllNetworkInterfaces()
 					.Where(i => i.OperationalStatus == OperationalStatus.Up)
 					.Select(i => i.GetPhysicalAddress().ToString())

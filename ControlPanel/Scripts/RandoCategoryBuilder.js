@@ -37,7 +37,12 @@ function OnReady() {
 	const statusSpan = document.querySelector("#rend_status");
 	if (socket.Version() >= 2) {
 		ready = true;
-		statusSpan.textContent = "Connected and ready!";
+		if (socket.IsRandoAvailable()) {
+			statusSpan.textContent = "Connected and ready!";
+		}
+		else {
+			statusSpan.textContent = "Randomizer is not enabled, but you can still save new categories. Enable the Randomizer mod and restart Everest to play randomizer categories.";
+		}
 	}
 	else {
 		ready = false;

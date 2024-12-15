@@ -9,11 +9,13 @@ function __H2HSocketMkDelegate(obj, func) {
 class H2HSocket {
 	_socketIP = "127.0.0.1";
 	_websocket = {};
-	_clientToken = "TOKEN_NOT_PROVISIONED";
 	_isConnected = false;
-	_cpVersion = -1;
 	_retryConnectionImmediately = false;
 	_reqIDCounter = 1;
+	_cpVersion = -1;
+	_clientToken = "TOKEN_NOT_PROVISIONED";
+	_readyEventSent = false;
+	_randoAvailable = false;
 
 	constructor(targetIP) {
 		if (targetIP) this._socketIP = targetIP;
@@ -47,10 +49,12 @@ class H2HSocket {
 		this._websocket = new WebSocket(this.GetConnectionUri());
 		this._websocket.onopen = (e) => {
 			this._isConnected = true;
+			this._readyEventSent = false;
 			this.OnOpen(e);
 		};
 		this._websocket.onclose = (e) => {
 			this._isConnected = false;
+			this._readyEventSent = false;
 			this.OnClose(e);
 			if (this._retryConnectionImmediately) {
 				this._retryConnectionImmediately = false;
@@ -62,13 +66,15 @@ class H2HSocket {
 		};
 		this._websocket.onmessage = (e) => {
 			const data = JSON.parse(e.data);
-			if (data.Command == "ALLOCATE_TOKEN") {
-				this._clientToken = data.Data;
-				if (this.IsReady(1)) this.OnReady();
-			}
-			else if (data.Command == "CONTROL_PANEL_VERSION") {
-				this._cpVersion = data.Data
-				if (this.IsReady(1)) this.OnReady();
+			if (data.Command == "WELCOME") {
+				this._clientToken = data.Data?.Token;
+				this._cpVersion = data.Data?.Version;
+				this._randoAvailable = data.Data?.RandomizerInstalled;
+
+				if (!this._readyEventSent) {
+					this.OnReady();
+					this._readyEventSent = true;
+				}
 			}
 			else {
 				this.OnMessage(data);
@@ -101,6 +107,10 @@ class H2HSocket {
 
 	Version() {
 		return this._cpVersion;
+	}
+
+	IsRandoAvailable() {
+		return this._randoAvailable;
 	}
 
 }
