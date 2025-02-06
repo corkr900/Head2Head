@@ -522,11 +522,12 @@ namespace Celeste.Mod.Head2Head.Shared {
 				MatchObjectiveType.WingedGoldenStrawberry => "Head2Head/Categories/WingedGolden",
 				//MatchObjectiveType.Flag => "Head2Head/Categories/Unknown",
 				//MatchObjectiveType.EnterRoom => "Head2Head/Categories/Unknown",
+                MatchObjectiveType.DeathraceComplete => "Head2Head/Categories/CheckeredFlag",
 				MatchObjectiveType.TimeLimit => "Head2Head/Categories/TimeLimit",
 				//MatchObjectiveType.CustomCollectable => "Head2Head/Categories/Unknown",
 				//MatchObjectiveType.CustomObjective => "Head2Head/Categories/Unknown",
 				//MatchObjectiveType.UnlockChapter => "Head2Head/Categories/Unknown",
-				MatchObjectiveType.RandomizerClear => "Head2Head/Categories/Clear",
+				MatchObjectiveType.RandomizerClear => "Head2Head/Categories/CheckeredFlag",
 				_ => null,
 			};
 		}
@@ -545,6 +546,8 @@ namespace Celeste.Mod.Head2Head.Shared {
         Flag = 8,
         EnterRoom = 9,
         TimeLimit = 10,
+		// Other Modes
+		DeathraceComplete = 200,
 		// Fullgame
 		UnlockChapter = 500,
 		// Special
@@ -552,7 +555,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 		// Custom
 		CustomObjective = 1000,
 		CustomCollectable = 1001,
-    }
+	}
 
     /// <summary>
     /// Discrete states a Match can be in.
@@ -571,6 +574,7 @@ namespace Celeste.Mod.Head2Head.Shared {
     /// </summary>
     public enum MatchRule {
         NoGrabbing,
+        DnfOnDeath,
     }
 
     public static class MatchExtensions {

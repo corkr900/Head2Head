@@ -199,6 +199,7 @@ Head2Head_ObjectiveLabel_GoldenStrawberry= Golden Berry
 Head2Head_ObjectiveLabel_WingedGoldenStrawberry= Winged Golden
 Head2Head_ObjectiveLabel_Flag= Unknown Flag
 Head2Head_ObjectiveLabel_EnterRoom= Enter Room
+Head2Head_ObjectiveLabel_DeathraceComplete= Complete the Race
 Head2Head_ObjectiveLabel_RandomizerClear= Randomizer Clear
 
 Head2Head_MatchStatus_None= Unknown
@@ -233,8 +234,10 @@ Head2Head_DNFReason_TAS= TAS
 Head2Head_DNFReason_RandomizerError= Randomizer Error
 Head2Head_DNFReason_EnabledVariant= Variant/Assist Mode
 Head2Head_DNFReason_DisabledRequiredVariant= Disabled Variant/Assist
+Head2Head_DNFReason_Died= Died
 
 Head2Head_RuleLabel_NoGrabbing= No Grabbing
+Head2Head_RuleLabel_DnfOnDeath= DNF On Death
 
 Head2Head_UntitledMatch= Untitled Match
 

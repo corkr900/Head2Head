@@ -1,6 +1,4 @@
 ﻿using Celeste.Editor;
-using Celeste.Mod;
-using Celeste.Mod.Head2Head.Control;
 using Celeste.Mod.Head2Head.Data;
 using Celeste.Mod.Head2Head.IO;
 using Celeste.Mod.Head2Head.Shared;
@@ -12,8 +10,6 @@ using Monocle;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using MonoMod.Utils;
 using Celeste.Mod.Head2Head.Entities;
 using System.Collections;
@@ -21,13 +17,10 @@ using MonoMod.RuntimeDetour;
 using System.Reflection;
 using MonoMod.Cil;
 using Mono.Cecil.Cil;
-using Celeste.Mod.UI;
 using Celeste.Mod.Head2Head.UI;
 using Celeste.Mod.Head2Head.Integration;
 using MonoMod.ModInterop;
 using Celeste.Mod.Head2Head.ControlPanel;
-using System.Text.RegularExpressions;
-using static Celeste.GaussianBlur;
 using Celeste.Mod.Head2Head.ControlPanel.Commands;
 
 // TODO Force DNF if a player intentionally closes the game
@@ -42,7 +35,7 @@ namespace Celeste.Mod.Head2Head
 		internal const string BTA_MATCH_PASS = "BTAMatchPass";
 
 		// Constants that might change in the future
-		public static readonly string ProtocolVersion = "1_2_4";
+		public static readonly string ProtocolVersion = "1_2_6";
 
 		// Other static stuff
 		public static Head2HeadModule Instance { get; private set; }
@@ -166,6 +159,7 @@ namespace Celeste.Mod.Head2Head
 			Everest.Events.Level.OnTransitionTo += onRoomTransition;
 			Everest.Events.Level.OnCreatePauseMenuButtons += OnCreatePauseMenuButtons;
 			Everest.Events.Celeste.OnExiting += OnExiting;
+			Everest.Events.Player.OnDie += OnPlayerDie;
 
 			// CelesteNet events
 			CNetComm.OnConnected += OnConnected;
@@ -256,6 +250,7 @@ namespace Celeste.Mod.Head2Head
 			Everest.Events.Level.OnTransitionTo -= onRoomTransition;
 			Everest.Events.Level.OnCreatePauseMenuButtons -= OnCreatePauseMenuButtons;
 			Everest.Events.Celeste.OnExiting -= OnExiting;
+			Everest.Events.Player.OnDie += OnPlayerDie;
 
 			// CelesteNet events
 			CNetComm.OnConnected -= OnConnected;
@@ -899,6 +894,15 @@ namespace Celeste.Mod.Head2Head
 				OptionsMenuOverride(self, returnIndex, minimal, "MENU_ASSIST_TITLE", "Head2Head_menu_override_assist_subtitle");
 			}
 			else orig(self, returnIndex, minimal);
+		}
+
+		private void OnPlayerDie(Player player) {
+			if (PlayerStatus.Current.IsInMatch(false)
+				&& PlayerStatus.Current?.CurrentMatch is MatchDefinition def
+				&& def.Rules.Contains(MatchRule.DnfOnDeath))
+			{
+				PlayerStatus.Current.BreakRule(MatchRule.DnfOnDeath, DNFReason.Died);
+			}
 		}
 
 		private void OptionsMenuOverride(Level self, int returnIndex, bool minimal, string header, string subtitle) {

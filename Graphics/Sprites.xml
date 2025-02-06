@@ -16,6 +16,10 @@
 		<Loop id="idle" path="Idle" delay=".27" frames="0,0,0,1,2,2,2,1" />
 	</Head2Head_SettingsManager>
 
+	<Head2Head_DeathraceSelector path="Head2Head/DeathraceSelector/" start="idle">
+		<Loop id="idle" path="Idle" delay=".27" frames="0,0,0,1,2,2,2,1" />
+	</Head2Head_DeathraceSelector>
+
 	<Head2Head_MatchSwitch_Stage path="Head2Head/MatchSwitch/Stage" start="idle">
 		<Justify x="0.5" y="0.5"/>
 		<Loop id="idle" path="" delay="0.08" frames="0-20"/>

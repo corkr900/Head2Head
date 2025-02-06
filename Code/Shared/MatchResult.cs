@@ -64,6 +64,7 @@ namespace Celeste.Mod.Head2Head.Shared {
         RandomizerError,
         EnabledVariant,
         DisabledRequiredVariant,
+        Died,
     }
 
     public static class MatchResultExtensions {
