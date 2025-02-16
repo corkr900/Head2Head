@@ -71,6 +71,7 @@ namespace Celeste.Mod.Head2Head.UI {
 		#region Banner
 
 		private bool ShouldRenderBanner(Scene scene, MatchDefinition def) {
+			// TODO handle other selectors
 			return def != null && ILSelector.ActiveSelector == null && FullgameSelector.ActiveSelector == null;
 		}
 

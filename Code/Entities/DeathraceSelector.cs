@@ -14,7 +14,8 @@ namespace Celeste.Mod.Head2Head.Entities {
 
 		private Sprite sprite;
 		private TalkComponent talkComponent;
-		//private Player player;
+		private Player player;
+		public static DeathraceSelector ActiveSelector { get; private set; }
 
 		public DeathraceSelector(EntityData data, Vector2 offset) {
 			Position = data.Position + offset;
@@ -28,8 +29,37 @@ namespace Celeste.Mod.Head2Head.Entities {
 			) { PlayerMustBeFacing = false });
 		}
 
-		private void OpenUI(Player p) {
-			// TODO
+		public override void Added(Scene scene) {
+			base.Added(scene);
+			UpdateEnabledState();
+			Head2HeadModule.OnMatchCurrentMatchUpdated += UpdateEnabledState;
+		}
+
+		public override void Removed(Scene scene) {
+			base.Removed(scene);
+			Head2HeadModule.OnMatchCurrentMatchUpdated -= UpdateEnabledState;
+		}
+
+		private void UpdateEnabledState() {
+			talkComponent.Enabled = Head2HeadModule.Instance.CanBuildFullgameMatch();
+		}
+
+		private void OpenUI(Player player) {
+			ActiveSelector = this;
+			this.player = player;
+			player.StateMachine.State = Player.StDummy;
+			player.SceneAs<Level>().PauseLock = true;
+
+			DeathraceSelectorUI ui = new DeathraceSelectorUI();
+			ui.OnRemove += CloseUI;
+			Scene.Add(ui);
+			Audio.Play("event:/ui/world_map/icon/select");
+		}
+
+		public void CloseUI() {
+			player.StateMachine.State = Player.StNormal;
+			player.SceneAs<Level>().PauseLock = false;
+			ActiveSelector = null;
 		}
 	}
 }
