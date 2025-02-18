@@ -16,9 +16,9 @@ namespace Celeste.Mod.Head2Head.ControlPanel.Commands
     internal class Incoming
     {
 
-        public static void Register()
-        {
-            ControlPanelCore.RegisterCommand("test_incoming", TestIncoming);
+        public static void Register() {
+            ControlPanelCore.RegisterCommand("subscriptions", Subscriptions);
+			ControlPanelCore.RegisterCommand("test_incoming", TestIncoming);
 			ControlPanelCore.RegisterCommand("request_image", RequestImage);
 			ControlPanelCore.RegisterCommand("stage_match", StageMatch);
 			ControlPanelCore.RegisterCommand("join_match", JoinMatch);
@@ -50,6 +50,35 @@ namespace Celeste.Mod.Head2Head.ControlPanel.Commands
 			Outgoing.ControlPanelActionsUpdate(token);
 		}
 
+		private static void Subscriptions(ControlPanelPacket packet) {
+			string clientToken = packet.ClientToken;
+			ClientSocket cli = ControlPanelCore.GetClient(clientToken);
+			if (cli == null) {
+				Logger.Log(LogLevel.Warn, "Head2Head", $"Tried to set subscriptions for nonexistant client with token '{clientToken}'.");
+				return;
+			}
+			if (packet.Json.TryGetProperty("remove", out JsonElement removals)) {
+				if (removals.ValueKind != JsonValueKind.Array) {
+					Logger.Log(LogLevel.Error, "Head2Head", $"Subscriptions command: unexpected value kind for property 'remove'. Epected Array, got '{removals.ValueKind}'.");
+					return;
+				}
+				foreach (JsonElement elem in removals.EnumerateArray()) {
+					string command = elem.GetString();
+					cli.SetSubscription(command, false);
+				}
+			}
+			if (packet.Json.TryGetProperty("add", out JsonElement additions)) {
+				if (additions.ValueKind != JsonValueKind.Array) {
+					Logger.Log(LogLevel.Error, "Head2Head", $"Subscriptions command: unexpected value kind for property 'add'. Epected Array, got '{additions.ValueKind}'.");
+					return;
+				}
+				foreach (JsonElement elem in additions.EnumerateArray()) {
+					string command = elem.GetString();
+					cli.SetSubscription(command, true);
+				}
+			}
+		}
+
 		private static void TestIncoming(ControlPanelPacket pack)
         {
             Engine.Commands.Log($"Incoming test message: {pack.Json}");
@@ -60,15 +89,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel.Commands
 			int pos = request.IndexOf(':');
 			string atlas = request[..pos];
 			string path = request[(pos + 1)..];
-			ControlPanelPacket outgoing = atlas switch {
-				"gui" => ControlPanelPacket.CreateOutgoing(
-					"IMAGE",
-					SerializeImage.FromGui(path, true),
-					pack.ClientToken
-				),
-				_ => null
-			};
-			if (outgoing != null) ControlPanelCore.SendImmediate(outgoing);
+			Outgoing.ImageData(atlas, path, pack.ClientToken);
 		}
 
 		private static void StageMatch(ControlPanelPacket packet) {

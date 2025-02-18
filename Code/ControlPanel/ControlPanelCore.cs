@@ -60,7 +60,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 				System.Diagnostics.StackTrace t = new System.Diagnostics.StackTrace();
 				Logger.Log(LogLevel.Warn, "Head2Head", $"Tried to send a null packet.\n{t}");
 			}
-			else SocketHandler.Send(packet.Payload, packet.ClientToken);
+			else SocketHandler.SafeSend(packet);
 		}
 
 		internal static void FlushIncoming() {
@@ -80,5 +80,8 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 			}
 		}
 
+		internal static ClientSocket GetClient(string client) {
+			return SocketHandler.clients.TryGetValue(client, out ClientSocket socket) ? socket : null;
+		}
 	}
 }

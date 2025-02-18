@@ -16,6 +16,7 @@ class H2HSocket {
 	_clientToken = "TOKEN_NOT_PROVISIONED";
 	_readyEventSent = false;
 	_randoAvailable = false;
+	_subscriptions = null;
 
 	constructor(targetIP) {
 		if (targetIP) this._socketIP = targetIP;
@@ -75,6 +76,9 @@ class H2HSocket {
 					this.OnReady();
 					this._readyEventSent = true;
 				}
+				if (this._subscriptions) {
+					this.Send("subscriptions", this._subscriptions);
+				}
 			}
 			else {
 				this.OnMessage(data);
@@ -83,6 +87,16 @@ class H2HSocket {
 		this._websocket.onerror = (e) => {
 			this.OnError(e);
 		};
+	}
+
+	Subscriptions(add, remove) {
+		this._subscriptions = {
+			"add": add,
+			"remove": remove,
+		};
+		if (this.IsReady()) {
+			this.Send("subscriptions", this._subscriptions);
+		}
 	}
 
 	ChangeConnection(ipToConnect) {

@@ -3,6 +3,7 @@ using Celeste.Mod.Head2Head.Shared;
 using Monocle;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
@@ -69,6 +70,17 @@ namespace Celeste.Mod.Head2Head.ControlPanel.Commands {
 				targetClientToken,
 				requestID
 			));
+		}
+
+		public static void ImageData(string atlas, string path, string targetClientToken) {
+			ControlPanelPacket outgoing = atlas switch {
+				"gui" => ControlPanelPacket.CreateOutgoing(
+					"IMAGE",
+					SerializeImage.FromGui(path, true),
+					targetClientToken),
+				_ => null
+			};
+			if (outgoing != null) ControlPanelCore.SendImmediate(outgoing);
 		}
 
 	}

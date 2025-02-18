@@ -8,6 +8,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using static Celeste.Mod.CelesteNet.DataTypes.DataInternalBlob;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Celeste.Mod.Head2Head.ControlPanel {
 	internal class ControlPanelPacket {
@@ -41,8 +42,19 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 		/// <summary>
 		/// The raw data payload for outgoing packets
 		/// </summary>
-		public string Payload { get; set; }
+		public string Payload {
+			get {
+				if (_deferredSerializationData != null) {
+					_serailizedData = JsonSerializer.Serialize(new SerializableCommand(Command, _deferredSerializationData));
+					_deferredSerializationData = null;
+				}
+				return _serailizedData;
+			}
+		}
+		private string _serailizedData = null;
 		public string RequestID { get; private set; }
+
+		private object _deferredSerializationData = null;
 
 		private ControlPanelPacket() { }
 
@@ -82,13 +94,12 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 
 		internal static ControlPanelPacket CreateOutgoing(string command, object data, string targetToken = "", string requestID = "") {
 			try {
-				string doc = JsonSerializer.Serialize(new SerializableCommand(command, data));
 				ControlPanelPacket packet = new();
 				packet.Outgoing = true;
 				packet.ClientToken = targetToken;
 				packet.Command = command;
-				packet.Payload = doc;
 				packet.RequestID = requestID;
+				packet._deferredSerializationData = data;
 				return packet;
 			}
 			catch (Exception e) {

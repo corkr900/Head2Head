@@ -14,6 +14,7 @@ using System.Text.Json.Nodes;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using System.Text.Json;
 using Celeste.Mod.CelesteNet.Client;
+using Celeste.Mod.Head2Head.ControlPanel.Commands;
 
 namespace Celeste.Mod.Head2Head.ControlPanel {
 
@@ -115,20 +116,26 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 			Logger.Log(LogLevel.Warn, "Head2Head", $"Stopped listening for new Control Panel connections.");
 		}
 
-		internal static void Send(string message, string clientToken = "") {
-			byte[] payload = ClientSocket.EncodeMessage(message);
-			bool allClients = string.IsNullOrEmpty(clientToken);
+		internal static void SafeSend(ControlPanelPacket packet) {
+			byte[] payload = null;  // Defer any serialization until we know we're going to send it to a client
+			bool allClients = string.IsNullOrEmpty(packet.ClientToken);
 			lock (ServerLock) {
 				if (allClients) {
 					foreach (ClientSocket client in clients.Values) {
-						client.Send(payload);
+						if (client.CanSend(packet)) {
+							payload ??= ClientSocket.EncodeMessage(packet.Payload);
+							client.Send_Internal(payload);
+						}
 					}
 				}
-				else if (clients.TryGetValue(clientToken, out ClientSocket sock) && sock.Connected) {
-					sock.Send(payload);
+				else if (clients.TryGetValue(packet.ClientToken, out ClientSocket sock) && sock.Connected) {
+					if (sock.CanSend(packet)) {
+						payload ??= ClientSocket.EncodeMessage(packet.Payload);
+						sock.Send_Internal(payload);
+					}
 				}
 				else {
-					Logger.Log(LogLevel.Warn, "Head2Head", $"Could not send control panel packet to client '{clientToken}': client disconnected or does not exist");
+					Logger.Log(LogLevel.Warn, "Head2Head", $"Could not send control panel packet to client '{packet.ClientToken}': client disconnected or does not exist");
 				}
 			}
 		}
@@ -146,6 +153,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 		private readonly Socket socket;
 		private readonly Thread thread;
 		private NetworkStream stream;
+		private CommandSubscription[] subscriptions = CommandSubscription.AllAvailableSubscriptions().ToArray();
 
 		internal ClientSocket(Socket socket) {
 			Token = ClientToken.GetNew();
@@ -355,10 +363,33 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 			socket?.Dispose();
 		}
 
-		internal void Send(byte[] payload) {
+		internal void Send_Internal(byte[] payload) {
 			if (Connected) {
-				stream?.Write(payload, 0, payload.Length);
+				try {
+					stream?.Write(payload, 0, payload.Length);
+				}
+				catch(Exception e) {
+					Logger.Log(LogLevel.Error, "Head2Head", $"Error occurred writing to Control Panel websocket: {e.Message}\n{e.StackTrace}");
+				}
 			}
+		}
+
+		internal bool CanSend(ControlPanelPacket packet) {
+			foreach (CommandSubscription cs in subscriptions) {
+				if (cs.Commands.Contains(packet.Command) && cs.Subscribed) return true;
+			}
+			return false;
+		}
+
+		public bool SetSubscription(string subscriptionName, bool newState) {
+			subscriptionName = subscriptionName.ToUpper();
+			foreach (CommandSubscription cs in subscriptions) {
+				if (cs.SubscriptionName == subscriptionName) {
+					cs.Subscribed = newState;
+					return true;
+				}
+			}
+			return false;
 		}
 	}
 }

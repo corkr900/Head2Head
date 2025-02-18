@@ -1,16 +1,24 @@
 // http://www.websocket.org/echo.html
 let socketIP = "127.0.0.1";
 const placeholderImage = "https://github.com/corkr900/Head2Head/blob/main/Graphics/Atlases/Gui/Head2Head/Categories/Custom.png?raw=true";
-let websocket = {};
-let clientToken = "TOKEN_NOT_PROVISIONED";
 let imageCache = {};
 let printErrors = false;
 let isDebugMode = false;
-let immediateTryReconnect = false;
 let enableIpEntry = false;
 
 HandleParams();
-TryConnect();
+
+// Set up the socket
+let socket = new H2HSocket(socketIP);
+socket.Subscriptions([
+	"current_match",
+	"other_match",
+	"match_forgotten",
+	"update_actions",
+]);
+socket.OnReady = OnReady;
+socket.OnClose = OnDisconnected;
+socket.OnMessage = OnMessage;
 
 function GetConnectionUri() {
 	return `ws://${socketIP}:8080/`;
@@ -37,75 +45,45 @@ function HandleParams() {
 	}
 }
 
-function TryConnect() {
-	websocket = new WebSocket(GetConnectionUri());
-	websocket.onopen = (e) => {
-		writeToScreen(`CONNECTED: ${JSON.stringify(e, null, 4)}`);
-		printErrors = true;
-		HandleConnectionUpdate(true);
-	};
-	websocket.onclose = (e) => {
-		if (printErrors) writeToScreen(`DISCONNECTED: ${JSON.stringify(e, null, 4)}`);
-		printErrors = false;
-		HandleConnectionUpdate(false);
-		if (immediateTryReconnect) {
-			immediateTryReconnect = false;
-			TryConnect();
-		}
-		else {
-			setTimeout(TryConnect, 500);
-		}
-	};
-	websocket.onmessage = (e) => {
-		writeToScreen(`RECEIVED: ${e.data}`);
-		HandleMessage(JSON.parse(e.data));
-	};
-	websocket.onerror = (e) => {
-		if (printErrors) writeToScreen(`<span class="error">ERROR:</span> ${JSON.stringify(e, null, 4)}`);
-	};
+function OnReady() {
+	HandleConnectionUpdate(true);
 }
 
-function HandleMessage(data) {
-	if (data.Command == "ALLOCATE_TOKEN") {
-		clientToken = data.Data;
+function OnDisconnected(e) {
+	HandleConnectionUpdate(false);
+}
+
+function OnMessage(msg) {
+	if (isDebugMode) {
+		writeToScreen(`RECEIVED: ${JSON.stringify(msg, null, 4)}`);
 	}
-	else if (data.Command == "CURRENT_MATCH") {
-		RenderCurrentMatchInfo(data.Data);
-		RenderOtherMatchInfo(data.Data);
+	if (msg.Command == "CURRENT_MATCH") {
+		RenderCurrentMatchInfo(msg.Data);
+		RenderOtherMatchInfo(msg.Data);
 	}
-	else if (data.Command == "OTHER_MATCH") {
-		RenderOtherMatchInfo(data.Data);
+	else if (msg.Command == "OTHER_MATCH") {
+		RenderOtherMatchInfo(msg.Data);
 	}
-	else if (data.Command == "IMAGE") {
-		imageCache[data.Data.Id] = data.Data.ImgSrc;
-		for (const elem of document.querySelectorAll(`[h2h_img_src|="${data.Data.Id}"]`)) {
-			elem.setAttribute("src", imageCache[data.Data.Id]);
+	else if (msg.Command == "IMAGE") {
+		imageCache[msg.Data.Id] = msg.Data.ImgSrc;
+		for (const elem of document.querySelectorAll(`[h2h_img_src|="${msg.Data.Id}"]`)) {
+			elem.setAttribute("src", imageCache[msg.Data.Id]);
 		}
 	}
-	else if (data.Command == "MATCH_NOT_CURRENT") {
-		if (GetCurMatchId() == data.Data) {
+	else if (msg.Command == "MATCH_NOT_CURRENT") {
+		if (GetCurMatchId() == msg.Data) {
 			RenderCurrentMatchInfo(null);
 		}
 	}
-	else if (data.Command == "MATCH_FORGOTTEN") {
-		RemoveMatchInfo(data.Data);
+	else if (msg.Command == "MATCH_FORGOTTEN") {
+		RemoveMatchInfo(msg.Data);
 	}
-	else if (data.Command == "MATCH_LOG") {
-		RenderLog(data.Data);
+	else if (msg.Command == "MATCH_LOG") {
+		RenderLog(msg.Data);
 	}
-	else if (data.Command == "UPDATE_ACTIONS") {
-		UpdateActions(data.Data);
+	else if (msg.Command == "UPDATE_ACTIONS") {
+		UpdateActions(msg.Data);
 	}
-}
-
-function doSend(command, data) {
-	const message = JSON.stringify({
-		Command: command,
-		Token: clientToken,
-		Data: data ?? {}
-	});
-	writeToScreen(`SENT: ${message}`);
-	websocket.send(message);
 }
 
 function writeToScreen(message) {
@@ -127,7 +105,7 @@ function GetH2HImageElement(image) {
 		if (imageCache[image.Id]) src = imageCache[image.Id];
 		else {
 			// TODO this can send duplicates if multiple of the same image comes in on the same request
-			doSend("REQUEST_IMAGE", image.Id);
+			socket.Send("REQUEST_IMAGE", image.Id);
 			src = placeholderImage;
 		}
 	}
@@ -141,8 +119,7 @@ function GetH2HImageElement(image) {
 
 function onConnectToIpClick() {
 	socketIP = document.getElementById("ipInput")?.value ?? socketIP;
-	immediateTryReconnect = true;
-	websocket.close();
+	socket.ChangeConnection(socketIP);
 }
 
 function UpdateActions(data) {
@@ -150,27 +127,27 @@ function UpdateActions(data) {
 	mainActionsDiv.textContent = "";
 	if (data.AvailableActions.includes("UNSTAGE_MATCH")) {
 		const btn = MakeButton("Remove Overlay", () => {
-			doSend("UNSTAGE_MATCH");
+			socket.Send("UNSTAGE_MATCH");
 		});
 		mainActionsDiv.appendChild(btn);
 	}
 	if (data.AvailableActions.includes("DBG_PURGE_DATA")) {
 		const btn = MakeButton("(Debug) Purge Data)", () => {
-			doSend("DBG_PURGE_DATA");
+			socket.Send("DBG_PURGE_DATA");
 		});
 		mainActionsDiv.appendChild(btn);
 
 	}
 	if (data.AvailableActions.includes("DBG_PULL_DATA")) {
 		const btn = MakeButton("(Debug) Pull Data", () => {
-			doSend("DBG_PULL_DATA");
+			socket.Send("DBG_PULL_DATA");
 		});
 		mainActionsDiv.appendChild(btn);
 
 	}
 	if (data.AvailableActions.includes("GIVE_MATCH_PASS")) {
 		const btn = MakeButton("Give Match Pass", () => {
-			//doSend("GIVE_MATCH_PASS");
+			//socket.Send("GIVE_MATCH_PASS");
 			alert("This has not been implemented yet.");
 		});
 		mainActionsDiv.appendChild(btn);
@@ -178,7 +155,7 @@ function UpdateActions(data) {
 	}
 	if (data.AvailableActions.includes("GO_TO_LOBBY")) {
 		const btn = MakeButton("Go To H2H Lobby", () => {
-			doSend("GO_TO_LOBBY");
+			socket.Send("GO_TO_LOBBY");
 		});
 		mainActionsDiv.appendChild(btn);
 
@@ -378,7 +355,7 @@ function RenderMatchPlayerRow(player, table, match) {
 	const actionsTd = document.createElement("td");
 	if (isDebugMode || player.Actions.includes("GET_OTHER_MATCH_LOG")) {
 		const btn = MakeButton("Get Log", () => {
-			doSend("GET_OTHER_MATCH_LOG", {
+			socket.Send("GET_OTHER_MATCH_LOG", {
 				matchID: match.InternalID,
 				playerID: player.Id,
 			});
@@ -421,7 +398,7 @@ function RenderMatchActionButtons(match, container) {
 	if (match.AvailableActions.includes("STAGE_MATCH")) {
 		const cell = document.createElement(elemType);
 		cell.appendChild(MakeButton("Stage", () => {
-			doSend("STAGE_MATCH", match.InternalID);
+			socket.Send("STAGE_MATCH", match.InternalID);
 		}));
 		buttonsContainer.appendChild(cell);
 	}
@@ -429,7 +406,7 @@ function RenderMatchActionButtons(match, container) {
 	if (match.AvailableActions.includes("JOIN_MATCH")) {
 		const cell = document.createElement(elemType);
 		cell.appendChild(MakeButton("Join", () => {
-			doSend("JOIN_MATCH", match.InternalID);
+			socket.Send("JOIN_MATCH", match.InternalID);
 		}));
 		buttonsContainer.appendChild(cell);
 	}
@@ -437,7 +414,7 @@ function RenderMatchActionButtons(match, container) {
 	if (match.AvailableActions.includes("START_MATCH")) {
 		const cell = document.createElement(elemType);
 		cell.appendChild(MakeButton("Start", () => {
-			doSend("START_MATCH", match.InternalID);
+			socket.Send("START_MATCH", match.InternalID);
 		}));
 		buttonsContainer.appendChild(cell);
 	}
@@ -446,7 +423,7 @@ function RenderMatchActionButtons(match, container) {
 		const cell = document.createElement(elemType);
 		cell.classList.add("keepAfterForgotten");
 		cell.appendChild(MakeButton("Get Log", () => {
-			doSend("GET_MY_MATCH_LOG", match.InternalID);
+			socket.Send("GET_MY_MATCH_LOG", match.InternalID);
 		}));
 		buttonsContainer.appendChild(cell);
 	}
@@ -454,7 +431,7 @@ function RenderMatchActionButtons(match, container) {
 	if (match.AvailableActions.includes("MATCH_DROP_OUT")) {
 		const cell = document.createElement(elemType);
 		cell.appendChild(MakeButton("Drop Out", () => {
-			doSend("MATCH_DROP_OUT", match.InternalID);
+			socket.Send("MATCH_DROP_OUT", match.InternalID);
 		}));
 		buttonsContainer.appendChild(cell);
 	}
@@ -463,7 +440,7 @@ function RenderMatchActionButtons(match, container) {
 		const cell = document.createElement(elemType);
 		cell.appendChild(MakeButton("End Match", () => {
 			if (confirm("The match will be ended for all players. This is a disruptive action. Continue?") == true) {
-				doSend("KILL_MATCH", match.InternalID);
+				socket.Send("KILL_MATCH", match.InternalID);
 			}
 		}));
 		buttonsContainer.appendChild(cell);
@@ -472,7 +449,7 @@ function RenderMatchActionButtons(match, container) {
 	if (match.AvailableActions.includes("FORGET_MATCH")) {
 		const cell = document.createElement(elemType);
 		cell.appendChild(MakeButton("Forget", () => {
-			doSend("FORGET_MATCH", match.InternalID);
+			socket.Send("FORGET_MATCH", match.InternalID);
 		}));
 		buttonsContainer.appendChild(cell);
 	}
