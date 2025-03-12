@@ -72,6 +72,9 @@ namespace Celeste.Mod.Head2Head.Shared {
 				chap.Data = new GlobalAreaKey(chapterMeta.MapSID).Data;
 				chap.Title = chapterMeta.Name;
 				chap.Icon = chapterMeta.Icon;
+				if (string.IsNullOrEmpty(chap.Title) && chap.Data != null) {
+					chap.Title = chap.Data.CompleteScreenName;
+				}
 				if (string.IsNullOrEmpty(chap.Icon) && chap.Data != null) {
 					chap.Icon = chap.Data.Icon;
 				}
