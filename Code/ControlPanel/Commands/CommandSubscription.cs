@@ -45,6 +45,28 @@ namespace Celeste.Mod.Head2Head.ControlPanel.Commands {
 			Subscribed = true,
 		};
 
+		/// <summary>
+		/// The websocket will reply to a GET_PLAYER_LIST command with a list of players.
+		/// Subscribed by default since this is only sent as a response to a client command.
+		/// Commands: PLAYER_LIST
+		/// </summary>
+		public static CommandSubscription PlayerListManual => new CommandSubscription() {
+			SubscriptionName = "PLAYER_LIST",
+			Commands = new string[] { "PLAYER_LIST" },
+			Subscribed = true,
+		};
+
+		/// <summary>
+		/// The websocket will reply to a GET_ENABLED_MODS command with a PLAYER_ENABLED_MODS command.
+		/// Subscribed by default since this is only sent as a response to a client command.
+		/// Commands: PLAYER_ENABLED_MODS
+		/// </summary>
+		public static CommandSubscription PlayerEnabledMods => new CommandSubscription() {
+			SubscriptionName = "PLAYER_ENABLED_MODS",
+			Commands = new string[] { "PLAYER_ENABLED_MODS" },
+			Subscribed = true,
+		};
+
 		#endregion default-on subscriptions
 
 		#region Optional Subscriptions
@@ -95,6 +117,8 @@ namespace Celeste.Mod.Head2Head.ControlPanel.Commands {
 			yield return CommandResult;
 			yield return MatchLog;
 			yield return ImageData;
+			yield return PlayerListManual;
+			yield return PlayerEnabledMods;
 			yield return CurrentMatch;
 			yield return OtherMatch;
 			yield return MatchForgotten;

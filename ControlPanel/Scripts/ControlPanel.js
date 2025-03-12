@@ -84,6 +84,12 @@ function OnMessage(msg) {
 	else if (msg.Command == "UPDATE_ACTIONS") {
 		UpdateActions(msg.Data);
 	}
+	else if (msg.Command == "PLAYER_LIST") {
+		UpdatePlayerList(msg.Data);
+	}
+	else if (msg.Command == "PLAYER_ENABLED_MODS") {
+		alert(msg.Data);
+	}
 }
 
 function writeToScreen(message) {
@@ -145,20 +151,17 @@ function UpdateActions(data) {
 		mainActionsDiv.appendChild(btn);
 
 	}
-	if (data.AvailableActions.includes("GIVE_MATCH_PASS")) {
-		const btn = MakeButton("Give Match Pass", () => {
-			//socket.Send("GIVE_MATCH_PASS");
-			alert("This has not been implemented yet.");
-		});
-		mainActionsDiv.appendChild(btn);
-
-	}
 	if (data.AvailableActions.includes("GO_TO_LOBBY")) {
 		const btn = MakeButton("Go To H2H Lobby", () => {
 			socket.Send("GO_TO_LOBBY");
 		});
 		mainActionsDiv.appendChild(btn);
-
+	}
+	if (data.AvailableActions.includes("GET_PLAYER_LIST")) {
+		const btn = MakeButton("Refresh Player List", () => {
+			socket.Send("GET_PLAYER_LIST");
+		});
+		mainActionsDiv.appendChild(btn);
 	}
 }
 
@@ -497,6 +500,7 @@ function RenderLog(log) {
 		LevelExitMode: "Exit Mode",
 		SaveDataIndex: "Save Data Slot",
 		MatchID: "Match ID",
+		Details: "Details",
 	});
 	for (const evt of log.Events) {
 		RenderLogRow(table, evt);
@@ -511,8 +515,44 @@ function RenderLogRow(table, evt) {
 	for (const key in evt) {
 		const td = newRow.querySelector(`[field|="${key}"]`);
 		if (td) {
-			td.textContent = evt[key];
+			if (evt[key] && evt[key].length > 120) {
+				td.appendChild(MakeButton("Show", () => {
+					alert(evt[key]);
+				}));
+			}
+			else {
+				td.textContent = evt[key];
+			}
 		}
 	}
 	table.appendChild(newRow);
+}
+
+function UpdatePlayerList(data) {
+	const container = document.querySelector("#playersCardBody");
+	if (!data || !data.Players) {
+		container.textContent = "There are no known players.";
+		return;
+	}
+	container.textContent = "";
+	let table = document.createElement("table");
+	const template = document.querySelector("#PlayerListRowTemplate");
+	for (const playerData of data.Players) {
+		const newRow = template.content.cloneNode(true);
+		const tdPlayer = newRow.querySelector(`[field|=PlayerName]`);
+		tdPlayer.textContent = playerData.Id.DisplayName;
+		const tdActions = newRow.querySelector(`[field|=Actions]`);
+		if (playerData.Commands.includes("GIVE_MATCH_PASS")) {
+			tdActions.appendChild(MakeButton("Give Match Pass", () => {
+				socket.Send("GIVE_MATCH_PASS", { playerID: playerData.Id.SerializedID });
+			}));
+		}
+		if (playerData.Commands.includes("GET_ENABLED_MODS")) {
+			tdActions.appendChild(MakeButton("Get Enabled Mods", () => {
+				socket.Send("GET_ENABLED_MODS", { playerID: playerData.Id.SerializedID });
+			}));
+		}
+		table.appendChild(newRow);
+	}
+	container.appendChild(table);
 }

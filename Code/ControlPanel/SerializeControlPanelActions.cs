@@ -16,6 +16,8 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 			List<string> ret = new();
 			MatchDefinition def = PlayerStatus.Current.CurrentMatch;
 
+			ret.Add("GET_PLAYER_LIST");
+
 			if (def?.PlayerCanLeaveFreely(PlayerID.MyIDSafe) == true) {
 				ret.Add("UNSTAGE_MATCH");
 			}
@@ -27,6 +29,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 			if (RoleLogic.CanGrantMatchPass()) {
 				ret.Add("GIVE_MATCH_PASS");
 			}
+
 			bool menuHasDropOutButton = (!def?.PlayerCanLeaveFreely(PlayerID.MyIDSafe)) ?? false;
 			bool isNoSavefile = SaveData.Instance?.FileSlot == null;
 			if (!menuHasDropOutButton && !isNoSavefile && !PlayerStatus.Current.CurrentArea.Equals(GlobalAreaKey.Head2HeadLobby)) {

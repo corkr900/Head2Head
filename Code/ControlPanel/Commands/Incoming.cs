@@ -35,6 +35,8 @@ namespace Celeste.Mod.Head2Head.ControlPanel.Commands
 			ControlPanelCore.RegisterCommand("go_to_Lobby", GoToLobby);
 			ControlPanelCore.RegisterCommand("stage_custom_rando", StageCustomRandomizerMatch);
 			ControlPanelCore.RegisterCommand("save_custom_rando", SaveCustomRandomizerCategory);
+			ControlPanelCore.RegisterCommand("get_player_list", GetPlayerList);
+			ControlPanelCore.RegisterCommand("get_enabled_mods", GetEnabledMods);
 			ClientSocket.OnClientConnected += OnClientConnected;
         }
 
@@ -201,10 +203,12 @@ namespace Celeste.Mod.Head2Head.ControlPanel.Commands
 		}
 
 		private static void GiveMatchPass(ControlPanelPacket packet) {
-			if (packet.Json.TryGetProperty("playerID", out JsonElement prop)) {
+			if (packet.Json.TryGetProperty("playerID", out JsonElement prop) && RoleLogic.CanGrantMatchPass()) {
 				PlayerID playerID = PlayerID.FromSerialized(prop.GetString() ?? "");
 				CNetComm.Instance.SendMisc(Head2HeadModule.BTA_MATCH_PASS, playerID);
+				Outgoing.CommandResult(true, packet.ClientToken, packet.RequestID);
 			}
+			else Outgoing.CommandResult(false, packet.ClientToken, packet.RequestID);
 		}
 
 		private static void GoToLobby(ControlPanelPacket packet) {
@@ -282,6 +286,18 @@ namespace Celeste.Mod.Head2Head.ControlPanel.Commands
 				Ruleset.DefaultRulesetStale = true;
 				Outgoing.CommandResult(true, packet.ClientToken, packet.RequestID, Dialog.Clean("Head2Head_ControlPanel_CategorySaved"));
 			}
+		}
+
+		private static void GetPlayerList(ControlPanelPacket packet) {
+			Outgoing.PlayerListUpdate(packet.ClientToken);
+		}
+
+		private static void GetEnabledMods(ControlPanelPacket packet) {
+			if (packet.Json.TryGetProperty("playerID", out JsonElement prop) && RoleLogic.CanGrantMatchPass()) {
+				PlayerID playerID = PlayerID.FromSerialized(prop.GetString() ?? "");
+				CNetComm.Instance.SendMisc(Head2HeadModule.REQUEST_ENABLED_MODS, playerID, requestorCPToken: packet.ClientToken);
+			}
+			else Outgoing.CommandResult(false, packet.ClientToken, packet.RequestID);
 		}
 
 	}

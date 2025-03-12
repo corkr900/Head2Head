@@ -41,7 +41,8 @@
 		<div class="card">
 			<h2>Control Panel</h2>
 			<div>Status: <span id="rend_status">Not Connected</span></div>
-			<div class="ipEntryEnabled">Connect to IP:
+			<div class="ipEntryEnabled">
+				Connect to IP:
 				<input type="text" id="ipInput" value="127.0.0.1"></input><br>
 				<button onClick="onConnectToIpClick()">Go!</button>
 			</div>
@@ -54,6 +55,10 @@
 		<div class="card">
 			<h2>All Matches</h2>
 			<div id="allMatchesBody"></div>
+		</div>
+		<div id="playersCard" class="card">
+			<h2>Players</h2>
+			<div id="playersCardBody">There are no known players yet. Try refreshing the player list.</div>
 		</div>
 		<div id="logCard" class="card">
 			<h2>Match Log</h2>
@@ -80,6 +85,13 @@
 			<td field="AreaSID"></td>
 			<td field="LevelExitMode"></td>
 			<td field="SaveDataIndex"></td>
+			<td field="Details"></td>
+		</tr>
+	</template>
+	<template id="PlayerListRowTemplate">
+		<tr>
+			<td field="PlayerName"></td>
+			<td field="Actions"></td>
 		</tr>
 	</template>
 	

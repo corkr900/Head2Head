@@ -14,15 +14,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 	public static class RoleLogic {
 		internal static Role ActiveRole => Head2HeadModule.Settings.ActiveRole;
 		internal static string ActiveRulesetID => Head2HeadModule.Settings.Ruleset;
-
-		// Roles that do stuff:
-		// debug
-		// bta
-		// wbta
-		// bta-host
-
 		public static bool HasBTAMatchPass { get; private set; } = false;
-
 		public static bool IsDebug { get { return ActiveRole == Role.Debug; } }
 
 		internal static void GiveBTAMatchPass() {
@@ -169,6 +161,14 @@ namespace Celeste.Mod.Head2Head.Shared {
 		}
 
 		internal static bool AllowChangingVariants() {
+			return ActiveRole switch {
+				Role.Host => true,
+				Role.Debug => true,
+				_ => false
+			};
+		}
+
+		internal static bool CanGetEnabledMods() {
 			return ActiveRole switch {
 				Role.Host => true,
 				Role.Debug => true,

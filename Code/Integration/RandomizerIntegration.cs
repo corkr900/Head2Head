@@ -52,6 +52,9 @@ namespace Celeste.Mod.Head2Head.Integration {
 
 	public class RandomizerIntegration {
 
+		/// <summary>
+		/// Return true if the Randomizer mod is loaded and the necessary interop functions are available
+		/// </summary>
 		public static bool RandomizerLoaded {
 			get {
 				return RandomizerGenerationInterop.Generate != null
@@ -59,6 +62,9 @@ namespace Celeste.Mod.Head2Head.Integration {
 			}
 		}
 
+		/// <summary>
+		/// Load the Randomizer interop functions
+		/// </summary>
 		public static void Load() {
 			typeof(RandomizerGenerationInterop).ModInterop();
 			typeof(RandomizerSettingsInterop).ModInterop();

@@ -61,6 +61,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel.Commands {
 		}
 
 		public static void CommandResult(bool result, string targetClientToken, string requestID, string info = "") {
+			if (string.IsNullOrEmpty(requestID) || string.IsNullOrEmpty(targetClientToken)) return;
 			ControlPanelCore.SendImmediate(ControlPanelPacket.CreateOutgoing(
 				"RESULT",
 				new SerializeCommandResult() {
@@ -83,5 +84,13 @@ namespace Celeste.Mod.Head2Head.ControlPanel.Commands {
 			if (outgoing != null) ControlPanelCore.SendImmediate(outgoing);
 		}
 
+		public static void PlayerListUpdate(string targetClientToken) {
+			var packet = ControlPanelPacket.CreateOutgoing("PLAYER_LIST", new SerializePlayerList(), targetClientToken);
+			ControlPanelCore.SendImmediate(packet);
+		}
+
+		internal static void PlayerEnabledMods(string targetClientToken, string displayText) {
+			ControlPanelCore.SendImmediate(ControlPanelPacket.CreateOutgoing("PLAYER_ENABLED_MODS", displayText, targetClientToken));
+		}
 	}
 }

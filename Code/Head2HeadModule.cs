@@ -40,9 +40,10 @@ namespace Celeste.Mod.Head2Head
 		private const int START_TIMER_LEAD_MS = 5000;
 		private const int DEBUG_SAVEFILE = -1;
 		internal const string BTA_MATCH_PASS = "BTAMatchPass";
-
+		internal const string REQUEST_ENABLED_MODS = "RequestEnabledMods";
+		internal const string ENABLED_MODS = "EnabledMods";
 		// Constants that might change in the future
-		public static readonly string ProtocolVersion = "1_2_4";
+		public static readonly string ProtocolVersion = "1_2_6";
 
 		// Other static stuff
 		public static Head2HeadModule Instance { get; private set; }
@@ -990,6 +991,16 @@ namespace Celeste.Mod.Head2Head
 						OnMatchCurrentMatchUpdated?.Invoke();
 					}
 					return;
+				case REQUEST_ENABLED_MODS:
+					if (data.targetPlayer.Equals(PlayerID.MyID)) {
+						CNetComm.Instance.SendMisc(ENABLED_MODS, data.playerID, true, data.requestorCPToken, GetEnabledModsList());
+					}
+					return;
+				case ENABLED_MODS:
+					if (data.targetPlayer.Equals(PlayerID.MyID)) {
+						Outgoing.PlayerEnabledMods(data.requestorCPToken, $"{data.respondingPlayerID?.DisplayName}:\n{data.details}");
+					}
+					return;
 			}
 		}
 
@@ -1705,6 +1716,22 @@ namespace Celeste.Mod.Head2Head
 				UserIO.Close();
 			}
 			return -2;
+		}
+
+		internal string GetEnabledModsList() {
+			return string.Join(", ", Everest.Modules.Select(
+				(EverestModule module) => module.Metadata.Name switch {
+					"Everest" => null,
+					"Celeste" => null,
+					"DialogCutscene" => null,
+					"UpdateChecker" => null,
+					"InfiniteSaves" => null,
+					"DebugRebind" => null,
+					"RebindPeriod" => null,
+					"Head2Head" => null,
+					_ => string.IsNullOrWhiteSpace(module.Metadata.Name)
+						? "***Unknown Mod***" : module.Metadata.Name
+				}).Where(s => !string.IsNullOrEmpty(s)));
 		}
 
 	}

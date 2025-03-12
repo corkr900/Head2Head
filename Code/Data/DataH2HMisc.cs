@@ -14,17 +14,32 @@ namespace Celeste.Mod.Head2Head.Data {
 
         public string message;
         public PlayerID targetPlayer;
+        public string details;
+        public string requestorCPToken;
+        public PlayerID? respondingPlayerID;
 
         protected override void Read(CelesteNetBinaryReader reader) {
             base.Read(reader);
             message = reader.ReadString();
             targetPlayer = reader.ReadPlayerID();
-        }
+			details = reader.ReadString();
+			requestorCPToken = reader.ReadString();
+            respondingPlayerID = reader.ReadBoolean() ? reader.ReadPlayerID() : null;
+		}
 
         protected override void Write(CelesteNetBinaryWriter writer) {
             base.Write(writer);
-            writer.Write(message);
+            writer.Write(message ?? "");
             writer.Write(targetPlayer);
-        }
+            writer.Write(details ?? "");
+			writer.Write(requestorCPToken ?? "");
+            if (respondingPlayerID == null) {
+                writer.Write(false);
+            }
+            else {
+                writer.Write(true);
+                writer.Write(respondingPlayerID.Value);
+            }
+		}
     }
 }

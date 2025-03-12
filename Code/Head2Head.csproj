@@ -63,12 +63,20 @@
     <None Include="..\Ahorn\entities\MatchButton.jl">
       <Link>Editor Plugins\MatchButton.jl</Link>
     </None>
+    <None Include="..\ControlPanel\Scripts\ControlPanel.js" Link="ControlPanelClient\Scripts\ControlPanel.js" />
+    <None Include="..\ControlPanel\Scripts\H2HSocketCore.js" Link="ControlPanelClient\Scripts\H2HSocketCore.js" />
+    <None Include="..\ControlPanel\Scripts\RandoCategoryBuilder.js" Link="ControlPanelClient\Scripts\RandoCategoryBuilder.js" />
+    <None Include="..\ControlPanel\Scripts\WebsocketTester.js" Link="ControlPanelClient\Scripts\WebsocketTester.js" />
     <None Include="..\everest.yaml">
       <Link>everest.yaml</Link>
     </None>
   </ItemGroup>
     
   <ItemGroup>
+    <Content Include="..\ControlPanel\ControlPanel.html" Link="ControlPanelClient\Html\ControlPanel.html" />
+    <Content Include="..\ControlPanel\RandoCategoryBuilder.html" Link="ControlPanelClient\Html\RandoCategoryBuilder.html" />
+    <Content Include="..\ControlPanel\Styles\ControlPanel.css" Link="ControlPanelClient\Styles\ControlPanel.css" />
+    <Content Include="..\ControlPanel\Tester.html" Link="ControlPanelClient\Html\Tester.html" />
     <Content Include="..\Dialog\English.txt">
       <Link>English.txt</Link>
     </Content>
@@ -83,6 +91,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="packages\BepInEx.AssemblyPublicizer.MSBuild.0.4.1\contentFiles\cs\any\IgnoresAccessChecksToAttribute.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="ControlPanelClient\Html\" />
+    <Folder Include="ControlPanelClient\Styles\" />
+    <Folder Include="ControlPanelClient\Scripts\" />
   </ItemGroup>
   
   <PropertyGroup>

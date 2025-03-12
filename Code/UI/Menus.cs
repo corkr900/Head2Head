@@ -669,15 +669,17 @@ namespace Celeste.Mod.Head2Head.UI
 			});
 
 			// Randomizer Category Builder
-			randoBldrBtn = menu.AddButton("Head2Head_SettingsManager_OpenRandoBuilder", () => {
-				string url = "https://corkr900.github.io/Head2Head/ControlPanel/RandoCategoryBuilder.html";
-				if (!Util.OpenUrl(url)) {
-					randoBldrBtn.SoftDisable(menu, "Head2Head_SettingsManager_CantOpenURLs", url);
-				}
-				else {
-					randoBldrBtn.SetSubtext(menu, "Head2Head_SettingsManager_OpenedURL");
-				}
-			});
+			if (RandomizerIntegration.RandomizerLoaded) {
+				randoBldrBtn = menu.AddButton("Head2Head_SettingsManager_OpenRandoBuilder", () => {
+					string url = "https://corkr900.github.io/Head2Head/ControlPanel/RandoCategoryBuilder.html";
+					if (!Util.OpenUrl(url)) {
+						randoBldrBtn.SoftDisable(menu, "Head2Head_SettingsManager_CantOpenURLs", url);
+					}
+					else {
+						randoBldrBtn.SetSubtext(menu, "Head2Head_SettingsManager_OpenedURL");
+					}
+				});
+			}
 
 			// Manage Custom Categories
 			btn = menu.AddButton("Head2Head_SettingsManager_ManageCustomCategories", () => {

@@ -154,6 +154,9 @@ namespace Celeste.Mod.Head2Head.IO {
 				allLogs[def.MatchID] = Current;
 			}
 			Current.Log(new LoggableAction(ActionType.MatchStart));
+			Current.Log(new LoggableAction(ActionType.EnabledMods) {
+				Details = Head2HeadModule.Instance.GetEnabledModsList(),
+			});
 			WriteLog();
 		}
 
@@ -347,6 +350,7 @@ namespace Celeste.Mod.Head2Head.IO {
 			CollectedSummitGem = 19,
 			CollectedCustomCollectable = 20,
 
+			EnabledMods = 97,
 			MatchRejoin = 98,
 			IntentionalCloseApplication = 99,
 
@@ -381,6 +385,7 @@ namespace Celeste.Mod.Head2Head.IO {
 		public string Checkpoint { get; set; }
 		public int SaveDataIndex { get; set; }
 		public string LevelExitMode { get; set; }
+		public string Details { get; set; }
 	}
 
 	public static class ActionLogExtensions {
@@ -423,6 +428,7 @@ namespace Celeste.Mod.Head2Head.IO {
 			w.Write(a.Checkpoint ?? "");
 			w.Write(a.SaveDataIndex);
 			w.Write(a.LevelExitMode ?? "");
+			w.Write(a.Details ?? "");
 		}
 
 		public static LoggableAction ReadLoggableAction(this MemoryStream r) {
@@ -436,6 +442,7 @@ namespace Celeste.Mod.Head2Head.IO {
 			act.Checkpoint = r.ReadString();
 			act.SaveDataIndex = r.ReadInt32();
 			act.LevelExitMode = r.ReadString();
+			act.Details = r.ReadString();
 			return act;
 		}
 	}

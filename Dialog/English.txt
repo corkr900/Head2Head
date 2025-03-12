@@ -260,7 +260,7 @@ Head2Head_menu_helpdesk_whynocreatematch_mainchannel= To avoid spam, you may not
 Join a different Celestenet channel before creating a match.
 Head2Head_menu_helpdesk_whynocreatematch_role= Your current role prevents you from creating a match.
 Unless you know what you're doing or have specific instructions, you probably want no role.
-(Clear out the Role setting in Main Menu -> Mod Options -> Head2Head)
+(Go to the settings kiosk in the Head 2 Head Lobby -> Mod Options -> Role: None)
 Head2Head_menu_helpdesk_whynocreatematch_playerstatus= Your current status prevents you from creating a match. Are you already in one?
 Head2Head_menu_helpdesk_whynocreatematch_other= Some unknown issue. Recommend purging local data and/or restarting Celeste.
 This message should never appear. If it does, let corkr900 know how you got here.

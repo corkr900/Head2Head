@@ -209,13 +209,16 @@ namespace Celeste.Mod.Head2Head.IO {
 			MessageCounter++;
 		}
 
-		internal void SendMisc(string message, PlayerID targetPlayer) {
+		internal void SendMisc(string message, PlayerID targetPlayer, bool isResponse = false, string requestorCPToken = null, string details = null) {
 			if (!CanSendMessages) {
 				return;
 			}
 			CnetClient.SendAndHandle(new DataH2HMisc() {
 				message = message,
 				targetPlayer = targetPlayer,
+				details = details,
+				respondingPlayerID = isResponse ? PlayerID.MyID : null,
+				requestorCPToken = requestorCPToken,
 			});
 			MessageCounter++;
 		}
