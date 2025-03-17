@@ -321,12 +321,27 @@ namespace Celeste.Mod.Head2Head
 		/// </summary>
 		/// <returns>false to let entity loading continue as normal, true to intercept the other loading logic</returns>
 		private bool OnLevelLoadEntity(Level level, LevelData levelData, Vector2 offset, EntityData entityData) {
-			if (entityData.Name != "goldenBerry") return false;  // We only care about golden berries
-			if (!PlayerStatus.Current.IsInMatch(false)) return false;  // Don't mess with anything if we're not in a match
+			// Shortcut if it's not something we care about
+			if (entityData.Name != "goldenBerry" && entityData.Name != "CollabUtils2/SilverBerry") return false;
+
+			bool? shouldSpawn = ShouldSpawnGoldBerry(level, levelData, offset, entityData);
+			if (shouldSpawn == null) return false;  // Don't mess with anything if we're not in a match
+			else if (shouldSpawn == false) return true;  // If we don't need the golden, do nothing but say it's handled; prevents the berry from loading in.
+			// Force the entities to spawn if we need them
+			else if (entityData.Name == "goldenBerry") {
+				level.Add(new Strawberry(entityData, offset, new EntityID(levelData.Name, entityData.ID)));  // Force it to appear if we need it
+			}
+			else if (entityData.Name == "CollabUtils2/SilverBerry") {
+				return false;  // TODO (!) force silvers to appear if we need them, even if they normally wouldn't
+			}
+			Logger.Log(LogLevel.Error, "Head2Head", $"Not sure whether to allow this entity to spawn: '{entityData.Name}'");
+			return false;  // We should never get to here anyway
+		}
+
+		private bool? ShouldSpawnGoldBerry(Level level, LevelData levelData, Vector2 offset, EntityData entityData) {
+			if (!PlayerStatus.Current.IsInMatch(false)) return null;  // Don't mess with anything if we're not in a match
 			MatchObjective ob = PlayerStatus.Current.FindObjective(MatchObjectiveType.GoldenStrawberry, new GlobalAreaKey(level.Session.Area));
-			if (ob == null) return true;  // If we don't need the golden, do nothing but say it's handled; prevents the berry from loading in.
-			level.Add(new Strawberry(entityData, offset, new EntityID(levelData.Name, entityData.ID)));  // Force it to appear if we need it
-			return true;
+			return ob != null;
 		}
 
 		private void OnUnlockEverythingThingyEnteredCheat(On.Celeste.UnlockEverythingThingy.orig_EnteredCheat orig, UnlockEverythingThingy self) {
