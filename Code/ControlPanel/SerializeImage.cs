@@ -90,7 +90,7 @@ namespace Celeste.Mod.Head2Head.ControlPanel {
 					}
 				}
 				return atlas == "url" ? path
-					: $"data:image/jpeg;base64,${Base64Image()}";
+					: $"data:image/jpeg;base64,{Base64Image()}";
 			}
 		}
 
