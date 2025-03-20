@@ -338,6 +338,10 @@ namespace Celeste.Mod.Head2Head
 			return false;  // We should never get to here anyway
 		}
 
+		/// <summary>
+		/// Wraps the logic for whether the golden / silver berry should spawn.
+		/// </summary>
+		/// <returns>true if it should spawn, false to prevent it from spawning, or null to not interfere with normal behavior</returns>
 		private bool? ShouldSpawnGoldBerry(Level level, LevelData levelData, Vector2 offset, EntityData entityData) {
 			if (!PlayerStatus.Current.IsInMatch(false)) return null;  // Don't mess with anything if we're not in a match
 			MatchObjective ob = PlayerStatus.Current.FindObjective(MatchObjectiveType.GoldenStrawberry, new GlobalAreaKey(level.Session.Area));
@@ -1733,7 +1737,7 @@ namespace Celeste.Mod.Head2Head
 			return -2;
 		}
 
-		internal string GetEnabledModsList() {
+		internal string GetEnabledModsList(bool includeAll = false) {
 			return string.Join(", ", Everest.Modules.Select(
 				(EverestModule module) => module.Metadata.Name switch {
 					"Everest" => null,
@@ -1744,9 +1748,10 @@ namespace Celeste.Mod.Head2Head
 					"DebugRebind" => null,
 					"RebindPeriod" => null,
 					"Head2Head" => null,
+					"CelesteNet.Client" => null,
 					_ => string.IsNullOrWhiteSpace(module.Metadata.Name)
 						? "***Unknown Mod***" : module.Metadata.Name
-				}).Where(s => !string.IsNullOrEmpty(s)));
+				}).Where(s => !string.IsNullOrEmpty(s) && (includeAll || !Ruleset.Current.IsRequiredMod(s))));
 		}
 
 	}

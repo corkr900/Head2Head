@@ -5,6 +5,7 @@ using Monocle;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -103,7 +104,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 				Logger.Log(LogLevel.Warn, "Head2Head", $"Encountered invalid role '{rolestr}' in custom ruleset '{ruleset.Name}'");
 				return Role.None;
 			};
-			customRulesets.Add(ruleset.ID, new Ruleset(ruleset.Roles?.Select(EnumParser)?.ToArray(), ruleset.Name, set));
+			customRulesets.Add(ruleset.ID, new Ruleset(ruleset.Roles?.Select(EnumParser)?.ToArray(), ruleset.Name, true, set));
 			Logger.Log(LogLevel.Info, "Head2Head", $"Processed ruleset {ruleset.ID}");
 		}
 
@@ -127,10 +128,77 @@ namespace Celeste.Mod.Head2Head.Shared {
 		public readonly ImmutableList<Role> Roles;
 		public readonly string DisplayName;
 
-		protected Ruleset(Role[] roles, string dispName, params RunOptionsLevelSet[] levels) {
+		public HashSet<string> RequiredMods { get; private set; }
+
+		protected Ruleset(Role[] roles, string dispName, bool checkRequiredMods, params RunOptionsLevelSet[] levels) {
 			DisplayName = dispName;
 			Roles = ImmutableList.Create(roles ?? Array.Empty<Role>());
 			LevelSets = ImmutableList.Create(levels ?? Array.Empty<RunOptionsLevelSet>());
+			if (checkRequiredMods) {
+				FindRequiredMods();
+			}
+			else {
+				RequiredMods = new();
+			}
+		}
+
+		public bool IsRequiredMod(string mod) {
+			return RequiredMods.Contains(mod);
+		}
+
+		private void FindRequiredMods() {
+			RequiredMods = new();
+			List<string> mapsUsed = new();
+			Queue<EverestModuleMetadata> dependencyQueue = new();
+
+			// First, find all maps that are used
+			foreach (RunOptionsLevelSet set in LevelSets) {
+				foreach (RunOptionsILChapter chap in set.Chapters) {
+					foreach (RunOptionsILSide side in chap.Sides) {
+						foreach (RunOptionsILCategory cat in side.Categories) {
+							foreach (MatchPhaseTemplate phase in cat.Template.Phases) {
+								GlobalAreaKey key = phase.Area;
+								if (!key.ExistsLocal) continue;
+								if (key.IsOverworld) continue;
+								if (key.IsRandomizer) continue;
+								if (key.Data == null) {
+									Logger.Log(LogLevel.Warn, "Head2Head", $"Found areakey with null data for area '{key.DisplayName}' ({key.SID})");
+									continue;
+								}
+								string path = $"Maps/{key.Data.Mode[(int)key.Mode].Path}";
+								if (!mapsUsed.Contains(path)) {
+									mapsUsed.Add(path);
+									Logger.Log(LogLevel.Debug, "Head2Head", $"DEBUG: Using map with path '{path}'");
+								}
+							}
+						}
+					}
+				}
+			}
+
+			// Now look through all mods to find the ones that contain the maps we need
+			lock (Everest.Content.Mods) {
+				foreach (var mod in Everest.Content.Mods) {
+					foreach (ModAsset asset in mod.List.Where(ma => ma.Type?.Equals(typeof(AssetTypeMap)) == true)) {
+						Logger.Log(LogLevel.Debug, "Head2Head", $"DEBUG: Found asset with path '{asset.PathVirtual}'");
+						if (mapsUsed.Contains(asset.PathVirtual)) {
+							dependencyQueue.Enqueue(mod.Mod);
+							break;
+						}
+					}
+				}
+			}
+
+			// Now, find all dependencies of the mods we need
+			while (dependencyQueue.Count > 0) {
+				EverestModuleMetadata mod = dependencyQueue.Dequeue();
+				RequiredMods.Add(mod.Name);
+				foreach (EverestModuleMetadata dep in mod.Dependencies) {
+					if (RequiredMods.Contains(dep.Name)) continue;
+					if (dependencyQueue.Contains(dep)) continue;
+					dependencyQueue.Enqueue(dep);
+				}
+			}
 		}
 
 		#endregion Instance behavior
@@ -138,7 +206,7 @@ namespace Celeste.Mod.Head2Head.Shared {
 
 	public class DefaultRuleset : Ruleset {
 
-		public DefaultRuleset() : base(null, "Head2Head_DefaultRulesetName", BuildSets()) {
+		public DefaultRuleset() : base(null, "Head2Head_DefaultRulesetName", false, BuildSets()) {
 
 		}
 

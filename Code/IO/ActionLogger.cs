@@ -155,7 +155,7 @@ namespace Celeste.Mod.Head2Head.IO {
 			}
 			Current.Log(new LoggableAction(ActionType.MatchStart));
 			Current.Log(new LoggableAction(ActionType.EnabledMods) {
-				Details = Head2HeadModule.Instance.GetEnabledModsList(),
+				Details = Head2HeadModule.Instance.GetEnabledModsList(false),
 			});
 			WriteLog();
 		}
