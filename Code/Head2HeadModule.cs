@@ -321,21 +321,30 @@ namespace Celeste.Mod.Head2Head
 		/// </summary>
 		/// <returns>false to let entity loading continue as normal, true to intercept the other loading logic</returns>
 		private bool OnLevelLoadEntity(Level level, LevelData levelData, Vector2 offset, EntityData entityData) {
-			// Shortcut if it's not something we care about
-			if (entityData.Name != "goldenBerry" && entityData.Name != "CollabUtils2/SilverBerry") return false;
+			// Don't mess with anything if we're not in a match
+			if (!PlayerStatus.Current.IsInMatch(false)) return false;
 
-			bool? shouldSpawn = ShouldSpawnGoldBerry(level, levelData, offset, entityData);
-			if (shouldSpawn == null) return false;  // Don't mess with anything if we're not in a match
-			else if (shouldSpawn == false) return true;  // If we don't need the golden, do nothing but say it's handled; prevents the berry from loading in.
-			// Force the entities to spawn if we need them
-			else if (entityData.Name == "goldenBerry") {
-				level.Add(new Strawberry(entityData, offset, new EntityID(levelData.Name, entityData.ID)));  // Force it to appear if we need it
+			// Prevent spawn or force spawn
+			switch(entityData.Name) {
+				case "goldenBerry":
+					bool? shouldSpawnGolden = ShouldSpawnGoldBerry(level, levelData, offset, entityData);
+					if (shouldSpawnGolden == null) return false;       // Do nothing if not in a match
+					else if (shouldSpawnGolden == false) return true;  // If we don't need the golden, do nothing but say it's handled; prevents the berry from loading in.
+					level.Add(new Strawberry(entityData, offset, new EntityID(levelData.Name, entityData.ID)));  // Force it to appear if we need it
+					return true;
+
+				case "CollabUtils2/SilverBerry":
+					bool? shouldSpawnSilver = ShouldSpawnGoldBerry(level, levelData, offset, entityData);
+					if (shouldSpawnSilver == null) return false;       // Do nothing if not in a match
+					else if (shouldSpawnSilver == false) return true;  // If we don't need the silver, do nothing but say it's handled; prevents the berry from loading in.
+					return false;                                      // TODO (!) force silvers to appear if we need them, even if they normally wouldn't
+
+				case "CollabUtils2/SpeedBerry":
+					return true;                                       // Don't spawn speed berries ever
+
+				default:
+					return false;
 			}
-			else if (entityData.Name == "CollabUtils2/SilverBerry") {
-				return false;  // TODO (!) force silvers to appear if we need them, even if they normally wouldn't
-			}
-			Logger.Log(LogLevel.Error, "Head2Head", $"Not sure whether to allow this entity to spawn: '{entityData.Name}'");
-			return false;  // We should never get to here anyway
 		}
 
 		/// <summary>
