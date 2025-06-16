@@ -658,6 +658,8 @@ namespace Celeste.Mod.Head2Head.Shared {
 		}
 
 		public void ApplyMatchDefinedAssists(bool evenIfalreadyStored) {
+			if (RoleLogic.AllowChangingVariants()) return;
+
 			Logger.Log(LogLevel.Info, "Head2Head", $"Applying match defined assists...");
 			if (CurrentMatch == null) {
 				Logger.Log(LogLevel.Info, "Head2Head", $"Skipping Apply match defined assists; no current match.");
