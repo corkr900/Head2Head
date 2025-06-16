@@ -32,18 +32,23 @@ namespace Celeste.Mod.Head2Head.IO {
 			}
         }
 
-        public static void DoClockSync() {
-            // TODO try to make this async so network doesnt affect startup time
-			try {
-                string server = TimeServer;
-                if (string.IsNullOrEmpty(server)) {
-                    return;
+        public static async Task<bool> DoClockSync() {
+            return await Task.Run(() => {
+				// TODO try to make this async so network doesnt affect startup time
+				try {
+					string server = TimeServer;
+					if (string.IsNullOrEmpty(server)) {
+						return false;
+					}
+					SNTPClient client = new SNTPClient(server);
+					client.Connect();
+					LocalClockOffset = client.LocalClockOffset;  // Okay to do this not thread safe
+                    return true;
+				}
+				catch {
+                    return false;
                 }
-                SNTPClient client = new SNTPClient(server);
-                client.Connect();
-                LocalClockOffset = client.LocalClockOffset;
-            }
-			catch { }
+			});
         }
 
         /*
