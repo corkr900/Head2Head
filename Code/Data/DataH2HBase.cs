@@ -14,8 +14,8 @@ namespace Celeste.Mod.Head2Head.Data {
 	/// packets if there is too much data for cnet to transmit in one packet. Encoding is as follows:
 	/// 1. (PlayerID) Sender player ID
 	/// 2. (int32) Chunk count
-	///     - If chunk count == 0, skip to ###
-	///     - If chunk count == 1, skip to ###
+	///     - If chunk count == 0, skip to #7
+	///     - If chunk count == 1, skip to #5
 	/// 3. (int32) Chunk index
 	/// 4. (unsigned int32) Packet ID
 	///     - Packet ID is unique per sender and will be the same for all chunks in a packet
